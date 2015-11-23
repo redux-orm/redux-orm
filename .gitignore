@@ -1,5 +1,7 @@
 node_modules
+docs
 *.sublime-project
 *.sublime-workspace
 .DS_Store
 lib
+.publish

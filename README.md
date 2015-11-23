@@ -1,7 +1,7 @@
 redux-orm
 ===============
 
-Use a simple ORM to manage and query your entity state trees, so you can write your reducers like this:
+A simple ORM to manage and query your state trees, so you can write your reducers like this:
 
 
 ```javascript
@@ -212,7 +212,7 @@ If you have different entity types, you'll be writing a lot of boilerplate. The 
 
 ### EntityManager
 
-See the full documentation for EntityManager [here]().
+See the full documentation for EntityManager [here](http://tommikaikkonen.github.io/redux-orm/EntityManager.html).
 
 Methods:
 
@@ -234,9 +234,29 @@ Methods shared with QuerySet:
 - `delete` marks all the entities for deletion on `reduce`.
 - `update` marks all the entities for an update based on the supplied argument.
 
+### Schema
+
+See the full documentation for Schema [here](http://tommikaikkonen.github.io/redux-orm/Schema.html).
+
+`Schema` holds information about the schema. If you pass a single string arguments, the generated tree will look like this:
+
+```javascript
+const schema = new Schema('items');
+// Resulting empty tree: {items: [], itemsById: {}}
+```
+
+You can pass an optional options object. The defaults are:
+```javascript
+{
+  idAttribute: 'id',
+  arrName: 'items', // if not specified, this is the same as the frst argument.
+  mapName: 'itemsById', // if not specified, this is the first argument + `'ById'`.
+}
+```
+
 ### QuerySet
 
-See the full documentation for `QuerySet` [here]().
+See the full documentation for `QuerySet` [here](http://tommikaikkonen.github.io/redux-orm/QuerySet.html).
 
 Methods:
 
@@ -254,7 +274,7 @@ Methods:
 
 ### Entity
 
-See the full documentation for `Entity` [here]().
+See the full documentation for `Entity` [here](http://tommikaikkonen.github.io/redux-orm/Entity.html).
 
 Methods:
 

@@ -9,10 +9,11 @@ import {
 
 /**
  * A chainable class that keeps track of a list of entities and
+ *
  * - returns a subset clone of itself with [filter]{@link QuerySet#filter} and [exclude]{@link QuerySet#exclude}
- * - records mutations to entities with [create]{@link QuerySet#create}, [update]{@link QuerySet#update} and [delete]{@link QuerySet#delete}
+ * - records mutations to entities with [update]{@link QuerySet#update} and [delete]{@link QuerySet#delete}
+ *
  */
-
 const QuerySet = class QuerySet {
     /**
      * Creates a QuerySet.

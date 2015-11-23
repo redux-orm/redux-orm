@@ -17,7 +17,7 @@ import {
  * This is very simple at the moment - I'm
  * thinking about a working approach to related
  * managers, which could be declared similarly to
- * [normalizr](https://github.com/gaearon/normalizr)
+ * [normalizr](https://github.com/gaearon/normalizr).
  */
 const Schema = class Schema {
     /**
@@ -67,7 +67,6 @@ Schema.defaultOpts = {
  * - [delete]{@link QuerySet#delete}
  * - [update]{@link QuerySet#update}
  *
- * @extends Object
  */
 const EntityManager = class EntityManager {
     /**
