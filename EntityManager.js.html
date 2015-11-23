@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: index.js</title>
+    <title>JSDoc: Source: EntityManager.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: index.js</h1>
+    <h1 class="page-title">Source: EntityManager.js</h1>
 
     
 
@@ -30,55 +30,15 @@
 import find from 'lodash/collection/find';
 import sortByAll from 'lodash/collection/sortByAll';
 
-import QuerySet from './QuerySet.js';
-import Entity from './Entity.js';
-import {match} from './utils.js';
+import QuerySet from './QuerySet';
+import Entity from './Entity';
 import {
     CREATE,
     UPDATE,
     DELETE,
     ORDER,
-} from './constants.js';
-
-/**
- * Defines the settings for a entity branch.
- * This is very simple at the moment - I'm
- * thinking about a working approach to related
- * managers, which could be declared similarly to
- * [normalizr](https://github.com/gaearon/normalizr).
- */
-const Schema = class Schema {
-    /**
-     * Create a new Schema.
-     * @param  {string} name - plural name of the entities branch
-     * @param  {Object} [opts] - settings for the schema.
-     * @param  {string} [opts.idAttribute=id] - the attribute name for entity id's.
-     * @param  {string} [opts.arrName=name] - the tree property name that holds an array of id's.
-     * @param  {string} [opts.mapName=name + ById] - the tree property name that holds the id-entity map.
-     */
-    constructor(name, opts) {
-        this.name = name;
-        this.buildOpts(opts);
-    }
-
-    buildOpts(opts) {
-        const userOptions = opts || {};
-        const options = Object.assign({}, this.defaultOpts, userOptions);
-        if (!options.hasOwnProperty('arrName')) {
-            options.arrName = this.name;
-        }
-
-        if (!options.hasOwnProperty('mapName')) {
-            options.mapName = this.name + 'ById';
-        }
-        Object.assign(this, options);
-    }
-};
-
-
-Schema.defaultOpts = {
-    idAttribute: 'id',
-};
+} from './constants';
+import {match} from './utils.js';
 
 /**
  * A class that manages an entity tree branch.
@@ -102,13 +62,11 @@ const EntityManager = class EntityManager {
      * @param  {object} tree - the tree branch to manage
      * @param  {Schema} - the Schema that defines the branch structure
      */
-    constructor(tree, schema) {
+    constructor(tree) {
         Object.assign(this, {
             tree,
-            schema,
             mutations: [],
         });
-        this.idAttribute = schema.idAttribute;
     }
 
     getEntityTree() {
@@ -116,14 +74,15 @@ const EntityManager = class EntityManager {
     }
 
     getDefaultState() {
-        return {
-            [this._arrName()]: [],
-            [this._mapName()]: {},
-        };
+        return this.schema.getDefaultState();
     }
 
     getEntityMap() {
         return this.getEntityTree()[this._mapName()];
+    }
+
+    getIdAttribute() {
+        return this.schema.idAttribute;
     }
 
     getIdArray() {
@@ -131,7 +90,7 @@ const EntityManager = class EntityManager {
     }
 
     getFullEntity(id) {
-        return Object.assign({[this.idAttribute]: id}, this.getEntityMap()[id]);
+        return Object.assign({[this.getIdAttribute()]: id}, this.getEntityMap()[id]);
     }
 
     getFullEntities() {
@@ -215,12 +174,12 @@ const EntityManager = class EntityManager {
         }
 
         const keys = Object.keys(lookupObj);
-        if (keys.includes(this.idAttribute)) {
+        const idAttribute = this.getIdAttribute();
+        if (keys.includes(idAttribute)) {
             // We treat `idAttribute` as unique, so if it's
             // in `lookupObj` we search with that attribute only.
-            return new Entity(this, this.getFullEntity(lookupObj[this.idAttribute]));
+            return new Entity(this, this.getFullEntity(lookupObj[idAttribute]));
         }
-
         const found = find(this.getFullEntities(), entity => match(lookupObj, entity));
 
         if (!found) {
@@ -272,7 +231,7 @@ const EntityManager = class EntityManager {
             return idArr.filter(id => !idsToDelete.includes(id));
         case ORDER:
             const entities = sortByAll(this.getFullEntities(), action.payload);
-            return entities.map(entity => entity[this.idAttribute]);
+            return entities.map(entity => entity[this.getIdAttribute()]);
         default:
             return idArr;
         }
@@ -311,15 +270,19 @@ const EntityManager = class EntityManager {
     }
 };
 
-function makeManager(schema) {
-    return (tree) => {
-        return new EntityManager(tree, schema);
-    };
-}
+EntityManager.createManager = function createManager(props) {
+    const parent = this;
 
-export {Schema, EntityManager, Entity, makeManager};
+    function childConstructor() {
+        parent.apply(this, arguments);
+    }
 
-export default makeManager;
+    childConstructor.prototype = Object.create(parent.prototype);
+    Object.assign(childConstructor.prototype, props);
+    return childConstructor;
+};
+
+export default EntityManager;
 </code></pre>
         </article>
     </section>
@@ -336,7 +299,7 @@ export default makeManager;
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Nov 22 2015 21:03:34 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Mon Nov 23 2015 01:00:58 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>
