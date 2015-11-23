@@ -14,4 +14,16 @@ function match(lookupObj, entity) {
     });
 }
 
-export {match};
+function extend(props) {
+    const parent = this;
+
+    function childConstructor() {
+        parent.apply(this, arguments);
+    }
+
+    childConstructor.prototype = Object.create(parent.prototype);
+    Object.assign(childConstructor.prototype, props);
+    return childConstructor;
+}
+
+export {match, extend};

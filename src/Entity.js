@@ -13,7 +13,15 @@ const Entity = class Entity {
     }
 
     getId() {
-        return this[this.manager.idAttribute];
+        return this[this.manager.getIdAttribute()];
+    }
+
+    toPlain() {
+        const obj = {};
+        this.fieldNames.forEach((fieldName) => {
+            obj[fieldName] = this[fieldName];
+        });
+        return obj;
     }
 
     /**

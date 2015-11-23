@@ -5,8 +5,8 @@ A simple ORM to manage and query your state trees, so you can write your reducer
 
 
 ```javascript
-import {makeManager, Schema} from 'redux-orm';
-const PeopleManager = makeManager(new Schema('people', {idAttribute: 'id'}));
+import {createManager, Schema} from 'redux-orm';
+const PeopleManager = createManager({schema: new Schema('people')});
 
 function peopleReducer(state, action) => {
   const peopleManager = new PeopleManager(state);
@@ -51,14 +51,14 @@ npm install --save redux-orm
 Import module.
 
 ```javascript
-import {Schema, makeManager} from 'redux-orm';
+import {Schema, createManager} from 'redux-orm';
 ```
 
 Declare your managers.
 
 ```javascript
 const peopleSchema = new Schema('people', {idAttribute: 'id'});
-const PeopleManager = makeManager(peopleSchema);
+const PeopleManager = createManager({schema: peopleSchema});
 ```
 
 Then you can instantiate `PeopleManager` with a state tree when you need. 

@@ -38,7 +38,7 @@ const QuerySet = class QuerySet {
      * @return {Object[]}
      */
     getFullEntities() {
-        const idAttribute = this.manager.idAttribute;
+        const idAttribute = this.manager.getIdAttribute();
         return this.idArr.map(id => {
             return Object.assign(
                 {[idAttribute]: id},
@@ -72,7 +72,7 @@ const QuerySet = class QuerySet {
      * @return {Entity} an Entity instance at index `index` in the QuerySet
      */
     at(index) {
-        return this.manager.get({[this.manager.idAttribute]: this.idArr[index]});
+        return this.manager.get({[this.manager.getIdAttribute()]: this.idArr[index]});
     }
 
     /**
@@ -106,8 +106,16 @@ const QuerySet = class QuerySet {
      * @return {QuerySet} a new {@link QuerySet} with entities that passed the filter.
      */
     filter(lookupObj) {
-        const entities = this.getFullEntities().filter(entity => match(lookupObj, entity));
-        return this._new(entities.map(entity => entity[this.manager.idAttribute]));
+        const fullEntities = this.getFullEntities();
+        let entities;
+
+        if (typeof lookupObj === 'function') {
+            entities = fullEntities.filter(lookupObj);
+        } else {
+            entities = fullEntities.filter(entity => match(lookupObj, entity));
+        }
+        const newIdArr = entities.map(entity => entity[this.manager.getIdAttribute()]);
+        return this._new(newIdArr);
     }
 
     /**
@@ -118,7 +126,7 @@ const QuerySet = class QuerySet {
      */
     exclude(lookupObj) {
         const entities = reject(this.getFullEntities(), entity => match(lookupObj, entity));
-        return this._new(entities.map(entity => entity[this.manager.idAttribute]));
+        return this._new(entities.map(entity => entity[this.manager.getIdAttribute()]));
     }
 
     /**
@@ -129,7 +137,7 @@ const QuerySet = class QuerySet {
      */
     orderBy(...fieldNames) {
         const entities = sortByAll(this.getFullEntities(), fieldNames);
-        return this._new(entities.map(entity => entity[this.manager.idAttribute]));
+        return this._new(entities.map(entity => entity[this.manager.getIdAttribute()]));
     }
 
     /**
