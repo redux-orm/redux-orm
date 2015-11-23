@@ -1,0 +1,15 @@
+{
+  "extends": "airbnb/base",
+  "env": {
+    "mocha": true
+  },
+  "rules": {
+    "indent": [2, 4],
+    "no-unused-vars": 1,
+    "id-length": 0,
+  },
+  "ecmaFeatures": {
+    "restParams": true,
+    "experimentalObjectRestSpread": true
+  }
+}
