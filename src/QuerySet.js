@@ -171,7 +171,7 @@ const QuerySet = class QuerySet {
     }
 };
 
-QuerySet.prototype.sharedMethods = [
+QuerySet.prototype.sharedMethodNames = [
     'getPlainEntities',
     'count',
     'exists',

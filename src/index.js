@@ -7,8 +7,8 @@ import {extend, attachQuerySetMethods} from './utils';
 function EntityManagerExtend(...args) {
     const cls = extend.call(EntityManager, ...args);
     const querySetClass = cls.prototype.querySetClass;
-    const sharedMethods = querySetClass.prototype.sharedMethods;
-    attachQuerySetMethods(cls.prototype, sharedMethods);
+    const sharedMethodNames = querySetClass.prototype.sharedMethodNames;
+    attachQuerySetMethods(cls.prototype, sharedMethodNames);
     return cls;
 }
 

@@ -10,7 +10,7 @@ import {
     DELETE,
     ORDER,
 } from './constants';
-import {match, attachQuerySetMethods} from './utils.js';
+import {match} from './utils.js';
 
 /**
  * A class that manages an entity tree branch.
@@ -39,8 +39,6 @@ const EntityManager = class EntityManager {
             tree,
             mutations: [],
         });
-
-        // attachQuerySetMethods(this, this.querySetClass.prototype, this.querySetClass.prototype.sharedMethods);
     }
 
     getDefaultState() {
