@@ -1,7 +1,6 @@
 import {expect} from 'chai';
 import {
     Schema,
-    createManager,
     EntityManager,
     QuerySet,
 } from '../index.js';
@@ -9,7 +8,7 @@ import {
 describe('createManager', () => {
     it('correctly attaches props', () => {
         const schema = new Schema('people');
-        const Manager = createManager({schema});
+        const Manager = EntityManager.extend({schema});
 
         const manager = new Manager();
 
@@ -33,7 +32,7 @@ describe('EntityManager.extend', () => {
 
 describe('EntityManager', () => {
     let stateTree;
-    const PersonManager = createManager({
+    const PersonManager = EntityManager.extend({
         schema: new Schema('people'),
     });
     let personManager;
@@ -106,7 +105,7 @@ describe('EntityManager', () => {
 
     it('overriding nextId works', () => {
         let nextIdCalled = false;
-        const AlternatePersonManager = createManager({
+        const AlternatePersonManager = EntityManager.extend({
             schema: new Schema('people'),
             nextId() {
                 nextIdCalled = true;

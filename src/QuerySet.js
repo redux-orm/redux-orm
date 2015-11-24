@@ -62,11 +62,6 @@ const QuerySet = class QuerySet {
         return Boolean(this.count());
     }
 
-    _getEntity(entity) {
-        const EntityClass = this.constructor.entityClass;
-        return new EntityClass(this.manager, entity);
-    }
-
     /**
      * Returns the Entity instance at index `index` in the QuerySet.
      * @param  {number} index - index of the entity to get
@@ -171,7 +166,8 @@ const QuerySet = class QuerySet {
     }
 };
 
-QuerySet.prototype.sharedMethodNames = [
+// Override if needed.
+QuerySet.prototype.defaultSharedMethodNames = [
     'getPlainEntities',
     'count',
     'exists',
@@ -185,5 +181,9 @@ QuerySet.prototype.sharedMethodNames = [
     'update',
     'delete',
 ];
+
+// You can set additional shared methods with this.
+// They will be callable from the manager.
+QuerySet.prototype.sharedMethodNames = [];
 
 export default QuerySet;

@@ -7,8 +7,12 @@ import {extend, attachQuerySetMethods} from './utils';
 function EntityManagerExtend(...args) {
     const cls = extend.call(EntityManager, ...args);
     const querySetClass = cls.prototype.querySetClass;
-    const sharedMethodNames = querySetClass.prototype.sharedMethodNames;
-    attachQuerySetMethods(cls.prototype, sharedMethodNames);
+
+    const defaultSharedMethodNames = querySetClass.prototype.defaultSharedMethodNames;
+    const additionalSharedMethodNames = querySetClass.prototype.sharedMethodNames;
+
+    attachQuerySetMethods(cls.prototype, defaultSharedMethodNames);
+    attachQuerySetMethods(cls.prototype, additionalSharedMethodNames);
     return cls;
 }
 
@@ -16,8 +20,6 @@ EntityManager.extend = EntityManagerExtend;
 QuerySet.extend = extend.bind(QuerySet);
 Entity.extend = extend.bind(Entity);
 
-const createManager = EntityManagerExtend;
+export {Schema, EntityManager, Entity, QuerySet};
 
-export {Schema, EntityManager, Entity, QuerySet, createManager};
-
-export default createManager;
+export default EntityManager;

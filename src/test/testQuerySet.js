@@ -1,5 +1,8 @@
 import {expect} from 'chai';
 import Schema from '../Schema';
+import {
+    UPDATE,
+} from '../constants';
 import EntityManager from '../EntityManager';
 import QuerySet from '../QuerySet';
 
@@ -78,6 +81,48 @@ describe('QuerySet', () => {
         const filtered = querySet.filter({name: 'Tommi'});
         expect(filtered.count()).to.equal(1);
         expect(filtered.first().toPlain()).to.deep.equal({id: 0, name: 'Tommi', age: 25});
+    });
+
+    it('exclude works correctly with object argument', () => {
+        const excluded = querySet.exclude({name: 'Tommi'});
+        expect(excluded.count()).to.equal(2);
+        expect(excluded.idArr).to.deep.equal([1, 2]);
+    });
+
+    it('update records a mutation', () => {
+        const updater = {name: 'Mark'};
+        expect(personManager.mutations).to.have.length(0);
+        querySet.update(updater);
+        expect(personManager.mutations).to.have.length(1);
+
+        expect(personManager.mutations[0]).to.deep.equal({
+            type: UPDATE,
+            payload: {
+                idArr: querySet.idArr,
+                updater,
+            },
+        });
+    });
+
+    it('custom methods works', () => {
+        const CustomQuerySet = QuerySet.extend({
+            overMiddleAge() {
+                return this.filter((person) => person.age > 50);
+            },
+            sharedMethodNames: [
+                'overMiddleAge',
+            ],
+        });
+        const Manager = EntityManager.extend({schema, querySetClass: CustomQuerySet});
+        const manager = new Manager(stateTree.people);
+        const customQuerySet = new CustomQuerySet(manager, manager.getIdArray());
+
+        const overMiddleAged = customQuerySet.overMiddleAge();
+        expect(overMiddleAged.count()).to.equal(1);
+        expect(overMiddleAged.first().toPlain()).to.deep.equal({id: 2, name: 'Mary', age: 60});
+
+        const overMiddleAgedFromManager = manager.overMiddleAge();
+        expect(overMiddleAgedFromManager).to.deep.equal(overMiddleAged);
     });
 });
 
