@@ -17,6 +17,7 @@ import {match} from './utils.js';
  *
  * The manager shares the following methods with {@link QuerySet}:
  *
+ * - [getPlainEntities]{@link QuerySet#getPlainEntities}
  * - [all]{@link QuerySet#all}
  * - [filter]{@link QuerySet#filter}
  * - [exclude]{@link QuerySet#exclude}

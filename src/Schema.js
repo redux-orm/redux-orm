@@ -1,11 +1,6 @@
-import defaults from 'lodash/object/defaults';
 
 /**
  * Defines the settings for a entity branch.
- * This is very simple at the moment - I'm
- * thinking about a working approach to related
- * managers, which could be declared similarly to
- * [normalizr](https://github.com/gaearon/normalizr).
  */
 const Schema = class Schema {
     /**

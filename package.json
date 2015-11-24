@@ -27,7 +27,8 @@
     "gulp": "^3.9.0",
     "gulp-gh-pages": "^0.5.4",
     "jsdoc": "^3.4.0",
-    "mocha": "^2.2.5"
+    "mocha": "^2.2.5",
+    "sinon": "^1.17.2"
   },
   "dependencies": {
     "lodash": "^3.10.1"

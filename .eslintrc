@@ -7,7 +7,7 @@
     "indent": [2, 4],
     "no-unused-vars": 1,
     "id-length": 0,
-    "no-unused-expressions": 1,
+    "no-unused-expressions": 0,
   },
   "ecmaFeatures": {
     "restParams": true,

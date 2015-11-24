@@ -3,6 +3,7 @@ import {
     Schema,
     EntityManager,
     QuerySet,
+    Entity,
 } from '../index.js';
 
 describe('createManager', () => {
@@ -119,7 +120,15 @@ describe('EntityManager', () => {
         const alternatePersonManager = new AlternatePersonManager(stateTree.people);
         alternatePersonManager.nextId();
         expect(nextIdCalled).to.be.true;
+
         const oldPeople = alternatePersonManager.oldPeople();
+        expect(oldPeople.count()).to.equal(1);
+    });
+
+    it('get works', () => {
+        const entity = personManager.get({id: 1});
+        expect(entity).to.be.an.instanceof(Entity);
+        expect(entity.getId()).to.equal(1);
     });
 });
 

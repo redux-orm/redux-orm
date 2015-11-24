@@ -2,6 +2,7 @@ import {expect} from 'chai';
 import Schema from '../Schema';
 import {
     UPDATE,
+    DELETE,
 } from '../constants';
 import EntityManager from '../EntityManager';
 import QuerySet from '../QuerySet';
@@ -101,6 +102,17 @@ describe('QuerySet', () => {
                 idArr: querySet.idArr,
                 updater,
             },
+        });
+    });
+
+    it('delete records a mutation', () => {
+        expect(personManager.mutations).to.have.length(0);
+        querySet.delete();
+        expect(personManager.mutations).to.have.length(1);
+
+        expect(personManager.mutations[0]).to.deep.equal({
+            type: DELETE,
+            payload: querySet.idArr,
         });
     });
 
