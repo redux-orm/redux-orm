@@ -1,6 +1,5 @@
 import reject from 'lodash/collection/reject';
 import sortByAll from 'lodash/collection/sortByAll';
-import Entity from './Entity.js';
 import {match} from './utils.js';
 import {
     UPDATE,
@@ -20,16 +19,20 @@ const QuerySet = class QuerySet {
      * @param  {EntityManager} manager - used to keep an internal reference
      *                                   to the EntityManager in use.
      * @param  {number[]} idArr - an array of the id's this QuerySet includes.
+     * @param {Object} [opts] - additional options
      */
-    constructor(manager, idArr) {
+    constructor(manager, idArr, opts) {
         Object.assign(this, {
             manager,
             idArr,
-        });
+        }, opts);
+
+        // For convenience.
+        this.schema = manager.schema;
     }
 
     _new(ids) {
-        return new QuerySet(this.manager, ids);
+        return new this.constructor(this.manager, ids);
     }
 
     /**
@@ -37,12 +40,9 @@ const QuerySet = class QuerySet {
      * The `idAttribute` of the entities is included with each entity.
      * @return {Object[]}
      */
-    getFullEntities() {
-        const idAttribute = this.manager.getIdAttribute();
+    getPlainEntities() {
         return this.idArr.map(id => {
-            return Object.assign(
-                {[idAttribute]: id},
-                this.manager.getEntityMap()[id]);
+            return this.manager.getPlainEntity(id, true);
         });
     }
 
@@ -63,7 +63,8 @@ const QuerySet = class QuerySet {
     }
 
     _getEntity(entity) {
-        return new Entity(this.manager, entity);
+        const EntityClass = this.constructor.entityClass;
+        return new EntityClass(this.manager, entity);
     }
 
     /**
@@ -72,7 +73,7 @@ const QuerySet = class QuerySet {
      * @return {Entity} an Entity instance at index `index` in the QuerySet
      */
     at(index) {
-        return this.manager.get({[this.manager.getIdAttribute()]: this.idArr[index]});
+        return this.manager.get({[this.schema.idAttribute]: this.idArr[index]});
     }
 
     /**
@@ -106,15 +107,15 @@ const QuerySet = class QuerySet {
      * @return {QuerySet} a new {@link QuerySet} with entities that passed the filter.
      */
     filter(lookupObj) {
-        const fullEntities = this.getFullEntities();
+        const plainEntities = this.getPlainEntities();
         let entities;
 
         if (typeof lookupObj === 'function') {
-            entities = fullEntities.filter(lookupObj);
+            entities = plainEntities.filter(lookupObj);
         } else {
-            entities = fullEntities.filter(entity => match(lookupObj, entity));
+            entities = plainEntities.filter(entity => match(lookupObj, entity));
         }
-        const newIdArr = entities.map(entity => entity[this.manager.getIdAttribute()]);
+        const newIdArr = entities.map(entity => entity[this.schema.idAttribute]);
         return this._new(newIdArr);
     }
 
@@ -125,8 +126,8 @@ const QuerySet = class QuerySet {
      * @return {QuerySet} a new {@link QuerySet} with entities that passed the filter.
      */
     exclude(lookupObj) {
-        const entities = reject(this.getFullEntities(), entity => match(lookupObj, entity));
-        return this._new(entities.map(entity => entity[this.manager.getIdAttribute()]));
+        const entities = reject(this.getPlainEntities(), entity => match(lookupObj, entity));
+        return this._new(entities.map(entity => entity[this.schema.idAttribute]));
     }
 
     /**
@@ -136,7 +137,7 @@ const QuerySet = class QuerySet {
      * @return {QuerySet} a new {@link QuerySet} with entities ordered by `fieldNames`.
      */
     orderBy(...fieldNames) {
-        const entities = sortByAll(this.getFullEntities(), fieldNames);
+        const entities = sortByAll(this.getPlainEntities(), fieldNames);
         return this._new(entities.map(entity => entity[this.manager.getIdAttribute()]));
     }
 

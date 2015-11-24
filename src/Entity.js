@@ -9,16 +9,16 @@ import {
 const Entity = class Entity {
     constructor(manager, props) {
         Object.assign(this, {manager}, props);
-        this.fieldNames = Object.keys(props);
+        this._fieldNames = Object.keys(props);
     }
 
     getId() {
-        return this[this.manager.getIdAttribute()];
+        return this[this.manager.schema.idAttribute];
     }
 
     toPlain() {
         const obj = {};
-        this.fieldNames.forEach((fieldName) => {
+        this._fieldNames.forEach((fieldName) => {
             obj[fieldName] = this[fieldName];
         });
         return obj;

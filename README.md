@@ -5,8 +5,8 @@ A simple ORM to manage and query your state trees, so you can write your reducer
 
 
 ```javascript
-import {createManager, Schema} from 'redux-orm';
-const PeopleManager = createManager({schema: new Schema('people')});
+import {EntityManager, Schema} from 'redux-orm';
+const PeopleManager = EntityManager.extend({schema: new Schema('people')});
 
 function peopleReducer(state, action) => {
   const peopleManager = new PeopleManager(state);
@@ -51,14 +51,14 @@ npm install --save redux-orm
 Import module.
 
 ```javascript
-import {Schema, createManager} from 'redux-orm';
+import {Schema, EntityManager} from 'redux-orm';
 ```
 
 Declare your managers.
 
 ```javascript
 const peopleSchema = new Schema('people', {idAttribute: 'id'});
-const PeopleManager = createManager({schema: peopleSchema});
+const PeopleManager = EntityManager.extend({schema: peopleSchema});
 ```
 
 Then you can instantiate `PeopleManager` with a state tree when you need. 
@@ -108,9 +108,9 @@ function rootReducer(state, action) {
 You can use it in your React components too.
 
 ```javascript
-import {makeManager, Schema} from 'redux-orm';
+import {EntityManager, Schema} from 'redux-orm';
 const RD = React.DOM;
-const PeopleManager = makeManager(new Schema('people', {idAttribute: 'id'}));
+const PeopleManager = EntityManager.extend({schema: new Schema('people', {idAttribute: 'id'})});
 
 const PeopleViewer = React.createClass({
   propTypes: {
@@ -126,7 +126,7 @@ const PeopleViewer = React.createClass({
   }
 
   renderList(querySet) {
-    const chilren = querySet.getFullEntities().map(person => {
+    const chilren = querySet.getPlainEntities().map(person => {
       return RD.li({key: person.id}, `${person.name}, ${person.age}`);
     });
     return RD.ul(null, children);
@@ -222,7 +222,7 @@ Methods:
 
 Methods shared with QuerySet:
 
-- `getFullEntities`: returns the entities as an array of objects with the `id` attribute included.
+- `getPlainEntities`: returns the entities as an array of objects with the `id` attribute included.
 - `count`: returns the number of entities.
 - `exists`: return `true` if number of entities is more than 0, else `false`.
 - `filter`: returns a new `QuerySet` with the entities that pass the filter.
@@ -260,7 +260,7 @@ See the full documentation for `QuerySet` [here](http://tommikaikkonen.github.io
 
 Methods:
 
-- `getFullEntities`: returns the `QuerySet` entities as an array of objects with the `id` attribute included.
+- `getPlainEntities`: returns the `QuerySet` entities as an array of objects with the `id` attribute included.
 - `count`: returns the number of entities in the `QuerySet`.
 - `exists`: return `true` if number of entities is more than 0, else `false`.
 - `filter`: returns a new `QuerySet` with the entities that pass the filter.

@@ -4,6 +4,7 @@ import Schema from './Schema';
 import Entity from './Entity';
 import {extend} from './utils';
 
+EntityManager.extend = extend.bind(EntityManager);
 QuerySet.extend = extend.bind(QuerySet);
 Entity.extend = extend.bind(Entity);
 

@@ -18,21 +18,21 @@ const Schema = class Schema {
      */
     constructor(name, opts) {
         this.name = name;
-        this.buildOpts(opts);
+        this.idAttribute = (opts && opts.idAttribute) || 'id';
+        this.arrName = (opts && opts.arrName) || this.name;
+        this.mapName = (opts && opts.mapName) || this.name + 'ById';
     }
 
-    buildOpts(opts) {
-        const options = opts || {};
-        defaults(options, Schema.defaultOpts);
+    accessIdArray(tree) {
+        return tree[this.arrName];
+    }
 
-        if (!options.hasOwnProperty('arrName')) {
-            options.arrName = this.name;
-        }
+    accessMap(tree) {
+        return tree[this.mapName];
+    }
 
-        if (!options.hasOwnProperty('mapName')) {
-            options.mapName = this.name + 'ById';
-        }
-        Object.assign(this, options);
+    accessId(tree, id) {
+        return this.accessMap(tree)[id];
     }
 
     getDefaultState() {

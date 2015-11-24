@@ -6,7 +6,7 @@ import QuerySet from '../QuerySet';
 describe('QuerySet', () => {
     let stateTree;
     const schema = new Schema('people');
-    const PersonManager = EntityManager.createManager({
+    const PersonManager = EntityManager.extend({
         schema: schema,
     });
     let personManager;

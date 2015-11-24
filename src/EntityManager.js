@@ -41,33 +41,35 @@ const EntityManager = class EntityManager {
         });
     }
 
-    getEntityTree() {
-        return this.tree;
-    }
-
     getDefaultState() {
         return this.schema.getDefaultState();
     }
 
     getEntityMap() {
-        return this.getEntityTree()[this._mapName()];
-    }
-
-    getIdAttribute() {
-        return this.schema.idAttribute;
+        return this.schema.accessMap(this.tree);
     }
 
     getIdArray() {
-        return this.getEntityTree()[this._arrName()];
+        return this.schema.accessIdArray(this.tree);
     }
 
-    getFullEntity(id) {
-        return Object.assign({[this.getIdAttribute()]: id}, this.getEntityMap()[id]);
+    getPlainEntity(id, includeIdAttribute) {
+        let entity = this.schema.accessId(this.tree, id);
+
+        if (!!includeIdAttribute) {
+            entity = Object.assign({[this.schema.idAttribute]: id}, entity);
+        }
+
+        return entity;
     }
 
-    getFullEntities() {
+    getPlainEntityWithId(id) {
+        return this.getPlainEntity(id, true);
+    }
+
+    getPlainEntities() {
         return this.getIdArray().map((id) => {
-            return this.getFullEntity(id);
+            return this.getPlainEntity(id, true);
         });
     }
 
@@ -75,16 +77,9 @@ const EntityManager = class EntityManager {
         return Math.max(...this.getIdArray()) + 1;
     }
 
-    _mapName() {
-        return this.schema.mapName;
-    }
-
-    _arrName() {
-        return this.schema.arrName;
-    }
-
-    _getQuerySet() {
-        return new QuerySet(this, this.getIdArray());
+    getQuerySet() {
+        const QuerySetClass = this.querySetClass;
+        return new QuerySetClass(this, this.getIdArray(), {entityClass: this.entityClass});
     }
 
     /**
@@ -92,27 +87,27 @@ const EntityManager = class EntityManager {
      * @return {QuerySet} a QuerySet containing all entities
      */
     all() {
-        return this._getQuerySet();
+        return this.getQuerySet();
     }
 
     at(index) {
-        return this._getQuerySet().at(index);
+        return this.getQuerySet().at(index);
     }
 
     first() {
-        return this._getQuerySet().first();
+        return this.getQuerySet().first();
     }
 
     last() {
-        return this._getQuerySet().last();
+        return this.getQuerySet().last();
     }
 
     exists() {
-        return this._getQuerySet().exists();
+        return this.getQuerySet().exists();
     }
 
     count() {
-        return this._getQuerySet().count();
+        return this.getQuerySet().count();
     }
 
     /**
@@ -130,7 +125,7 @@ const EntityManager = class EntityManager {
     }
 
     exclude(lookupObj) {
-        return this._getQuerySet().exclude(lookupObj);
+        return this.getQuerySet().exclude(lookupObj);
     }
 
     /**
@@ -146,13 +141,12 @@ const EntityManager = class EntityManager {
         }
 
         const keys = Object.keys(lookupObj);
-        const idAttribute = this.getIdAttribute();
-        if (keys.includes(idAttribute)) {
+        if (keys.includes(this.idAttribute)) {
             // We treat `idAttribute` as unique, so if it's
             // in `lookupObj` we search with that attribute only.
-            return new Entity(this, this.getFullEntity(lookupObj[idAttribute]));
+            return new Entity(this, this.getPlainEntity(lookupObj[this.idAttribute]), true);
         }
-        const found = find(this.getFullEntities(), entity => match(lookupObj, entity));
+        const found = find(this.getPlainEntities(), entity => match(lookupObj, entity));
 
         if (!found) {
             throw new Error('Entity not found when calling get method');
@@ -162,15 +156,15 @@ const EntityManager = class EntityManager {
     }
 
     filter(lookupObj) {
-        return this._getQuerySet().filter(lookupObj);
+        return this.getQuerySet().filter(lookupObj);
     }
 
     delete() {
-        return this._getQuerySet().delete();
+        return this.getQuerySet().delete();
     }
 
     update(updater) {
-        return this._getQuerySet().update(updater);
+        return this.getQuerySet().update(updater);
     }
 
     setOrder(arg) {
@@ -187,11 +181,11 @@ const EntityManager = class EntityManager {
     reduce() {
         return this.mutations.reduce((state, action) => {
             const next = {
-                [this._arrName()]: this.reduceIdArray(state[this._arrName()], action),
-                [this._mapName()]: this.reduceEntityMap(state[this._mapName()], action),
+                [this.schema.arrName]: this.reduceIdArray(state[this.schema.arrName], action),
+                [this.schema.mapName]: this.reduceEntityMap(state[this.schema.mapName], action),
             };
             return next;
-        }, this.getEntityTree());
+        }, this.tree);
     }
 
     reduceIdArray(idArr, action) {
@@ -203,7 +197,7 @@ const EntityManager = class EntityManager {
             return idArr.filter(id => !idsToDelete.includes(id));
         case ORDER:
             const entities = sortByAll(this.getFullEntities(), action.payload);
-            return entities.map(entity => entity[this.getIdAttribute()]);
+            return entities.map(entity => entity[this.idAttribute]);
         default:
             return idArr;
         }
@@ -242,16 +236,7 @@ const EntityManager = class EntityManager {
     }
 };
 
-EntityManager.createManager = function createManager(props) {
-    const parent = this;
-
-    function childConstructor() {
-        parent.apply(this, arguments);
-    }
-
-    childConstructor.prototype = Object.create(parent.prototype);
-    Object.assign(childConstructor.prototype, props);
-    return childConstructor;
-};
+EntityManager.prototype.querySetClass = QuerySet;
+EntityManager.prototype.entityClass = Entity;
 
 export default EntityManager;

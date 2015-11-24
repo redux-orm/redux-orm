@@ -3,6 +3,7 @@ import {
     Schema,
     createManager,
     EntityManager,
+    QuerySet,
 } from '../index.js';
 
 describe('createManager', () => {
@@ -13,17 +14,20 @@ describe('createManager', () => {
         const manager = new Manager();
 
         expect(manager.schema).to.equal(schema);
+        expect(manager.querySetClass).to.equal(QuerySet);
     });
 });
 
-describe('EntityManager.createManager', () => {
+describe('EntityManager.extend', () => {
     it('correctly attaches props', () => {
         const schema = new Schema('people');
-        const Manager = EntityManager.createManager({schema});
+        const CustomQuerySet = QuerySet.extend({extra: 1});
+        const Manager = EntityManager.extend({schema, querySetClass: CustomQuerySet});
 
         const manager = new Manager();
 
         expect(manager.schema).to.equal(schema);
+        expect(manager.querySetClass).to.equal(CustomQuerySet);
     });
 });
 
@@ -110,7 +114,7 @@ describe('EntityManager', () => {
             },
 
             oldPeople() {
-                return this._getQuerySet().filter((person) => person.age > 40);
+                return this.getQuerySet().filter((person) => person.age > 40);
             },
         });
         const alternatePersonManager = new AlternatePersonManager(stateTree.people);
