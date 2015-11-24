@@ -8,12 +8,12 @@ import {
  */
 const Entity = class Entity {
     constructor(manager, props) {
-        Object.assign(this, {manager}, props);
+        Object.assign(this, {_manager: manager}, props);
         this._fieldNames = Object.keys(props);
     }
 
     getId() {
-        return this[this.manager.schema.idAttribute];
+        return this[this._manager.schema.idAttribute];
     }
 
     toPlain() {
@@ -42,7 +42,7 @@ const Entity = class Entity {
      */
     update(mergeObj) {
         Object.assign(this, mergeObj);
-        this.manager.mutations.push({
+        this._manager.mutations.push({
             type: UPDATE,
             payload: {
                 idArr: [this.getId()],
@@ -56,7 +56,7 @@ const Entity = class Entity {
      * @return {undefined}
      */
     delete() {
-        this.manager.mutations.push({
+        this._manager.mutations.push({
             type: DELETE,
             payload: [this.getId()],
         });
