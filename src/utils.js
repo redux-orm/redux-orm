@@ -26,4 +26,16 @@ function extend(props) {
     return childConstructor;
 }
 
-export {match, extend};
+function querySetDelegatorFactory(methodName) {
+    return function querySetDelegator(...args) {
+        return this.getQuerySet()[methodName](...args);
+    };
+}
+
+function attachQuerySetMethods(target, methodNames) {
+    methodNames.forEach(methodName => {
+        target[methodName] = querySetDelegatorFactory(methodName);
+    });
+}
+
+export {match, extend, attachQuerySetMethods};

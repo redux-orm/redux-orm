@@ -10,7 +10,7 @@ import {
     DELETE,
     ORDER,
 } from './constants';
-import {match} from './utils.js';
+import {match, attachQuerySetMethods} from './utils.js';
 
 /**
  * A class that manages an entity tree branch.
@@ -39,6 +39,8 @@ const EntityManager = class EntityManager {
             tree,
             mutations: [],
         });
+
+        // attachQuerySetMethods(this, this.querySetClass.prototype, this.querySetClass.prototype.sharedMethods);
     }
 
     getDefaultState() {
@@ -67,12 +69,6 @@ const EntityManager = class EntityManager {
         return this.getPlainEntity(id, true);
     }
 
-    getPlainEntities() {
-        return this.getIdArray().map((id) => {
-            return this.getPlainEntity(id, true);
-        });
-    }
-
     nextId() {
         return Math.max(...this.getIdArray()) + 1;
     }
@@ -90,26 +86,6 @@ const EntityManager = class EntityManager {
         return this.getQuerySet();
     }
 
-    at(index) {
-        return this.getQuerySet().at(index);
-    }
-
-    first() {
-        return this.getQuerySet().first();
-    }
-
-    last() {
-        return this.getQuerySet().last();
-    }
-
-    exists() {
-        return this.getQuerySet().exists();
-    }
-
-    count() {
-        return this.getQuerySet().count();
-    }
-
     /**
      * Records the addition of a new entity and returns a
      * new Entity instance.
@@ -124,10 +100,6 @@ const EntityManager = class EntityManager {
         return new Entity(this, props);
     }
 
-    exclude(lookupObj) {
-        return this.getQuerySet().exclude(lookupObj);
-    }
-
     /**
      * Gets the Entity instance that matches properties in `lookupObj`.
      * Throws an error if Entity is not found.
@@ -136,7 +108,7 @@ const EntityManager = class EntityManager {
      * @return {Entity} an Entity instance that matches `lookupObj` properties.
      */
     get(lookupObj) {
-        if (!this.exists()) {
+        if (!this.getIdArray().length) {
             throw new Error('Tried getting from empty QuerySet');
         }
 
@@ -153,18 +125,6 @@ const EntityManager = class EntityManager {
         }
 
         return new Entity(this, found);
-    }
-
-    filter(lookupObj) {
-        return this.getQuerySet().filter(lookupObj);
-    }
-
-    delete() {
-        return this.getQuerySet().delete();
-    }
-
-    update(updater) {
-        return this.getQuerySet().update(updater);
     }
 
     setOrder(arg) {

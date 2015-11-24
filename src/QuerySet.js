@@ -171,4 +171,19 @@ const QuerySet = class QuerySet {
     }
 };
 
+QuerySet.prototype.sharedMethods = [
+    'getPlainEntities',
+    'count',
+    'exists',
+    'at',
+    'first',
+    'last',
+    'all',
+    'filter',
+    'exclude',
+    'orderBy',
+    'update',
+    'delete',
+];
+
 export default QuerySet;
