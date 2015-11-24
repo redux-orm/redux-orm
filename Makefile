@@ -22,3 +22,5 @@ deploydocs: build
 
 lint:
 	$(BIN)/eslint src
+
+PHONY: build clean test test-watch lint
