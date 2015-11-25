@@ -1,5 +1,4 @@
 import {expect} from 'chai';
-import Schema from '../Schema';
 import {
     UPDATE,
     DELETE,
@@ -9,9 +8,8 @@ import QuerySet from '../QuerySet';
 
 describe('QuerySet', () => {
     let stateTree;
-    const schema = new Schema('people');
     const PersonManager = EntityManager.extend({
-        schema: schema,
+        schema: 'people',
     });
     let personManager;
     let querySet;
@@ -125,7 +123,7 @@ describe('QuerySet', () => {
                 'overMiddleAge',
             ],
         });
-        const Manager = EntityManager.extend({schema, querySetClass: CustomQuerySet});
+        const Manager = EntityManager.extend({schema: 'people', querySetClass: CustomQuerySet});
         const manager = new Manager(stateTree.people);
         const customQuerySet = new CustomQuerySet(manager, manager.getIdArray());
 

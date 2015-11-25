@@ -174,7 +174,6 @@ QuerySet.prototype.defaultSharedMethodNames = [
     'at',
     'first',
     'last',
-    'all',
     'filter',
     'exclude',
     'orderBy',

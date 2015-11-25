@@ -1,40 +1,32 @@
 import {expect} from 'chai';
 import {
-    Schema,
     EntityManager,
     QuerySet,
     Entity,
 } from '../index.js';
 
-describe('createManager', () => {
-    it('correctly attaches props', () => {
-        const schema = new Schema('people');
-        const Manager = EntityManager.extend({schema});
-
-        const manager = new Manager();
-
-        expect(manager.schema).to.equal(schema);
-        expect(manager.querySetClass).to.equal(QuerySet);
-    });
-});
-
 describe('EntityManager.extend', () => {
     it('correctly attaches props', () => {
-        const schema = new Schema('people');
-        const CustomQuerySet = QuerySet.extend({extra: 1});
-        const Manager = EntityManager.extend({schema, querySetClass: CustomQuerySet});
+        const Manager = EntityManager.extend({schema: 'people'});
 
         const manager = new Manager();
 
-        expect(manager.schema).to.equal(schema);
-        expect(manager.querySetClass).to.equal(CustomQuerySet);
+        const expectedSchema = {
+            name: 'people',
+            idAttribute: 'id',
+            mapName: 'peopleById',
+            arrName: 'people',
+        };
+
+        expect(manager.schema).to.deep.equal(expectedSchema);
+        expect(manager.querySetClass).to.equal(QuerySet);
     });
 });
 
 describe('EntityManager', () => {
     let stateTree;
     const PersonManager = EntityManager.extend({
-        schema: new Schema('people'),
+        schema: 'people',
     });
     let personManager;
     beforeEach(() => {
@@ -107,7 +99,7 @@ describe('EntityManager', () => {
     it('overriding nextId works', () => {
         let nextIdCalled = false;
         const AlternatePersonManager = EntityManager.extend({
-            schema: new Schema('people'),
+            schema: 'people',
             nextId() {
                 nextIdCalled = true;
                 return new Date();

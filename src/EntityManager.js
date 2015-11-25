@@ -12,6 +12,11 @@ import {
 } from './constants';
 import {match} from './utils.js';
 
+const DEFAULT_SCHEMA_OPTIONS = {
+    name: 'items',
+    idAttribute: 'id',
+};
+
 /**
  * A class that manages an entity tree branch.
  *
@@ -33,29 +38,59 @@ const EntityManager = class EntityManager {
     /**
      * Create an EntityManager.
      * @param  {object} tree - the tree branch to manage
-     * @param  {Schema} - the Schema that defines the branch structure
      */
     constructor(tree) {
         Object.assign(this, {
             tree,
             mutations: [],
         });
+
+        this.schema = this._initializeSchema();
+    }
+
+
+    _initializeSchema() {
+        let schema;
+        if (typeof this.schema === 'string') {
+            schema = Object.assign({}, DEFAULT_SCHEMA_OPTIONS, {name: this.schema});
+        } else if (this.schema) {
+            schema = Object.assign({}, DEFAULT_SCHEMA_OPTIONS, this.schema);
+        } else {
+            schema = DEFAULT_SCHEMA_OPTIONS;
+        }
+
+        if (!schema.arrName) {
+            schema.arrName = schema.name;
+        }
+
+        if (!schema.mapName) {
+            schema.mapName = schema.name + 'ById';
+        }
+
+        return schema;
     }
 
     getDefaultState() {
-        return this.schema.getDefaultState();
+        return {
+            [this.arrName]: [],
+            [this.mapName]: {},
+        };
     }
 
     getEntityMap() {
-        return this.schema.accessMap(this.tree);
+        return this.tree[this.schema.mapName];
     }
 
     getIdArray() {
-        return this.schema.accessIdArray(this.tree);
+        return this.tree[this.schema.arrName];
+    }
+
+    getId(id) {
+        return this.getEntityMap()[id];
     }
 
     getPlainEntity(id, includeIdAttribute) {
-        let entity = this.schema.accessId(this.tree, id);
+        let entity = this.getId(id);
 
         if (!!includeIdAttribute) {
             entity = Object.assign({[this.schema.idAttribute]: id}, entity);
@@ -138,12 +173,39 @@ const EntityManager = class EntityManager {
      * @return {Object} the reduced state tree
      */
     reduce() {
+        if (!this.tree) {
+            return this.getDefaultState();
+        }
+        const {
+            arrName,
+            mapName,
+        } = this.schema;
+
         return this.mutations.reduce((state, action) => {
-            const next = {
-                [this.schema.arrName]: this.reduceIdArray(state[this.schema.arrName], action),
-                [this.schema.mapName]: this.reduceEntityMap(state[this.schema.mapName], action),
-            };
-            return next;
+            switch (action.type) {
+            case CREATE:
+            case DELETE:
+                // These mutation types operate on both the idArray and entityMap.
+                return {
+                    [arrName]: this.reduceIdArray(state[arrName], action),
+                    [mapName]: this.reduceEntityMap(state[mapName], action),
+                };
+            case ORDER:
+                // Order mutates only the id array.
+                return {
+                    [arrName]: this.reduceIdArray(state[arrName], action),
+                    [mapName]: state[mapName],
+                };
+            case UPDATE:
+                // Update mutates only the entityMap, since we don't allow
+                // for updating id's.
+                return {
+                    [arrName]: state[arrName],
+                    [mapName]: this.reduceEntityMap(state[mapName], action),
+                };
+            default:
+                return state;
+            }
         }, this.tree);
     }
 

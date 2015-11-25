@@ -1,6 +1,5 @@
 import EntityManager from './EntityManager';
 import QuerySet from './QuerySet';
-import Schema from './Schema';
 import Entity from './Entity';
 import {extend, attachQuerySetMethods} from './utils';
 
@@ -20,6 +19,6 @@ EntityManager.extend = EntityManagerExtend;
 QuerySet.extend = extend.bind(QuerySet);
 Entity.extend = extend.bind(Entity);
 
-export {Schema, EntityManager, Entity, QuerySet};
+export {EntityManager, Entity, QuerySet};
 
 export default EntityManager;
