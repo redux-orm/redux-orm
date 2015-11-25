@@ -5,8 +5,8 @@ A simple ORM to manage and query your state trees, so you can write your reducer
 
 
 ```javascript
-import {EntityManager, Schema} from 'redux-orm';
-const PeopleManager = EntityManager.extend({schema: new Schema('people')});
+import {EntityManager} from 'redux-orm';
+const PeopleManager = EntityManager.extend({schema: 'people'});
 
 function peopleReducer(state, action) => {
   const peopleManager = new PeopleManager(state);
@@ -38,7 +38,7 @@ function peopleReducer(state, action) => {
 }
 ```
 
-The API is heavily inspired by the Django ORM.
+The API is heavily inspired by the Django ORM. You can also look at it as a Backbone.js-esque API to a collection of items, but without the event framework and the REST API functionality. All edits (delete, create, update, set, orderBy) are deferred to when you call `entityManager.reduce`.
 
 ## Installation
 
@@ -51,14 +51,25 @@ npm install --save redux-orm
 Import module.
 
 ```javascript
-import {Schema, EntityManager} from 'redux-orm';
+import {EntityManager} from 'redux-orm';
 ```
 
 Declare your managers.
 
 ```javascript
-const peopleSchema = new Schema('people', {idAttribute: 'id'});
-const PeopleManager = EntityManager.extend({schema: peopleSchema});
+// The idAttribute value is used when getting the entities as a list of full objects.
+const PeopleManager = EntityManager.extend({
+  schema: {
+    name: 'people',
+    idAttribute: 'id'
+  },
+
+  // You can define any extra methods you might want.
+  licenseEligible() {
+    return this.filter(person => person.age > 16);
+  },
+
+});
 ```
 
 Then you can instantiate `PeopleManager` with a state tree when you need. 
@@ -89,6 +100,8 @@ function peopleReducer(state, action) {
     people.create({name: 'John', age: 50});
     people.get({name: 'Tommi'}).delete();
     break;
+  case SET_ELIGIBLE_FOR_LICENSE:
+    people.licenseEligible().update({eligibleForLicense: true})
   default:
     return state;
   }
@@ -108,9 +121,9 @@ function rootReducer(state, action) {
 You can use it in your React components too.
 
 ```javascript
-import {EntityManager, Schema} from 'redux-orm';
+import {EntityManager} from 'redux-orm';
 const RD = React.DOM;
-const PeopleManager = EntityManager.extend({schema: new Schema('people', {idAttribute: 'id'})});
+const PeopleManager = EntityManager.extend({schema: 'people'});
 
 const PeopleViewer = React.createClass({
   propTypes: {
@@ -169,7 +182,7 @@ const tree = {
 };
 ```
 
-You'll end up writing quite a bit of boilerplate to handle create, update and delete operations, especially if you're doing it in pure JS. Libraries like Immutable can help considerably.
+You'll end up writing quite a bit of boilerplate to handle create, update and delete operations, especially if you're doing it in pure JS.
 
 ```javascript
 function peopleReducer(state, action) {
@@ -187,7 +200,6 @@ function peopleReducer(state, action) {
 function peopleByIdReducer(state, action) {
   switch (action.type) {
   case CREATE_PERSON:
-    const personWithoutId = Object.keys(action.payload).filter(key => key !== 'id')
     return {
       ...state,
       [action.payload.id]: omit(action.payload, 'id'),
@@ -206,7 +218,7 @@ function peopleByIdReducer(state, action) {
 }
 ```
 
-If you have different entity types, you'll be writing a lot of boilerplate. The bugs are bound to creep in at some point. `redux-orm` abstracts this particular way of working with entities.
+If you have different entity types, you'll be writing a lot of boilerplate. The bugs are bound to creep in at some point. Libraries like Immutable can help considerably, but are designed to work generally with any data. Since we know we're dealing with entities, we can use much more expressive code to implement our reducers. `redux-orm` abstracts this particular way of working with entities.
 
 ## API
 
@@ -214,10 +226,123 @@ If you have different entity types, you'll be writing a lot of boilerplate. The 
 
 See the full documentation for EntityManager [here](http://tommikaikkonen.github.io/redux-orm/EntityManager.html).
 
-Methods:
+Class methods:
+
+- `extend` extends the class with the supplied object. You may specify attributes and manager methods, override the default manager methods. Here are some examples:
+
+You must declare a schema for EntityManager to follow; the shape of the tree that stores a collection of entities. If you dont declare it and instantiate straight from EntityManager:
+
+```javascript
+const itemManager = new EntityManager();
+// itemManager.schema === {
+//   idAttribute: 'id',
+//   arrName: 'items',
+//   mapName: 'itemsById'
+// }
+// itemManager.getDefaultState() returns: {
+//   items: [],
+//   itemsById: {},
+// }
+
+const CatManager = EntityManager.extend({schema: 'cats'});
+const catManager = new CatManager();
+// catManager.schema === {
+//   idAttribute: 'id',
+//   arrName: 'cats',
+//   mapName: 'catsById'
+// }
+// catManager.getDefaultState() returns: {
+//   cats: [],
+//   catsById: {},
+// }
+
+const DogManager = DogManager.extend({
+  schema: {
+    arrName: 'listOfDogs',
+    mapName: 'idMapOfDogs',
+    idAttribute: 'collarName',
+  }
+});
+const dogManager = new DogManager();
+// dogManager.schema === {
+//   idAttribute: 'collarName',
+//   arrName: 'listOfDogs',
+//   mapName: 'idMapOfDogs'
+// }
+// dogManager.getDefaultState() returns: {
+//   listOfDogs: [],
+//   idMapOfDogs: {},
+// }
+
+// Define a custom QuerySet class with a couple of
+// convenience methods.
+const CatQuerySet = QuerySet.extend({
+  familyFriendly() {
+    return self.filter({accidents: 0, aggressive: false});
+  },
+  adoptable() {
+    return self.filter({upForAdoption: true});
+  },
+
+  // If you want to be able to call QuerySet methods from
+  // a manager, list the method names here.
+  sharedMethodNames: [
+    'familyFriendly',
+    'adoptable',
+  ],
+});
+
+// Define a Manager class that uses CatQuerySet.
+const CatManagerWithCustomQuerySet = CatManager.extend({querySetClass: CatQuerySet});
+const tree = {
+  cats: [0, 1],
+  catsById: {
+    0: {
+      name: 'Felix',
+      upForAdoption: true,
+      aggressive: true,
+      accidents: 5,
+    },
+    1: {
+      name: 'Bubbles',
+      upForAdoption: false,
+      aggressive: false,
+      accidents: 0,
+    }
+  }
+};
+
+const catManager = new CatManagerWithCustomQuerySet(tree);
+
+// Since we listed `familyFriendly` in the `CatQuerySet`'s
+// `sharedMethodNames`, we can call it from catManager. 
+const familyFriendly = catManager.familyFriendly()
+familyFriendly.count();
+// 1
+familyFriendly.getPlainEntities();
+// [
+//    {
+//      id: 1,
+//      name: 'Bubbles',
+//      upForAdoption: false,
+//      aggressive: false,
+//      accidents: 0
+//    }
+// ]
+
+// QuerySet methods that don't record mutations return
+// a copy of themselves (or the filtered subset) for chaining.
+const couldAdopt = familyFriendly.adoptable();
+couldAdopt.count();
+// 0
+couldAdopt.getPlainEntities();
+// []
+```
+
+Instance methods:
 
 - `get` to get an entity based on properties,
-- `create` to create a new instance. The new `id` will be `Math.max(...allOtherIds) + 1` unless you set it explicitly.
+- `create` to create a new instance. The new `id` will be `Math.max(...allOtherIds) + 1` unless you set it explicitly. You can use a different function to generate the `id` by overriding `nextId` method the manager.
 - `reduce` makes a copy of the state tree with the recorded mutations applied
 
 Methods shared with QuerySet:
@@ -225,34 +350,15 @@ Methods shared with QuerySet:
 - `getPlainEntities`: returns the entities as an array of objects with the `id` attribute included.
 - `count`: returns the number of entities.
 - `exists`: return `true` if number of entities is more than 0, else `false`.
-- `filter`: returns a new `QuerySet` with the entities that pass the filter.
-- `exclude` returns a new `QuerySet` with the entities that do not pass the filter.
+- `filter`: returns a new `QuerySet` with the entities that pass the filter. You can either pass an object that `redux-orm` tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not.
+- `exclude` returns a new `QuerySet` with the entities that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function.
 - `all` return a new `QuerySet` with the same entities.
 - `at` returns an `Entity` instance at the supplied index.
 - `first` returns an `Entity` instance at the `0` index.
 - `last` returns an `Entity` instance at the `EntityManager.count() - 1` index.
 - `delete` marks all the entities for deletion on `reduce`.
-- `update` marks all the entities for an update based on the supplied argument.
+- `update` marks all the entities for an update based on the supplied argument. The argument can either be an object that will be merged with the entity, or a mapping function that takes the entity as an argument and **returns a new, updated entity**. Do not mutate the entity if you pass a function to `update`.
 
-### Schema
-
-See the full documentation for Schema [here](http://tommikaikkonen.github.io/redux-orm/Schema.html).
-
-`Schema` holds information about the schema. If you pass a single string arguments, the generated tree will look like this:
-
-```javascript
-const schema = new Schema('items');
-// Resulting empty tree: {items: [], itemsById: {}}
-```
-
-You can pass an optional options object. The defaults are:
-```javascript
-{
-  idAttribute: 'id',
-  arrName: 'items', // if not specified, this is the same as the frst argument.
-  mapName: 'itemsById', // if not specified, this is the first argument + `'ById'`.
-}
-```
 
 ### QuerySet
 
@@ -263,24 +369,57 @@ Methods:
 - `getPlainEntities`: returns the `QuerySet` entities as an array of objects with the `id` attribute included.
 - `count`: returns the number of entities in the `QuerySet`.
 - `exists`: return `true` if number of entities is more than 0, else `false`.
-- `filter`: returns a new `QuerySet` with the entities that pass the filter.
-- `exclude` returns a new `QuerySet` with the entities that do not pass the filter.
+- `filter`: returns a new `QuerySet` with the entities that pass the filter. You can either pass an object that `redux-orm` tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not.
+- `exclude` returns a new `QuerySet` with the entities that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function.
 - `all` return a new `QuerySet` with the same entities.
 - `at` returns an `Entity` instance at the supplied index in the `QuerySet`.
 - `first` returns an `Entity` instance at the `0` index.
 - `last` returns an `Entity` instance at the `EntityManager.count() - 1` index.
 - `delete` marks all the `QuerySet` entities for deletion on `reduce`.
-- `update` marks all the `QuerySet` entities for an update based on the supplied argument.
+- `update` marks all the `QuerySet` entities for an update based on the supplied argument. The argument can either be an object that will be merged with the entity, or a mapping function that takes the entity as an argument and **returns a new, updated entity**. Do not mutate the entity if you pass a function to `update`.
 
 ### Entity
 
 See the full documentation for `Entity` [here](http://tommikaikkonen.github.io/redux-orm/Entity.html).
 
+Entity is a very thin wrapper on the plain JavaScript object presentation of an entity.
+
+```javascript
+
+// person is an instance of Entity.
+const person = peopleManager.get({name: 'Tommi'});
+
+person.toPlain()
+// returns {
+//   id: 0,
+//   name: 'Tommi',
+//   age: 25
+// }
+
+// You can only record a mutation.
+// It won't be applied yet.
+person.set('name', 'Matt');
+// undefined
+
+// You can see that nothing has changed in the Entity.
+person.name
+// 'Tommi'
+
+person.delete();
+
+person.name
+// 'Tommi'
+
+// The changes will be apparent in the new tree returned
+// by `peopleManager.reduce()`
+```
+
 Methods:
 
-- `set`: marks a supplied `propertyName` to be updated to `value` at `reduce`.
-- `update`: marks a supplied object of property names and values to be merged with the entity at `reduce`.
-- `delete`: marks the entity to be deleted at `reduce`.
+- `toPlain`: returns a plain JavaScript object presentation of the Entity. The attribute name of the id will equal to `manager.schema.idAttribute`, where `manager` is the manager controlling the entity.
+- `set`: marks a supplied `propertyName` to be updated to `value` at `reduce`. Returns `undefined`
+- `update`: marks a supplied object of property names and values to be merged with the entity at `reduce`. Returns `undefined`.
+- `delete`: marks the entity to be deleted at `reduce`. Returns `undefined`.
 
 ## License
 

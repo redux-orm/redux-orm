@@ -21,6 +21,8 @@ function extend(props) {
         parent.apply(this, arguments);
     }
 
+    Object.assign(childConstructor, parent);
+
     childConstructor.prototype = Object.create(parent.prototype);
     Object.assign(childConstructor.prototype, props);
     return childConstructor;
