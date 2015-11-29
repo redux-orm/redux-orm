@@ -1,38 +1,60 @@
 
 /**
- * Simple Queue implementation.
+ * A simple ListIterator implementation.
  */
-class Queue {
-    constructor(...args) {
-        if (args.length > 1) {
-            this._queue = [...args];
-        } else if (args.length === 1) {
-            this._queue = [args[0]];
-        } else {
-            this._queue = [];
+class ListIterator {
+    /**
+     * Creates a new ListIterator instance.
+     * @param  {Array} list - list to iterate over
+     * @param  {Number} [idx=0] - starting index. Defaults to `0`
+     * @param  {Function} [getValue] a function that receives the current `idx`
+     *                               and `list` and should return the value that
+     *                               `next` should return. Defaults to `(idx, list) => list[idx]`
+     */
+    constructor(list, idx, getValue) {
+        this.list = list;
+        this.idx = idx || 0;
+
+        if (typeof getValue === 'function') {
+            this.getValue = getValue;
         }
-        this._offset = 0;
     }
 
-    enqueue(item) {
-        this._queue.push(item);
+    /**
+     * The default implementation for the `getValue` function.
+     *
+     * @param  {Number} idx - the current iterator index
+     * @param  {Array} list - the list being iterated
+     * @return {*} - the value at index `idx` in `list`.
+     */
+    getValue(idx, list) {
+        return list[idx];
     }
 
-    dequeue() {
-        if (this._queue.length === 0) return undefined;
-
-        const item = this._queue[this._offset++];
-
-        if (this._offset * 2 > this._queue.length) {
-            this._queue = this._queue.slice(this._offset);
-            this._offset = 0;
+    /**
+     * Returns the next element from the iterator instance.
+     * Always returns an Object with keys `value` and `done`.
+     * If the returned element is the last element being iterated,
+     * `done` will equal `true`, otherwise `false`. `value` holds
+     * the value returned by `getValue`.
+     *
+     * @return {Object|undefined} Object with keys `value` and `done`, or
+     *                            `undefined` if the list index is out of bounds.
+     */
+    next() {
+        if (this.idx < this.list.length - 1) {
+            return {
+                value: this.getValue(this.list, this.idx++),
+                done: false,
+            };
+        } else if (this.idx < this.list.length) {
+            return {
+                value: this.getValue(this.list, this.idx++),
+                done: true,
+            };
         }
 
-        return item;
-    }
-
-    isEmpty() {
-        return this._queue.length === 0;
+        return undefined;
     }
 }
 
@@ -52,16 +74,51 @@ function match(lookupObj, entity) {
     });
 }
 
+function capitalize(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+/**
+ * Returns the branch name for a many-to-many relation.
+ * The name is the combination of the model name and the field name the relation
+ * was declared. The field name's first letter is capitalized.
+ *
+ * Example: model `Author` has a many-to-many relation to the model `Book`, defined
+ * in the `Author` field `books`. The many-to-many branch name will be `AuthorBooks`.
+ *
+ * @param  {string} declarationModelName - the name of the model the many-to-many relation was declared on
+ * @param  {string} fieldName            - the field name where the many-to-many relation was declared on
+ * @return {string} The branch name for the many-to-many relation.
+ */
 function m2mName(declarationModelName, fieldName) {
-    return declarationModelName + '_' + fieldName;
+    return declarationModelName + capitalize(fieldName);
 }
 
+/**
+ * Returns the fieldname that saves a foreign key to the
+ * model id where the many-to-many relation was declared.
+ *
+ * Example: `Author` => `fromAuthorId`
+ *
+ * @param  {string} declarationModelName - the name of the model where the relation was declared
+ * @return {string} the field name in the through model for `declarationModelName`'s foreign key.
+ */
 function m2mFromFieldName(declarationModelName) {
-    return `from_${declarationModelName}_id`;
+    return `from${declarationModelName}Id`;
 }
 
+/**
+ * Returns the fieldname that saves a foreign key in a many-to-many through model to the
+ * model where the many-to-many relation was declared.
+ *
+ * Example: `Book` => `toBookId`
+ *
+ * @param  {string} otherModelName - the name of the model that was the target of the many-to-many
+ *                                   declaration.
+ * @return {string} the field name in the through model for `otherModelName`'s foreign key..
+ */
 function m2mToFieldName(otherModelName) {
-    return `to_${otherModelName}_id`;
+    return `to${otherModelName}Id`;
 }
 
 function extend(props) {
@@ -90,4 +147,4 @@ function attachQuerySetMethods(target, methodNames) {
     });
 }
 
-export {match, extend, attachQuerySetMethods, m2mName, m2mFromFieldName, m2mToFieldName, Queue};
+export {match, extend, attachQuerySetMethods, m2mName, m2mFromFieldName, m2mToFieldName, ListIterator};

@@ -1,17 +1,44 @@
 import UPDATE from './constants';
 import {m2mName, m2mFromFieldName, m2mToFieldName} from './utils';
 
-class ForeignKey {
+
+const Field = class Field {
+    getRelatedModelName(thisModel, relatedModelName) {
+        if (relatedModelName === 'this') {
+            return thisModel.getName();
+        }
+        return relatedModelName;
+    }
+};
+
+/**
+ * The ForeignKey is a field class that defines a foreign key
+ * to another {@link Model}.
+ */
+const ForeignKey = class ForeignKey extends Field {
+    /**
+     * Creates a {@link ForeignKey} instance based on the related
+     * model name.
+     *
+     * @param  {string} relatedModelName - name of the related model
+     */
     constructor(relatedModelName) {
+        super(relatedModelName);
         this.relatedModelName = relatedModelName;
     }
 
-    getGetter(orm, instance, attrName, value) {
-        const relatedManager = orm.getRelatedManager(this.relatedModelName);
-        return relatedManager.get.bind(relatedManager, value);
+    getGetter(session, instance, attrName, value) {
+        const thisModelClass = instance.getClass();
+
+        const relatedModelName = this.getRelatedModelName(thisModelClass, this.relatedModelName);
+        const relatedModel = session[relatedModelName];
+        const relatedManager = relatedModel.objects;
+
+        const idAttribute = relatedModel.idAttribute;
+        return relatedManager.get.bind(relatedManager, {[idAttribute]: value});
     }
 
-    getSetter(orm, instance, attrName) {
+    getSetter(session, instance, attrName) {
         return (arg) => {
             let relatedId;
             if (Number.isInteger(arg)) {
@@ -19,7 +46,8 @@ class ForeignKey {
             } else {
                 relatedId = arg.getId();
             }
-            this.manager.mutations.push({
+            const modelClass = instance.getClass();
+            modelClass.addMutation({
                 type: UPDATE,
                 payload: {
                     id: this.instance.getId(),
@@ -28,70 +56,68 @@ class ForeignKey {
             });
         };
     }
-}
+};
 
-class ManyToMany {
+const ManyToMany = class ManyToMany extends Field {
     constructor(relatedModelName) {
+        super(relatedModelName);
         this.relatedModelName = relatedModelName;
     }
 
-    getGetter(orm, instance, attrName) {
+    getGetter(session, instance, attrName) {
         return () => {
-            const tableName = m2mName(instance.getClass().name, attrName);
-            const thisFieldName = m2mFromFieldName(instance.getClass().name);
+            const thisModelClass = instance.getClass();
+            const tableName = m2mName(thisModelClass.getName(), attrName);
+            const thisFieldName = m2mFromFieldName(thisModelClass.getName());
             const toFieldName = m2mToFieldName(this.relatedModelName);
-            const throughQs = orm.getRelatedManager(tableName).filter({[thisFieldName]: instance.getId()});
+            const throughManager = session[tableName].objects;
+            const throughQs = session.getRelatedManager(tableName).filter({[thisFieldName]: instance.getId()});
+
             const relatedIds = throughQs.toPlain().map((through) => {
                 return through[toFieldName];
             });
-
-            const toModelManager = orm.getRelatedManager(this.relatedModelName);
-
+            const toModelName = this.getRelatedModelName(thisModelClass, this.relatedModelName);
+            const toModel = session[toModelName];
+            const toModelManager = toModel.objects;
             const qs = toModelManager.getQuerySetFromIds(relatedIds);
 
-            const entityWithM2M = instance;
-
             qs.add = function add(...args) {
-                const ids = relatedIds.slice();
-                if (args.length > 1) {
-                    args.forEach(entity => {
-                        if (Number.isInteger(entity)) {
-                            ids.push(entity);
-                        } else {
-                            ids.push(entity.getId());
-                        }
+                const ids = args.map(entity => {
+                    if (Number.isInteger(entity)) {
+                        ids.push(entity);
+                    } else {
+                        ids.push(entity.getId());
+                    }
+                });
+
+                ids.forEach(id => {
+                    throughManager.create({
+                        [thisFieldName]: instance.getId(),
+                        [toFieldName]: id,
                     });
-                }
-                entityWithM2M.constructor.addMutation({
-                    type: UPDATE,
-                    payload: {
-                        id: entityWithM2M.id,
-                        [attrName]: ids,
-                    },
                 });
             };
 
             qs.remove = function remove(...entities) {
-                if (entities.length < 1) {
-                    return undefined;
-                }
                 let idsToRemove;
-
                 if (Number.isInteger(entities[0])) {
                     idsToRemove = entities;
                 } else {
                     idsToRemove = entities.map(entity => entity.getId());
                 }
 
-                const nextIds = relatedIds.filter(id => !idsToRemove.includes(id));
+                const thisId = instance.getId();
+                const entitiesToDelete = throughManager.filter(through => {
+                    if (through[thisFieldName] === thisId) {
+                        if (idsToRemove.includes(through[toFieldName])) {
+                            return true;
+                        }
+                    }
 
-                entityWithM2M.constructor.addMutation({
-                    type: UPDATE,
-                    payload: {
-                        id: entityWithM2M.id,
-                        [attrName]: nextIds,
-                    },
+                    return false;
                 });
+
+                entitiesToDelete.delete();
             };
 
             return qs;
@@ -103,7 +129,7 @@ class ManyToMany {
             throw new Error('Tried setting a M2M field. Please use the related QuerySet methods add and remove.');
         };
     }
-}
+};
 
 export {ForeignKey, ManyToMany};
 export default ForeignKey;

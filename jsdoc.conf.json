@@ -5,7 +5,7 @@
     },
     "source": {
         "includePattern": ".+\\.js(doc)?$",
-        "excludePattern": "(^|\\/|\\\\)_"
+        "excludePattern": "test"
     },
     "plugins": [
         "plugins/markdown"

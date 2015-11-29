@@ -16,8 +16,8 @@ import {
 const QuerySet = class QuerySet {
     /**
      * Creates a QuerySet.
-     * @param  {EntityManager} manager - used to keep an internal reference
-     *                                   to the EntityManager in use.
+     * @param  {Manager} manager - used to keep an internal reference
+     *                             to the Manager in use.
      * @param  {number[]} idArr - an array of the id's this QuerySet includes.
      * @param {Object} [opts] - additional options
      */
@@ -32,19 +32,24 @@ const QuerySet = class QuerySet {
         return new this.constructor(this.manager, ids);
     }
 
+    toString() {
+        return 'QuerySet contents: \n    - ' + this.idArr.map(id => {
+            return this.manager.getWithId(id).toString();
+        }).join('\n    - ');
+    }
+
     /**
-     * Returns an array of the plain entity objects represented by the QuerySet.
-     * The `idAttribute` of the entities is included with each entity.
+     * Returns an array of the plain objects represented by the QuerySet.
      * @return {Object[]}
      */
     toPlain() {
         return this.idArr.map(id => {
-            return this.manager.getPlainEntity(id, true);
+            return this.manager.getPlain(id);
         });
     }
 
     /**
-     * Returns the number of entities represented by the QuerySet.
+     * Returns the number of model instances represented by the QuerySet.
      * @return {number} length of the QuerySet
      */
     count() {
@@ -52,7 +57,7 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Checks if QuerySet has any entities.
+     * Checks if QuerySet has any objects.
      * @return {Boolean} `true` if QuerySet contains entities, else `false`.
      */
     exists() {
@@ -60,25 +65,25 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns the Entity instance at index `index` in the QuerySet.
-     * @param  {number} index - index of the entity to get
-     * @return {Entity} an Entity instance at index `index` in the QuerySet
+     * Returns the {@link Model} instance at index `index` in the QuerySet.
+     * @param  {number} index - index of the model instance to get
+     * @return {Model} an {@link Model} instance at index `index` in the QuerySet
      */
     at(index) {
         return this.manager.get({[this.manager.model.idAttribute]: this.idArr[index]});
     }
 
     /**
-     * Returns the Entity instance at index 0 in the QuerySet.
-     * @return {Entity}
+     * Returns the {@link Model} instance at index 0 in the QuerySet.
+     * @return {Model}
      */
     first() {
         return this.at(0);
     }
 
     /**
-     * Returns the Entity instance at index `QuerySet.count() - 1`
-     * @return {Entity}
+     * Returns the {@link Model} instance at index `QuerySet.count() - 1`
+     * @return {Model}
      */
     last() {
         return this.at(this.idArr.length - 1);
@@ -95,7 +100,7 @@ const QuerySet = class QuerySet {
     /**
      * Returns a new {@link QuerySet} with entities that match properties in `lookupObj`.
      *
-     * @param  {Object} lookupObj - the properties to match entities with.
+     * @param  {Object} lookupObj - the properties to match objects with.
      * @return {QuerySet} a new {@link QuerySet} with entities that passed the filter.
      */
     filter(lookupObj) {
@@ -130,7 +135,7 @@ const QuerySet = class QuerySet {
      */
     orderBy(...fieldNames) {
         const entities = sortByAll(this.toPlain(), fieldNames);
-        return this._new(entities.map(entity => entity[this.manager.model.getIdAttribute()]));
+        return this._new(entities.map(entity => entity[this.manager.model.idAttribute]));
     }
 
     /**
@@ -142,7 +147,7 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     update(updater) {
-        this.manager.model.mutations.push({
+        this.manager.model.addMutation({
             type: UPDATE,
             payload: {
                 idArr: this.idArr,
@@ -156,7 +161,7 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     delete() {
-        this.manager.model.mutations.push({
+        this.manager.model.addMutation({
             type: DELETE,
             payload: this.idArr,
         });
