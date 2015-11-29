@@ -26,9 +26,6 @@ const QuerySet = class QuerySet {
             manager,
             idArr,
         }, opts);
-
-        // For convenience.
-        this.schema = manager.schema;
     }
 
     _new(ids) {
@@ -40,7 +37,7 @@ const QuerySet = class QuerySet {
      * The `idAttribute` of the entities is included with each entity.
      * @return {Object[]}
      */
-    getPlainEntities() {
+    toPlain() {
         return this.idArr.map(id => {
             return this.manager.getPlainEntity(id, true);
         });
@@ -68,7 +65,7 @@ const QuerySet = class QuerySet {
      * @return {Entity} an Entity instance at index `index` in the QuerySet
      */
     at(index) {
-        return this.manager.get({[this.schema.idAttribute]: this.idArr[index]});
+        return this.manager.get({[this.manager.model.idAttribute]: this.idArr[index]});
     }
 
     /**
@@ -102,7 +99,7 @@ const QuerySet = class QuerySet {
      * @return {QuerySet} a new {@link QuerySet} with entities that passed the filter.
      */
     filter(lookupObj) {
-        const plainEntities = this.getPlainEntities();
+        const plainEntities = this.toPlain();
         let entities;
 
         if (typeof lookupObj === 'function') {
@@ -110,7 +107,7 @@ const QuerySet = class QuerySet {
         } else {
             entities = plainEntities.filter(entity => match(lookupObj, entity));
         }
-        const newIdArr = entities.map(entity => entity[this.schema.idAttribute]);
+        const newIdArr = entities.map(entity => entity[this.manager.model.idAttribute]);
         return this._new(newIdArr);
     }
 
@@ -121,8 +118,8 @@ const QuerySet = class QuerySet {
      * @return {QuerySet} a new {@link QuerySet} with entities that passed the filter.
      */
     exclude(lookupObj) {
-        const entities = reject(this.getPlainEntities(), entity => match(lookupObj, entity));
-        return this._new(entities.map(entity => entity[this.schema.idAttribute]));
+        const entities = reject(this.toPlain(), entity => match(lookupObj, entity));
+        return this._new(entities.map(entity => entity[this.manager.model.idAttribute]));
     }
 
     /**
@@ -132,8 +129,8 @@ const QuerySet = class QuerySet {
      * @return {QuerySet} a new {@link QuerySet} with entities ordered by `fieldNames`.
      */
     orderBy(...fieldNames) {
-        const entities = sortByAll(this.getPlainEntities(), fieldNames);
-        return this._new(entities.map(entity => entity[this.manager.getIdAttribute()]));
+        const entities = sortByAll(this.toPlain(), fieldNames);
+        return this._new(entities.map(entity => entity[this.manager.model.getIdAttribute()]));
     }
 
     /**
@@ -145,7 +142,7 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     update(updater) {
-        this.manager.mutations.push({
+        this.manager.model.mutations.push({
             type: UPDATE,
             payload: {
                 idArr: this.idArr,
@@ -159,7 +156,7 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     delete() {
-        this.manager.mutations.push({
+        this.manager.model.mutations.push({
             type: DELETE,
             payload: this.idArr,
         });
@@ -168,7 +165,7 @@ const QuerySet = class QuerySet {
 
 // Override if needed.
 QuerySet.prototype.defaultSharedMethodNames = [
-    'getPlainEntities',
+    'toPlain',
     'count',
     'exists',
     'at',

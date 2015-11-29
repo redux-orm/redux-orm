@@ -1,6 +1,5 @@
 import EntityManager from './EntityManager';
 import QuerySet from './QuerySet';
-import Entity from './Entity';
 import {extend, attachQuerySetMethods} from './utils';
 
 function EntityManagerExtend(...args) {
@@ -17,8 +16,7 @@ function EntityManagerExtend(...args) {
 
 EntityManager.extend = EntityManagerExtend;
 QuerySet.extend = extend.bind(QuerySet);
-Entity.extend = extend.bind(Entity);
 
-export {EntityManager, Entity, QuerySet};
+export {EntityManager, QuerySet};
 
 export default EntityManager;

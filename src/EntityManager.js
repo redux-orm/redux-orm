@@ -1,28 +1,18 @@
-import omit from 'lodash/object/omit';
 import find from 'lodash/collection/find';
-import sortByAll from 'lodash/collection/sortByAll';
 
 import QuerySet from './QuerySet';
-import Entity from './Entity';
 import {
     CREATE,
-    UPDATE,
-    DELETE,
     ORDER,
 } from './constants';
-import {match} from './utils.js';
-
-const DEFAULT_SCHEMA_OPTIONS = {
-    name: 'items',
-    idAttribute: 'id',
-};
+import {match, attachQuerySetMethods} from './utils.js';
 
 /**
  * A class that manages an entity tree branch.
  *
  * The manager shares the following methods with {@link QuerySet}:
  *
- * - [getPlainEntities]{@link QuerySet#getPlainEntities}
+ * - [toPlain]{@link QuerySet#toPlain}
  * - [all]{@link QuerySet#all}
  * - [filter]{@link QuerySet#filter}
  * - [exclude]{@link QuerySet#exclude}
@@ -36,65 +26,19 @@ const DEFAULT_SCHEMA_OPTIONS = {
  *
  */
 const EntityManager = class EntityManager {
-    /**
-     * Create an EntityManager.
-     * @param  {object} [tree] - the tree branch to manage. If `tree` is `undefined`, `reduce` will return
-     *                           create an empty state tree based on the schema before applying any mutations.
-     */
-    constructor(tree) {
+    constructor(model) {
+        this.model = model;
         Object.assign(this, {
-            tree,
-            mutations: [],
+            state: model.state,
         });
-
-        this.schema = this._initializeSchema();
-
-        if (!this.tree) {
-            this.tree = this.getDefaultState();
-        }
-    }
-
-
-    _initializeSchema() {
-        let schema;
-        if (typeof this.schema === 'string') {
-            schema = Object.assign({}, DEFAULT_SCHEMA_OPTIONS, {name: this.schema});
-        } else if (this.schema) {
-            schema = Object.assign({}, DEFAULT_SCHEMA_OPTIONS, this.schema);
-        } else {
-            schema = DEFAULT_SCHEMA_OPTIONS;
-        }
-
-        if (!schema.arrName) {
-            schema.arrName = schema.name;
-        }
-
-        if (!schema.mapName) {
-            schema.mapName = schema.name + 'ById';
-        }
-
-        return schema;
-    }
-
-    /**
-     * Returns the default state tree.
-     * If no tree is specified when instantiating an EntityManager,
-     * this will be called in the constructor.
-     * @return {Object} The state tree as described in the schema.
-     */
-    getDefaultState() {
-        return {
-            [this.arrName]: [],
-            [this.mapName]: {},
-        };
     }
 
     getEntityMap() {
-        return this.tree[this.schema.mapName];
+        return this.state[this.model.mapName];
     }
 
     getIdArray() {
-        return this.tree[this.schema.arrName];
+        return this.state[this.model.arrName];
     }
 
     getId(id) {
@@ -103,9 +47,8 @@ const EntityManager = class EntityManager {
 
     getPlainEntity(id, includeIdAttribute) {
         let entity = this.getId(id);
-
         if (!!includeIdAttribute) {
-            entity = Object.assign({[this.schema.idAttribute]: id}, entity);
+            entity = Object.assign({[this.model.idAttribute]: id}, entity);
         }
 
         return entity;
@@ -126,7 +69,12 @@ const EntityManager = class EntityManager {
 
     getQuerySet() {
         const QuerySetClass = this.querySetClass;
-        return new QuerySetClass(this, this.getIdArray(), {entityClass: this.entityClass});
+        return new QuerySetClass(this, this.getIdArray(), {entityClass: this.model});
+    }
+
+    getQuerySetFromIds(ids) {
+        const QuerySetClass = this.querySetClass;
+        return new QuerySetClass(this, ids, {entityClass: this.model});
     }
 
     /**
@@ -148,11 +96,12 @@ const EntityManager = class EntityManager {
      * @return {Entity} a new Entity instance.
      */
     create(props) {
-        this.mutations.push({
+        this.model.addMutation({
             type: CREATE,
             payload: props,
         });
-        return new Entity(this, props);
+        const Model = this.model;
+        return new Model(props);
     }
 
     /**
@@ -166,20 +115,20 @@ const EntityManager = class EntityManager {
         if (!this.getIdArray().length) {
             throw new Error('Tried getting from empty QuerySet');
         }
+        const Model = this.model;
 
         const keys = Object.keys(lookupObj);
-        if (keys.includes(this.idAttribute)) {
+        if (keys.includes(this.model.idAttribute)) {
             // We treat `idAttribute` as unique, so if it's
             // in `lookupObj` we search with that attribute only.
-            return new Entity(this, this.getPlainEntity(lookupObj[this.idAttribute]), true);
+            return new Model(this.getPlainEntity(lookupObj[this.model.idAttribute], true));
         }
-        const found = find(this.getPlainEntities(), entity => match(lookupObj, entity));
+        const found = find(this.toPlain(), entity => match(lookupObj, entity));
 
         if (!found) {
             throw new Error('Entity not found when calling get method');
         }
-
-        return new Entity(this, found);
+        return new Model(found);
     }
 
     /**
@@ -196,103 +145,15 @@ const EntityManager = class EntityManager {
      * @return {undefined}
      */
     setOrder(orderArg) {
-        this.mutations.push({
+        this.model.addMutations.push({
             type: ORDER,
             payload: orderArg,
         });
     }
-
-    /**
-     * Applies recorded mutations and returns a new state tree.
-     * @return {Object} the reduced state tree
-     */
-    reduce() {
-        const {
-            arrName,
-            mapName,
-        } = this.schema;
-
-        return this.mutations.reduce((state, action) => {
-            switch (action.type) {
-            case CREATE:
-            case DELETE:
-                // These mutation types operate on both the idArray and entityMap.
-                return {
-                    [arrName]: this.reduceIdArray(state[arrName], action),
-                    [mapName]: this.reduceEntityMap(state[mapName], action),
-                };
-            case ORDER:
-                // Order mutates only the id array.
-                return {
-                    [arrName]: this.reduceIdArray(state[arrName], action),
-                    [mapName]: state[mapName],
-                };
-            case UPDATE:
-                // Update mutates only the entityMap, since we don't allow
-                // for updating id's.
-                return {
-                    [arrName]: state[arrName],
-                    [mapName]: this.reduceEntityMap(state[mapName], action),
-                };
-            default:
-                return state;
-            }
-        }, this.tree);
-    }
-
-    reduceIdArray(idArr, action) {
-        switch (action.type) {
-        case CREATE:
-            const payloadId = action.payload[this.schema.idAttribute];
-            const newId = payloadId ? payloadId : this.nextId();
-            return [...idArr, newId];
-        case DELETE:
-            const idsToDelete = action.payload.idArr;
-            return idArr.filter(id => !idsToDelete.includes(id));
-        case ORDER:
-            const entities = sortByAll(this.getFullEntities(), action.payload);
-            return entities.map(entity => entity[this.idAttribute]);
-        default:
-            return idArr;
-        }
-    }
-
-    reduceEntityMap(entityMap, action) {
-        switch (action.type) {
-        case CREATE:
-            const payloadId = action.payload[this.schema.idAttribute];
-            const newId = payloadId ? payloadId : this.nextId();
-            return {
-                ...entityMap,
-                [newId]: Object.assign({}, omit(action.payload, 'id')),
-            };
-        case UPDATE:
-            let mapper;
-            if (typeof action.payload.updater === 'function') {
-                mapper = action.payload.updater;
-            } else {
-                mapper = entity => Object.assign({}, entity, action.payload.updater);
-            }
-
-            const updatesMap = action.payload.idArr.reduce((map, _id) => {
-                map[_id] = mapper(entityMap[_id]);
-                return map;
-            }, {});
-
-            return {
-                ...entityMap,
-                ...updatesMap,
-            };
-        case DELETE:
-            const idsToDelete = action.payload.idArr;
-            return omit(entityMap, idsToDelete);
-        default:
-            return entityMap;
-        }
-    }
 };
 
 EntityManager.prototype.querySetClass = QuerySet;
-EntityManager.prototype.entityClass = Entity;
+attachQuerySetMethods(EntityManager.prototype, QuerySet.prototype.defaultSharedMethodNames);
+attachQuerySetMethods(EntityManager.prototype, QuerySet.prototype.sharedMethodNames);
 
 export default EntityManager;
