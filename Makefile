@@ -9,7 +9,7 @@ clean:
 
 build: clean
 	$(BIN)/babel src --out-dir lib
-	$(BIN)/jsdoc src -d docs -c ./jsdoc.conf.json --verbose --debug
+	$(BIN)/jsdoc src -d docs -c ./jsdoc.conf.json --verbose
 
 test: lint
 	NODE_ENV=test $(BIN)/mocha $(MOCHA_ARGS) $(MOCHA_TARGET)

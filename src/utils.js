@@ -1,3 +1,6 @@
+/**
+ * @module utils
+ */
 
 /**
  * A simple ListIterator implementation.

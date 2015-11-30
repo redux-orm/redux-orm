@@ -118,16 +118,13 @@ const Meta = class Meta {
         if (this.indexById) {
             const id = entry[this.idAttribute];
             return {
-                [this.arrName]: [...branch[this.arrName], id],
-                [this.mapName]: {
-                    ...branch[this.mapName],
-                    [id]: entry,
-                },
+                [this.arrName]: [branch[this.arrName].concat(id)],
+                [this.mapName]: Object.assign({}, branch[this.mapName], {[id]: entry}),
             };
         }
 
         return {
-            [this.arrName]: [...branch[this.arrName], entry],
+            [this.arrName]: [branch[this.arrName].concat(entry)],
         };
     }
 
@@ -154,10 +151,7 @@ const Meta = class Meta {
 
             return {
                 [arrName]: branch[arrName],
-                [mapName]: {
-                    ...branch[mapName],
-                    ...updatedMap,
-                },
+                [mapName]: Object.assign({}, branch[mapName], updatedMap),
             };
         }
 
@@ -178,7 +172,7 @@ const Meta = class Meta {
         if (this.indexById) {
             return {
                 [arrName]: branch[arrName].filter(id => !idsToDelete.includes(id)),
-                [mapName]: omit(branch[mapName], ...idsToDelete),
+                [mapName]: omit(branch[mapName], idsToDelete),
             };
         }
 
@@ -188,4 +182,5 @@ const Meta = class Meta {
     }
 };
 
+export {Meta};
 export default Meta;
