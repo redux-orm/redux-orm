@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: Meta.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: Meta.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import find from 'lodash/collection/find';
+import sortBy from 'lodash/collection/sortBy';
+import omit from 'lodash/object/omit';
+import {ListIterator} from './utils';
+
+/**
+ * Handles the underlying data structure for a {@link Model} class.
+ * Implements the "database backend" functionality.
+ */
+const Meta = class Meta {
+    /**
+     * Creates a new {@link Meta} instance.
+     * @param  {Object} userOpts - options to use. Must have a non-empty `name` property.
+     */
+    constructor(userOpts) {
+        const defaultOpts = {
+            name: null,
+            idAttribute: 'id',
+            branchName: null,
+            indexById: true,
+            ordered: true,
+            arrName: 'items',
+            mapName: 'itemsById',
+        };
+
+        if (!userOpts.name) {
+            throw new Error('You must give a name for the Model in getMeta.');
+        }
+
+        if (!userOpts.branchName) {
+            userOpts.branchName = userOpts.name;
+        }
+
+        userOpts._name = userOpts.name;
+        delete userOpts.name;
+
+        Object.assign(this, defaultOpts, userOpts);
+    }
+
+    /**
+     * The branch name.
+     * @return {string} The branch name.
+     */
+    get name() {
+        return this._name;
+    }
+
+    /**
+     * Returns a reference to the object at index `id`
+     * in state `branch`.
+     *
+     * @param  {Object} branch - the state
+     * @param  {Number} id - the id of the object to get
+     * @return {Object} A reference to the raw object in the state.
+     */
+    accessId(branch, id) {
+        if (this.indexById) {
+            return branch[this.mapName][id];
+        }
+
+        return find(branch[this.arrName], {[this.idAttribute]: id});
+    }
+
+    accessIdList(branch) {
+        return branch[this.arrName];
+    }
+
+    /**
+     * Returns a {@link ListIterator} instance for
+     * the list of objects in `branch`.
+     *
+     * @param  {Object} branch - the model's state branch
+     * @return {ListIterator} An iterator that loops through the objects in `branch`
+     */
+    iterator(branch) {
+        if (this.indexById) {
+            return new ListIterator(branch[this.arrName], 0, (list, idx) => branch[this.mapName][list[idx]]);
+        }
+
+        return new ListIterator(branch[this.arrName], 0);
+    }
+
+    accessList(branch) {
+        return branch[this.arrName].map(id => {
+            const obj = this.accessId(branch, id);
+            return Object.assign({[this.idAttribute]: id}, obj);
+        });
+    }
+
+    /**
+     * Returns the default state for the data structure.
+     * @return {Object} The default state for this {@link Meta} instance's data structure
+     */
+    getDefaultState() {
+        if (this.indexById) {
+            return {
+                [this.arrName]: [],
+                [this.mapName]: {},
+            };
+        }
+
+        return {
+            [this.arrName]: [],
+        };
+    }
+
+    /**
+     * Returns the data structure with objects ordered
+     * by `comparator`.
+     *
+     * @param  {Object} branch - the state of the data structure
+     * @param  {Function} comparator - the comparator function
+     * @return {Object} the data structure ordered by `comparator`.
+     */
+    order(branch, comparator) {
+        const thisMeta = this;
+        const {arrName, mapName} = this;
+
+        // Wrap comparator to access the full object if the model
+        // is indexed.
+        function wrappedComparator(id) {
+            return comparator(thisMeta.accessId(branch, id));
+        }
+
+        if (this.indexById) {
+            const orderedIds = sortBy(branch[arrName], wrappedComparator);
+            return {
+                [arrName]: orderedIds,
+                [mapName]: branch[mapName],
+            };
+        }
+        return {
+            [arrName]: sortBy(branch[arrName], comparator),
+        };
+    }
+
+    /**
+     * Returns the data structure including a new object `entry`
+     * @param  {Object} branch - the data structure state
+     * @param  {Object} entry - the object to insert
+     * @return {Object} the data structure including `entry`.
+     */
+    insert(branch, entry) {
+        if (this.indexById) {
+            const id = entry[this.idAttribute];
+            return {
+                [this.arrName]: [branch[this.arrName].concat(id)],
+                [this.mapName]: Object.assign({}, branch[this.mapName], {[id]: entry}),
+            };
+        }
+
+        return {
+            [this.arrName]: [branch[this.arrName].concat(entry)],
+        };
+    }
+
+    /**
+     * Returns the data structure with objects where id in `idArr`
+     * are:
+     *
+     * 1. merged with `patcher`, if `patcher` is an object.
+     * 2. mapped with `patcher`, if `patcher` is a function.
+     *
+     * @param  {Object} branch - the data structure state
+     * @param  {Array} idArr - the id's of the objects to update
+     * @param  {Object|Function} patcher - If an object, the object to merge with objects
+     *                                     where their id is in `idArr`. If a function,
+     *                                     the mapping function for the objects in the
+     *                                     data structure.
+     * @return {Object} the data structure with objects with their id in `idArr` updated with `patcher`.
+     */
+    update(branch, idArr, patcher) {
+        const {
+            arrName,
+            mapName,
+            idAttribute,
+        } = this;
+
+        let mapFunction;
+        if (typeof patcher === 'function') {
+            mapFunction = patcher;
+        } else {
+            mapFunction = (entity) => Object.assign({}, entity, patcher);
+        }
+
+        if (this.indexById) {
+            const updatedMap = {};
+            idArr.reduce((map, id) => {
+                map[id] = mapFunction(branch[mapName][id]);
+                return map;
+            }, updatedMap);
+
+            return {
+                [arrName]: branch[arrName],
+                [mapName]: Object.assign({}, branch[mapName], updatedMap),
+            };
+        }
+
+        const arrShallowCopy = branch[arrName].slice();
+
+        return {
+            [arrName]: arrShallowCopy.map(entity => {
+                if (idArr.includes(entity[idAttribute])) {
+                    return mapFunction(entity);
+                }
+                return entity;
+            }),
+        };
+    }
+
+    /**
+     * Returns the data structure without objects with their id included in `idsToDelete`.
+     * @param  {Object} branch - the data structure state
+     * @param  {Array} idsToDelete - the ids to delete from the data structure
+     * @return {Object} the data structure without ids in `idsToDelete`.
+     */
+    delete(branch, idsToDelete) {
+        const {arrName, mapName, idAttribute} = this;
+        if (this.indexById) {
+            return {
+                [arrName]: branch[arrName].filter(id => !idsToDelete.includes(id)),
+                [mapName]: omit(branch[mapName], idsToDelete),
+            };
+        }
+
+        return {
+            [arrName]: branch[arrName].filter(entity => !idsToDelete.includes(entity[idAttribute])),
+        };
+    }
+};
+
+export {Meta};
+export default Meta;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="ForeignKey.html">ForeignKey</a></li><li><a href="Manager.html">Manager</a></li><li><a href="Meta.html">Meta</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Nov 29 2015 19:20:00 GMT-0800 (PST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

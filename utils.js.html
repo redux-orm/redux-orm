@@ -27,6 +27,69 @@
     <section>
         <article>
             <pre class="prettyprint source linenums"><code>/**
+ * @module utils
+ */
+
+/**
+ * A simple ListIterator implementation.
+ */
+class ListIterator {
+    /**
+     * Creates a new ListIterator instance.
+     * @param  {Array} list - list to iterate over
+     * @param  {Number} [idx=0] - starting index. Defaults to `0`
+     * @param  {Function} [getValue] a function that receives the current `idx`
+     *                               and `list` and should return the value that
+     *                               `next` should return. Defaults to `(idx, list) => list[idx]`
+     */
+    constructor(list, idx, getValue) {
+        this.list = list;
+        this.idx = idx || 0;
+
+        if (typeof getValue === 'function') {
+            this.getValue = getValue;
+        }
+    }
+
+    /**
+     * The default implementation for the `getValue` function.
+     *
+     * @param  {Number} idx - the current iterator index
+     * @param  {Array} list - the list being iterated
+     * @return {*} - the value at index `idx` in `list`.
+     */
+    getValue(idx, list) {
+        return list[idx];
+    }
+
+    /**
+     * Returns the next element from the iterator instance.
+     * Always returns an Object with keys `value` and `done`.
+     * If the returned element is the last element being iterated,
+     * `done` will equal `true`, otherwise `false`. `value` holds
+     * the value returned by `getValue`.
+     *
+     * @return {Object|undefined} Object with keys `value` and `done`, or
+     *                            `undefined` if the list index is out of bounds.
+     */
+    next() {
+        if (this.idx &lt; this.list.length - 1) {
+            return {
+                value: this.getValue(this.list, this.idx++),
+                done: false,
+            };
+        } else if (this.idx &lt; this.list.length) {
+            return {
+                value: this.getValue(this.list, this.idx++),
+                done: true,
+            };
+        }
+
+        return undefined;
+    }
+}
+
+/**
  * Checks if the properties in `lookupObj` match
  * the corresponding properties in `entity`.
  * @param  {Object} lookupObj - properties to match against
@@ -40,6 +103,53 @@ function match(lookupObj, entity) {
     return keys.every((key) => {
         return lookupObj[key] === entity[key];
     });
+}
+
+function capitalize(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+/**
+ * Returns the branch name for a many-to-many relation.
+ * The name is the combination of the model name and the field name the relation
+ * was declared. The field name's first letter is capitalized.
+ *
+ * Example: model `Author` has a many-to-many relation to the model `Book`, defined
+ * in the `Author` field `books`. The many-to-many branch name will be `AuthorBooks`.
+ *
+ * @param  {string} declarationModelName - the name of the model the many-to-many relation was declared on
+ * @param  {string} fieldName            - the field name where the many-to-many relation was declared on
+ * @return {string} The branch name for the many-to-many relation.
+ */
+function m2mName(declarationModelName, fieldName) {
+    return declarationModelName + capitalize(fieldName);
+}
+
+/**
+ * Returns the fieldname that saves a foreign key to the
+ * model id where the many-to-many relation was declared.
+ *
+ * Example: `Author` => `fromAuthorId`
+ *
+ * @param  {string} declarationModelName - the name of the model where the relation was declared
+ * @return {string} the field name in the through model for `declarationModelName`'s foreign key.
+ */
+function m2mFromFieldName(declarationModelName) {
+    return `from${declarationModelName}Id`;
+}
+
+/**
+ * Returns the fieldname that saves a foreign key in a many-to-many through model to the
+ * model where the many-to-many relation was declared.
+ *
+ * Example: `Book` => `toBookId`
+ *
+ * @param  {string} otherModelName - the name of the model that was the target of the many-to-many
+ *                                   declaration.
+ * @return {string} the field name in the through model for `otherModelName`'s foreign key..
+ */
+function m2mToFieldName(otherModelName) {
+    return `to${otherModelName}Id`;
 }
 
 function extend(props) {
@@ -68,7 +178,7 @@ function attachQuerySetMethods(target, methodNames) {
     });
 }
 
-export {match, extend, attachQuerySetMethods};
+export {match, extend, attachQuerySetMethods, m2mName, m2mFromFieldName, m2mToFieldName, ListIterator};
 </code></pre>
         </article>
     </section>
@@ -79,13 +189,13 @@ export {match, extend, attachQuerySetMethods};
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Entity.html">Entity</a></li><li><a href="EntityManager.html">EntityManager</a></li><li><a href="QuerySet.html">QuerySet</a></li></ul><h3>Global</h3><ul><li><a href="global.html#match">match</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="ForeignKey.html">ForeignKey</a></li><li><a href="Manager.html">Manager</a></li><li><a href="Meta.html">Meta</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Nov 25 2015 00:46:14 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Nov 29 2015 19:20:00 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>
