@@ -105,12 +105,42 @@ const Person = schema.define('Person', {
 });
 
 // You may also specify instance methods if you declare your model with an ES6 class.
-
 class Person extends Model {
   static getMetaOpts() {
     return {
       name: 'Person',
     };
+  }
+
+  static get fields() {
+    return {
+      friends: many('this'),
+      location: fk('Location'),
+    };
+  }
+
+  static reducer(state, action, Person, session) {
+    switch (action.type) {
+    case CREATE_PERSON:
+      Person.objects.create(action.payload);
+      break;
+    case UPDATE_PERSON:
+      Person.objects.get({id: action.payload.id}).update(action.payload);
+      break;
+    case ADD_LOCATION:
+      Person.objects.get(id: action.payload.id).locations.add(action.payload.locationId);
+    case REMOVE_LOCATION:
+      Person.objects.get(id: action.payload.id).locations.remove(action.payload.locationId);
+    case DELETE_PERSON:
+      Person.objects.delete({id: action.payload.id});
+      break;
+    default:
+      return state;
+    }
+
+    // You could also save the next state in a variable and do
+    // any manual manipulation of that state.
+    return Person.getNextState();
   }
 
   toString() {
@@ -119,14 +149,9 @@ class Person extends Model {
   getFullName() {
     return `${this.first_name} ${this.last_name}`;
   },
-
-  friendLocations() {
-    return this.friends.map(friend => friend.location);
-  }
 }
 
-// You may also declare the related fields in the class definition
-// with a static getter.
+// You may also declare the related fields here.
 Person.fields = {
   friends: many('this'),
   location: fk('Location'),
@@ -148,6 +173,10 @@ function rootReducer(state, action) {
   entities: schema.reducer(),
 }
 ```
+
+Now every time you dispatch an action, the Person reducer you defined will be called. Any changes you make to many-to-many relations in the reducer will also be applied. However, you can't (and shouldn't) record mutations for any neighboring Models that are not M2M. They will not be applied. You should do that in the Model's own reducer.
+
+After an action dispatch triggers a store change in `redux`, you can instantiate a session in a React component to query the Model instances and use any of the instance methods you declared.
 
 ## Rationale
 
@@ -229,18 +258,8 @@ function peopleReducer(state, action, Person) {
   default:
     return state;
   }
-  return Person.reduce();
+  return Person.getNextState();
 }
-
-function ormReducerFromMap(map);
-
-ormReducerFromMap((state, action, Person) => {
-  return {
-    CREATE_PERSON: () => Person.objects.create(action.payload),
-    UPDATE_PERSON: () => Person.objects.get({id: action.payload.id}).update(action.payload),
-    DELETE_PERSON: () => Pereson.objects.delete({id: action.payload.id}), 
-  };
-});
 
 ```
 
@@ -344,9 +363,9 @@ peopleManager.getNextState();
 Methods:
 
 - `toPlain`: returns a plain JavaScript object presentation of the Model.
-- `set`: marks a supplied `propertyName` to be updated to `value` at `reduce`. Returns `undefined`
-- `update`: marks a supplied object of property names and values to be merged with the Model instance at `reduce`. Returns `undefined`.
-- `delete`: marks the Model instance to be deleted at `reduce`. Returns `undefined`.
+- `set`: marks a supplied `propertyName` to be updated to `value` at `Model.getNextState`. Returns `undefined`
+- `update`: marks a supplied object of property names and values to be merged with the Model instance at `Model.getNextState`. Returns `undefined`.
+- `delete`: marks the Model instance to be deleted at `Model.getNextState`. Returns `undefined`.
 
 ### Meta
 
@@ -377,7 +396,7 @@ Methods shared with QuerySet:
 - `at` returns an `Entity` instance at the supplied index.
 - `first` returns an `Entity` instance at the `0` index.
 - `last` returns an `Entity` instance at the `EntityManager.count() - 1` index.
-- `delete` marks all the entities for deletion on `reduce`.
+- `delete` marks all the entities for deletion on `Model.getNextState`.
 - `update` marks all the entities for an update based on the supplied argument. The argument can either be an object that will be merged with the entity, or a mapping function that takes the entity as an argument and **returns a new, updated entity**. Do not mutate the entity if you pass a function to `update`.
 
 
@@ -397,7 +416,7 @@ Methods:
 - `at` returns an `Entity` instance at the supplied index in the `QuerySet`.
 - `first` returns an `Entity` instance at the `0` index.
 - `last` returns an `Entity` instance at the `EntityManager.count() - 1` index.
-- `delete` marks all the `QuerySet` entities for deletion on `reduce`.
+- `delete` marks all the `QuerySet` entities for deletion on `Model.getNextState`.
 - `update` marks all the `QuerySet` entities for an update based on the supplied argument. The argument can either be an object that will be merged with the entity, or a mapping function that takes the entity as an argument and **returns a new, updated entity**. Do not mutate the entity if you pass a function to `update`.
 
 ## License
