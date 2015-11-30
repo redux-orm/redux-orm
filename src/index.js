@@ -22,6 +22,14 @@ function EntityManagerExtend(...args) {
 Manager.extend = EntityManagerExtend;
 QuerySet.extend = extend.bind(QuerySet);
 
+function fk(relatedModelName) {
+    return new ForeignKey(relatedModelName);
+}
+
+function many(relatedModelName) {
+    return new ManyToMany(relatedModelName);
+}
+
 export {
     Manager,
     QuerySet,
@@ -31,6 +39,8 @@ export {
     Session,
     ForeignKey,
     ManyToMany,
+    fk,
+    many,
 };
 
 export default Manager;

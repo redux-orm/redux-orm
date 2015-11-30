@@ -117,6 +117,18 @@ const QuerySet = class QuerySet {
     }
 
     /**
+     * Maps the {@link Model} instances in the {@link QuerySet}.
+     * @param  {Function} func - the mapping function that takes one argument, a
+     *                           {@link Model} instance.
+     * @return {Array}  the mapped array
+     */
+    map(func) {
+        return this.idArr.map(id => {
+            return func(this.manager.getWithId(id));
+        });
+    }
+
+    /**
      * Returns a new {@link QuerySet} with objects that do not match properties in `lookupObj`.
      *
      * @param  {Object} lookupObj - the properties to unmatch objects with.
@@ -175,6 +187,7 @@ QuerySet.prototype.defaultSharedMethodNames = [
     'exists',
     'at',
     'first',
+    'map',
     'last',
     'filter',
     'exclude',
