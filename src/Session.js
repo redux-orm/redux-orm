@@ -18,10 +18,10 @@ const Session = class Session {
         this.action = action;
         this.state = state;
 
-        this.mutations = [];
-
         const models = schema.getModelClassesFor(this, state);
         this.models = models;
+
+        this.mutations = [];
 
         models.forEach(modelClass => {
             Object.defineProperty(this, modelClass.getName(), {
@@ -85,8 +85,7 @@ const Session = class Session {
      * @return {Object} The next state
      */
     reduce() {
-        const mutations = this.mutations;
-
+        this.mutations = [];
         const nextState = {};
         // Don't call user reducers when bootstrapping data.
         if (!this._bootstrapping) {

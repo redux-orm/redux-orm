@@ -7,10 +7,10 @@ import {
 } from './constants.js';
 
 /**
- * A chainable class that keeps track of a list of entities and
+ * A chainable class that keeps track of a list of objects and
  *
  * - returns a subset clone of itself with [filter]{@link QuerySet#filter} and [exclude]{@link QuerySet#exclude}
- * - records mutations to entities with [update]{@link QuerySet#update} and [delete]{@link QuerySet#delete}
+ * - records mutations to objects with [update]{@link QuerySet#update} and [delete]{@link QuerySet#delete}
  *
  */
 const QuerySet = class QuerySet {
@@ -90,18 +90,18 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns a new QuerySet with the same entities.
-     * @return {QuerySet} a new QuerySet with the same entities.
+     * Returns a new QuerySet with the same objects.
+     * @return {QuerySet} a new QuerySet with the same objects.
      */
     all() {
         return this._new(this.idArr);
     }
 
     /**
-     * Returns a new {@link QuerySet} with entities that match properties in `lookupObj`.
+     * Returns a new {@link QuerySet} with objects that match properties in `lookupObj`.
      *
      * @param  {Object} lookupObj - the properties to match objects with.
-     * @return {QuerySet} a new {@link QuerySet} with entities that passed the filter.
+     * @return {QuerySet} a new {@link QuerySet} with objects that passed the filter.
      */
     filter(lookupObj) {
         const plainEntities = this.toPlain();
@@ -117,10 +117,10 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns a new {@link QuerySet} with entities that do not match properties in `lookupObj`.
+     * Returns a new {@link QuerySet} with objects that do not match properties in `lookupObj`.
      *
-     * @param  {Object} lookupObj - the properties to unmatch entities with.
-     * @return {QuerySet} a new {@link QuerySet} with entities that passed the filter.
+     * @param  {Object} lookupObj - the properties to unmatch objects with.
+     * @return {QuerySet} a new {@link QuerySet} with objects that passed the filter.
      */
     exclude(lookupObj) {
         const entities = reject(this.toPlain(), entity => match(lookupObj, entity));
@@ -128,10 +128,10 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns a new {@link QuerySet} with entities ordered by `fieldNames` in ascending
+     * Returns a new {@link QuerySet} with objects ordered by `fieldNames` in ascending
      * order.
      * @param  {string[]} fieldNames - the property names to order by.
-     * @return {QuerySet} a new {@link QuerySet} with entities ordered by `fieldNames`.
+     * @return {QuerySet} a new {@link QuerySet} with objects ordered by `fieldNames`.
      */
     orderBy(...fieldNames) {
         const entities = sortByAll(this.toPlain(), fieldNames);
@@ -139,11 +139,11 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Records a mutation specified with `updater` to all the entities in the {@link QuerySet}.
-     * @param  {Object|function} updater - an object to merge with all the entities in this
+     * Records a mutation specified with `updater` to all the objects in the {@link QuerySet}.
+     * @param  {Object|function} updater - an object to merge with all the objects in this
      *                                     queryset, or a mapper function that takes the
-     *                                     entity as an argument and returns an updated
-     *                                     entity.
+     *                                     object as an argument and returns an updated
+     *                                     object.
      * @return {undefined}
      */
     update(updater) {
@@ -157,7 +157,7 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Records a deletion of all the entities in this {@link QuerySet}.
+     * Records a deletion of all the objects in this {@link QuerySet}.
      * @return {undefined}
      */
     delete() {

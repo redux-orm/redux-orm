@@ -4,9 +4,8 @@ import omit from 'lodash/object/omit';
 import {ListIterator} from './utils';
 
 /**
- * Handles metadata for a {@link Model}.
- * If you want to override the underlying
- * datastructure, subclass this.
+ * Handles the underlying data structure for a {@link Model} class.
+ * Implements the "database backend" functionality.
  */
 const Meta = class Meta {
     /**
@@ -38,6 +37,10 @@ const Meta = class Meta {
         Object.assign(this, defaultOpts, userOpts);
     }
 
+    /**
+     * The branch name.
+     * @return {string} The branch name.
+     */
     get name() {
         return this._name;
     }
@@ -62,6 +65,13 @@ const Meta = class Meta {
         return branch[this.arrName];
     }
 
+    /**
+     * Returns a {@link ListIterator} instance for
+     * the list of objects in `branch`.
+     *
+     * @param  {Object} branch - the model's state branch
+     * @return {ListIterator} An iterator that loops through the objects in `branch`
+     */
     iterator(branch) {
         if (this.indexById) {
             return new ListIterator(branch[this.arrName], 0, (list, idx) => branch[this.mapName][list[idx]]);
@@ -77,13 +87,15 @@ const Meta = class Meta {
         });
     }
 
+    /**
+     * Returns the default state for the data structure.
+     * @return {Object} The default state for this {@link Meta} instance's data structure
+     */
     getDefaultState() {
         if (this.indexById) {
             return {
                 [this.arrName]: [],
-                [this.mapName]: {
-
-                },
+                [this.mapName]: {},
             };
         }
 
@@ -92,6 +104,14 @@ const Meta = class Meta {
         };
     }
 
+    /**
+     * Returns the data structure with objects ordered
+     * by `comparator`.
+     *
+     * @param  {Object} branch - the state of the data structure
+     * @param  {Function} comparator - the comparator function
+     * @return {Object} the data structure ordered by `comparator`.
+     */
     order(branch, comparator) {
         const thisMeta = this;
         const {arrName, mapName} = this;
@@ -114,6 +134,12 @@ const Meta = class Meta {
         };
     }
 
+    /**
+     * Returns the data structure including a new object `entry`
+     * @param  {Object} branch - the data structure state
+     * @param  {Object} entry - the object to insert
+     * @return {Object} the data structure including `entry`.
+     */
     insert(branch, entry) {
         if (this.indexById) {
             const id = entry[this.idAttribute];
@@ -128,6 +154,21 @@ const Meta = class Meta {
         };
     }
 
+    /**
+     * Returns the data structure with objects where id in `idArr`
+     * are:
+     *
+     * 1. merged with `patcher`, if `patcher` is an object.
+     * 2. mapped with `patcher`, if `patcher` is a function.
+     *
+     * @param  {Object} branch - the data structure state
+     * @param  {Array} idArr - the id's of the objects to update
+     * @param  {Object|Function} patcher - If an object, the object to merge with objects
+     *                                     where their id is in `idArr`. If a function,
+     *                                     the mapping function for the objects in the
+     *                                     data structure.
+     * @return {Object} the data structure with objects with their id in `idArr` updated with `patcher`.
+     */
     update(branch, idArr, patcher) {
         const {
             arrName,
@@ -167,6 +208,12 @@ const Meta = class Meta {
         };
     }
 
+    /**
+     * Returns the data structure without objects with their id included in `idsToDelete`.
+     * @param  {Object} branch - the data structure state
+     * @param  {Array} idsToDelete - the ids to delete from the data structure
+     * @return {Object} the data structure without ids in `idsToDelete`.
+     */
     delete(branch, idsToDelete) {
         const {arrName, mapName, idAttribute} = this;
         if (this.indexById) {

@@ -1,6 +1,6 @@
 BIN=node_modules/.bin
 
-MOCHA_ARGS= --compilers js:babel/register -g Schema
+MOCHA_ARGS= --compilers js:babel/register
 MOCHA_TARGET=src/**/test*.js
 
 clean:

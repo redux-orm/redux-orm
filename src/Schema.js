@@ -4,10 +4,9 @@ import Session from './Session';
 import Model from './Model';
 
 /**
- * The Schema class' responsibility is the database
- * structure. The database structure is represented by
- * a set of models. To include your model in that set,
- * Schema offers {@link Schema#register} and a shortcut {@link Schema#define} methods.
+ * Schema's responsibility is tracking the set of {@link Model} classes used in the database.
+ * To include your model in that set, Schema offers {@link Schema#register} and a
+ * shortcut {@link Schema#define} methods.
  *
  * Schema also handles starting a Session with {@link Schema#from}.
  */
@@ -24,7 +23,7 @@ const Schema = class Schema {
      * it to the schema instance.
      *
      * Note that you can also define Model classes by yourself
-     * in ES6 syntax.
+     * with ES6 classes.
      *
      * @param  {string} modelName - the name of the model class
      * @param  {Object} [relatedFields] - a dictionary of `fieldName: fieldInstance`
