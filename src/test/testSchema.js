@@ -172,36 +172,5 @@ describe('Schema', () => {
         const tommi = orm.Person.objects.first();
         expect(tommi.name).to.equal('Tommi');
         expect(tommi.locations.count()).to.equal(2);
-
-        console.log(orm.Person.objects.first().toString());
-        console.log('locations: ', orm.Person.objects.first().locations.all().toString());
-        console.log('reduced', orm.reduce());
-    });
-
-    it('correctly defines ManyToMany2', () => {
-        const schema = new Schema();
-
-        schema.define('Person', {
-            locations: new ManyToMany('Location'),
-        }, (state, action, Person, orm) => {
-            Person.objects.create({id: 5, name: 'Mike', age: 30});
-            const me = Person.objects.get({name: 'Tommi'});
-            me.update({age: 20});
-            const firstLoc = me.locations.first();
-            me.locations.remove(firstLoc);
-            const result = Person.getNextState();
-            return result;
-        });
-
-        schema.define('Location');
-
-        const initial = schema.bootstrap((state, orm) => {
-            console.log('state', orm);
-            orm.Location.objects.create({city: 'San Francisco', country: 'United States'});
-            orm.Person.objects.create({name: 'Tommi', age: 25});
-            orm.Person.objects.create({name: 'Tommi', age: 25});
-            return orm.reduce();
-        });
-        console.log('initial', initial);
     });
 });

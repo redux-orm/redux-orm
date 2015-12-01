@@ -28,7 +28,8 @@
     "gulp-gh-pages": "^0.5.4",
     "jsdoc": "^3.4.0",
     "mocha": "^2.2.5",
-    "sinon": "^1.17.2"
+    "sinon": "^1.17.2",
+    "sinon-chai": "^2.8.0"
   },
   "dependencies": {
     "lodash": "^3.10.1"
