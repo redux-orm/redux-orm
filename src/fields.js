@@ -84,10 +84,9 @@ const ManyToMany = class ManyToMany extends Field {
             qs.add = function add(...args) {
                 const ids = args.map(entity => {
                     if (Number.isInteger(entity)) {
-                        ids.push(entity);
-                    } else {
-                        ids.push(entity.getId());
+                        return entity;
                     }
+                    return entity.getId();
                 });
 
                 ids.forEach(id => {
