@@ -28,6 +28,19 @@ const Model = class Model {
     constructor(props) {
         const ModelClass = this.getClass();
         this._initFields(ModelClass.fields, props);
+        this._initVirtualFields(ModelClass.virtualFields);
+    }
+
+    _initVirtualFields(virtualFields) {
+        const ModelClass = this.getClass();
+        const session = ModelClass.session;
+
+        forOwn(virtualFields, (fieldInstance, fieldName) => {
+            Object.defineProperty(this, fieldName, {
+                get: fieldInstance.getGetter(session, this, fieldName),
+                set: fieldInstance.getSetter(session, this, fieldName),
+            });
+        });
     }
 
     _initFields(fields, props) {

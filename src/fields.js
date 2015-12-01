@@ -11,6 +11,29 @@ const Field = class Field {
     }
 };
 
+
+const OneToManyDescriptor = class ManyToOneDescriptor {
+    constructor(relatedModelName) {
+        this.relatedModelName = relatedModelName;
+    }
+
+    getGetter(session, instance, attrName) {
+        console.log('one to many getter');
+        return () => {
+            const modelClass = instance.getClass();
+            const thisId = instance.getId();
+            const idAttribute = modelClass.idAttribute;
+            const relatedManager = session[this.relatedModelName].objects;
+            const relatedQuerySet = relatedManager.filter({[idAttribute]: thisId});
+            return relatedQuerySet;
+        };
+    }
+
+    getSetter(session, instance, attrName) {
+        return () => undefined;
+    }
+};
+
 /**
  * The ForeignKey is a field class that defines a foreign key
  * to another {@link Model}.
@@ -22,7 +45,7 @@ const ForeignKey = class ForeignKey extends Field {
      *
      * @param  {string} relatedModelName - name of the related model
      */
-    constructor(relatedModelName) {
+    constructor(relatedModelName, opts) {
         super(relatedModelName);
         this.relatedModelName = relatedModelName;
     }
@@ -59,7 +82,7 @@ const ForeignKey = class ForeignKey extends Field {
 };
 
 const ManyToMany = class ManyToMany extends Field {
-    constructor(relatedModelName) {
+    constructor(relatedModelName, opts) {
         super(relatedModelName);
         this.relatedModelName = relatedModelName;
     }
@@ -130,5 +153,5 @@ const ManyToMany = class ManyToMany extends Field {
     }
 };
 
-export {ForeignKey, ManyToMany};
+export {ForeignKey, ManyToMany, OneToManyDescriptor};
 export default ForeignKey;

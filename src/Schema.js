@@ -2,6 +2,7 @@ import forOwn from 'lodash/object/forOwn';
 import find from 'lodash/collection/find';
 import Session from './Session';
 import Model from './Model';
+import {ForeignKey, ManyToMany, OneToManyDescriptor} from './fields';
 
 /**
  * Schema's responsibility is tracking the set of {@link Model} classes used in the database.
@@ -16,6 +17,7 @@ const Schema = class Schema {
      */
     constructor() {
         this.registry = [];
+        this.implicitThroughModels = [];
     }
 
     /**
@@ -71,7 +73,8 @@ const Schema = class Schema {
      */
     register(model) {
         const m2m = model.getManyToManyModels();
-        this.registry.push(model, ...m2m);
+        this.implicitThroughModels.push(...m2m);
+        this.registry.push(model);
     }
 
     /**
@@ -88,11 +91,38 @@ const Schema = class Schema {
         return found;
     }
 
+    gatherVirtualFields() {
+        const virtualFields = [];
+        this.registry.forEach(model => {
+            forOwn(model.fields, (fieldInstance, fieldName) => {
+                if (fieldInstance instanceof ForeignKey) {
+                    virtualFields.push([fieldInstance.relatedModelName, model.getName(), OneToManyDescriptor, model.getName() + 'Set']);
+                }
+                // else if (fieldInstance instanceof ManyToMany) {
+                //     virtualFields.push([fieldInstance.relatedModelName, model.getName(), ManyToMany, model.getName() + 'Set']);
+                // }
+            });
+        });
+        return virtualFields;
+    }
+
     getModelClassesFor(orm) {
+        const virtualFields = this.gatherVirtualFields();
+
+        virtualFields.forEach((args) => {
+            const [fromModelName, toModelName, FieldClass, fieldName] = args;
+            const modelClass = this.get(fromModelName);
+            if (!modelClass.hasOwnProperty('virtualFields')) modelClass.virtualFields = {};
+            modelClass.virtualFields[fieldName] = new FieldClass(toModelName);
+        });
+
         this.registry.forEach(model => {
             model.connect(orm);
         });
-        return this.registry;
+        this.implicitThroughModels.forEach(model => {
+            model.connect(orm);
+        });
+        return this.registry.concat(this.implicitThroughModels);
     }
 
     // fromFixture(data){

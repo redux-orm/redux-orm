@@ -64,11 +64,13 @@ describe('Schema', () => {
 
         const {Person, Location} = orm;
 
+
         expect(Location.objects).to.be.an.instanceof(Manager);
         expect(Person.objects).to.be.an.instanceof(Manager);
 
         const aPerson = Person.objects.first();
         const aLocation = Location.objects.first();
+
         expect(aPerson.toPlain()).to.deep.equal({id: 0, name: 'Tommi', age: 25, location: 0});
         expect(aPerson).to.be.an.instanceOf(Model);
 
@@ -168,6 +170,7 @@ describe('Schema', () => {
         expect(orm.PersonLocations).to.exist;
 
         const SF = orm.Location.objects.get({name: 'San Francisco'});
+        console.log(SF.PersonSet);
 
         const tommi = orm.Person.objects.first();
         expect(tommi.name).to.equal('Tommi');
