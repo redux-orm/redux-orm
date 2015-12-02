@@ -5,6 +5,9 @@ THIS IS A WORK IN PROGRESS!
 
 A small, simple and immutable ORM to manage the entities in your Redux store. `redux-orm` doesn't mutate the data, it only returns a new database state.
 
+[![npm version](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
+[![npm downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
+
 ## Why?
 
 I got tired of the boilerplate I was writing for reducers. I wrote long reducers that do pretty much the same thing with very small variations. Immutability helpers make the task easier, but the code is not as expressive since it doesn't implement an abstraction of entities and their relations (`state.updateIn([id, 'locations'], [0, 2])` vs `Person.objects.get({id}).locations.add(0, 2)`). Hence `redux-orm` was born.
