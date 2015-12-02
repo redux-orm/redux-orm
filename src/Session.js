@@ -13,12 +13,10 @@ const Session = class Session {
      * @param  {Object} [action] - the current action in the dispatch cycle.
      *                             Will be passed to the user defined reducers.
      */
-    constructor(schema, state, action) {
-        this.schema = schema;
+    constructor(models, state, action) {
         this.action = action;
         this.state = state;
 
-        const models = schema.getModelClassesFor(this, state);
         this.models = models;
 
         this.mutations = [];
@@ -27,6 +25,8 @@ const Session = class Session {
             Object.defineProperty(this, modelClass.getName(), {
                 get: () => modelClass,
             });
+
+            modelClass.connect(this);
         });
     }
 
@@ -71,12 +71,6 @@ const Session = class Session {
     getState(modelName) {
         const state = this.state[modelName];
         return state;
-    }
-
-    bootstrap(func) {
-        this._bootstrapping = true;
-        this.state = this.getDefaultState();
-        return func(this.state, this);
     }
 
     /**

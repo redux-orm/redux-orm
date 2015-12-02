@@ -2,7 +2,9 @@ import forOwn from 'lodash/object/forOwn';
 import find from 'lodash/collection/find';
 import Session from './Session';
 import Model from './Model';
-import {ForeignKey, ManyToMany, OneToManyDescriptor} from './fields';
+import {ForeignKey, ManyToMany} from './fields';
+import {forwardsManyToOneDescriptor, reverseManyToOneDescriptor, manyToManyDescriptor} from './descriptors';
+import {m2mName} from './utils';
 
 /**
  * Schema's responsibility is tracking the set of {@link Model} classes used in the database.
@@ -84,61 +86,86 @@ const Schema = class Schema {
      * @return {Model} the model class, if found
      */
     get(modelName) {
-        const found = find(this.registry, (model) => model.getName() === modelName);
+        const found = find(this.registry.concat(this.implicitThroughModels), (model) => model.getName() === modelName);
         if (typeof found === 'undefined') {
             throw new Error(`Did not find model ${modelName} from registry.`);
         }
         return found;
     }
 
-    gatherVirtualFields() {
-        const virtualFields = [];
-        this.registry.forEach(model => {
-            forOwn(model.fields, (fieldInstance, fieldName) => {
-                if (fieldInstance instanceof ForeignKey) {
-                    virtualFields.push([fieldInstance.relatedModelName, model.getName(), OneToManyDescriptor, model.getName() + 'Set']);
-                }
-                // else if (fieldInstance instanceof ManyToMany) {
-                //     virtualFields.push([fieldInstance.relatedModelName, model.getName(), ManyToMany, model.getName() + 'Set']);
-                // }
-            });
-        });
-        return virtualFields;
-    }
-
-    getModelClassesFor(orm) {
-        const virtualFields = this.gatherVirtualFields();
-
-        virtualFields.forEach((args) => {
-            const [fromModelName, toModelName, FieldClass, fieldName] = args;
-            const modelClass = this.get(fromModelName);
-            if (!modelClass.hasOwnProperty('virtualFields')) modelClass.virtualFields = {};
-            modelClass.virtualFields[fieldName] = new FieldClass(toModelName);
-        });
-
-        this.registry.forEach(model => {
-            model.connect(orm);
-        });
-        this.implicitThroughModels.forEach(model => {
-            model.connect(orm);
-        });
+    getModelClasses() {
+        this.setupModelPrototypes();
         return this.registry.concat(this.implicitThroughModels);
     }
 
-    // fromFixture(data){
-    //     const state = {};
-    //     const modelsInited = [];
-    //     forOwn(data, (value, key) => {
-    //         const model = this.get(key);
-    //         state[key] = this.get(key);
-    //         modelsInited.push(key);
-    //     });
-    //     const orm = new Session(this);
-    //     return o
-    // }
+    setupModelPrototypes() {
+        this.registry.forEach(model => {
+            const fields = model.fields;
+            forOwn(fields, (fieldInstance, fieldName) => {
+                if (fieldInstance instanceof ForeignKey) {
+                    const toModelName = fieldInstance.toModelName;
+                    const toModel = toModelName === 'this' ? model : this.get(toModelName);
+
+                    // Forwards.
+                    Object.defineProperty(
+                        model.prototype,
+                        fieldName,
+                        forwardsManyToOneDescriptor(fieldName, toModel)
+                    );
+                    model.definedProperties[fieldName] = true;
+
+                    // Backwards.
+                    const backwardsFieldName = model.getName() + 'Set';
+                    Object.defineProperty(
+                        toModel.prototype,
+                        backwardsFieldName,
+                        reverseManyToOneDescriptor(fieldName, model)
+                    );
+                    toModel.definedProperties[backwardsFieldName] = true;
+                } else if (fieldInstance instanceof ManyToMany) {
+                    // Forwards.
+                    const throughModelName = m2mName(model.getName(), fieldName);
+                    const throughModel = this.get(throughModelName);
+
+                    const toModelName = fieldInstance.toModelName;
+                    const toModel = toModelName === 'this' ? model : this.get(toModelName);
+
+                    Object.defineProperty(
+                        model.prototype,
+                        fieldName,
+                        manyToManyDescriptor(model, toModel, throughModel, false)
+                    );
+                    model.definedProperties[fieldName] = true;
+
+                    // Backwards.
+                    const backwardsFieldName = model.getName() + 'Set';
+                    Object.defineProperty(
+                        toModel.prototype,
+                        backwardsFieldName,
+                        manyToManyDescriptor(model, toModel, throughModel, true)
+                    );
+                    toModel.definedProperties[backwardsFieldName] = true;
+                }
+            });
+        });
+
+        this.implicitThroughModels.forEach(model => {
+            forOwn(model.fields, (fieldInstance, fieldName) => {
+                const toModelName = fieldInstance.toModelName;
+                const toModel = toModelName === 'this' ? model : this.get(toModelName);
+                // Only Forwards.
+                Object.defineProperty(
+                    model.prototype,
+                    fieldName,
+                    forwardsManyToOneDescriptor(fieldName, toModel)
+                );
+                model.definedProperties[fieldName] = true;
+            });
+        });
+    }
 
     fromEmpty(action) {
-        return new Session(this, this.getDefaultState(), action);
+        return new Session(this.getModelClasses(), this.getDefaultState(), action);
     }
 
     /**
@@ -149,7 +176,7 @@ const Schema = class Schema {
      * @return {Session} a new session instance
      */
     from(state, action) {
-        return new Session(this, state, action);
+        return new Session(this.getModelClasses(), state, action);
     }
 
     /**
@@ -172,11 +199,6 @@ const Schema = class Schema {
         return (state, action) => {
             return this.from(state, action).reduce();
         };
-    }
-
-    bootstrap(func) {
-        const orm = new Session(this);
-        return orm.bootstrap(func);
     }
 };
 

@@ -27,55 +27,31 @@ const Model = class Model {
      */
     constructor(props) {
         const ModelClass = this.getClass();
-        this._initFields(ModelClass.fields, props);
-        this._initVirtualFields(ModelClass.virtualFields);
+        this._initFields(props);
     }
 
-    _initVirtualFields(virtualFields) {
+    _initFields(props) {
         const ModelClass = this.getClass();
-        const session = ModelClass.session;
 
-        forOwn(virtualFields, (fieldInstance, fieldName) => {
-            Object.defineProperty(this, fieldName, {
-                get: fieldInstance.getGetter(session, this, fieldName),
-                set: fieldInstance.getSetter(session, this, fieldName),
-            });
-        });
-    }
-
-    _initFields(fields, props) {
         this._fieldNames = [];
         this._fields = props;
-        const ModelClass = this.getClass();
-        const modelName = ModelClass.getName();
-        const idAttribute = ModelClass.getMetaInstance().idAttribute;
-        const session = ModelClass.session;
-
-        const fieldsAssigned = [];
-
-        forOwn(fields, (fieldInstance, fieldName) => {
-            // console.log('initing related fields: ', fieldName, props[fieldName]);
-            Object.defineProperty(this, fieldName, {
-                get: fieldInstance.getGetter(session, this, fieldName, props[fieldName]),
-                set: fieldInstance.getSetter(session, this, fieldName),
-            });
-            fieldsAssigned.push(fieldName);
-        });
+        const idAttribute = ModelClass.idAttribute;
 
         forOwn(props, (fieldValue, fieldName) => {
+            this._fields[fieldName] = fieldValue;
             this._fieldNames.push(fieldName);
-            if (!fieldsAssigned.includes(fieldName)) {
+
+            // If the field has not already been defined on the
+            // prototype for a relation.
+            if (!ModelClass.definedProperties[fieldName]) {
                 Object.defineProperty(this, fieldName, {
                     get: () => fieldValue,
                     set: (value) => {
-                        session.addMutation({
+                        ModelClass.addMutation({
                             type: UPDATE,
                             payload: {
                                 [idAttribute]: this.getId(),
                                 [fieldName]: value,
-                            },
-                            meta: {
-                                name: modelName,
                             },
                         });
                     },
@@ -112,21 +88,21 @@ const Model = class Model {
         const models = [];
         forOwn(fields, (fieldInstance, fieldName) => {
             if (fieldInstance instanceof ManyToMany) {
-                let relatedModelName;
-                if (fieldInstance.relatedModelName === 'this') {
-                    relatedModelName = thisModelName;
+                let toModelName;
+                if (fieldInstance.toModelName === 'this') {
+                    toModelName = thisModelName;
                 } else {
-                    relatedModelName = fieldInstance.relatedModelName;
+                    toModelName = fieldInstance.toModelName;
                 }
 
                 const fromFieldName = m2mFromFieldName(thisModelName);
-                const toFieldName = m2mToFieldName(relatedModelName);
+                const toFieldName = m2mToFieldName(toModelName);
 
                 const Through = class ThroughModel extends this.getThroughModelClass() {
                     static get fields() {
                         return {
                             [fromFieldName]: new ForeignKey(thisModelName),
-                            [toFieldName]: new ForeignKey(relatedModelName),
+                            [toFieldName]: new ForeignKey(toModelName),
                         };
                     }
 
@@ -346,7 +322,7 @@ const Model = class Model {
      * @return {*} The id value of the current instance.
      */
     getId() {
-        return this._fields[this.getClass().getMetaInstance().idAttribute];
+        return this._fields[this.getClass().idAttribute];
     }
 
     /**
@@ -426,5 +402,6 @@ const Model = class Model {
 };
 
 Model.fields = {};
+Model.definedProperties = {};
 
 export default Model;

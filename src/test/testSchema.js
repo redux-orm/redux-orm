@@ -9,15 +9,15 @@ describe('Schema', () => {
         const schema = new Schema();
 
         class PersonModel extends Model {
-            static getMetaOptions() {
-                return {
-                    name: 'Person',
-                };
-            }
-
             static get fields() {
                 return {
                     location: new ForeignKey('Location'),
+                };
+            }
+
+            static getMetaOptions() {
+                return {
+                    name: 'Person',
                 };
             }
         }
@@ -58,7 +58,6 @@ describe('Schema', () => {
             },
         });
 
-        console.log(orm.getDefaultState());
         expect(orm.Person).to.exist;
         expect(orm.Location).to.exist;
 
@@ -73,7 +72,6 @@ describe('Schema', () => {
 
         expect(aPerson.toPlain()).to.deep.equal({id: 0, name: 'Tommi', age: 25, location: 0});
         expect(aPerson).to.be.an.instanceOf(Model);
-
         const relatedLocation = aPerson.location;
         expect(relatedLocation.equals(aLocation)).to.be.ok;
     });
@@ -82,15 +80,15 @@ describe('Schema', () => {
         const schema = new Schema();
 
         class PersonModel extends Model {
-            static getMetaOptions() {
-                return {
-                    name: 'Person',
-                };
-            }
-
             static get fields() {
                 return {
                     locations: new ManyToMany('Location'),
+                };
+            }
+
+            static getMetaOptions() {
+                return {
+                    name: 'Person',
                 };
             }
 
@@ -122,18 +120,23 @@ describe('Schema', () => {
 
         const orm = schema.from({
             Person: {
-                items: [0],
+                items: [0, 1],
                 itemsById: {
                     0: {
                         id: 0,
                         name: 'Tommi',
                         age: 25,
                     },
+                    1: {
+                        id: 1,
+                        name: 'Ats',
+                        age: 28,
+                    },
                 },
             },
 
             PersonLocations: {
-                items: [0, 1],
+                items: [0, 1, 2],
                 itemsById: {
                     0: {
                         id: 0,
@@ -143,6 +146,11 @@ describe('Schema', () => {
                     1: {
                         id: 1,
                         fromPersonId: 0,
+                        toLocationId: 1,
+                    },
+                    2: {
+                        id: 2,
+                        fromPersonId: 1,
                         toLocationId: 1,
                     },
                 },
@@ -170,10 +178,17 @@ describe('Schema', () => {
         expect(orm.PersonLocations).to.exist;
 
         const SF = orm.Location.objects.get({name: 'San Francisco'});
-        console.log(SF.PersonSet);
+        expect(SF.PersonSet.count()).to.equal(1);
+
+        const hki = orm.Location.objects.get({name: 'Helsinki'});
+        expect(hki.PersonSet.count()).to.equal(2);
 
         const tommi = orm.Person.objects.first();
         expect(tommi.name).to.equal('Tommi');
         expect(tommi.locations.count()).to.equal(2);
+
+        const ats = orm.Person.objects.get({name: 'Ats'});
+        expect(ats.locations.count()).to.equal(1);
+        expect(ats.locations.first().equals(hki)).to.be.ok;
     });
 });
