@@ -16,35 +16,26 @@ import {
 const QuerySet = class QuerySet {
     /**
      * Creates a QuerySet.
-     * @param  {Manager} manager - used to keep an internal reference
-     *                             to the Manager in use.
+     * @param  {Model} modelClass - the model class of objects in this QuerySet.
      * @param  {number[]} idArr - an array of the id's this QuerySet includes.
      * @param {Object} [opts] - additional options
      */
-    constructor(manager, idArr, opts) {
+    constructor(modelClass, idArr, opts) {
         Object.assign(this, {
-            manager,
+            modelClass,
             idArr,
         }, opts);
     }
-};
 
-/**
- * The QuerySet prototypes are declared outside the class so that they
- * can be enumerated over in ES5. This is useful when attaching all
- * methods to a Manager class, as they share these.
- */
-
-QuerySet.prototype = {
     _new(ids) {
-        return new this.constructor(this.manager, ids);
-    },
+        return new this.constructor(this.modelClass, ids);
+    }
 
     toString() {
         return 'QuerySet contents: \n    - ' + this.idArr.map(id => {
-            return this.manager.getWithId(id).toString();
+            return this.modelClass.getWithId(id).toString();
         }).join('\n    - ');
-    },
+    }
 
     /**
      * Returns an array of the plain objects represented by the QuerySet.
@@ -52,9 +43,9 @@ QuerySet.prototype = {
      */
     toPlain() {
         return this.idArr.map(id => {
-            return this.manager.getPlain(id);
+            return this.modelClass.accessId(id);
         });
-    },
+    }
 
     /**
      * Returns the number of model instances represented by the QuerySet.
@@ -62,7 +53,7 @@ QuerySet.prototype = {
      */
     count() {
         return this.idArr.length;
-    },
+    }
 
     /**
      * Checks if QuerySet has any objects.
@@ -70,7 +61,7 @@ QuerySet.prototype = {
      */
     exists() {
         return Boolean(this.count());
-    },
+    }
 
     /**
      * Returns the {@link Model} instance at index `index` in the QuerySet.
@@ -78,8 +69,8 @@ QuerySet.prototype = {
      * @return {Model} an {@link Model} instance at index `index` in the QuerySet
      */
     at(index) {
-        return this.manager.get({[this.manager.model.idAttribute]: this.idArr[index]});
-    },
+        return this.modelClass.get({[this.modelClass.idAttribute]: this.idArr[index]});
+    }
 
     /**
      * Returns the {@link Model} instance at index 0 in the QuerySet.
@@ -87,7 +78,7 @@ QuerySet.prototype = {
      */
     first() {
         return this.at(0);
-    },
+    }
 
     /**
      * Returns the {@link Model} instance at index `QuerySet.count() - 1`
@@ -95,7 +86,7 @@ QuerySet.prototype = {
      */
     last() {
         return this.at(this.idArr.length - 1);
-    },
+    }
 
     /**
      * Returns a new QuerySet with the same objects.
@@ -103,7 +94,7 @@ QuerySet.prototype = {
      */
     all() {
         return this._new(this.idArr);
-    },
+    }
 
     /**
      * Returns a new {@link QuerySet} with objects that match properties in `lookupObj`.
@@ -120,9 +111,9 @@ QuerySet.prototype = {
         } else {
             entities = plainEntities.filter(entity => match(lookupObj, entity));
         }
-        const newIdArr = entities.map(entity => entity[this.manager.model.idAttribute]);
+        const newIdArr = entities.map(entity => entity[this.modelClass.idAttribute]);
         return this._new(newIdArr);
-    },
+    }
 
     /**
      * Maps the {@link Model} instances in the {@link QuerySet}.
@@ -132,9 +123,9 @@ QuerySet.prototype = {
      */
     map(func) {
         return this.idArr.map(id => {
-            return func(this.manager.getWithId(id));
+            return func(this.modelClass.getWithId(id));
         });
-    },
+    }
 
     /**
      * Returns a new {@link QuerySet} with objects that do not match properties in `lookupObj`.
@@ -144,8 +135,8 @@ QuerySet.prototype = {
      */
     exclude(lookupObj) {
         const entities = reject(this.toPlain(), entity => match(lookupObj, entity));
-        return this._new(entities.map(entity => entity[this.manager.model.idAttribute]));
-    },
+        return this._new(entities.map(entity => entity[this.modelClass.idAttribute]));
+    }
 
     /**
      * Returns a new {@link QuerySet} with objects ordered by `fieldNames` in ascending
@@ -155,8 +146,8 @@ QuerySet.prototype = {
      */
     orderBy(...fieldNames) {
         const entities = sortByAll(this.toPlain(), fieldNames);
-        return this._new(entities.map(entity => entity[this.manager.model.idAttribute]));
-    },
+        return this._new(entities.map(entity => entity[this.modelClass.idAttribute]));
+    }
 
     /**
      * Records a mutation specified with `updater` to all the objects in the {@link QuerySet}.
@@ -167,26 +158,41 @@ QuerySet.prototype = {
      * @return {undefined}
      */
     update(updater) {
-        this.manager.model.addMutation({
+        this.modelClass.addMutation({
             type: UPDATE,
             payload: {
                 idArr: this.idArr,
                 updater,
             },
         });
-    },
+    }
 
     /**
      * Records a deletion of all the objects in this {@link QuerySet}.
      * @return {undefined}
      */
     delete() {
-        this.manager.model.addMutation({
+        this.modelClass.addMutation({
             type: DELETE,
             payload: this.idArr,
         });
-    },
+    }
 };
 
+QuerySet.sharedMethods = [
+    'toPlain',
+    'count',
+    'at',
+    'all',
+    'last',
+    'first',
+    'exists',
+    'filter',
+    'map',
+    'exclude',
+    'orderBy',
+    'update',
+    'delete',
+];
 
 export default QuerySet;

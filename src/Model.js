@@ -3,9 +3,9 @@ import forOwn from 'lodash/object/forOwn';
 import {ManyToMany, ForeignKey} from './fields';
 import Session from './Session';
 import Meta from './Meta';
-import Manager from './Manager';
+import QuerySet from './QuerySet';
 import {CREATE, UPDATE, DELETE, ORDER} from './constants';
-import {m2mName, m2mToFieldName, m2mFromFieldName} from './utils';
+import {match, m2mName, m2mToFieldName, m2mFromFieldName} from './utils';
 
 /**
  * The heart of an ORM, the data model.
@@ -26,7 +26,6 @@ const Model = class Model {
      * @param  {Object} props - the properties to instantiate with
      */
     constructor(props) {
-        const ModelClass = this.getClass();
         this._initFields(props);
     }
 
@@ -208,14 +207,6 @@ const Model = class Model {
     }
 
     /**
-     * Returns the default manager for this model class.
-     * @return {Manager} The {@link Manager} for this Model
-     */
-    static get objects() {
-        return new Manager(this);
-    }
-
-    /**
      * Gets the name of this {@link Model} class.
      * Delegates to {@link Meta}.
      *
@@ -266,15 +257,6 @@ const Model = class Model {
     }
 
     /**
-     * Returns the related {@link Manager} instance for this {@link Model}.
-     *
-     * @return {Manager} The related {@link Manager} instance for this {@link Model}.
-     */
-    static getRelatedManager() {
-        return new Manager(this);
-    }
-
-    /**
      * Connect the model class to a {@link Session}.
      *
      * @param  {Session} session - The session to connect to.
@@ -304,6 +286,122 @@ const Model = class Model {
     static addMutation(mutation) {
         mutation.meta = {name: this.getName()};
         this.session.addMutation(mutation);
+    }
+
+    /**
+     * Returns the id to be assigned to a new entity.
+     * You may override this to suit your needs.
+     * @return {*} the id value for a new entity.
+     */
+    static nextId() {
+        const idArr = this.accessIds();
+        if (idArr.length === 0) {
+            return 0;
+        }
+        return Math.max(...idArr) + 1;
+    }
+
+    static getQuerySet() {
+        return this.getQuerySetFromIds(this.accessIds());
+    }
+
+    static getQuerySetFromIds(ids) {
+        const QuerySetClass = this.querySetClass;
+        return new QuerySetClass(this, ids);
+    }
+
+    static get query() {
+        if (!this._cachedQuerySet) {
+            this._cachedQuerySet = this.getQuerySet();
+        }
+        return this._cachedQuerySet;
+    }
+
+    /**
+     * Returns a {@link QuerySet} containing all {@link Model} instances.
+     * @return {QuerySet} a QuerySet containing all {@link Model} instances
+     */
+    static all() {
+        return this.getQuerySet();
+    }
+
+    /**
+     * Records the addition of a new {@link Model} instance and returns it.
+     *
+     * @param  {props} props - the new {@link Model}'s properties.
+     * @return {Model} a new {@link Model} instance.
+     */
+    static create(props) {
+        const idAttribute = this.idAttribute;
+
+        if (!props.hasOwnProperty(idAttribute)) {
+            props[idAttribute] = this.nextId();
+        }
+
+        this.addMutation({
+            type: CREATE,
+            payload: props,
+        });
+        const ModelClass = this;
+        return new ModelClass(props);
+    }
+
+    static getWithId(id) {
+        const ModelClass = this;
+        return new ModelClass(this.accessId(id));
+    }
+
+    /**
+     * Gets the {@link Model} instance that matches properties in `lookupObj`.
+     * Throws an error if {@link Model} is not found.
+     *
+     * @param  {Object} lookupObj - the properties used to match a single entity.
+     * @return {Model} a {@link Model} instance that matches `lookupObj` properties.
+     */
+    static get(lookupObj) {
+        if (!this.accessIds().length) {
+            throw new Error(`No entities found for model ${this.getName()}`);
+        }
+        const ModelClass = this;
+
+        const keys = Object.keys(lookupObj);
+        if (keys.includes(this.idAttribute)) {
+            // We treat `idAttribute` as unique, so if it's
+            // in `lookupObj` we search with that attribute only.
+            const props = this.accessId(lookupObj[this.idAttribute]);
+            const instance = new ModelClass(props);
+            return instance;
+        }
+
+        const iterator = this.iterator();
+
+        let done = false;
+        while (!done) {
+            const curr = iterator.next();
+            if (match(lookupObj, curr.value)) {
+                return new ModelClass(curr.value);
+            }
+            done = curr.done;
+        }
+
+        throw new Error('Model instance not found when calling get method');
+    }
+
+    /**
+     * Records an ordering mutation for the objects.
+     * Note that if you create or update any objects after
+     * calling this, they won't be in order.
+     *
+     * @param {function|string|string[]} orderArg - A function, an attribute name or a list of attribute
+     *                                              names to order the objects by. If you supply a function,
+     *                                              it must return a value user to order the entities.
+     * @return {undefined}
+     */
+    static setOrder(orderArg) {
+        this.addMutation({
+            type: ORDER,
+            payload: orderArg,
+        });
     }
 
     /**
@@ -403,5 +501,6 @@ const Model = class Model {
 
 Model.fields = {};
 Model.definedProperties = {};
+Model.querySetClass = QuerySet;
 
 export default Model;

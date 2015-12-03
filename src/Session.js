@@ -56,10 +56,6 @@ const Session = class Session {
         return mutations;
     }
 
-    getRelatedManager(modelName) {
-        return this[modelName].getRelatedManager();
-    }
-
     getDefaultState() {
         const state = {};
         this.models.forEach(modelClass => {

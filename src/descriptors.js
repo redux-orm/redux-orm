@@ -6,8 +6,7 @@ function forwardsManyToOneDescriptor(fieldName, declaredToModel) {
     return {
         get() {
             const toId = this._fields[fieldName];
-            const toIdAttribute = declaredToModel.idAttribute;
-            return declaredToModel.objects.get({[toIdAttribute]: toId});
+            return declaredToModel.getWithId(toId);
         },
         set(value) {
             const thisId = this.getId();
@@ -36,7 +35,7 @@ function reverseManyToOneDescriptor(declaredFieldName, declaredFromModel) {
     return {
         get() {
             const thisId = this.getId();
-            return declaredFromModel.objects.filter({[declaredFieldName]: thisId});
+            return declaredFromModel.filter({[declaredFieldName]: thisId});
         },
         set() {
             throw new Error('Can\'t mutate a reverse many-to-one relation.');
@@ -53,8 +52,6 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
             const fromFieldName = m2mFromFieldName(declaredFromModel.getName());
             const toFieldName = m2mToFieldName(declaredToModel.getName());
 
-            const throughManager = throughModel.objects;
-
             const lookupObj = {};
             if (!reverse) {
                 lookupObj[fromFieldName] = thisId;
@@ -62,14 +59,17 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
                 lookupObj[toFieldName] = thisId;
             }
 
-            const throughQs = throughManager.filter(lookupObj);
+            const throughQs = throughModel.filter(lookupObj);
+            const toIdsSet = {};
 
-            const toIds = throughQs.toPlain().map(throughInstance => {
-                return throughInstance[reverse ? fromFieldName : toFieldName];
+            throughQs.toPlain().forEach(throughObject => {
+                const id = throughObject[reverse ? fromFieldName : toFieldName];
+                toIdsSet[id] = true;
             });
+            const toIds = Object.keys(toIdsSet);
 
             const qsFromModel = reverse ? declaredFromModel : declaredToModel;
-            const qs = qsFromModel.objects.getQuerySetFromIds(toIds);
+            const qs = qsFromModel.getQuerySetFromIds(toIds);
 
             qs.add = function add(...args) {
                 const ids = args.map(entity => {
@@ -80,7 +80,7 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
                 });
 
                 ids.forEach(id => {
-                    throughManager.create({
+                    throughModel.create({
                         [fromFieldName]: thisId,
                         [toFieldName]: id,
                     });
@@ -95,7 +95,7 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
                     idsToRemove = entities.map(entity => entity.getId());
                 }
 
-                const entitiesToDelete = throughManager.filter(through => {
+                const entitiesToDelete = throughModel.filter(through => {
                     if (through[fromFieldName] === thisId) {
                         if (idsToRemove.includes(through[toFieldName])) {
                             return true;

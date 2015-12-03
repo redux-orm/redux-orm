@@ -1,7 +1,6 @@
 import {expect} from 'chai';
 import Schema from '../Schema';
 import Model from '../Model';
-import Manager from '../Manager';
 import {ForeignKey, ManyToMany} from '../fields';
 
 describe('Schema', () => {
@@ -62,13 +61,8 @@ describe('Schema', () => {
         expect(orm.Location).to.exist;
 
         const {Person, Location} = orm;
-
-
-        expect(Location.objects).to.be.an.instanceof(Manager);
-        expect(Person.objects).to.be.an.instanceof(Manager);
-
-        const aPerson = Person.objects.first();
-        const aLocation = Location.objects.first();
+        const aPerson = Person.first();
+        const aLocation = Location.first();
 
         expect(aPerson.toPlain()).to.deep.equal({id: 0, name: 'Tommi', age: 25, location: 0});
         expect(aPerson).to.be.an.instanceOf(Model);
@@ -93,8 +87,8 @@ describe('Schema', () => {
             }
 
             static reducer(state, action, Person, orm) {
-                Person.objects.create({id: 5, name: 'Mike', age: 30});
-                const me = Person.objects.get({name: 'Tommi'});
+                Person.create({id: 5, name: 'Mike', age: 30});
+                const me = Person.get({name: 'Tommi'});
                 me.update({age: 20});
                 const firstLoc = me.locations.first();
                 me.locations.remove(firstLoc);
@@ -177,19 +171,17 @@ describe('Schema', () => {
         expect(orm.Location).to.exist;
         expect(orm.PersonLocations).to.exist;
 
-        const SF = orm.Location.objects.get({name: 'San Francisco'});
-        console.log('hoo');
-        console.log(SF.PersonSet);
+        const SF = orm.Location.get({name: 'San Francisco'});
         expect(SF.PersonSet.count()).to.equal(1);
 
-        const hki = orm.Location.objects.get({name: 'Helsinki'});
+        const hki = orm.Location.get({name: 'Helsinki'});
         expect(hki.PersonSet.count()).to.equal(2);
 
-        const tommi = orm.Person.objects.first();
+        const tommi = orm.Person.first();
         expect(tommi.name).to.equal('Tommi');
         expect(tommi.locations.count()).to.equal(2);
 
-        const ats = orm.Person.objects.get({name: 'Ats'});
+        const ats = orm.Person.get({name: 'Ats'});
         expect(ats.locations.count()).to.equal(1);
         expect(ats.locations.first().equals(hki)).to.be.ok;
     });

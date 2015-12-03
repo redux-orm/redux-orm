@@ -4,7 +4,7 @@ import Session from './Session';
 import Model from './Model';
 import {ForeignKey, ManyToMany} from './fields';
 import {forwardsManyToOneDescriptor, reverseManyToOneDescriptor, manyToManyDescriptor} from './descriptors';
-import {m2mName} from './utils';
+import {m2mName, attachQuerySetMethods} from './utils';
 
 /**
  * Schema's responsibility is tracking the set of {@link Model} classes used in the database.
@@ -98,6 +98,11 @@ const Schema = class Schema {
         return this.registry.concat(this.implicitThroughModels);
     }
 
+    _attachQuerySetMethods(model) {
+        const {querySetClass} = model;
+        attachQuerySetMethods(model, querySetClass);
+    }
+
     setupModelPrototypes() {
         this.registry.forEach(model => {
             const fields = model.fields;
@@ -147,6 +152,7 @@ const Schema = class Schema {
                     toModel.definedProperties[backwardsFieldName] = true;
                 }
             });
+            this._attachQuerySetMethods(model);
         });
 
         this.implicitThroughModels.forEach(model => {
@@ -161,6 +167,7 @@ const Schema = class Schema {
                 );
                 model.definedProperties[fieldName] = true;
             });
+            this._attachQuerySetMethods(model);
         });
     }
 

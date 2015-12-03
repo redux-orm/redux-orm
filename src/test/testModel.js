@@ -4,7 +4,6 @@ import sinon from 'sinon';
 chai.use(sinonChai);
 const {expect} = chai;
 import BaseModel from '../Model';
-import Manager from '../Manager';
 import {ForeignKey, ManyToMany} from '../fields';
 
 describe('Model', () => {
@@ -41,11 +40,6 @@ describe('Model', () => {
             Model.connect(sessionMock);
 
             expect(Model.session).to.equal(sessionMock);
-        });
-
-        it('objects getter works correctly', () => {
-            Model._session = sessionMock;
-            expect(Model.objects).to.be.an.instanceOf(Manager);
         });
 
         it('callUserReducer calls reducer with correct arguments', () => {

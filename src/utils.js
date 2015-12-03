@@ -126,42 +126,18 @@ function m2mToFieldName(otherModelName) {
     return `to${otherModelName}Id`;
 }
 
-function extend(props) {
-    const parent = this;
-
-    function childConstructor() {
-        parent.apply(this, arguments);
-    }
-
-    Object.assign(childConstructor, parent);
-
-    childConstructor.prototype = Object.create(parent.prototype);
-    Object.assign(childConstructor.prototype, props);
-    return childConstructor;
-}
-
 function querySetDelegatorFactory(methodName) {
     return function querySetDelegator(...args) {
         return this.getQuerySet()[methodName](...args);
     };
 }
 
-function attachQuerySetMethods(managerClass, querySetClass) {
-    const managerProto = managerClass.prototype;
-    const querySetProto = querySetClass.prototype;
-    const ignoreMethods = [
-        '_new',
-    ];
+function attachQuerySetMethods(modelClass, querySetClass) {
+    const querySetSharedMethods = querySetClass.sharedMethods;
 
-    forOwn(querySetProto, (value, key) => {
-        const isFunc = typeof value === 'function';
-        const ignored = ignoreMethods.includes(key);
-        const alreadySet = typeof managerProto[key] === 'function';
-
-        if (isFunc && !ignored && !alreadySet) {
-            managerProto[key] = querySetDelegatorFactory(key);
-        }
+    querySetSharedMethods.forEach(methodName => {
+        modelClass[methodName] = querySetDelegatorFactory(methodName);
     });
 }
 
-export {match, extend, attachQuerySetMethods, m2mName, m2mFromFieldName, m2mToFieldName, ListIterator};
+export {match, attachQuerySetMethods, m2mName, m2mFromFieldName, m2mToFieldName, ListIterator};
