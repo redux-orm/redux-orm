@@ -37,16 +37,16 @@ schema.define('Person', {
   case EDIT_PERSON:
     // The data isn't mutated, you're still working with the same data
     // that you started with.
-    Person.get({id: action.payload.id}).update(action.payload);
+    Person.withId(action.payload.id).update(action.payload);
     break;
   case DELETE_PERSON:
-    Person.get({id: action.payload.id}).delete();
+    Person.withId(action.payload.id).delete();
     break;
   case ADD_FRIENDS:
-    Person.get({id: action.payload.id}).friends.add(action.payload.friendIds);
+    Person.withId(action.payload.id).friends.add(action.payload.friendIds);
     break;
   case DELETE_FRIENDS:
-    Person.get({id: action.payload.id}).friends.remove(action.payload.friendIds);
+    Person.withId(action.payload.id).friends.remove(action.payload.friendIds);
     break;
   default:
     return state;
