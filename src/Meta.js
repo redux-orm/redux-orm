@@ -144,13 +144,13 @@ const Meta = class Meta {
         if (this.indexById) {
             const id = entry[this.idAttribute];
             return {
-                [this.arrName]: [branch[this.arrName].concat(id)],
+                [this.arrName]: branch[this.arrName].concat(id),
                 [this.mapName]: Object.assign({}, branch[this.mapName], {[id]: entry}),
             };
         }
 
         return {
-            [this.arrName]: [branch[this.arrName].concat(entry)],
+            [this.arrName]: branch[this.arrName].concat(entry),
         };
     }
 

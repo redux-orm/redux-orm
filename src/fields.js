@@ -4,11 +4,8 @@ const Field = class Field {
     }
 };
 
-const ForeignKey = class ForeignKey extends Field {
-};
+const ForeignKey = class ForeignKey extends Field {};
+const ManyToMany = class ManyToMany extends Field {};
+const OneToOne = class OneToOne extends Field {};
 
-const ManyToMany = class ManyToMany extends Field {
-
-};
-
-export {ForeignKey, ManyToMany};
+export {ForeignKey, ManyToMany, OneToOne};

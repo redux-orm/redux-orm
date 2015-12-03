@@ -1,5 +1,3 @@
-import forOwn from 'lodash/object/forOwn';
-
 /**
  * @module utils
  */
@@ -126,6 +124,10 @@ function m2mToFieldName(otherModelName) {
     return `to${otherModelName}Id`;
 }
 
+function reverseFieldName(modelName) {
+    return modelName.toLowerCase() + 'Set';
+}
+
 function querySetDelegatorFactory(methodName) {
     return function querySetDelegator(...args) {
         return this.getQuerySet()[methodName](...args);
@@ -140,4 +142,12 @@ function attachQuerySetMethods(modelClass, querySetClass) {
     });
 }
 
-export {match, attachQuerySetMethods, m2mName, m2mFromFieldName, m2mToFieldName, ListIterator};
+export {
+    match,
+    attachQuerySetMethods,
+    m2mName,
+    m2mFromFieldName,
+    m2mToFieldName,
+    reverseFieldName,
+    ListIterator,
+};

@@ -2,11 +2,15 @@ import UPDATE from './constants';
 import {m2mFromFieldName, m2mToFieldName} from './utils';
 
 // Forwards side a Foreign Key: returns one object.
-function forwardsManyToOneDescriptor(fieldName, declaredToModel) {
+// Also works as forwardsOneToOneDescriptor.
+function forwardManyToOneDescriptor(fieldName, declaredToModel) {
     return {
         get() {
             const toId = this._fields[fieldName];
-            return declaredToModel.getWithId(toId);
+            if (typeof toId !== 'undefined') {
+                return declaredToModel.getWithId(toId);
+            }
+            return undefined;
         },
         set(value) {
             const thisId = this.getId();
@@ -30,8 +34,22 @@ function forwardsManyToOneDescriptor(fieldName, declaredToModel) {
     };
 }
 
+const forwardOneToOneDescriptor = forwardManyToOneDescriptor;
+
+function backwardOneToOneDescriptor(declaredFieldName, declaredFromModel) {
+    return {
+        get() {
+            const thisId = this.getId();
+            return declaredFromModel.get({[declaredFieldName]: thisId});
+        },
+        set() {
+            throw new Error('Can\'t mutate a reverse one-to-one relation.');
+        },
+    };
+}
+
 // Reverse side of a Foreign Key: returns many objects.
-function reverseManyToOneDescriptor(declaredFieldName, declaredFromModel) {
+function backwardManyToOneDescriptor(declaredFieldName, declaredFromModel) {
     return {
         get() {
             const thisId = this.getId();
@@ -64,7 +82,9 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
 
             throughQs.toPlain().forEach(throughObject => {
                 const id = throughObject[reverse ? fromFieldName : toFieldName];
-                toIdsSet[id] = true;
+                if (typeof id !== 'undefined') {
+                    toIdsSet[id] = true;
+                }
             });
             const toIds = Object.keys(toIdsSet);
 
@@ -117,4 +137,10 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
     };
 }
 
-export {forwardsManyToOneDescriptor, reverseManyToOneDescriptor, manyToManyDescriptor};
+export {
+    forwardManyToOneDescriptor,
+    forwardOneToOneDescriptor,
+    backwardOneToOneDescriptor,
+    backwardManyToOneDescriptor,
+    manyToManyDescriptor,
+};

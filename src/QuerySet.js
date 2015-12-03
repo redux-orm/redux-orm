@@ -115,6 +115,18 @@ const QuerySet = class QuerySet {
         return this._new(newIdArr);
     }
 
+    modelFilter(lookupObj) {
+        let entities;
+        const modelInstances = this.idArr.map((_, idx) => this.at(idx));
+        if (typeof lookupObj === 'function') {
+            entities = modelInstances.filter(lookupObj);
+        } else {
+            entities = modelInstances.filter(entity => match(lookupObj, entity));
+        }
+        const newIdArr = entities.map(entity => entity.getId());
+        return this._new(newIdArr);
+    }
+
     /**
      * Maps the {@link Model} instances in the {@link QuerySet}.
      * @param  {Function} func - the mapping function that takes one argument, a

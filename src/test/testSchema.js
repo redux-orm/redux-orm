@@ -1,7 +1,7 @@
 import {expect} from 'chai';
 import Schema from '../Schema';
 import Model from '../Model';
-import {ForeignKey, ManyToMany} from '../fields';
+import {ForeignKey, ManyToMany, OneToOne} from '../fields';
 
 describe('Schema', () => {
     it('correctly defines models', () => {
@@ -77,6 +77,7 @@ describe('Schema', () => {
             static get fields() {
                 return {
                     locations: new ManyToMany('Location'),
+                    currentLocation: new OneToOne('Location'),
                 };
             }
 
@@ -86,7 +87,7 @@ describe('Schema', () => {
                 };
             }
 
-            static reducer(state, action, Person, orm) {
+            static reducer(state, action, Person) {
                 Person.create({id: 5, name: 'Mike', age: 30});
                 const me = Person.get({name: 'Tommi'});
                 me.update({age: 20});
@@ -172,10 +173,10 @@ describe('Schema', () => {
         expect(orm.PersonLocations).to.exist;
 
         const SF = orm.Location.get({name: 'San Francisco'});
-        expect(SF.PersonSet.count()).to.equal(1);
+        expect(SF.personSet.count()).to.equal(1);
 
         const hki = orm.Location.get({name: 'Helsinki'});
-        expect(hki.PersonSet.count()).to.equal(2);
+        expect(hki.personSet.count()).to.equal(2);
 
         const tommi = orm.Person.first();
         expect(tommi.name).to.equal('Tommi');
@@ -184,5 +185,153 @@ describe('Schema', () => {
         const ats = orm.Person.get({name: 'Ats'});
         expect(ats.locations.count()).to.equal(1);
         expect(ats.locations.first().equals(hki)).to.be.ok;
+    });
+
+    it('Correctly defined OneToOne', () => {
+        const schema = new Schema();
+
+        class UserModel extends Model {
+            static get fields() {
+                return {
+                    profile: new OneToOne('Profile'),
+                    pair: new OneToOne('this'),
+                };
+            }
+            static getMetaOptions() {
+                return {
+                    name: 'User',
+                };
+            }
+
+            static reducer(state, action, User) {
+                switch (action.type) {
+                case 'CREATE_USER':
+                    User.create(action.payload.user);
+                    break;
+                case 'REMOVE_USER':
+                    User.get({id: action.payload}).delete();
+                    break;
+                default:
+                    return state;
+                }
+                return User.getNextState();
+            }
+        }
+
+        class ProfileModel extends Model {
+            static getMetaOptions() {
+                return {
+                    name: 'Profile',
+                };
+            }
+
+            static reducer(state, action, Profile) {
+                switch (action.type) {
+                case 'CREATE_USER':
+                    Profile.create(action.payload.profile);
+                    break;
+                case 'REMOVE_USER':
+                    Profile.modelFilter(profile => profile.user.getId() === action.payload)
+                            .delete();
+                    break;
+                default:
+                    return state;
+                }
+                return Profile.getNextState();
+            }
+        }
+
+        schema.register(UserModel);
+        schema.register(ProfileModel);
+
+        const initialState = {
+            User: {
+                items: [0, 1, 2, 3],
+                itemsById: {
+                    0: {
+                        id: 0,
+                        name: 'Tommi',
+                        profile: 0,
+                        pair: 1,
+                    },
+                    1: {
+                        id: 1,
+                        name: 'Matt',
+                        profile: 1,
+                        pair: 0,
+                    },
+                    2: {
+                        id: 2,
+                        name: 'Mary',
+                        profile: 2,
+                        pair: 3,
+                    },
+                    3: {
+                        id: 3,
+                        name: 'Heinz',
+                        profile: 3,
+                        pair: 2,
+                    },
+                },
+            },
+
+            Profile: {
+                items: [0, 1, 2, 3],
+                itemsById: {
+                    0: {
+                        id: 0,
+                        greeting: 'Hi, this is Tommi\'s profile!',
+                    },
+                    1: {
+                        id: 1,
+                        greeting: 'Hi, this is Matt\'s profile!',
+                    },
+                    2: {
+                        id: 2,
+                        greeting: 'Hi, this is Mary\'s profile!',
+                    },
+                    3: {
+                        id: 3,
+                        greeting: 'Hi, this is Heinz\'s profile!',
+                    },
+                },
+            },
+        };
+
+        const session = schema.from(initialState);
+        const {User, Profile} = session;
+        expect(User.count()).to.equal(4);
+        expect(Profile.count()).to.equal(4);
+
+        const aUser = User.first();
+        const aProfile = Profile.last();
+
+        expect(aUser.user.pair).to.deep.equal(aUser);
+
+        const aUsersProfile = aUser.profile;
+        expect(aUsersProfile.user).to.deep.equal(aUser);
+
+        const reducer = schema.reducer();
+        const nextState = reducer(
+            initialState,
+            {
+                type: 'CREATE_USER',
+                payload: {
+                    user: {
+                        id: 4,
+                        name: 'Jonathan',
+                    },
+                    profile: {
+                        id: 4,
+                        greeting: 'This is Jonathan!',
+                    },
+                },
+            }
+        );
+        const {User: nextUser, Profile: nextProfile} = schema.from(nextState);
+        expect(nextUser.count()).to.equal(5);
+        expect(nextProfile.count()).to.equal(5);
+
+        expect(nextUser.last().profile).to.be.undefined;
     });
 });

@@ -369,8 +369,11 @@ const Model = class Model {
             // We treat `idAttribute` as unique, so if it's
             // in `lookupObj` we search with that attribute only.
             const props = this.accessId(lookupObj[this.idAttribute]);
-            const instance = new ModelClass(props);
-            return instance;
+            if (typeof props !== 'undefined') {
+                return new ModelClass(props);
+            }
+
+            throw new Error('Model instance not found when calling get method');
         }
 
         const iterator = this.iterator();

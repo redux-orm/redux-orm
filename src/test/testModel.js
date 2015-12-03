@@ -4,7 +4,6 @@ import sinon from 'sinon';
 chai.use(sinonChai);
 const {expect} = chai;
 import BaseModel from '../Model';
-import {ForeignKey, ManyToMany} from '../fields';
 
 describe('Model', () => {
     describe('static method', () => {
