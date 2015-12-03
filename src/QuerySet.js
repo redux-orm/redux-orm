@@ -33,7 +33,7 @@ const QuerySet = class QuerySet {
 
     toString() {
         return 'QuerySet contents: \n    - ' + this.idArr.map(id => {
-            return this.modelClass.getWithId(id).toString();
+            return this.modelClass.withId(id).toString();
         }).join('\n    - ');
     }
 
@@ -135,7 +135,7 @@ const QuerySet = class QuerySet {
      */
     map(func) {
         return this.idArr.map(id => {
-            return func(this.modelClass.getWithId(id));
+            return func(this.modelClass.withId(id));
         });
     }
 

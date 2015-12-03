@@ -8,7 +8,7 @@ function forwardManyToOneDescriptor(fieldName, declaredToModel) {
         get() {
             const toId = this._fields[fieldName];
             if (typeof toId !== 'undefined') {
-                return declaredToModel.getWithId(toId);
+                return declaredToModel.withId(toId);
             }
             return undefined;
         },

@@ -8,6 +8,12 @@ A small, simple and immutable ORM to manage the entities in your Redux store. `r
 [![npm version](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
 [![npm downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
 
+## Features
+
+- Define Models with ES6 classes
+- An expressive API to write terse reducers
+- Doesn't mutate state. Only returns the next database state.
+
 ## Why?
 
 I got tired of the boilerplate I was writing for reducers. I wrote long reducers that do pretty much the same thing with very small variations. Immutability helpers make the task easier, but the code is not as expressive since it doesn't implement an abstraction of entities and their relations (`state.updateIn([id, 'locations'], [0, 2])` vs `Person.objects.get({id}).locations.add(0, 2)`). Hence `redux-orm` was born.
@@ -26,21 +32,21 @@ schema.define('Person', {
   // Define the reducer for this entity.
   switch (action.type) {
   case ADD_PERSON:
-    Person.objects.create(action.payload);
+    Person.create(action.payload);
     break;
   case EDIT_PERSON:
     // The data isn't mutated, you're still working with the same data
     // that you started with.
-    Person.objects.get({id: action.payload.id}).update(action.payload);
+    Person.get({id: action.payload.id}).update(action.payload);
     break;
   case DELETE_PERSON:
-    Person.objects.get({id: action.payload.id}).delete();
+    Person.get({id: action.payload.id}).delete();
     break;
   case ADD_FRIENDS:
-    Person.objects.get({id: action.payload.id}).friends.add(action.payload.friendIds);
+    Person.get({id: action.payload.id}).friends.add(action.payload.friendIds);
     break;
   case DELETE_FRIENDS:
-    Person.objects.get({id: action.payload.id}).friends.remove(action.payload.friendIds);
+    Person.get({id: action.payload.id}).friends.remove(action.payload.friendIds);
     break;
   default:
     return state;
@@ -64,7 +70,7 @@ class App extends React.Component {
     const {entities} = this.props;
     const {Person, Location} = schema.from(entities);
 
-    const people = Person.objects.filter(person => person.age > 18).toPlain();
+    const people = Person.filter(person => person.age > 18).toPlain();
 
     const childrenElements = people.map(person => {
       return <li>{person.toString()}</li>
@@ -88,7 +94,7 @@ npm install --save redux-orm
 Import.
 
 ```javascript
-import {Schema, fk, many, Model} from 'redux-orm';
+import {Schema, fk, many, oneToOne, Model} from 'redux-orm';
 ```
 
 Declare your schema.
@@ -125,17 +131,17 @@ class Person extends Model {
   static reducer(state, action, Person, session) {
     switch (action.type) {
     case CREATE_PERSON:
-      Person.objects.create(action.payload);
+      Person.create(action.payload);
       break;
     case UPDATE_PERSON:
-      Person.objects.get({id: action.payload.id}).update(action.payload);
+      Person.withId(action.payload.id).update(action.payload);
       break;
     case ADD_LOCATION:
-      Person.objects.get(id: action.payload.id).locations.add(action.payload.locationId);
+      Person.withId(action.payload.id).locations.add(action.payload.locationId);
     case REMOVE_LOCATION:
-      Person.objects.get(id: action.payload.id).locations.remove(action.payload.locationId);
+      Person.withId(action.payload.id).locations.remove(action.payload.locationId);
     case DELETE_PERSON:
-      Person.objects.delete({id: action.payload.id});
+      Person.withId(action.payload.id).delete();
       break;
     default:
       return state;
@@ -250,13 +256,13 @@ Here's the same logic with `redux-orm`:
 function peopleReducer(state, action, Person) {
   switch (action.type) {
   case CREATE_PERSON:
-    Person.objects.create(action.payload);
+    Person.create(action.payload);
     break;
   case UPDATE_PERSON:
-    Person.objects.get({id: action.payload.id}).update(action.payload);
+    Person.withId(action.payload.id).update(action.payload);
     break;
   case DELETE_PERSON:
-    Person.objects.delete({id: action.payload.id});
+    Person.withId(action.payload.id).delete();
     break;
   default:
     return state;
@@ -317,7 +323,7 @@ schema.register(Person);
 schema.from(startingState);
 
 // person is an instance of `Model`.
-const person = schema.Person.objects.get({name: 'Tommi'});
+const person = schema.Person.get({name: 'Tommi'});
 
 // Access fields like you would in a normal object.
 person.age;
@@ -351,9 +357,9 @@ person.name
 // 'Tommi'
 
 // The changes will be apparent in the new tree returned
-// by `peopleManager.getNextState()`
+// by `schema.getNextState()`
 
-peopleManager.getNextState();
+schema.getNextState();
 // {
 //   Person: {
 //     items: [],
@@ -363,7 +369,14 @@ peopleManager.getNextState();
 
 ```
 
-Methods:
+Class Methods:
+
+- `get` to get a Model instance based on matching properties,
+- `create` to create a new Model instance. The new `id` will be `Math.max(...allOtherIds) + 1` unless you set it explicitly or override the manager's `nextId` method.
+
+You will also have access to all [QuerySet instance methods](http://tommikaikkonen.github.io/redux-orm/QuerySet.html) from the class object for convenience.
+
+Instance methods:
 
 - `toPlain`: returns a plain JavaScript object presentation of the Model.
 - `set`: marks a supplied `propertyName` to be updated to `value` at `Model.getNextState`. Returns `undefined`
@@ -378,34 +391,11 @@ See the full documentation for Meta [here](http://tommikaikkonen.github.io/redux
 
 See the full documentation for Session [here](http://tommikaikkonen.github.io/redux-orm/Session.html)
 
-### Manager
-
-See the full documentation for Manager [here](http://tommikaikkonen.github.io/redux-orm/Manager.html).
-
-Instance methods:
-
-- `get` to get a Model instance based on matching properties,
-- `create` to create a new Model instance. The new `id` will be `Math.max(...allOtherIds) + 1` unless you set it explicitly or override the manager's `nextId` method.
-
-Methods shared with QuerySet:
-
-- `toPlain`: returns the entities as an array of objects.
-- `count`: returns the number of entities.
-- `exists`: return `true` if number of entities is more than 0, else `false`.
-- `filter`: returns a new `QuerySet` with the entities that pass the filter. You can either pass an object that `redux-orm` tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not.
-- `exclude` returns a new `QuerySet` with the entities that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function.
-- `map` maps through all Model instances.
-- `all` return a new `QuerySet` with the same entities.
-- `at` returns an `Entity` instance at the supplied index.
-- `first` returns an `Entity` instance at the `0` index.
-- `last` returns an `Entity` instance at the `EntityManager.count() - 1` index.
-- `delete` marks all the entities for deletion on `Model.getNextState`.
-- `update` marks all the entities for an update based on the supplied argument. The argument can either be an object that will be merged with the entity, or a mapping function that takes the entity as an argument and **returns a new, updated entity**. Do not mutate the entity if you pass a function to `update`.
-
-
 ### QuerySet
 
 See the full documentation for `QuerySet` [here](http://tommikaikkonen.github.io/redux-orm/QuerySet.html).
+
+You can access all of these methods straight from a `Model` class.
 
 Methods:
 
@@ -415,10 +405,10 @@ Methods:
 - `filter`: returns a new `QuerySet` with the entities that pass the filter. You can either pass an object that `redux-orm` tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not.
 - `exclude` returns a new `QuerySet` with the entities that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function.
 - `map` maps through all Model instances.
-- `all` return a new `QuerySet` with the same entities.
-- `at` returns an `Entity` instance at the supplied index in the `QuerySet`.
-- `first` returns an `Entity` instance at the `0` index.
-- `last` returns an `Entity` instance at the `EntityManager.count() - 1` index.
+- `all` returns a new `QuerySet` with the same entities.
+- `at` returns an `Model` instance at the supplied index in the `QuerySet`.
+- `first` returns an `Model` instance at the `0` index.
+- `last` returns an `Model` instance at the `querySet.count() - 1` index.
 - `delete` marks all the `QuerySet` entities for deletion on `Model.getNextState`.
 - `update` marks all the `QuerySet` entities for an update based on the supplied argument. The argument can either be an object that will be merged with the entity, or a mapping function that takes the entity as an argument and **returns a new, updated entity**. Do not mutate the entity if you pass a function to `update`.
 

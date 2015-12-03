@@ -346,7 +346,7 @@ const Model = class Model {
         return new ModelClass(props);
     }
 
-    static getWithId(id) {
+    static withId(id) {
         const ModelClass = this;
         return new ModelClass(this.accessId(id));
     }
@@ -445,9 +445,7 @@ const Model = class Model {
 
     /**
      * Returns a plain JavaScript object representation
-     * of the entity, with the id value set on the `idAttribute` key.
-     * `idAttribute` is looked up on the `Manager` class that controls
-     * this entity.
+     * of the {@link Model} instance.
      * @return {Object} a plain JavaScript object representing the {@link Model}
      */
     toPlain() {

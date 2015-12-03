@@ -3,7 +3,7 @@ import Meta from './Meta';
 import Model from './Model';
 import Schema from './Schema';
 import Session from './Session';
-import {ForeignKey, ManyToMany} from './fields';
+import {ForeignKey, ManyToMany, OneToOne} from './fields';
 
 function fk(relatedModelName) {
     return new ForeignKey(relatedModelName);
@@ -11,6 +11,10 @@ function fk(relatedModelName) {
 
 function many(relatedModelName) {
     return new ManyToMany(relatedModelName);
+}
+
+function oneToOne(relatedModelName) {
+    return new OneToOne(relatedModelName);
 }
 
 export {
@@ -23,6 +27,7 @@ export {
     ManyToMany,
     fk,
     many,
+    oneToOne,
 };
 
 export default Model;
