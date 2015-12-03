@@ -44,25 +44,24 @@ import {
 const QuerySet = class QuerySet {
     /**
      * Creates a QuerySet.
-     * @param  {Manager} manager - used to keep an internal reference
-     *                             to the Manager in use.
+     * @param  {Model} modelClass - the model class of objects in this QuerySet.
      * @param  {number[]} idArr - an array of the id's this QuerySet includes.
      * @param {Object} [opts] - additional options
      */
-    constructor(manager, idArr, opts) {
+    constructor(modelClass, idArr, opts) {
         Object.assign(this, {
-            manager,
+            modelClass,
             idArr,
         }, opts);
     }
 
     _new(ids) {
-        return new this.constructor(this.manager, ids);
+        return new this.constructor(this.modelClass, ids);
     }
 
     toString() {
         return 'QuerySet contents: \n    - ' + this.idArr.map(id => {
-            return this.manager.getWithId(id).toString();
+            return this.modelClass.withId(id).toString();
         }).join('\n    - ');
     }
 
@@ -72,7 +71,7 @@ const QuerySet = class QuerySet {
      */
     toPlain() {
         return this.idArr.map(id => {
-            return this.manager.getPlain(id);
+            return this.modelClass.accessId(id);
         });
     }
 
@@ -98,7 +97,7 @@ const QuerySet = class QuerySet {
      * @return {Model} an {@link Model} instance at index `index` in the QuerySet
      */
     at(index) {
-        return this.manager.get({[this.manager.model.idAttribute]: this.idArr[index]});
+        return this.modelClass.get({[this.modelClass.idAttribute]: this.idArr[index]});
     }
 
     /**
@@ -140,7 +139,19 @@ const QuerySet = class QuerySet {
         } else {
             entities = plainEntities.filter(entity => match(lookupObj, entity));
         }
-        const newIdArr = entities.map(entity => entity[this.manager.model.idAttribute]);
+        const newIdArr = entities.map(entity => entity[this.modelClass.idAttribute]);
+        return this._new(newIdArr);
+    }
+
+    modelFilter(lookupObj) {
+        let entities;
+        const modelInstances = this.idArr.map((_, idx) => this.at(idx));
+        if (typeof lookupObj === 'function') {
+            entities = modelInstances.filter(lookupObj);
+        } else {
+            entities = modelInstances.filter(entity => match(lookupObj, entity));
+        }
+        const newIdArr = entities.map(entity => entity.getId());
         return this._new(newIdArr);
     }
 
@@ -152,7 +163,7 @@ const QuerySet = class QuerySet {
      */
     map(func) {
         return this.idArr.map(id => {
-            return func(this.manager.getWithId(id));
+            return func(this.modelClass.withId(id));
         });
     }
 
@@ -164,7 +175,7 @@ const QuerySet = class QuerySet {
      */
     exclude(lookupObj) {
         const entities = reject(this.toPlain(), entity => match(lookupObj, entity));
-        return this._new(entities.map(entity => entity[this.manager.model.idAttribute]));
+        return this._new(entities.map(entity => entity[this.modelClass.idAttribute]));
     }
 
     /**
@@ -175,7 +186,7 @@ const QuerySet = class QuerySet {
      */
     orderBy(...fieldNames) {
         const entities = sortByAll(this.toPlain(), fieldNames);
-        return this._new(entities.map(entity => entity[this.manager.model.idAttribute]));
+        return this._new(entities.map(entity => entity[this.modelClass.idAttribute]));
     }
 
     /**
@@ -187,7 +198,7 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     update(updater) {
-        this.manager.model.addMutation({
+        this.modelClass.addMutation({
             type: UPDATE,
             payload: {
                 idArr: this.idArr,
@@ -201,32 +212,28 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     delete() {
-        this.manager.model.addMutation({
+        this.modelClass.addMutation({
             type: DELETE,
             payload: this.idArr,
         });
     }
 };
 
-// Override if needed.
-QuerySet.prototype.defaultSharedMethodNames = [
+QuerySet.sharedMethods = [
     'toPlain',
     'count',
-    'exists',
     'at',
-    'first',
-    'map',
+    'all',
     'last',
+    'first',
+    'exists',
     'filter',
+    'map',
     'exclude',
     'orderBy',
     'update',
     'delete',
 ];
-
-// You can set additional shared methods with this.
-// They will be callable from the manager.
-QuerySet.prototype.sharedMethodNames = [];
 
 export default QuerySet;
 </code></pre>
@@ -239,13 +246,13 @@ export default QuerySet;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="ForeignKey.html">ForeignKey</a></li><li><a href="Manager.html">Manager</a></li><li><a href="Meta.html">Meta</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Meta.html">Meta</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Nov 29 2015 19:20:00 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Thu Dec 03 2015 00:06:53 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>

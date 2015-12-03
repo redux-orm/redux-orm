@@ -31,9 +31,9 @@
 import {ManyToMany, ForeignKey} from './fields';
 import Session from './Session';
 import Meta from './Meta';
-import Manager from './Manager';
+import QuerySet from './QuerySet';
 import {CREATE, UPDATE, DELETE, ORDER} from './constants';
-import {m2mName, m2mToFieldName, m2mFromFieldName} from './utils';
+import {match, m2mName, m2mToFieldName, m2mFromFieldName} from './utils';
 
 /**
  * The heart of an ORM, the data model.
@@ -54,43 +54,31 @@ const Model = class Model {
      * @param  {Object} props - the properties to instantiate with
      */
     constructor(props) {
-        const ModelClass = this.getClass();
-        this._initFields(ModelClass.fields, props);
+        this._initFields(props);
     }
 
-    _initFields(fields, props) {
+    _initFields(props) {
+        const ModelClass = this.getClass();
+
         this._fieldNames = [];
         this._fields = props;
-        const ModelClass = this.getClass();
-        const modelName = ModelClass.getName();
-        const idAttribute = ModelClass.getMetaInstance().idAttribute;
-        const session = ModelClass.session;
-
-        const fieldsAssigned = [];
-
-        forOwn(fields, (fieldInstance, fieldName) => {
-            // console.log('initing related fields: ', fieldName, props[fieldName]);
-            Object.defineProperty(this, fieldName, {
-                get: fieldInstance.getGetter(session, this, fieldName, props[fieldName]),
-                set: fieldInstance.getSetter(session, this, fieldName),
-            });
-            fieldsAssigned.push(fieldName);
-        });
+        const idAttribute = ModelClass.idAttribute;
 
         forOwn(props, (fieldValue, fieldName) => {
+            this._fields[fieldName] = fieldValue;
             this._fieldNames.push(fieldName);
-            if (!fieldsAssigned.includes(fieldName)) {
+
+            // If the field has not already been defined on the
+            // prototype for a relation.
+            if (!ModelClass.definedProperties[fieldName]) {
                 Object.defineProperty(this, fieldName, {
                     get: () => fieldValue,
                     set: (value) => {
-                        session.addMutation({
+                        ModelClass.addMutation({
                             type: UPDATE,
                             payload: {
                                 [idAttribute]: this.getId(),
                                 [fieldName]: value,
-                            },
-                            meta: {
-                                name: modelName,
                             },
                         });
                     },
@@ -127,21 +115,21 @@ const Model = class Model {
         const models = [];
         forOwn(fields, (fieldInstance, fieldName) => {
             if (fieldInstance instanceof ManyToMany) {
-                let relatedModelName;
-                if (fieldInstance.relatedModelName === 'this') {
-                    relatedModelName = thisModelName;
+                let toModelName;
+                if (fieldInstance.toModelName === 'this') {
+                    toModelName = thisModelName;
                 } else {
-                    relatedModelName = fieldInstance.relatedModelName;
+                    toModelName = fieldInstance.toModelName;
                 }
 
                 const fromFieldName = m2mFromFieldName(thisModelName);
-                const toFieldName = m2mToFieldName(relatedModelName);
+                const toFieldName = m2mToFieldName(toModelName);
 
                 const Through = class ThroughModel extends this.getThroughModelClass() {
                     static get fields() {
                         return {
                             [fromFieldName]: new ForeignKey(thisModelName),
-                            [toFieldName]: new ForeignKey(relatedModelName),
+                            [toFieldName]: new ForeignKey(toModelName),
                         };
                     }
 
@@ -247,14 +235,6 @@ const Model = class Model {
     }
 
     /**
-     * Returns the default manager for this model class.
-     * @return {Manager} The {@link Manager} for this Model
-     */
-    static get objects() {
-        return new Manager(this);
-    }
-
-    /**
      * Gets the name of this {@link Model} class.
      * Delegates to {@link Meta}.
      *
@@ -305,15 +285,6 @@ const Model = class Model {
     }
 
     /**
-     * Returns the related {@link Manager} instance for this {@link Model}.
-     *
-     * @return {Manager} The related {@link Manager} instance for this {@link Model}.
-     */
-    static getRelatedManager() {
-        return new Manager(this);
-    }
-
-    /**
      * Connect the model class to a {@link Session}.
      *
      * @param  {Session} session - The session to connect to.
@@ -346,6 +317,125 @@ const Model = class Model {
     }
 
     /**
+     * Returns the id to be assigned to a new entity.
+     * You may override this to suit your needs.
+     * @return {*} the id value for a new entity.
+     */
+    static nextId() {
+        const idArr = this.accessIds();
+        if (idArr.length === 0) {
+            return 0;
+        }
+        return Math.max(...idArr) + 1;
+    }
+
+    static getQuerySet() {
+        return this.getQuerySetFromIds(this.accessIds());
+    }
+
+    static getQuerySetFromIds(ids) {
+        const QuerySetClass = this.querySetClass;
+        return new QuerySetClass(this, ids);
+    }
+
+    static get query() {
+        if (!this._cachedQuerySet) {
+            this._cachedQuerySet = this.getQuerySet();
+        }
+        return this._cachedQuerySet;
+    }
+
+    /**
+     * Returns a {@link QuerySet} containing all {@link Model} instances.
+     * @return {QuerySet} a QuerySet containing all {@link Model} instances
+     */
+    static all() {
+        return this.getQuerySet();
+    }
+
+    /**
+     * Records the addition of a new {@link Model} instance and returns it.
+     *
+     * @param  {props} props - the new {@link Model}'s properties.
+     * @return {Model} a new {@link Model} instance.
+     */
+    static create(props) {
+        const idAttribute = this.idAttribute;
+
+        if (!props.hasOwnProperty(idAttribute)) {
+            props[idAttribute] = this.nextId();
+        }
+
+        this.addMutation({
+            type: CREATE,
+            payload: props,
+        });
+        const ModelClass = this;
+        return new ModelClass(props);
+    }
+
+    static withId(id) {
+        const ModelClass = this;
+        return new ModelClass(this.accessId(id));
+    }
+
+    /**
+     * Gets the {@link Model} instance that matches properties in `lookupObj`.
+     * Throws an error if {@link Model} is not found.
+     *
+     * @param  {Object} lookupObj - the properties used to match a single entity.
+     * @return {Model} a {@link Model} instance that matches `lookupObj` properties.
+     */
+    static get(lookupObj) {
+        if (!this.accessIds().length) {
+            throw new Error(`No entities found for model ${this.getName()}`);
+        }
+        const ModelClass = this;
+
+        const keys = Object.keys(lookupObj);
+        if (keys.includes(this.idAttribute)) {
+            // We treat `idAttribute` as unique, so if it's
+            // in `lookupObj` we search with that attribute only.
+            const props = this.accessId(lookupObj[this.idAttribute]);
+            if (typeof props !== 'undefined') {
+                return new ModelClass(props);
+            }
+
+            throw new Error('Model instance not found when calling get method');
+        }
+
+        const iterator = this.iterator();
+
+        let done = false;
+        while (!done) {
+            const curr = iterator.next();
+            if (match(lookupObj, curr.value)) {
+                return new ModelClass(curr.value);
+            }
+            done = curr.done;
+        }
+
+        throw new Error('Model instance not found when calling get method');
+    }
+
+    /**
+     * Records an ordering mutation for the objects.
+     * Note that if you create or update any objects after
+     * calling this, they won't be in order.
+     *
+     * @param {function|string|string[]} orderArg - A function, an attribute name or a list of attribute
+     *                                              names to order the objects by. If you supply a function,
+     *                                              it must return a value user to order the entities.
+     * @return {undefined}
+     */
+    static setOrder(orderArg) {
+        this.addMutation({
+            type: ORDER,
+            payload: orderArg,
+        });
+    }
+
+    /**
      * Gets the {@link Model} class or subclass constructor (the class that
      * instantiated this instance).
      *
@@ -361,7 +451,7 @@ const Model = class Model {
      * @return {*} The id value of the current instance.
      */
     getId() {
-        return this._fields[this.getClass().getMetaInstance().idAttribute];
+        return this._fields[this.getClass().idAttribute];
     }
 
     /**
@@ -383,9 +473,7 @@ const Model = class Model {
 
     /**
      * Returns a plain JavaScript object representation
-     * of the entity, with the id value set on the `idAttribute` key.
-     * `idAttribute` is looked up on the `Manager` class that controls
-     * this entity.
+     * of the {@link Model} instance.
      * @return {Object} a plain JavaScript object representing the {@link Model}
      */
     toPlain() {
@@ -441,6 +529,8 @@ const Model = class Model {
 };
 
 Model.fields = {};
+Model.definedProperties = {};
+Model.querySetClass = QuerySet;
 
 export default Model;
 </code></pre>
@@ -453,13 +543,13 @@ export default Model;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="ForeignKey.html">ForeignKey</a></li><li><a href="Manager.html">Manager</a></li><li><a href="Meta.html">Meta</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Meta.html">Meta</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Nov 29 2015 19:20:00 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Thu Dec 03 2015 00:06:53 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>

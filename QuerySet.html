@@ -48,7 +48,7 @@
     <h2>Constructor</h2>
     
 
-    <h4 class="name" id="QuerySet"><span class="type-signature"></span>new QuerySet<span class="signature">(manager, idArr, opts<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="QuerySet"><span class="type-signature"></span>new QuerySet<span class="signature">(modelClass, idArr, opts<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -93,13 +93,13 @@
 
         <tr>
             
-                <td class="name"><code>manager</code></td>
+                <td class="name"><code>modelClass</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="Manager.html">Manager</a></span>
+<span class="param-type"><a href="Model.html">Model</a></span>
 
 
             
@@ -117,8 +117,7 @@
 
             
 
-            <td class="description last"><p>used to keep an internal reference
-                            to the Manager in use.</p></td>
+            <td class="description last"><p>the model class of objects in this QuerySet.</p></td>
         </tr>
 
     
@@ -323,7 +322,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line96">line 96</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line95">line 95</a>
     </li></ul></dd>
     
 
@@ -476,7 +475,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line72">line 72</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line71">line 71</a>
     </li></ul></dd>
     
 
@@ -580,7 +579,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line55">line 55</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line54">line 54</a>
     </li></ul></dd>
     
 
@@ -684,7 +683,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line175">line 175</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line186">line 186</a>
     </li></ul></dd>
     
 
@@ -833,7 +832,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line137">line 137</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line148">line 148</a>
     </li></ul></dd>
     
 
@@ -937,7 +936,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line63">line 63</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line62">line 62</a>
     </li></ul></dd>
     
 
@@ -1090,7 +1089,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line106">line 106</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line105">line 105</a>
     </li></ul></dd>
     
 
@@ -1194,7 +1193,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line80">line 80</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line79">line 79</a>
     </li></ul></dd>
     
 
@@ -1294,7 +1293,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line88">line 88</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line87">line 87</a>
     </li></ul></dd>
     
 
@@ -1444,7 +1443,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line125">line 125</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line136">line 136</a>
     </li></ul></dd>
     
 
@@ -1598,7 +1597,7 @@ order.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line148">line 148</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line159">line 159</a>
     </li></ul></dd>
     
 
@@ -1702,7 +1701,7 @@ order.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line45">line 45</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line44">line 44</a>
     </li></ul></dd>
     
 
@@ -1857,7 +1856,7 @@ order.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line161">line 161</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line172">line 172</a>
     </li></ul></dd>
     
 
@@ -1917,13 +1916,13 @@ order.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="ForeignKey.html">ForeignKey</a></li><li><a href="Manager.html">Manager</a></li><li><a href="Meta.html">Meta</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Meta.html">Meta</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Nov 29 2015 19:20:00 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Thu Dec 03 2015 00:06:53 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>
