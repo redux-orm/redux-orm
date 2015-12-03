@@ -165,7 +165,6 @@ const Manager = class Manager {
 };
 
 Manager.prototype.querySetClass = QuerySet;
-attachQuerySetMethods(Manager.prototype, QuerySet.prototype.defaultSharedMethodNames);
-attachQuerySetMethods(Manager.prototype, QuerySet.prototype.sharedMethodNames);
+attachQuerySetMethods(Manager, QuerySet);
 
 export default Manager;

@@ -1,3 +1,5 @@
+import forOwn from 'lodash/object/forOwn';
+
 /**
  * @module utils
  */
@@ -144,9 +146,21 @@ function querySetDelegatorFactory(methodName) {
     };
 }
 
-function attachQuerySetMethods(target, methodNames) {
-    methodNames.forEach(methodName => {
-        target[methodName] = querySetDelegatorFactory(methodName);
+function attachQuerySetMethods(managerClass, querySetClass) {
+    const managerProto = managerClass.prototype;
+    const querySetProto = querySetClass.prototype;
+    const ignoreMethods = [
+        '_new',
+    ];
+
+    forOwn(querySetProto, (value, key) => {
+        const isFunc = typeof value === 'function';
+        const ignored = ignoreMethods.includes(key);
+        const alreadySet = typeof managerProto[key] === 'function';
+
+        if (isFunc && !ignored && !alreadySet) {
+            managerProto[key] = querySetDelegatorFactory(key);
+        }
     });
 }
 

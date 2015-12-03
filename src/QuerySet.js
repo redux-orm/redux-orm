@@ -27,16 +27,24 @@ const QuerySet = class QuerySet {
             idArr,
         }, opts);
     }
+};
 
+/**
+ * The QuerySet prototypes are declared outside the class so that they
+ * can be enumerated over in ES5. This is useful when attaching all
+ * methods to a Manager class, as they share these.
+ */
+
+QuerySet.prototype = {
     _new(ids) {
         return new this.constructor(this.manager, ids);
-    }
+    },
 
     toString() {
         return 'QuerySet contents: \n    - ' + this.idArr.map(id => {
             return this.manager.getWithId(id).toString();
         }).join('\n    - ');
-    }
+    },
 
     /**
      * Returns an array of the plain objects represented by the QuerySet.
@@ -46,7 +54,7 @@ const QuerySet = class QuerySet {
         return this.idArr.map(id => {
             return this.manager.getPlain(id);
         });
-    }
+    },
 
     /**
      * Returns the number of model instances represented by the QuerySet.
@@ -54,7 +62,7 @@ const QuerySet = class QuerySet {
      */
     count() {
         return this.idArr.length;
-    }
+    },
 
     /**
      * Checks if QuerySet has any objects.
@@ -62,7 +70,7 @@ const QuerySet = class QuerySet {
      */
     exists() {
         return Boolean(this.count());
-    }
+    },
 
     /**
      * Returns the {@link Model} instance at index `index` in the QuerySet.
@@ -71,7 +79,7 @@ const QuerySet = class QuerySet {
      */
     at(index) {
         return this.manager.get({[this.manager.model.idAttribute]: this.idArr[index]});
-    }
+    },
 
     /**
      * Returns the {@link Model} instance at index 0 in the QuerySet.
@@ -79,7 +87,7 @@ const QuerySet = class QuerySet {
      */
     first() {
         return this.at(0);
-    }
+    },
 
     /**
      * Returns the {@link Model} instance at index `QuerySet.count() - 1`
@@ -87,7 +95,7 @@ const QuerySet = class QuerySet {
      */
     last() {
         return this.at(this.idArr.length - 1);
-    }
+    },
 
     /**
      * Returns a new QuerySet with the same objects.
@@ -95,7 +103,7 @@ const QuerySet = class QuerySet {
      */
     all() {
         return this._new(this.idArr);
-    }
+    },
 
     /**
      * Returns a new {@link QuerySet} with objects that match properties in `lookupObj`.
@@ -114,7 +122,7 @@ const QuerySet = class QuerySet {
         }
         const newIdArr = entities.map(entity => entity[this.manager.model.idAttribute]);
         return this._new(newIdArr);
-    }
+    },
 
     /**
      * Maps the {@link Model} instances in the {@link QuerySet}.
@@ -126,7 +134,7 @@ const QuerySet = class QuerySet {
         return this.idArr.map(id => {
             return func(this.manager.getWithId(id));
         });
-    }
+    },
 
     /**
      * Returns a new {@link QuerySet} with objects that do not match properties in `lookupObj`.
@@ -137,7 +145,7 @@ const QuerySet = class QuerySet {
     exclude(lookupObj) {
         const entities = reject(this.toPlain(), entity => match(lookupObj, entity));
         return this._new(entities.map(entity => entity[this.manager.model.idAttribute]));
-    }
+    },
 
     /**
      * Returns a new {@link QuerySet} with objects ordered by `fieldNames` in ascending
@@ -148,7 +156,7 @@ const QuerySet = class QuerySet {
     orderBy(...fieldNames) {
         const entities = sortByAll(this.toPlain(), fieldNames);
         return this._new(entities.map(entity => entity[this.manager.model.idAttribute]));
-    }
+    },
 
     /**
      * Records a mutation specified with `updater` to all the objects in the {@link QuerySet}.
@@ -166,7 +174,7 @@ const QuerySet = class QuerySet {
                 updater,
             },
         });
-    }
+    },
 
     /**
      * Records a deletion of all the objects in this {@link QuerySet}.
@@ -177,27 +185,8 @@ const QuerySet = class QuerySet {
             type: DELETE,
             payload: this.idArr,
         });
-    }
+    },
 };
 
-// Override if needed.
-QuerySet.prototype.defaultSharedMethodNames = [
-    'toPlain',
-    'count',
-    'exists',
-    'at',
-    'first',
-    'map',
-    'last',
-    'filter',
-    'exclude',
-    'orderBy',
-    'update',
-    'delete',
-];
-
-// You can set additional shared methods with this.
-// They will be callable from the manager.
-QuerySet.prototype.sharedMethodNames = [];
 
 export default QuerySet;

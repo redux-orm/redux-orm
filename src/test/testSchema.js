@@ -178,6 +178,8 @@ describe('Schema', () => {
         expect(orm.PersonLocations).to.exist;
 
         const SF = orm.Location.objects.get({name: 'San Francisco'});
+        console.log('hoo');
+        console.log(SF.PersonSet);
         expect(SF.PersonSet.count()).to.equal(1);
 
         const hki = orm.Location.objects.get({name: 'Helsinki'});
