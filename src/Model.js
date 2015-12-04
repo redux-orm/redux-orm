@@ -97,20 +97,17 @@ const Model = class Model {
                 const fromFieldName = m2mFromFieldName(thisModelName);
                 const toFieldName = m2mToFieldName(toModelName);
 
-                const Through = class ThroughModel extends this.getThroughModelClass() {
-                    static get fields() {
-                        return {
-                            [fromFieldName]: new ForeignKey(thisModelName),
-                            [toFieldName]: new ForeignKey(toModelName),
-                        };
-                    }
+                const Through = class ThroughModel extends this.getThroughModelClass() {};
 
-                    static getMetaOptions() {
-                        return {
-                            'name': m2mName(thisModelName, fieldName),
-                        };
-                    }
+                Through.meta = {
+                    name: m2mName(thisModelName, fieldName),
                 };
+
+                Through.fields = {
+                    [fromFieldName]: new ForeignKey(thisModelName),
+                    [toFieldName]: new ForeignKey(toModelName),
+                };
+
 
                 models.push(Through);
             }
@@ -125,8 +122,19 @@ const Model = class Model {
      *
      * @return {Object} the options object used to instantiate a {@link Meta} class.
      */
-    static getMetaOptions() {
-        throw new Error('You must declare a static getMetaOptions function in your Model class.');
+    static meta() {
+        throw new Error('You must declare a static "meta" function in your Model class.');
+    }
+
+    static getMeta() {
+        if (typeof this.meta === 'function') {
+            return this.meta();
+        }
+        if (typeof this.meta === 'undefined') {
+            throw new Error(`You must declare either a 'meta' class method or
+                            a 'meta' class variable in your Model Class`);
+        }
+        return this.meta;
     }
 
     /**
@@ -147,7 +155,7 @@ const Model = class Model {
     static getMetaInstance() {
         if (!this._meta) {
             const MetaClass = this.getMetaClass();
-            this._meta = new MetaClass(this.getMetaOptions());
+            this._meta = new MetaClass(this.getMeta());
         }
         return this._meta;
     }

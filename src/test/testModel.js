@@ -21,7 +21,7 @@ describe('Model', () => {
             // of Model, so our manipulations
             // won't survive longer than each test.
             Model = Object.create(BaseModel);
-            Model.getMetaOptions = () => {
+            Model.meta = () => {
                 return {
                     name: 'Model',
                 };
@@ -66,14 +66,14 @@ describe('Model', () => {
         });
     });
 
-    describe('static method delegated to Meta', () => {
+    describe('static method delegates to Meta', () => {
         let Model;
         let metaMock;
         const stateMock = {};
 
         beforeEach(() => {
             Model = Object.create(BaseModel);
-            Model.getMetaOptions = () => {
+            Model.meta = () => {
                 return {
                     name: 'Model',
                 };

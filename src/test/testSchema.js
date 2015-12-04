@@ -14,7 +14,7 @@ describe('Schema', () => {
                 };
             }
 
-            static getMetaOptions() {
+            static meta() {
                 return {
                     name: 'Person',
                 };
@@ -22,7 +22,7 @@ describe('Schema', () => {
         }
 
         class LocationModel extends Model {
-            static getMetaOptions() {
+            static meta() {
                 return {
                     name: 'Location',
                 };
@@ -81,7 +81,7 @@ describe('Schema', () => {
                 };
             }
 
-            static getMetaOptions() {
+            static meta() {
                 return {
                     name: 'Person',
                 };
@@ -99,7 +99,7 @@ describe('Schema', () => {
         }
 
         class LocationModel extends Model {
-            static getMetaOptions() {
+            static meta() {
                 return {
                     name: 'Location',
                 };
@@ -197,7 +197,7 @@ describe('Schema', () => {
                     pair: new OneToOne('this'),
                 };
             }
-            static getMetaOptions() {
+            static meta() {
                 return {
                     name: 'User',
                 };
@@ -219,7 +219,7 @@ describe('Schema', () => {
         }
 
         class ProfileModel extends Model {
-            static getMetaOptions() {
+            static meta() {
                 return {
                     name: 'Profile',
                 };

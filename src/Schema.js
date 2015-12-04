@@ -42,12 +42,9 @@ const Schema = class Schema {
      * @return {Model} The defined model class.
      */
     define(modelName, relatedFields, reducer, metaOpts) {
-        class ShortcutDefinedModel extends Model {
-            static getMetaOptions() {
-                return {name: modelName, ...metaOpts};
-            }
-        }
+        class ShortcutDefinedModel extends Model {}
 
+        ShortcutDefinedModel.meta = {name: modelName, ...metaOpts};
         ShortcutDefinedModel.fields = relatedFields;
 
         if (typeof reducer === 'function') {

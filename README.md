@@ -115,7 +115,7 @@ const Person = schema.define('Person', {
 
 // You may also specify instance methods if you declare your model with an ES6 class.
 class Person extends Model {
-  static getMetaOpts() {
+  static meta() {
     return {
       name: 'Person',
     };
@@ -171,6 +171,10 @@ class Location extends Model {
     return `${this.city}, ${this.country}`;
   }
 }
+
+// To make sure your code works mangled and minimized,
+// You need to specify the model name with a string.
+Location.meta = {name: 'Location'};
 
 ```
 
@@ -292,7 +296,7 @@ See the full documentation for `Model` [here](http://tommikaikkonen.github.io/re
 import {Model, Schema} from 'redux-orm';
 
 class Person extends Model {
-  static getMetaOpts() {
+  static meta() {
     return {
       name: 'Person';
     }
@@ -343,10 +347,10 @@ person.toString();
 
 // You can only record a mutation.
 // It won't be applied yet.
-person.set('name', 'Matt');
+person.name = 'Matt';
 // undefined
 
-// You can see that nothing has changed in the Entity.
+// You can see that nothing has changed in the Model instance.
 person.name
 // 'Tommi'
 
