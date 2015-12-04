@@ -1,5 +1,5 @@
 import find from 'lodash/collection/find';
-import sortBy from 'lodash/collection/sortBy';
+import sortByOrder from 'lodash/collection/sortByOrder';
 import omit from 'lodash/object/omit';
 import {ListIterator} from './utils';
 
@@ -105,32 +105,34 @@ const Meta = class Meta {
     }
 
     /**
-     * Returns the data structure with objects ordered
-     * by `comparator`.
+     * Returns the data structure with objects in ascending order.
+     * This function uses the `lodash `[sortByOrder](https://lodash.com/docs#sortByOrder)
+     * internally, so you can supply it the same `iteratees` and `orders`
+     * arguments. Please read there for the full docs.
      *
      * @param  {Object} branch - the state of the data structure
-     * @param  {Function} comparator - the comparator function
-     * @return {Object} the data structure ordered by `comparator`.
+     * @param  {Function[]|Object[]|string[]} iteratees - the iteratees to sort by
+     * @param  {string[]} orders - the sort orders of `iteratees`
+     * @return {Object} the data structure ordered with the arguments.
      */
-    order(branch, comparator) {
+    order(branch, iteratees, orders) {
         const thisMeta = this;
         const {arrName, mapName} = this;
 
-        // Wrap comparator to access the full object if the model
-        // is indexed.
-        function wrappedComparator(id) {
-            return comparator(thisMeta.accessId(branch, id));
-        }
-
         if (this.indexById) {
-            const orderedIds = sortBy(branch[arrName], wrappedComparator);
+            // TODO: we don't need to build a full list to sort,
+            // but it's convenient for direct use of lodash.
+            // By implementing our own sorting, this could be more performant.
+            const fullList = this.accessList(branch);
+            const orderedObjects = sortByOrder(fullList, iteratees, orders);
             return {
-                [arrName]: orderedIds,
+                [arrName]: orderedObjects.map(obj => obj[thisMeta.idAttribute]),
                 [mapName]: branch[mapName],
             };
         }
+
         return {
-            [arrName]: sortBy(branch[arrName], comparator),
+            [arrName]: sortByOrder(branch[arrName], iteratees, orders),
         };
     }
 

@@ -77,12 +77,10 @@ const Session = class Session {
     reduce() {
         this.mutations = [];
         const nextState = {};
-        // Don't call user reducers when bootstrapping data.
-        if (!this._bootstrapping) {
-            this.models.forEach(modelClass => {
-                nextState[modelClass.getName()] = modelClass.callUserReducer();
-            });
-        }
+
+        this.models.forEach(modelClass => {
+            nextState[modelClass.getName()] = modelClass.callUserReducer();
+        });
         // The remaining mutations are for M2M tables.
         return this.mutations.reduce((state, action) => {
             const modelName = action.meta.name;

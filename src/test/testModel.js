@@ -54,14 +54,15 @@ describe('Model', () => {
             expect(reducerStub).to.have.been.calledWithExactly(stateMock, actionMock, Model, sessionMock);
         });
 
-        it('callUserReducer calls reducer with correct arguments', () => {
-            const reducerResult = {};
-            const reducerStub = sinon.stub().returns(reducerResult);
-            Model.reducer = reducerStub;
+        it('getMetaInstance works correctly', () => {
+            const MetaMockClass = sinon.stub();
+            Model.getMetaClass = () => MetaMockClass;
 
-            Model._session = sessionMock;
-            const MetaMock = {};
-            Model.getMetaInstance = () => MetaMock;
+            const instance = Model.getMetaInstance();
+            expect(instance).to.be.an.instanceOf(MetaMockClass);
+
+            // Make sure the previous instance is cached
+            expect(Model.getMetaInstance()).to.equal(instance);
         });
     });
 

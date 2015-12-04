@@ -1,18 +1,16 @@
-// import {expect} from 'chai';
+// import chai from 'chai';
+// import sinonChai from 'sinon-chai';
+// import sinon from 'sinon';
+// chai.use(sinonChai);
+// const {expect} = chai;
 // import {
 //     UPDATE,
 //     DELETE,
 // } from '../constants';
-// import Manager from '../Manager';
 // import QuerySet from '../QuerySet';
 
 // describe('QuerySet', () => {
-//     let stateTree;
-//     const PersonManager = Manager.extend({
-//         schema: 'people',
-//     });
-//     let personManager;
-//     let querySet;
+//     let modelClassMock;
 
 //     function getStateTree() {
 //         return {

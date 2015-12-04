@@ -80,7 +80,7 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
             const throughQs = throughModel.filter(lookupObj);
             const toIdsSet = {};
 
-            throughQs.toPlain().forEach(throughObject => {
+            throughQs.plain.objects().forEach(throughObject => {
                 const id = throughObject[reverse ? fromFieldName : toFieldName];
                 if (typeof id !== 'undefined') {
                     toIdsSet[id] = true;

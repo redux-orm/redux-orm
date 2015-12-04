@@ -1,6 +1,7 @@
 import reject from 'lodash/collection/reject';
-import sortByAll from 'lodash/collection/sortByAll';
-import {match} from './utils.js';
+import filter from 'lodash/collection/filter';
+import sortByOrder from 'lodash/collection/sortByOrder';
+
 import {
     UPDATE,
     DELETE,
@@ -25,10 +26,34 @@ const QuerySet = class QuerySet {
             modelClass,
             idArr,
         }, opts);
+
+        this._opts = opts;
+
+        // A flag that tells if the user wants
+        // the result in plain javascript objects
+        // or {@link Model} instances.
+        // Results are plain objects by default.
+        if (opts && opts.hasOwnProperty('plain')) {
+            this._plain = opts.plain;
+        } else {
+            this._plain = false;
+        }
     }
 
     _new(ids) {
-        return new this.constructor(this.modelClass, ids);
+        const plain = this._plain;
+        const opts = Object.assign({}, this._opts, {plain});
+        return new this.constructor(this.modelClass, ids, opts);
+    }
+
+    get plain() {
+        this._plain = true;
+        return this;
+    }
+
+    get models() {
+        this._plain = false;
+        return this;
     }
 
     toString() {
@@ -69,6 +94,9 @@ const QuerySet = class QuerySet {
      * @return {Model} an {@link Model} instance at index `index` in the QuerySet
      */
     at(index) {
+        if (this._plain) {
+            return this.modelClass.accessId(this.idArr[index]);
+        }
         return this.modelClass.get({[this.modelClass.idAttribute]: this.idArr[index]});
     }
 
@@ -97,33 +125,56 @@ const QuerySet = class QuerySet {
     }
 
     /**
+     * Returns all objects in this QuerySet. If the plain flag
+     * is on (default), this will be a list of ordinary JavaScript objects.
+     * If it is off, these will be Model instances.
+     *
+     * @return {Array} An array of either JavaScript objects or Model instances.
+     */
+    objects() {
+        return this.idArr.map((_, idx) => this.at(idx));
+    }
+
+    /**
      * Returns a new {@link QuerySet} with objects that match properties in `lookupObj`.
      *
      * @param  {Object} lookupObj - the properties to match objects with.
      * @return {QuerySet} a new {@link QuerySet} with objects that passed the filter.
      */
     filter(lookupObj) {
-        const plainEntities = this.toPlain();
-        let entities;
-
-        if (typeof lookupObj === 'function') {
-            entities = plainEntities.filter(lookupObj);
-        } else {
-            entities = plainEntities.filter(entity => match(lookupObj, entity));
-        }
-        const newIdArr = entities.map(entity => entity[this.modelClass.idAttribute]);
-        return this._new(newIdArr);
+        return this._filterOrExclude(lookupObj, false);
     }
 
-    modelFilter(lookupObj) {
+    /**
+     * Returns a new {@link QuerySet} with objects that do not match properties in `lookupObj`.
+     *
+     * @param  {Object} lookupObj - the properties to unmatch objects with.
+     * @return {QuerySet} a new {@link QuerySet} with objects that passed the filter.
+     */
+    exclude(lookupObj) {
+        return this._filterOrExclude(lookupObj, true);
+    }
+
+    _filterOrExclude(lookupObj, exclude) {
+        const func = exclude ? reject : filter;
         let entities;
-        const modelInstances = this.idArr.map((_, idx) => this.at(idx));
         if (typeof lookupObj === 'function') {
-            entities = modelInstances.filter(lookupObj);
+            // For filtering with function,
+            // use whatever object type
+            // is flagged.
+            entities = this.objects();
         } else {
-            entities = modelInstances.filter(entity => match(lookupObj, entity));
+            // Lodash filtering doesn't work with
+            // Model instances.
+            entities = this.plain.objects();
         }
-        const newIdArr = entities.map(entity => entity.getId());
+        const filteredEntities = func(entities, lookupObj);
+
+        const getIdFunc = this._plain
+            ? (obj) => obj[this.modelClass.idAttribute]
+            : (obj) => obj.getId();
+
+        const newIdArr = filteredEntities.map(getIdFunc);
         return this._new(newIdArr);
     }
 
@@ -134,20 +185,9 @@ const QuerySet = class QuerySet {
      * @return {Array}  the mapped array
      */
     map(func) {
-        return this.idArr.map(id => {
-            return func(this.modelClass.withId(id));
+        return this.idArr.map((_, idx) => {
+            return func(this.at(idx));
         });
-    }
-
-    /**
-     * Returns a new {@link QuerySet} with objects that do not match properties in `lookupObj`.
-     *
-     * @param  {Object} lookupObj - the properties to unmatch objects with.
-     * @return {QuerySet} a new {@link QuerySet} with objects that passed the filter.
-     */
-    exclude(lookupObj) {
-        const entities = reject(this.toPlain(), entity => match(lookupObj, entity));
-        return this._new(entities.map(entity => entity[this.modelClass.idAttribute]));
     }
 
     /**
@@ -156,8 +196,8 @@ const QuerySet = class QuerySet {
      * @param  {string[]} fieldNames - the property names to order by.
      * @return {QuerySet} a new {@link QuerySet} with objects ordered by `fieldNames`.
      */
-    orderBy(...fieldNames) {
-        const entities = sortByAll(this.toPlain(), fieldNames);
+    orderBy(...args) {
+        const entities = sortByOrder(this.objects(), ...args);
         return this._new(entities.map(entity => entity[this.modelClass.idAttribute]));
     }
 

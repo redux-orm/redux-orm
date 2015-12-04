@@ -364,10 +364,9 @@ const Model = class Model {
         }
         const ModelClass = this;
 
-        const keys = Object.keys(lookupObj);
-        if (keys.includes(this.idAttribute)) {
-            // We treat `idAttribute` as unique, so if it's
-            // in `lookupObj` we search with that attribute only.
+        // We treat `idAttribute` as unique, so if it's
+        // in `lookupObj` we search with that attribute only.
+        if (lookupObj.hasOwnProperty(this.idAttribute)) {
             const props = this.accessId(lookupObj[this.idAttribute]);
             if (typeof props !== 'undefined') {
                 return new ModelClass(props);
