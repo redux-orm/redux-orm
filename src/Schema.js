@@ -44,7 +44,7 @@ const Schema = class Schema {
     define(modelName, relatedFields, reducer, metaOpts) {
         class ShortcutDefinedModel extends Model {}
 
-        ShortcutDefinedModel.meta = {name: modelName, ...metaOpts};
+        ShortcutDefinedModel.meta = Object.assign({name: modelName}, metaOpts);
         ShortcutDefinedModel.fields = relatedFields;
 
         if (typeof reducer === 'function') {

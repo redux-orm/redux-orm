@@ -200,8 +200,8 @@ const QuerySet = class QuerySet {
      * @param  {string[]} fieldNames - the property names to order by.
      * @return {QuerySet} a new {@link QuerySet} with objects ordered by `fieldNames`.
      */
-    orderBy(...args) {
-        const entities = sortByOrder(this.objects(), ...args);
+    orderBy(args) {
+        const entities = sortByOrder.apply([this.objects()].concat(args));
         return this._new(entities.map(entity => entity[this.modelClass.idAttribute]));
     }
 
