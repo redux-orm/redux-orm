@@ -136,9 +136,31 @@ function querySetDelegatorFactory(methodName) {
 
 function attachQuerySetMethods(modelClass, querySetClass) {
     const querySetSharedMethods = querySetClass.sharedMethods;
-
     querySetSharedMethods.forEach(methodName => {
-        modelClass[methodName] = querySetDelegatorFactory(methodName);
+        // Check for descriptor.
+        const descriptor = Object.getOwnPropertyDescriptor(querySetClass.prototype, methodName);
+        if (typeof descriptor !== 'undefined' && typeof descriptor.get !== 'undefined') {
+            Object.defineProperty(modelClass, methodName, descriptor);
+        } else {
+            modelClass[methodName] = querySetDelegatorFactory(methodName);
+        }
+    });
+
+    // `plain` and `models` are specially handled cases
+    // as they're static getters.
+    Object.defineProperties(modelClass, {
+        plain: {
+            get() {
+                this._plain = true;
+                return this;
+            },
+        },
+        models: {
+            get() {
+                this._plain = false;
+                return this;
+            },
+        },
     });
 }
 

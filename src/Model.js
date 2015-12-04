@@ -318,6 +318,12 @@ const Model = class Model {
         return new QuerySetClass(this, ids);
     }
 
+    static invalidateCaches() {
+        this._cachedQuerySet = undefined;
+        this._meta = undefined;
+        this._setupDone = undefined;
+    }
+
     static get query() {
         if (!this._cachedQuerySet) {
             this._cachedQuerySet = this.getQuerySet();

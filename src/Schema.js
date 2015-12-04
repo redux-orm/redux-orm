@@ -77,7 +77,11 @@ const Schema = class Schema {
      * @return {undefined}
      */
     register(model) {
+        model.invalidateCaches();
+
         const m2m = model.getManyToManyModels();
+        m2m.forEach(m2mModel => m2mModel.invalidateCaches());
+
         this.implicitThroughModels.push(...m2m);
         this.registry.push(model);
     }

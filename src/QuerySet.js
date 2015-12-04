@@ -40,6 +40,10 @@ const QuerySet = class QuerySet {
         }
     }
 
+    static addSharedMethod(methodName) {
+        this.sharedMethods = this.sharedMethods.concat(methodName);
+    }
+
     _new(ids) {
         const plain = this._plain;
         const opts = Object.assign({}, this._opts, {plain});

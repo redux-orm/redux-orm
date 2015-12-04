@@ -1,136 +1,164 @@
-// import chai from 'chai';
-// import sinonChai from 'sinon-chai';
-// import sinon from 'sinon';
-// chai.use(sinonChai);
-// const {expect} = chai;
-// import {
-//     UPDATE,
-//     DELETE,
-// } from '../constants';
-// import QuerySet from '../QuerySet';
+import chai from 'chai';
+import sinonChai from 'sinon-chai';
+import sinon from 'sinon';
+chai.use(sinonChai);
+const {expect} = chai;
 
-// describe('QuerySet', () => {
-//     let modelClassMock;
+import Model from '../Model';
+import Schema from '../Schema';
+import QuerySet from '../QuerySet';
+import {
+    UPDATE,
+    DELETE,
+} from '../constants';
 
-//     function getStateTree() {
-//         return {
-//             people: {
-//                 people: [0, 1, 2],
-//                 peopleById: {
-//                     0: {
-//                         name: 'Tommi',
-//                         age: 25,
-//                     },
-//                     1: {
-//                         name: 'John',
-//                         age: 50,
-//                     },
-//                     2: {
-//                         name: 'Mary',
-//                         age: 60,
-//                     },
-//                 },
-//             },
-//         };
-//     }
-//     beforeEach(() => {
-//         stateTree = getStateTree();
-//         personManager = new PersonManager(stateTree.people);
+describe('QuerySet', () => {
+    let modelClassMock;
 
-//         querySet = new QuerySet(personManager, personManager.getIdArray());
-//     });
+    let PersonClass;
 
-//     it('count works correctly', () => {
-//         expect(querySet.count()).to.equal(3);
+    const state = {
+        Person: {
+            items: [0, 1, 2],
+            itemsById: {
+                0: {
+                    id: 0,
+                    name: 'Tommi',
+                    age: 25,
+                },
+                1: {
+                    id: 1,
+                    name: 'John',
+                    age: 50,
+                },
+                2: {
+                    id: 2,
+                    name: 'Mary',
+                    age: 60,
+                },
+            },
+        },
+    };
+    let schema;
+    let session;
+    let qs;
+    beforeEach(() => {
+        schema = new Schema();
+        // Start off with a fresh Model class for each
+        // test.
+        PersonClass = class Person extends Model {};
+        PersonClass.meta = {name: 'Person'};
+        schema.register(PersonClass);
+        session = schema.from(state);
+        qs = session.Person.query;
+    });
 
-//         const empty = new QuerySet(personManager, []);
-//         expect(empty.count()).to.equal(0);
-//     });
+    it('count works correctly', () => {
+        expect(qs.count()).to.equal(3);
+        const emptyQs = new QuerySet(session.Person, []);
+        expect(emptyQs.count()).to.equal(0);
+    });
 
-//     it('exists works correctly', () => {
-//         expect(querySet.exists()).to.equal(true);
+    it('exists works correctly', () => {
+        expect(qs.exists()).to.equal(true);
 
-//         const empty = new QuerySet(personManager, []);
-//         expect(empty.exists()).to.equal(false);
-//     });
+        const empty = new QuerySet(session.Person, []);
+        expect(empty.exists()).to.equal(false);
+    });
 
-//     it('at works correctly', () => {
-//         expect(querySet.at(0).toPlain()).to.deep.equal({id: 0, name: 'Tommi', age: 25});
-//         expect(querySet.at(2).toPlain()).to.deep.equal({id: 2, name: 'Mary', age: 60});
-//     });
+    it('at works correctly', () => {
+        expect(qs.plain.at(0)).to.equal(state.Person.itemsById[0]);
+        expect(qs.plain.at(2)).to.equal(state.Person.itemsById[2]);
 
-//     it('first works correctly', () => {
-//         expect(querySet.first()).to.deep.equal(querySet.at(0));
-//     });
+        expect(qs.at(0)).to.deep.equal({id: 0, name: 'Tommi', age: 25});
+    });
 
-//     it('last works correctly', () => {
-//         expect(querySet.last()).to.deep.equal(querySet.at(2));
-//     });
+    it('first works correctly', () => {
+        expect(qs.first()).to.deep.equal(qs.at(0));
+        expect(qs.plain.first()).to.deep.equal(qs.at(0));
+    });
 
-//     it('all works correctly', () => {
-//         const all = querySet.all();
+    it('last works correctly', () => {
+        expect(qs.last()).to.deep.equal(qs.at(2));
+        expect(qs.plain.last()).to.equal(state.Person.itemsById[2]);
+    });
 
-//         expect(all).not.to.equal(querySet);
-//         expect(all).to.deep.equal(querySet);
-//     });
+    it('all works correctly', () => {
+        const all = qs.all();
 
-//     it('filter works correctly with object argument', () => {
-//         const filtered = querySet.filter({name: 'Tommi'});
-//         expect(filtered.count()).to.equal(1);
-//         expect(filtered.first().toPlain()).to.deep.equal({id: 0, name: 'Tommi', age: 25});
-//     });
+        expect(all).not.to.equal(qs);
+        expect(all.idArr).to.deep.equal(qs.idArr);
+    });
 
-//     it('exclude works correctly with object argument', () => {
-//         const excluded = querySet.exclude({name: 'Tommi'});
-//         expect(excluded.count()).to.equal(2);
-//         expect(excluded.idArr).to.deep.equal([1, 2]);
-//     });
+    it('filter works correctly with object argument', () => {
+        const filtered = qs.plain.filter({name: 'Tommi'});
+        expect(filtered.count()).to.equal(1);
+        expect(filtered.first()).to.equal(state.Person.itemsById[0]);
+    });
 
-//     it('update records a mutation', () => {
-//         const updater = {name: 'Mark'};
-//         expect(personManager.mutations).to.have.length(0);
-//         querySet.update(updater);
-//         expect(personManager.mutations).to.have.length(1);
+    it('exclude works correctly with object argument', () => {
+        const excluded = qs.exclude({name: 'Tommi'});
+        expect(excluded.count()).to.equal(2);
+        expect(excluded.idArr).to.deep.equal([1, 2]);
+    });
 
-//         expect(personManager.mutations[0]).to.deep.equal({
-//             type: UPDATE,
-//             payload: {
-//                 idArr: querySet.idArr,
-//                 updater,
-//             },
-//         });
-//     });
+    it('update records a mutation', () => {
+        const updater = {name: 'Mark'};
+        expect(session.mutations).to.have.length(0);
+        qs.update(updater);
+        expect(session.mutations).to.have.length(1);
 
-//     it('delete records a mutation', () => {
-//         expect(personManager.mutations).to.have.length(0);
-//         querySet.delete();
-//         expect(personManager.mutations).to.have.length(1);
+        expect(session.mutations[0]).to.deep.equal({
+            type: UPDATE,
+            payload: {
+                idArr: qs.idArr,
+                updater,
+            },
+            meta: {
+                name: 'Person',
+            },
+        });
+    });
 
-//         expect(personManager.mutations[0]).to.deep.equal({
-//             type: DELETE,
-//             payload: querySet.idArr,
-//         });
-//     });
+    it('delete records a mutation', () => {
+        expect(session.mutations).to.have.length(0);
+        qs.delete();
+        expect(session.mutations).to.have.length(1);
 
-//     // it('custom methods works', () => {
-//     //     const CustomQuerySet = QuerySet.extend({
-//     //         overMiddleAge() {
-//     //             return this.filter((person) => person.age > 50);
-//     //         },
-//     //         sharedMethodNames: [
-//     //             'overMiddleAge',
-//     //         ],
-//     //     });
-//     //     const Manager = Manager.extend({schema: 'people', querySetClass: CustomQuerySet});
-//     //     const manager = new Manager(stateTree.people);
-//     //     const customQuerySet = new CustomQuerySet(manager, manager.getIdArray());
+        expect(session.mutations[0]).to.deep.equal({
+            type: DELETE,
+            payload: qs.idArr,
+            meta: {
+                name: 'Person',
+            },
+        });
+    });
 
-//     //     const overMiddleAged = customQuerySet.overMiddleAge();
-//     //     expect(overMiddleAged.count()).to.equal(1);
-//     //     expect(overMiddleAged.first().toPlain()).to.deep.equal({id: 2, name: 'Mary', age: 60});
+    it('custom methods works', () => {
+        class CustomQuerySet extends QuerySet {
+            overMiddleAge() {
+                const origPlain = this._plain;
+                const filtered = this.plain.filter(person => person.age > 50);
+                return origPlain ? filtered : filtered.models;
+            }
+        }
+        CustomQuerySet.addSharedMethod('overMiddleAge');
 
-//     //     const overMiddleAgedFromManager = manager.overMiddleAge();
-//     //     expect(overMiddleAgedFromManager).to.deep.equal(overMiddleAged);
-//     // });
-// });
+        class PersonSub extends PersonClass {}
+
+        PersonSub.meta = {name: 'Person'};
+        PersonSub.querySetClass = CustomQuerySet;
+        const aSchema = new Schema();
+        aSchema.register(PersonSub);
+        const sess = aSchema.from(state);
+        const customQs = sess.Person.query;
+
+        const overMiddleAged = customQs.overMiddleAge();
+        expect(overMiddleAged.count()).to.equal(1);
+        expect(overMiddleAged.first().toPlain()).to.deep.equal({id: 2, name: 'Mary', age: 60});
+
+        expect(PersonSub.overMiddleAge().count()).to.equal(1);
+        expect(PersonSub.plain.filter({name: 'Tommi'}).count()).to.equal(1);
+    });
+});
 
