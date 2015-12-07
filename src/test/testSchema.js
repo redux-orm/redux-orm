@@ -32,6 +32,12 @@ describe('Schema', () => {
         schema.register(PersonModel);
         schema.register(LocationModel);
 
+        const reducer = schema.reducer();
+
+        const initReduce = reducer(undefined, {type: 'INIT'});
+        expect(initReduce).to.have.property('Person');
+        expect(initReduce).to.have.property('Location');
+
         const orm = schema.from({
             Person: {
                 items: [0],

@@ -65,8 +65,10 @@ const Session = class Session {
     }
 
     getState(modelName) {
-        const state = this.state[modelName];
-        return state;
+        if (this.state) {
+            return this.state[modelName];
+        }
+        return undefined;
     }
 
     /**
