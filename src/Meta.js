@@ -14,7 +14,7 @@ const Meta = class Meta {
      */
     constructor(userOpts) {
         const defaultOpts = {
-            name: null,
+            _name: null,
             idAttribute: 'id',
             branchName: null,
             indexById: true,
