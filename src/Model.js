@@ -492,9 +492,6 @@ const Model = class Model {
                 idArr: [this.getId()],
                 updater: mergeObj,
             },
-            meta: {
-                name: this.getClass().getName(),
-            },
         });
     }
 
@@ -503,12 +500,9 @@ const Model = class Model {
      * @return {undefined}
      */
     delete() {
-        this.session.addMutation({
+        this.getClass().addMutation({
             type: DELETE,
             payload: [this.getId()],
-            meta: {
-                name: this.getClass().getName(),
-            },
         });
     }
 };
