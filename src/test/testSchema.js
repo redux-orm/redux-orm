@@ -36,6 +36,8 @@ describe('Schema', () => {
 
         const initReduce = reducer(undefined, {type: 'INIT'});
         expect(initReduce).to.have.property('Person');
+        expect(initReduce.Person).to.have.property('items');
+        expect(initReduce.Person.items).to.have.length(0);
         expect(initReduce).to.have.property('Location');
 
         const orm = schema.from({

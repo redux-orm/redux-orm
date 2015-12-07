@@ -25,7 +25,7 @@ const QuerySet = class QuerySet {
         Object.assign(this, {
             modelClass,
             idArr,
-        }, opts);
+        });
 
         this._opts = opts;
 
