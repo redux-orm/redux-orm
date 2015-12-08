@@ -73,17 +73,20 @@ const Schema = class Schema {
      * through models will be generated and registered with
      * this call.
      *
-     * @param  {Model} model - the model to register
+     * @param  {...Model} model - a model to register
      * @return {undefined}
      */
-    register(model) {
-        model.invalidateCaches();
+    register() {
+        const models = Array.prototype.slice.call(arguments);
+        models.forEach(model => {
+            model.invalidateCaches();
 
-        const m2m = model.getManyToManyModels();
-        m2m.forEach(m2mModel => m2mModel.invalidateCaches());
+            const m2m = model.getManyToManyModels();
+            m2m.forEach(m2mModel => m2mModel.invalidateCaches());
 
-        this.implicitThroughModels.push(...m2m);
-        this.registry.push(model);
+            this.implicitThroughModels.push(...m2m);
+            this.registry.push(model);
+        });
     }
 
     /**
