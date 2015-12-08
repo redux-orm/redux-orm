@@ -4,6 +4,7 @@ import sinon from 'sinon';
 chai.use(sinonChai);
 const {expect} = chai;
 import BaseModel from '../Model';
+import {UPDATE, DELETE, CREATE, ORDER} from '../constants';
 
 describe('Model', () => {
     describe('static method', () => {
@@ -114,6 +115,99 @@ describe('Model', () => {
 
             expect(accessIdsSpy).to.have.been.calledOnce;
             expect(accessIdsSpy).to.have.been.calledWithExactly(stateMock);
+        });
+    });
+
+    describe('Instance methods', () => {
+        let Model;
+        let instance;
+        const sessionMock = {};
+        const stateMock = {};
+        const actionMock = {};
+
+        sessionMock.action = actionMock;
+
+        sessionMock.getState = () => stateMock;
+
+        beforeEach(() => {
+            // Get a fresh copy
+            // of Model, so our manipulations
+            // won't survive longer than each test.
+            Model = class TestModel extends BaseModel {};
+            Model.meta = () => {
+                return {
+                    name: 'Model',
+                };
+            };
+            instance = new Model({id: 0, name: 'Tommi'});
+        });
+
+        it('delete works correctly', () => {
+            const addMutationSpy = sinon.spy();
+            Model.addMutation = addMutationSpy;
+
+            expect(addMutationSpy).not.called;
+            instance.delete();
+            expect(addMutationSpy).calledOnce;
+            expect(addMutationSpy.getCall(0).args[0]).to.deep.equal({
+                type: DELETE,
+                payload: [instance.id],
+            });
+        });
+
+        it('update works correctly', () => {
+            const addMutationSpy = sinon.spy();
+            Model.addMutation = addMutationSpy;
+
+            expect(addMutationSpy).not.called;
+            instance.update({name: 'Matt'});
+            expect(addMutationSpy).calledOnce;
+            expect(addMutationSpy.getCall(0).args[0]).to.deep.equal({
+                type: UPDATE,
+                payload: {
+                    idArr: [instance.id],
+                    updater: {
+                        name: 'Matt',
+                    },
+                },
+            });
+        });
+
+        it('set works correctly', () => {
+            Model.addMutation = () => undefined;
+
+            const updateSpy = sinon.spy(instance, 'update');
+
+            expect(updateSpy).not.called;
+            instance.set('name', 'Matt');
+            expect(updateSpy).calledOnce;
+            expect(updateSpy.getCall(0).args[0]).to.deep.equal({
+                name: 'Matt',
+            });
+        });
+
+        it('toPlain works correctly', () => {
+            expect(instance.toPlain()).to.deep.equal({
+                id: 0,
+                name: 'Tommi',
+            });
+        });
+
+        it('equals works correctly', () => {
+            const anotherInstance = new Model({id: 0, name: 'Tommi'});
+            expect(instance.equals(anotherInstance)).to.be.ok;
+        });
+
+        it('toString works correctly', () => {
+            expect(instance.toString()).to.equal('Model: {id: 0, name: Tommi}');
+        });
+
+        it('getId works correctly', () => {
+            expect(instance.getId()).to.equal(0);
+        });
+
+        it('getClass works correctly', () => {
+            expect(instance.getClass()).to.equal(Model);
         });
     });
 });
