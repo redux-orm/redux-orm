@@ -157,6 +157,10 @@ class App extends Component {
 
 Well, yeah. `redux-orm` deals with related data, structured similar to a relational database. The database in this case is a simple JavaScript object database.
 
+### Why?
+
+For simple apps, writing reducers by hand is alright, but when the number of object types you have increases and you need to maintain relations between them, things get hairy. ImmutableJS goes a long way to reduce complexity in your reducers, but `redux-orm` is specialized for relational data.
+
 ### Reducers and Immutability
 
 Say we're inside a reducer and want to update the name of a book.
@@ -198,11 +202,7 @@ Just like you can extend `Model`, you can do the same for `QuerySet` (customize 
 
 ### Caveats
 
-The ORM abstraction will never be as performant compared to writing reducers by hand, and adds to the build size of your project (last I checked, minimizing the source files without gzipping yielded about 29 KB). If you have very simple data without relations, `redux-orm` may be overkill. The development convenience benefit is considerable though.
-
-### Rationale
-
-For simple apps, writing reducers by hand is alright, but when the number of object types you have increases and you need to maintain relations between them, things get hairy. ImmutableJS goes a long way to reduce complexity in your reducers, but `redux-orm` is specialized for relational data.
+The ORM abstraction will never be as performant compared to writing reducers by hand, and adds to the build size of your project (last I checked, minimizing the source files and gzipping yielded about 8 KB). If you have very simple data without relations, `redux-orm` may be overkill. The development convenience benefit is considerable though.
 
 ## API
 
