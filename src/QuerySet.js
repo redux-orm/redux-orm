@@ -259,6 +259,7 @@ QuerySet.sharedMethods = [
     'all',
     'last',
     'first',
+    'forEach',
     'exists',
     'filter',
     'map',
