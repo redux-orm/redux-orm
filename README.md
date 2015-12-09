@@ -81,7 +81,7 @@ class Book extends Model {
 // Below we would declare Author and Publisher models
 ```
 
-### Connecting to Redux
+### Connect to Redux
 
 To create our data schema, we create a Schema instance and register our models.
 
@@ -108,7 +108,7 @@ const rootReducer = combineReducers({
 });
 ```
 
-### Using with React
+### Use with React
 
 In your top level component, you can begin a `Session` to query your data with `redux-orm`.
 
