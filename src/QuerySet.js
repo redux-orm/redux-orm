@@ -172,9 +172,6 @@ const QuerySet = class QuerySet {
             // Lodash filtering doesn't work with
             // Model instances.
             entities = this.plain.objects();
-
-            // Return flag to original value.
-            this._plain = startPlainFlag;
         }
         const filteredEntities = func(entities, lookupObj);
 
@@ -183,6 +180,9 @@ const QuerySet = class QuerySet {
             : (obj) => obj.getId();
 
         const newIdArr = filteredEntities.map(getIdFunc);
+
+        // Return flag to original value.
+        this._plain = startPlainFlag;
         return this._new(newIdArr);
     }
 
