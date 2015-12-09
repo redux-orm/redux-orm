@@ -160,6 +160,7 @@ const QuerySet = class QuerySet {
     }
 
     _filterOrExclude(lookupObj, exclude) {
+        const startPlainFlag = this._plain;
         const func = exclude ? reject : filter;
         let entities;
         if (typeof lookupObj === 'function') {
@@ -171,6 +172,9 @@ const QuerySet = class QuerySet {
             // Lodash filtering doesn't work with
             // Model instances.
             entities = this.plain.objects();
+
+            // Return flag to original value.
+            this._plain = startPlainFlag;
         }
         const filteredEntities = func(entities, lookupObj);
 
@@ -180,6 +184,19 @@ const QuerySet = class QuerySet {
 
         const newIdArr = filteredEntities.map(getIdFunc);
         return this._new(newIdArr);
+    }
+
+    /**
+     * Calls `func` for each object in the QuerySet.
+     * The object is either a reference to the plain
+     * object in the database or a Model instance, depending
+     * on the flag.
+     *
+     * @param  {Function} func - the function to call with each object
+     * @return {undefined}
+     */
+    forEach(func) {
+        this.objects().forEach(func);
     }
 
     /**
