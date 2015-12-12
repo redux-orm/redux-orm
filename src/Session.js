@@ -33,7 +33,7 @@ const Session = class Session {
     /**
      * Records a mutation to the session.
      * @param {Object} mutation - the mutation object. Must have keys
-     *                            `type`, `payload` and `meta`. `meta`
+     *                            `type`, `payload` and `backend`. `backend`
      *                            must also include a `name` attribute
      *                            that contains the model name.
      */
@@ -51,7 +51,7 @@ const Session = class Session {
     getMutationsFor(modelClass) {
         const modelName = modelClass.getName();
 
-        const [mutations, other] = partition(this.mutations, 'meta.name', modelName);
+        const [mutations, other] = partition(this.mutations, 'backend.name', modelName);
         this.mutations = other;
         return mutations;
     }
@@ -85,7 +85,7 @@ const Session = class Session {
         });
         // The remaining mutations are for M2M tables.
         return this.mutations.reduce((state, action) => {
-            const modelName = action.meta.name;
+            const modelName = action.backend.name;
             state[modelName] = this[modelName].getNextState();
             return state;
         }, nextState);

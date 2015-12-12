@@ -22,7 +22,7 @@ describe('Model', () => {
             // of Model, so our manipulations
             // won't survive longer than each test.
             Model = Object.create(BaseModel);
-            Model.meta = () => {
+            Model.backend = () => {
                 return {
                     name: 'Model',
                 };
@@ -55,32 +55,32 @@ describe('Model', () => {
             expect(reducerStub).to.have.been.calledWithExactly(stateMock, actionMock, Model, sessionMock);
         });
 
-        it('getMetaInstance works correctly', () => {
-            const MetaMockClass = sinon.stub();
-            Model.getMetaClass = () => MetaMockClass;
+        it('getBackendInstance works correctly', () => {
+            const BackendMockClass = sinon.stub();
+            Model.getBackendClass = () => BackendMockClass;
 
-            const instance = Model.getMetaInstance();
-            expect(instance).to.be.an.instanceOf(MetaMockClass);
+            const instance = Model.getBackendInstance();
+            expect(instance).to.be.an.instanceOf(BackendMockClass);
 
             // Make sure the previous instance is cached
-            expect(Model.getMetaInstance()).to.equal(instance);
+            expect(Model.getBackendInstance()).to.equal(instance);
         });
     });
 
-    describe('static method delegates to Meta', () => {
+    describe('static method delegates to Backend', () => {
         let Model;
-        let metaMock;
+        let backendMock;
         const stateMock = {};
 
         beforeEach(() => {
             Model = Object.create(BaseModel);
-            Model.meta = () => {
+            Model.backend = () => {
                 return {
                     name: 'Model',
                 };
             };
-            metaMock = {};
-            Model.getMetaInstance = () => metaMock;
+            backendMock = {};
+            Model.getBackendInstance = () => backendMock;
             Object.defineProperty(Model, 'state', {
                 get: () => stateMock,
             });
@@ -88,7 +88,7 @@ describe('Model', () => {
 
         it('accessId correctly delegates', () => {
             const accessIdSpy = sinon.spy();
-            metaMock.accessId = accessIdSpy;
+            backendMock.accessId = accessIdSpy;
 
             const arg = 1;
             Model.accessId(arg);
@@ -99,7 +99,7 @@ describe('Model', () => {
 
         it('accessIds correctly delegates', () => {
             const accessIdsSpy = sinon.spy();
-            metaMock.accessIdList = accessIdsSpy;
+            backendMock.accessIdList = accessIdsSpy;
 
             Model.accessIds();
 
@@ -109,7 +109,7 @@ describe('Model', () => {
 
         it('accessList correctly delegates', () => {
             const accessIdsSpy = sinon.spy();
-            metaMock.accessIdList = accessIdsSpy;
+            backendMock.accessIdList = accessIdsSpy;
 
             Model.accessIds();
 
@@ -134,7 +134,7 @@ describe('Model', () => {
             // of Model, so our manipulations
             // won't survive longer than each test.
             Model = class TestModel extends BaseModel {};
-            Model.meta = () => {
+            Model.backend = () => {
                 return {
                     name: 'Model',
                 };

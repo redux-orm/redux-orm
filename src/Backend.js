@@ -7,9 +7,9 @@ import {ListIterator} from './utils';
  * Handles the underlying data structure for a {@link Model} class.
  * Implements the "database backend" functionality.
  */
-const Meta = class Meta {
+const Backend = class Backend {
     /**
-     * Creates a new {@link Meta} instance.
+     * Creates a new {@link Backend} instance.
      * @param  {Object} userOpts - options to use. Must have a non-empty `name` property.
      */
     constructor(userOpts) {
@@ -24,7 +24,7 @@ const Meta = class Meta {
         };
 
         if (!userOpts.name) {
-            throw new Error('You must give a name for the Model in getMeta.');
+            throw new Error('You must give a name for the Model in getBackend.');
         }
 
         if (!userOpts.branchName) {
@@ -89,7 +89,7 @@ const Meta = class Meta {
 
     /**
      * Returns the default state for the data structure.
-     * @return {Object} The default state for this {@link Meta} instance's data structure
+     * @return {Object} The default state for this {@link Backend} instance's data structure
      */
     getDefaultState() {
         if (this.indexById) {
@@ -116,7 +116,7 @@ const Meta = class Meta {
      * @return {Object} the data structure ordered with the arguments.
      */
     order(branch, iteratees, orders) {
-        const thisMeta = this;
+        const thisBackend = this;
         const {arrName, mapName} = this;
 
         if (this.indexById) {
@@ -126,7 +126,7 @@ const Meta = class Meta {
             const fullList = this.accessList(branch);
             const orderedObjects = sortByOrder(fullList, iteratees, orders);
             return {
-                [arrName]: orderedObjects.map(obj => obj[thisMeta.idAttribute]),
+                [arrName]: orderedObjects.map(obj => obj[thisBackend.idAttribute]),
                 [mapName]: branch[mapName],
             };
         }
@@ -231,5 +231,5 @@ const Meta = class Meta {
     }
 };
 
-export {Meta};
-export default Meta;
+export {Backend};
+export default Backend;

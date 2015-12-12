@@ -2,7 +2,7 @@ import forOwn from 'lodash/object/forOwn';
 
 import {ManyToMany, ForeignKey} from './fields';
 import Session from './Session';
-import Meta from './Meta';
+import Backend from './Backend';
 import QuerySet from './QuerySet';
 import {CREATE, UPDATE, DELETE, ORDER} from './constants';
 import {match, m2mName, m2mToFieldName, m2mFromFieldName} from './utils';
@@ -99,7 +99,7 @@ const Model = class Model {
 
                 const Through = class ThroughModel extends this.getThroughModelClass() {};
 
-                Through.meta = {
+                Through.backend = {
                     name: m2mName(thisModelName, fieldName),
                 };
 
@@ -117,47 +117,47 @@ const Model = class Model {
     }
 
     /**
-     * Returns the options object passed to the {@link Meta} class constructor.
+     * Returns the options object passed to the {@link Backend} class constructor.
      * You need to define this for every subclass.
      *
-     * @return {Object} the options object used to instantiate a {@link Meta} class.
+     * @return {Object} the options object used to instantiate a {@link Backend} class.
      */
-    static meta() {
-        throw new Error('You must declare a static "meta" function in your Model class.');
+    static backend() {
+        throw new Error('You must declare a static "backend" function in your Model class.');
     }
 
-    static getMeta() {
-        if (typeof this.meta === 'function') {
-            return this.meta();
+    static getBackend() {
+        if (typeof this.backend === 'function') {
+            return this.backend();
         }
-        if (typeof this.meta === 'undefined') {
-            throw new Error(`You must declare either a 'meta' class method or
-                            a 'meta' class variable in your Model Class`);
+        if (typeof this.backend === 'undefined') {
+            throw new Error(`You must declare either a 'backend' class method or
+                            a 'backend' class variable in your Model Class`);
         }
-        return this.meta;
+        return this.backend;
     }
 
     /**
-     * Returns the {@link Meta} class used to instantiate
-     * the {@link Meta} instance for this {@link Model}.
+     * Returns the {@link Backend} class used to instantiate
+     * the {@link Backend} instance for this {@link Model}.
      *
-     * Override this if you want to use a custom {@link Meta} class.
-     * @return {Meta} The {@link Meta} class or subclass to use for this {@link Model}.
+     * Override this if you want to use a custom {@link Backend} class.
+     * @return {Backend} The {@link Backend} class or subclass to use for this {@link Model}.
      */
-    static getMetaClass() {
-        return Meta;
+    static getBackendClass() {
+        return Backend;
     }
 
     /**
-     * Gets the {@link Meta} instance linked to this {@link Model}.
-     * @return {Meta} The {@link Meta} instance linked to this {@link Model}.
+     * Gets the {@link Backend} instance linked to this {@link Model}.
+     * @return {Backend} The {@link Backend} instance linked to this {@link Model}.
      */
-    static getMetaInstance() {
-        if (!this._meta) {
-            const MetaClass = this.getMetaClass();
-            this._meta = new MetaClass(this.getMeta());
+    static getBackendInstance() {
+        if (!this._backend) {
+            const BackendClass = this.getBackendClass();
+            this._backend = new BackendClass(this.getBackend());
         }
-        return this._meta;
+        return this._backend;
     }
 
     /**
@@ -170,18 +170,18 @@ const Model = class Model {
             return this.getDefaultState();
         }
 
-        const meta = this.getMetaInstance();
+        const backend = this.getBackendInstance();
 
         const mutations = this.session.getMutationsFor(this);
 
         return mutations.reduce((state, action) => {
             switch (action.type) {
             case CREATE:
-                return meta.insert(state, action.payload);
+                return backend.insert(state, action.payload);
             case UPDATE:
-                return meta.update(state, action.payload.idArr, action.payload.updater);
+                return backend.update(state, action.payload.idArr, action.payload.updater);
             case DELETE:
-                return meta.delete(state, action.payload);
+                return backend.delete(state, action.payload);
             default:
                 return state;
             }
@@ -207,16 +207,16 @@ const Model = class Model {
 
     /**
      * Gets the default, empty state of the branch.
-     * Delegates to a {@link Meta} instance.
+     * Delegates to a {@link Backend} instance.
      * @return {Object} The default state.
      */
     static getDefaultState() {
-        return this.getMetaInstance().getDefaultState();
+        return this.getBackendInstance().getDefaultState();
     }
 
     /**
      * Gets the name of this {@link Model} class.
-     * Delegates to {@link Meta}.
+     * Delegates to {@link Backend}.
      *
      * Constructors have a name property which we cannot
      * override, so this is implemented as a method.
@@ -224,44 +224,44 @@ const Model = class Model {
      * @return {string} The name of this {@link Model} class.
      */
     static getName() {
-        return this.getMetaInstance().name;
+        return this.getBackendInstance().name;
     }
 
     /**
      * Returns the id attribute of this {@link Model}.
-     * Delegates to the related {@link Meta} instance.
+     * Delegates to the related {@link Backend} instance.
      *
      * @return {string} The id attribute of this {@link Model}.
      */
     static get idAttribute() {
-        return this.getMetaInstance().idAttribute;
+        return this.getBackendInstance().idAttribute;
     }
 
     /**
-     * A convenience method to call {@link Meta#accessId} from
+     * A convenience method to call {@link Backend#accessId} from
      * the {@link Model} class.
      *
      * @param  {Number} id - the object id to access
      * @return {Object} a reference to the object in the database.
      */
     static accessId(id) {
-        return this.getMetaInstance().accessId(this.state, id);
+        return this.getBackendInstance().accessId(this.state, id);
     }
 
     /**
-     * A convenience method to call {@link Meta#accessIdList} from
+     * A convenience method to call {@link Backend#accessIdList} from
      * the {@link Model} class with the current state.
      */
     static accessIds() {
-        return this.getMetaInstance().accessIdList(this.state);
+        return this.getBackendInstance().accessIdList(this.state);
     }
 
     static accessList() {
-        return this.getMetaInstance().accessList(this.state);
+        return this.getBackendInstance().accessList(this.state);
     }
 
     static iterator() {
-        return this.getMetaInstance().iterator(this.state);
+        return this.getBackendInstance().iterator(this.state);
     }
 
     /**
@@ -288,11 +288,11 @@ const Model = class Model {
 
     /**
      * A convenience method that delegates to the current {@link Session} instane.
-     * Adds the required metadata about this {@link Model} to the mutation object.
+     * Adds the required backenddata about this {@link Model} to the mutation object.
      * @param {Object} mutation - the mutation to add.
      */
     static addMutation(mutation) {
-        mutation.meta = {name: this.getName()};
+        mutation.backend = {name: this.getName()};
         this.session.addMutation(mutation);
     }
 
@@ -320,7 +320,7 @@ const Model = class Model {
 
     static invalidateCaches() {
         this._cachedQuerySet = undefined;
-        this._meta = undefined;
+        this._backend = undefined;
         this._setupDone = undefined;
     }
 

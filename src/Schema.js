@@ -38,13 +38,13 @@ const Schema = class Schema {
      * @param  {string} modelName - the name of the model class
      * @param  {Object} [relatedFields] - a dictionary of `fieldName: fieldInstance`
      * @param  {Function} [reducer] - the reducer function to use for this model
-     * @param  {Object} [metaOpts] -Meta options for this model.
+     * @param  {Object} [backendOpts] -Backend options for this model.
      * @return {Model} The defined model class.
      */
-    define(modelName, relatedFields, reducer, metaOpts) {
+    define(modelName, relatedFields, reducer, backendOpts) {
         class ShortcutDefinedModel extends Model {}
 
-        ShortcutDefinedModel.meta = Object.assign({name: modelName}, metaOpts);
+        ShortcutDefinedModel.backend = Object.assign({name: modelName}, backendOpts);
         ShortcutDefinedModel.fields = relatedFields;
 
         if (typeof reducer === 'function') {

@@ -47,7 +47,7 @@ describe('QuerySet', () => {
         // Start off with a fresh Model class for each
         // test.
         PersonClass = class Person extends Model {};
-        PersonClass.meta = {name: 'Person'};
+        PersonClass.backend = {name: 'Person'};
         schema.register(PersonClass);
         session = schema.from(state);
         qs = session.Person.query;
@@ -114,7 +114,7 @@ describe('QuerySet', () => {
                 idArr: qs.idArr,
                 updater,
             },
-            meta: {
+            backend: {
                 name: 'Person',
             },
         });
@@ -128,7 +128,7 @@ describe('QuerySet', () => {
         expect(session.mutations[0]).to.deep.equal({
             type: DELETE,
             payload: qs.idArr,
-            meta: {
+            backend: {
                 name: 'Person',
             },
         });
@@ -146,7 +146,7 @@ describe('QuerySet', () => {
 
         class PersonSub extends PersonClass {}
 
-        PersonSub.meta = {name: 'Person'};
+        PersonSub.backend = {name: 'Person'};
         PersonSub.querySetClass = CustomQuerySet;
         const aSchema = new Schema();
         aSchema.register(PersonSub);

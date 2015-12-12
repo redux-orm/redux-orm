@@ -1,5 +1,5 @@
 import QuerySet from './QuerySet';
-import Meta from './Meta';
+import Backend from './Backend';
 import Model from './Model';
 import Schema from './Schema';
 import Session from './Session';
@@ -19,7 +19,7 @@ function oneToOne(relatedModelName) {
 
 export {
     QuerySet,
-    Meta,
+    Backend,
     Model,
     Schema,
     Session,

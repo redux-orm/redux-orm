@@ -2,20 +2,20 @@ import chai from 'chai';
 import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
 const {expect} = chai;
-import Meta from '../Meta';
+import Backend from '../Backend';
 import {ListIterator} from '../utils';
 
-describe('Meta', () => {
+describe('Backend', () => {
     describe('constructor', () => {
         it('throws if not supplied with a name', () => {
-            expect(() => new Meta()).to.throw(Error);
+            expect(() => new Backend()).to.throw(Error);
         });
 
         it('correctly assigns name', () => {
-            const name = 'MetaName';
-            const meta = new Meta({name: name});
-            expect(meta.name).to.equal(name);
-            expect(meta.branchName).to.equal(name);
+            const name = 'BackendName';
+            const backend = new Backend({name: name});
+            expect(backend.name).to.equal(name);
+            expect(backend.branchName).to.equal(name);
         });
     });
 
@@ -37,18 +37,18 @@ describe('Meta', () => {
                 },
             },
         };
-        const meta = new Meta({name: 'SomeName'});
+        const backend = new Backend({name: 'SomeName'});
 
         it('correctly accesses an id', () => {
-            expect(meta.accessId(state, 1)).to.equal(state.itemsById[1]);
+            expect(backend.accessId(state, 1)).to.equal(state.itemsById[1]);
         });
 
         it('correctly accesses id\'s', () => {
-            expect(meta.accessIdList(state)).to.equal(state.items);
+            expect(backend.accessIdList(state)).to.equal(state.items);
         });
 
         it('correctly returns an iterator', () => {
-            const iterator = meta.iterator(state);
+            const iterator = backend.iterator(state);
             expect(iterator).to.be.an.instanceOf(ListIterator);
 
             let iteratorIndex = 0;
@@ -65,7 +65,7 @@ describe('Meta', () => {
         });
 
         it('correctly returns a default state', () => {
-            expect(meta.getDefaultState()).to.deep.equal({
+            expect(backend.getDefaultState()).to.deep.equal({
                 items: [],
                 itemsById: {},
             });
@@ -73,7 +73,7 @@ describe('Meta', () => {
 
         it('correctly inserts an entry', () => {
             const entry = {id: 3, data: 'newdata!'};
-            const newState = meta.insert(state, entry);
+            const newState = backend.insert(state, entry);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.deep.equal([0, 1, 2, 3]);
@@ -100,7 +100,7 @@ describe('Meta', () => {
         it('correctly updates entries with a merging object', () => {
             const toMergeObj = {data: 'modifiedData'};
             const idsToUpdate = [1, 2];
-            const newState = meta.update(state, idsToUpdate, toMergeObj);
+            const newState = backend.update(state, idsToUpdate, toMergeObj);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.equal(state.items);
@@ -126,7 +126,7 @@ describe('Meta', () => {
                 return Object.assign({}, obj, {data: `data${id}`});
             };
             const idsToUpdate = [1, 2];
-            const newState = meta.update(state, idsToUpdate, mapperFunc);
+            const newState = backend.update(state, idsToUpdate, mapperFunc);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.equal(state.items);
@@ -148,7 +148,7 @@ describe('Meta', () => {
 
         it('correctly deletes entries', () => {
             const idsToDelete = [1, 2];
-            const newState = meta.delete(state, idsToDelete);
+            const newState = backend.delete(state, idsToDelete);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.deep.equal([0]);
@@ -161,7 +161,7 @@ describe('Meta', () => {
         });
 
         it('correctly orders entries', () => {
-            const newState = meta.order(state, ['id'], ['desc']);
+            const newState = backend.order(state, ['id'], ['desc']);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.deep.equal([2, 1, 0]);

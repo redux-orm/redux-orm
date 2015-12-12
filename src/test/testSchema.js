@@ -17,7 +17,7 @@ describe('Schema', () => {
                     };
                 }
 
-                static meta() {
+                static backend() {
                     return {
                         name: 'Person',
                     };
@@ -25,7 +25,7 @@ describe('Schema', () => {
             };
 
             Location = class LocationModel extends Model {
-                static meta() {
+                static backend() {
                     return {
                         name: 'Location',
                     };
@@ -57,7 +57,7 @@ describe('Schema', () => {
                 };
             }
 
-            static meta() {
+            static backend() {
                 return {
                     name: 'Person',
                 };
@@ -65,7 +65,7 @@ describe('Schema', () => {
         }
 
         class LocationModel extends Model {
-            static meta() {
+            static backend() {
                 return {
                     name: 'Location',
                 };
@@ -132,7 +132,7 @@ describe('Schema', () => {
                 };
             }
 
-            static meta() {
+            static backend() {
                 return {
                     name: 'Person',
                 };
@@ -150,7 +150,7 @@ describe('Schema', () => {
         }
 
         class LocationModel extends Model {
-            static meta() {
+            static backend() {
                 return {
                     name: 'Location',
                 };
@@ -248,7 +248,7 @@ describe('Schema', () => {
                     pair: new OneToOne('this'),
                 };
             }
-            static meta() {
+            static backend() {
                 return {
                     name: 'User',
                 };
@@ -270,7 +270,7 @@ describe('Schema', () => {
         }
 
         class ProfileModel extends Model {
-            static meta() {
+            static backend() {
                 return {
                     name: 'Profile',
                 };
