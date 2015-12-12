@@ -31,7 +31,7 @@ class Book extends Model {
     // Declare any static or instance methods you need.
 }
 
-Book.meta = {name: 'Book'};
+Book.backend = {name: 'Book'};
 
 // Declare your related fields.
 Book.fields = {
@@ -192,13 +192,13 @@ By default, each Model has the following JavaScript object representation:
 }
 ```
 
-This representation maintains an array of object ID's and an index of id's for quick access. (A single object array representation is also provided for use. It is possible to subclass `Meta` to use any structure you want).
+This representation maintains an array of object ID's and an index of id's for quick access. (A single object array representation is also provided for use. It is possible to subclass `Backend` to use any structure you want).
 
 `redux-orm` runs a mini-redux inside it. It queues any updates the library user records with action-like objects, and when `getNextState` is called, it applies those actions with its internal reducers. There's some room here to provide performance optimizations similar to Immutable.js.
 
 ### Customizability
 
-Just like you can extend `Model`, you can do the same for `QuerySet` (customize methods on Model instance collections) and `Meta` (customize store access and updates).
+Just like you can extend `Model`, you can do the same for `QuerySet` (customize methods on Model instance collections) and `Backend` (customize store access and updates).
 
 ### Caveats
 
@@ -219,7 +219,7 @@ const schema = new Schema(); // no arguments needed.
 Instance methods:
 
 - `register(model1, model2, ...modelN)`: registers Model classes to the `Schema` instance.
-- `define(name, [relatedFields], [metaOpts])`: shortcut to define and register simple models.
+- `define(name, [relatedFields], [backendOpts])`: shortcut to define and register simple models.
 - `from(state, [action])`: begins a new `Session` with `state`. If `action` is omitted, the session can be used to query the state data.
 - `reducer()`: returns a reducer function that can be plugged into Redux. The reducer will return the next state of the database given the provided action. You need to register your models before calling this.
 
@@ -271,19 +271,19 @@ For `fk`, you can access the reverse relation through `author.bookSet`, where th
 
 For `many` field declarations, accessing the field on a Model instance will return a `QuerySet` with two additional methods: `add` and `remove`. They take 1 or more arguments, where the arguments are either Model instances or their id's. Calling these methods records updates that will be reflected in the next state.
 
-When declaring model classes, always remember to set the `meta` property, which must include at least the name of the model. You need to set the name explicitly because running your code through a mangler would otherwise break functionality. The name you declare in `meta` will be used to resolve all related fields. 
+When declaring model classes, always remember to set the `backend` property, which must include at least the name of the model. You need to set the name explicitly because running your code through a mangler would otherwise break functionality. The name you declare in `backend` will be used to resolve all related fields. 
 
-**Declaring `meta`**:
+**Declaring `backend`**:
 ```javascript
 class Book extends Model {
-    static meta() {
+    static backend() {
         return {
             name: 'Book'
         };
     }
 }
 // alternative:
-Book.meta = {name: 'Book'};
+Book.backend = {name: 'Book'};
 ```
 
 
@@ -348,23 +348,23 @@ session.Book.create({id: 5, name: 'Refactoring', release_year: 1999});
 ```
 
 
-### Meta
+### Backend
 
-Meta holds both the meta information for a model class and the database backend functionality. You can use a custom Meta if you want to change the underlying data structure (for performance reasons etc.).
+Backend holds both the backend information for a model class and the database backend functionality. You can use a custom Backend if you want to change the underlying data structure (for performance reasons etc.).
 
-See the full documentation for `Meta` [here](http://tommikaikkonen.github.io/redux-orm/Meta.html)
+See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/redux-orm/Backend.html)
 
-**Instantiation**: will be done for you, but you supply the options object in `YourModelClass.meta`.
+**Instantiation**: will be done for you, but you supply the options object in `YourModelClass.backend`.
 
-E.g., if you set this meta options object:
+E.g., if you set this backend options object:
 
 ```javascript
 class Book extends Model {}
 
-Book.meta = {name: 'Book'};
+Book.backend = {name: 'Book'};
 ```
 
-The `Meta` instance will have the following options:
+The `Backend` instance will have the following options:
 
 ```javascript
 {
