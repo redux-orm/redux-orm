@@ -103,13 +103,13 @@ describe('QuerySet', () => {
         expect(excluded.idArr).to.deep.equal([1, 2]);
     });
 
-    it('update records a mutation', () => {
+    it('update records a update', () => {
         const updater = {name: 'Mark'};
-        expect(session.mutations).to.have.length(0);
+        expect(session.updates).to.have.length(0);
         qs.update(updater);
-        expect(session.mutations).to.have.length(1);
+        expect(session.updates).to.have.length(1);
 
-        expect(session.mutations[0]).to.deep.equal({
+        expect(session.updates[0]).to.deep.equal({
             type: UPDATE,
             payload: {
                 idArr: qs.idArr,
@@ -121,12 +121,12 @@ describe('QuerySet', () => {
         });
     });
 
-    it('delete records a mutation', () => {
-        expect(session.mutations).to.have.length(0);
+    it('delete records a update', () => {
+        expect(session.updates).to.have.length(0);
         qs.delete();
-        expect(session.mutations).to.have.length(1);
+        expect(session.updates).to.have.length(1);
 
-        expect(session.mutations[0]).to.deep.equal({
+        expect(session.updates[0]).to.deep.equal({
             type: DELETE,
             payload: qs.idArr,
             meta: {

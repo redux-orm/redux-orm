@@ -21,7 +21,7 @@ function forwardManyToOneDescriptor(fieldName, declaredToModel) {
                 toId = value;
             }
 
-            this.getClass().addMutation({
+            this.getClass().addUpdate({
                 type: UPDATE,
                 payload: {
                     idArr: [thisId],

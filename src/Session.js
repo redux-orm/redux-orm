@@ -19,7 +19,7 @@ const Session = class Session {
 
         this.models = models;
 
-        this.mutations = [];
+        this.updates = [];
 
         models.forEach(modelClass => {
             Object.defineProperty(this, modelClass.modelName, {
@@ -31,29 +31,31 @@ const Session = class Session {
     }
 
     /**
-     * Records a mutation to the session.
-     * @param {Object} mutation - the mutation object. Must have keys
+     * Records an update to the session.
+     * @param {Object} update - the update object. Must have keys
      *                            `type`, `payload` and `meta`. `meta`
      *                            must also include a `name` attribute
      *                            that contains the model name.
      */
-    addMutation(mutation) {
-        this.mutations.push(mutation);
+    addUpdate(update) {
+        this.updates.push(update);
     }
 
     /**
-     * Gets the recorded mutations for `modelClass` and
-     * deletes them from the Session instance mutations list.
+     * Gets the recorded updates for `modelClass` and
+     * deletes them from the Session instance updates list.
      *
-     * @param  {Model} modelClass - the model class to get mutations for
-     * @return {Object[]} A list of the user-recorded mutations for `modelClass`.
+     * @param  {Model} modelClass - the model class to get updates for
+     * @return {Object[]} A list of the user-recorded updates for `modelClass`.
      */
-    getMutationsFor(modelClass) {
-        const modelName = modelClass.modelName;
+    getUpdatesFor(modelClass) {
+        const [updates, other] = partition(
+            this.updates,
+            'meta.name',
+            modelClass.modelName);
 
-        const [mutations, other] = partition(this.mutations, 'meta.name', modelName);
-        this.mutations = other;
-        return mutations;
+        this.updates = other;
+        return updates;
     }
 
     getDefaultState() {
@@ -77,14 +79,14 @@ const Session = class Session {
      * @return {Object} The next state
      */
     reduce() {
-        this.mutations = [];
+        this.updates = [];
         const nextState = {};
 
         this.models.forEach(modelClass => {
             nextState[modelClass.modelName] = modelClass.callUserReducer();
         });
-        // The remaining mutations are for M2M tables.
-        return this.mutations.reduce((state, action) => {
+        // The remaining updates are for M2M tables.
+        return this.updates.reduce((state, action) => {
             const modelName = action.meta.name;
             state[modelName] = this[modelName].getNextState();
             return state;

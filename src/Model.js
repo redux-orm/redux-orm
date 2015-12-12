@@ -9,7 +9,7 @@ import {match, m2mName, m2mToFieldName, m2mFromFieldName} from './utils';
 
 /**
  * The heart of an ORM, the data model.
- * The static class methods manages the mutations
+ * The static class methods manages the updates
  * passed to this. The class itself is connected to a session,
  * and because of this you can only have a single session at a time
  * for a {@link Model} class.
@@ -46,7 +46,7 @@ const Model = class Model {
                 Object.defineProperty(this, fieldName, {
                     get: () => fieldValue,
                     set: (value) => {
-                        ModelClass.addMutation({
+                        ModelClass.addUpdate({
                             type: UPDATE,
                             payload: {
                                 [idAttribute]: this.getId(),
@@ -161,7 +161,7 @@ const Model = class Model {
 
     /**
      * Gets the Model's next state by applying the recorded
-     * mutations.
+     * updates.
      * @return {Object} The next state.
      */
     static getNextState() {
@@ -171,9 +171,9 @@ const Model = class Model {
 
         const backend = this.getBackend();
 
-        const mutations = this.session.getMutationsFor(this);
+        const updates = this.session.getUpdatesFor(this);
 
-        return mutations.reduce((state, action) => {
+        return updates.reduce((state, action) => {
             switch (action.type) {
             case CREATE:
                 return backend.insert(state, action.payload);
@@ -274,12 +274,12 @@ const Model = class Model {
 
     /**
      * A convenience method that delegates to the current {@link Session} instane.
-     * Adds the required backenddata about this {@link Model} to the mutation object.
-     * @param {Object} mutation - the mutation to add.
+     * Adds the required backenddata about this {@link Model} to the update object.
+     * @param {Object} update - the update to add.
      */
-    static addMutation(mutation) {
-        mutation.meta = {name: this.modelName};
-        this.session.addMutation(mutation);
+    static addUpdate(update) {
+        update.meta = {name: this.modelName};
+        this.session.addUpdate(update);
     }
 
     /**
@@ -338,7 +338,7 @@ const Model = class Model {
             props[idAttribute] = this.nextId();
         }
 
-        this.addMutation({
+        this.addUpdate({
             type: CREATE,
             payload: props,
         });
@@ -390,7 +390,7 @@ const Model = class Model {
     }
 
     /**
-     * Records an ordering mutation for the objects.
+     * Records an ordering update for the objects.
      * Note that if you create or update any objects after
      * calling this, they won't be in order.
      *
@@ -400,7 +400,7 @@ const Model = class Model {
      * @return {undefined}
      */
     static setOrder(orderArg) {
-        this.addMutation({
+        this.addUpdate({
             type: ORDER,
             payload: orderArg,
         });
@@ -456,7 +456,7 @@ const Model = class Model {
     }
 
     /**
-     * Records a mutation to the {@link Model} instance for a single
+     * Records a update to the {@link Model} instance for a single
      * field value assignment.
      * @param {string} propertyName - name of the property to set
      * @param {*} value - value assigned to the property
@@ -467,12 +467,12 @@ const Model = class Model {
     }
 
     /**
-     * Records a mutation to the {@link Model} instance for multiple field value assignments.
+     * Records a update to the {@link Model} instance for multiple field value assignments.
      * @param  {Object} mergeObj - an object that will be merged with this instance.
      * @return {undefined}
      */
     update(mergeObj) {
-        this.getClass().addMutation({
+        this.getClass().addUpdate({
             type: UPDATE,
             payload: {
                 idArr: [this.getId()],
@@ -486,7 +486,7 @@ const Model = class Model {
      * @return {undefined}
      */
     delete() {
-        this.getClass().addMutation({
+        this.getClass().addUpdate({
             type: DELETE,
             payload: [this.getId()],
         });

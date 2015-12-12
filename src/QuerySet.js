@@ -11,7 +11,7 @@ import {
  * A chainable class that keeps track of a list of objects and
  *
  * - returns a subset clone of itself with [filter]{@link QuerySet#filter} and [exclude]{@link QuerySet#exclude}
- * - records mutations to objects with [update]{@link QuerySet#update} and [delete]{@link QuerySet#delete}
+ * - records updates to objects with [update]{@link QuerySet#update} and [delete]{@link QuerySet#delete}
  *
  */
 const QuerySet = class QuerySet {
@@ -223,7 +223,7 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Records a mutation specified with `updater` to all the objects in the {@link QuerySet}.
+     * Records a update specified with `updater` to all the objects in the {@link QuerySet}.
      * @param  {Object|function} updater - an object to merge with all the objects in this
      *                                     queryset, or a mapper function that takes the
      *                                     object as an argument and returns an updated
@@ -231,7 +231,7 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     update(updater) {
-        this.modelClass.addMutation({
+        this.modelClass.addUpdate({
             type: UPDATE,
             payload: {
                 idArr: this.idArr,
@@ -245,7 +245,7 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     delete() {
-        this.modelClass.addMutation({
+        this.modelClass.addUpdate({
             type: DELETE,
             payload: this.idArr,
         });

@@ -132,26 +132,26 @@ describe('Model', () => {
         });
 
         it('delete works correctly', () => {
-            const addMutationSpy = sinon.spy();
-            Model.addMutation = addMutationSpy;
+            const addUpdateSpy = sinon.spy();
+            Model.addUpdate = addUpdateSpy;
 
-            expect(addMutationSpy).not.called;
+            expect(addUpdateSpy).not.called;
             instance.delete();
-            expect(addMutationSpy).calledOnce;
-            expect(addMutationSpy.getCall(0).args[0]).to.deep.equal({
+            expect(addUpdateSpy).calledOnce;
+            expect(addUpdateSpy.getCall(0).args[0]).to.deep.equal({
                 type: DELETE,
                 payload: [instance.id],
             });
         });
 
         it('update works correctly', () => {
-            const addMutationSpy = sinon.spy();
-            Model.addMutation = addMutationSpy;
+            const addUpdateSpy = sinon.spy();
+            Model.addUpdate = addUpdateSpy;
 
-            expect(addMutationSpy).not.called;
+            expect(addUpdateSpy).not.called;
             instance.update({name: 'Matt'});
-            expect(addMutationSpy).calledOnce;
-            expect(addMutationSpy.getCall(0).args[0]).to.deep.equal({
+            expect(addUpdateSpy).calledOnce;
+            expect(addUpdateSpy.getCall(0).args[0]).to.deep.equal({
                 type: UPDATE,
                 payload: {
                     idArr: [instance.id],
@@ -163,7 +163,7 @@ describe('Model', () => {
         });
 
         it('set works correctly', () => {
-            Model.addMutation = () => undefined;
+            Model.addUpdate = () => undefined;
 
             const updateSpy = sinon.spy(instance, 'update');
 
