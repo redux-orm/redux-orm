@@ -22,7 +22,7 @@ const Session = class Session {
         this.mutations = [];
 
         models.forEach(modelClass => {
-            Object.defineProperty(this, modelClass.getName(), {
+            Object.defineProperty(this, modelClass.modelName, {
                 get: () => modelClass,
             });
 
@@ -33,7 +33,7 @@ const Session = class Session {
     /**
      * Records a mutation to the session.
      * @param {Object} mutation - the mutation object. Must have keys
-     *                            `type`, `payload` and `backend`. `backend`
+     *                            `type`, `payload` and `meta`. `meta`
      *                            must also include a `name` attribute
      *                            that contains the model name.
      */
@@ -49,9 +49,9 @@ const Session = class Session {
      * @return {Object[]} A list of the user-recorded mutations for `modelClass`.
      */
     getMutationsFor(modelClass) {
-        const modelName = modelClass.getName();
+        const modelName = modelClass.modelName;
 
-        const [mutations, other] = partition(this.mutations, 'backend.name', modelName);
+        const [mutations, other] = partition(this.mutations, 'meta.name', modelName);
         this.mutations = other;
         return mutations;
     }
@@ -59,7 +59,7 @@ const Session = class Session {
     getDefaultState() {
         const state = {};
         this.models.forEach(modelClass => {
-            state[modelClass.getName()] = modelClass.getDefaultState();
+            state[modelClass.modelName] = modelClass.getDefaultState();
         });
         return state;
     }
@@ -81,11 +81,11 @@ const Session = class Session {
         const nextState = {};
 
         this.models.forEach(modelClass => {
-            nextState[modelClass.getName()] = modelClass.callUserReducer();
+            nextState[modelClass.modelName] = modelClass.callUserReducer();
         });
         // The remaining mutations are for M2M tables.
         return this.mutations.reduce((state, action) => {
-            const modelName = action.backend.name;
+            const modelName = action.meta.name;
             state[modelName] = this[modelName].getNextState();
             return state;
         }, nextState);

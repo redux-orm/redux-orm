@@ -7,14 +7,13 @@ import {ListIterator} from '../utils';
 
 describe('Backend', () => {
     describe('constructor', () => {
-        it('throws if not supplied with a name', () => {
+        it('throws if not supplied with a branch name', () => {
             expect(() => new Backend()).to.throw(Error);
         });
 
-        it('correctly assigns name', () => {
-            const name = 'BackendName';
-            const backend = new Backend({name: name});
-            expect(backend.name).to.equal(name);
+        it('correctly assigns branch name', () => {
+            const name = 'BranchName';
+            const backend = new Backend({branchName: name});
             expect(backend.branchName).to.equal(name);
         });
     });
@@ -37,7 +36,7 @@ describe('Backend', () => {
                 },
             },
         };
-        const backend = new Backend({name: 'SomeName'});
+        const backend = new Backend({branchName: 'SomeName'});
 
         it('correctly accesses an id', () => {
             expect(backend.accessId(state, 1)).to.equal(state.itemsById[1]);

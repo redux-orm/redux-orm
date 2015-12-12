@@ -64,11 +64,11 @@ const Model = class Model {
      * @return {Object} The state for this {@link Model} in the current {@link Session}.
      */
     static get state() {
-        return this.session.getState(this.getName());
+        return this.session.getState(this.modelName);
     }
 
     static toString() {
-        return `ModelClass: ${this.getName()}`;
+        return `ModelClass: ${this.modelName}`;
     }
 
     /**
@@ -82,7 +82,7 @@ const Model = class Model {
 
     static getManyToManyModels() {
         const fields = this.fields;
-        const thisModelName = this.getName();
+        const thisModelName = this.modelName;
 
         const models = [];
         forOwn(fields, (fieldInstance, fieldName) => {
@@ -99,9 +99,7 @@ const Model = class Model {
 
                 const Through = class ThroughModel extends this.getThroughModelClass() {};
 
-                Through.backend = {
-                    name: m2mName(thisModelName, fieldName),
-                };
+                Through.modelName = m2mName(thisModelName, fieldName);
 
                 Through.fields = {
                     [fromFieldName]: new ForeignKey(thisModelName),
@@ -118,15 +116,16 @@ const Model = class Model {
 
     /**
      * Returns the options object passed to the {@link Backend} class constructor.
-     * You need to define this for every subclass.
      *
      * @return {Object} the options object used to instantiate a {@link Backend} class.
      */
     static backend() {
-        throw new Error('You must declare a static "backend" function in your Model class.');
+        return {
+            branchName: this.modelName,
+        };
     }
 
-    static getBackend() {
+    static _getBackendOpts() {
         if (typeof this.backend === 'function') {
             return this.backend();
         }
@@ -152,10 +151,10 @@ const Model = class Model {
      * Gets the {@link Backend} instance linked to this {@link Model}.
      * @return {Backend} The {@link Backend} instance linked to this {@link Model}.
      */
-    static getBackendInstance() {
+    static getBackend() {
         if (!this._backend) {
             const BackendClass = this.getBackendClass();
-            this._backend = new BackendClass(this.getBackend());
+            this._backend = new BackendClass(this._getBackendOpts());
         }
         return this._backend;
     }
@@ -170,7 +169,7 @@ const Model = class Model {
             return this.getDefaultState();
         }
 
-        const backend = this.getBackendInstance();
+        const backend = this.getBackend();
 
         const mutations = this.session.getMutationsFor(this);
 
@@ -211,20 +210,7 @@ const Model = class Model {
      * @return {Object} The default state.
      */
     static getDefaultState() {
-        return this.getBackendInstance().getDefaultState();
-    }
-
-    /**
-     * Gets the name of this {@link Model} class.
-     * Delegates to {@link Backend}.
-     *
-     * Constructors have a name property which we cannot
-     * override, so this is implemented as a method.
-     *
-     * @return {string} The name of this {@link Model} class.
-     */
-    static getName() {
-        return this.getBackendInstance().name;
+        return this.getBackend().getDefaultState();
     }
 
     /**
@@ -234,7 +220,7 @@ const Model = class Model {
      * @return {string} The id attribute of this {@link Model}.
      */
     static get idAttribute() {
-        return this.getBackendInstance().idAttribute;
+        return this.getBackend().idAttribute;
     }
 
     /**
@@ -245,7 +231,7 @@ const Model = class Model {
      * @return {Object} a reference to the object in the database.
      */
     static accessId(id) {
-        return this.getBackendInstance().accessId(this.state, id);
+        return this.getBackend().accessId(this.state, id);
     }
 
     /**
@@ -253,15 +239,15 @@ const Model = class Model {
      * the {@link Model} class with the current state.
      */
     static accessIds() {
-        return this.getBackendInstance().accessIdList(this.state);
+        return this.getBackend().accessIdList(this.state);
     }
 
     static accessList() {
-        return this.getBackendInstance().accessList(this.state);
+        return this.getBackend().accessList(this.state);
     }
 
     static iterator() {
-        return this.getBackendInstance().iterator(this.state);
+        return this.getBackend().iterator(this.state);
     }
 
     /**
@@ -292,7 +278,7 @@ const Model = class Model {
      * @param {Object} mutation - the mutation to add.
      */
     static addMutation(mutation) {
-        mutation.backend = {name: this.getName()};
+        mutation.meta = {name: this.modelName};
         this.session.addMutation(mutation);
     }
 
@@ -374,7 +360,7 @@ const Model = class Model {
      */
     static get(lookupObj) {
         if (!this.accessIds().length) {
-            throw new Error(`No entities found for model ${this.getName()}`);
+            throw new Error(`No entities found for model ${this.modelName}`);
         }
         const ModelClass = this;
 
@@ -444,7 +430,7 @@ const Model = class Model {
      * @return {string} A string representation of this {@link Model} instance.
      */
     toString() {
-        const className = this.getClass().getName();
+        const className = this.getClass().modelName;
         const fields = this._fieldNames.map(fieldName => {
             const val = this._fields[fieldName];
             return `${fieldName}: ${val}`;

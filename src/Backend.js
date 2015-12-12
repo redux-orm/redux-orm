@@ -14,35 +14,20 @@ const Backend = class Backend {
      */
     constructor(userOpts) {
         const defaultOpts = {
-            _name: null,
-            idAttribute: 'id',
             branchName: null,
+            idAttribute: 'id',
             indexById: true,
             ordered: true,
             arrName: 'items',
             mapName: 'itemsById',
         };
 
-        if (!userOpts.name) {
-            throw new Error('You must give a name for the Model in getBackend.');
+        if (typeof userOpts.branchName === 'undefined') {
+            throw Error(`Backend got an undefined branchName - did you
+                        declare modelName on your Model class?'`);
         }
-
-        if (!userOpts.branchName) {
-            userOpts.branchName = userOpts.name;
-        }
-
-        userOpts._name = userOpts.name;
-        delete userOpts.name;
 
         Object.assign(this, defaultOpts, userOpts);
-    }
-
-    /**
-     * The branch name.
-     * @return {string} The branch name.
-     */
-    get name() {
-        return this._name;
     }
 
     /**

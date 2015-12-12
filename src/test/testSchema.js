@@ -16,21 +16,12 @@ describe('Schema', () => {
                         location: new ForeignKey('Location'),
                     };
                 }
-
-                static backend() {
-                    return {
-                        name: 'Person',
-                    };
-                }
             };
 
-            Location = class LocationModel extends Model {
-                static backend() {
-                    return {
-                        name: 'Location',
-                    };
-                }
-            };
+            Person.modelName = 'Person';
+
+            Location = class LocationModel extends Model {};
+            Location.modelName = 'Location';
         });
 
         it('correctly registers a single model at a time', () => {
@@ -56,21 +47,11 @@ describe('Schema', () => {
                     location: new ForeignKey('Location'),
                 };
             }
-
-            static backend() {
-                return {
-                    name: 'Person',
-                };
-            }
         }
+        PersonModel.modelName = 'Person';
 
-        class LocationModel extends Model {
-            static backend() {
-                return {
-                    name: 'Location',
-                };
-            }
-        }
+        class LocationModel extends Model {}
+        LocationModel.modelName = 'Location';
 
         schema.register(PersonModel);
         schema.register(LocationModel);
@@ -132,12 +113,6 @@ describe('Schema', () => {
                 };
             }
 
-            static backend() {
-                return {
-                    name: 'Person',
-                };
-            }
-
             static reducer(state, action, Person) {
                 Person.create({id: 5, name: 'Mike', age: 30});
                 const me = Person.get({name: 'Tommi'});
@@ -148,18 +123,15 @@ describe('Schema', () => {
                 return result;
             }
         }
+        PersonModel.modelName = 'Person';
 
         class LocationModel extends Model {
-            static backend() {
-                return {
-                    name: 'Location',
-                };
-            }
-
             toString() {
                 return `${this.name}, ${this.country}`;
             }
         }
+
+        LocationModel.modelName = 'Location';
 
         schema.register(PersonModel);
         schema.register(LocationModel);
@@ -248,11 +220,6 @@ describe('Schema', () => {
                     pair: new OneToOne('this'),
                 };
             }
-            static backend() {
-                return {
-                    name: 'User',
-                };
-            }
 
             static reducer(state, action, User) {
                 switch (action.type) {
@@ -269,13 +236,9 @@ describe('Schema', () => {
             }
         }
 
-        class ProfileModel extends Model {
-            static backend() {
-                return {
-                    name: 'Profile',
-                };
-            }
+        UserModel.modelName = 'User';
 
+        class ProfileModel extends Model {
             static reducer(state, action, Profile) {
                 switch (action.type) {
                 case 'CREATE_USER':
@@ -291,6 +254,8 @@ describe('Schema', () => {
                 return Profile.getNextState();
             }
         }
+
+        ProfileModel.modelName = 'Profile';
 
         schema.register(UserModel);
         schema.register(ProfileModel);

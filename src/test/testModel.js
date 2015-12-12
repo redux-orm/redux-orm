@@ -22,11 +22,7 @@ describe('Model', () => {
             // of Model, so our manipulations
             // won't survive longer than each test.
             Model = Object.create(BaseModel);
-            Model.backend = () => {
-                return {
-                    name: 'Model',
-                };
-            };
+            Model.modelName = 'Model';
         });
 
         it('session getter works correctly', () => {
@@ -55,15 +51,15 @@ describe('Model', () => {
             expect(reducerStub).to.have.been.calledWithExactly(stateMock, actionMock, Model, sessionMock);
         });
 
-        it('getBackendInstance works correctly', () => {
+        it('getBackend works correctly', () => {
             const BackendMockClass = sinon.stub();
             Model.getBackendClass = () => BackendMockClass;
 
-            const instance = Model.getBackendInstance();
+            const instance = Model.getBackend();
             expect(instance).to.be.an.instanceOf(BackendMockClass);
 
             // Make sure the previous instance is cached
-            expect(Model.getBackendInstance()).to.equal(instance);
+            expect(Model.getBackend()).to.equal(instance);
         });
     });
 
@@ -74,13 +70,9 @@ describe('Model', () => {
 
         beforeEach(() => {
             Model = Object.create(BaseModel);
-            Model.backend = () => {
-                return {
-                    name: 'Model',
-                };
-            };
+            Model.modelName = 'Model';
             backendMock = {};
-            Model.getBackendInstance = () => backendMock;
+            Model.getBackend = () => backendMock;
             Object.defineProperty(Model, 'state', {
                 get: () => stateMock,
             });
@@ -134,11 +126,8 @@ describe('Model', () => {
             // of Model, so our manipulations
             // won't survive longer than each test.
             Model = class TestModel extends BaseModel {};
-            Model.backend = () => {
-                return {
-                    name: 'Model',
-                };
-            };
+            Model.modelName = 'Model';
+
             instance = new Model({id: 0, name: 'Tommi'});
         });
 

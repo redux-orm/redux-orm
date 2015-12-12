@@ -96,7 +96,7 @@ const Schema = class Schema {
      * @return {Model} the model class, if found
      */
     get(modelName) {
-        const found = find(this.registry.concat(this.implicitThroughModels), (model) => model.getName() === modelName);
+        const found = find(this.registry.concat(this.implicitThroughModels), (model) => model.modelName === modelName);
         if (typeof found === 'undefined') {
             throw new Error(`Did not find model ${modelName} from registry.`);
         }
@@ -131,7 +131,7 @@ const Schema = class Schema {
                         model.definedProperties[fieldName] = true;
 
                         // Backwards.
-                        const backwardsFieldName = reverseFieldName(model.getName());
+                        const backwardsFieldName = reverseFieldName(model.modelName);
                         Object.defineProperty(
                             toModel.prototype,
                             backwardsFieldName,
@@ -140,7 +140,7 @@ const Schema = class Schema {
                         toModel.definedProperties[backwardsFieldName] = true;
                     } else if (fieldInstance instanceof ManyToMany) {
                         // Forwards.
-                        const throughModelName = m2mName(model.getName(), fieldName);
+                        const throughModelName = m2mName(model.modelName, fieldName);
                         const throughModel = this.get(throughModelName);
 
                         Object.defineProperty(
@@ -151,7 +151,7 @@ const Schema = class Schema {
                         model.definedProperties[fieldName] = true;
 
                         // Backwards.
-                        const backwardsFieldName = reverseFieldName(model.getName());
+                        const backwardsFieldName = reverseFieldName(model.modelName);
                         Object.defineProperty(
                             toModel.prototype,
                             backwardsFieldName,
@@ -168,7 +168,7 @@ const Schema = class Schema {
                         model.definedProperties[fieldName] = true;
 
                         // Backwards.
-                        const backwardsFieldName = model.getName().toLowerCase();
+                        const backwardsFieldName = model.modelName.toLowerCase();
                         Object.defineProperty(
                             toModel.prototype,
                             backwardsFieldName,

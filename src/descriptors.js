@@ -67,8 +67,8 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
         get() {
             const thisId = this.getId();
 
-            const fromFieldName = m2mFromFieldName(declaredFromModel.getName());
-            const toFieldName = m2mToFieldName(declaredToModel.getName());
+            const fromFieldName = m2mFromFieldName(declaredFromModel.modelName);
+            const toFieldName = m2mToFieldName(declaredToModel.modelName);
 
             const lookupObj = {};
             if (!reverse) {
