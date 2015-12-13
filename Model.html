@@ -31,7 +31,7 @@
         <h2>Model</h2>
         
             <div class="class-description"><p>The heart of an ORM, the data model.
-The static class methods manages the mutations
+The static class methods manages the updates
 passed to this. The class itself is connected to a session,
 and because of this you can only have a single session at a time
 for a <a href="Model.html"><code>Model</code></a> class.</p>
@@ -152,7 +152,7 @@ logic by defining prototype methods (without <code>static</code> keyword).</p></
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line23">line 23</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line22">line 22</a>
     </li></ul></dd>
     
 
@@ -203,7 +203,7 @@ logic by defining prototype methods (without <code>static</code> keyword).</p></
 
 <div class="description">
     <p>Returns the id attribute of this <a href="Model.html"><code>Model</code></a>.
-Delegates to the related <a href="Meta.html"><code>Meta</code></a> instance.</p>
+Delegates to the related <a href="Backend.html"><code>Backend</code></a> instance.</p>
 </div>
 
 
@@ -241,7 +241,7 @@ Delegates to the related <a href="Meta.html"><code>Meta</code></a> instance.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line236">line 236</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line178">line 178</a>
     </li></ul></dd>
     
 
@@ -303,7 +303,7 @@ Delegates to the related <a href="Meta.html"><code>Meta</code></a> instance.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line285">line 285</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line227">line 227</a>
     </li></ul></dd>
     
 
@@ -365,7 +365,7 @@ Delegates to the related <a href="Meta.html"><code>Meta</code></a> instance.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line66">line 66</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line65">line 65</a>
     </li></ul></dd>
     
 
@@ -399,7 +399,7 @@ Delegates to the related <a href="Meta.html"><code>Meta</code></a> instance.</p>
 
 
 <div class="description">
-    <p>A convenience method to call <a href="Meta.html#accessId"><code>Meta#accessId</code></a> from
+    <p>A convenience method to call <a href="Backend.html#accessId"><code>Backend#accessId</code></a> from
 the <a href="Model.html"><code>Model</code></a> class.</p>
 </div>
 
@@ -493,7 +493,7 @@ the <a href="Model.html"><code>Model</code></a> class.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line247">line 247</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line189">line 189</a>
     </li></ul></dd>
     
 
@@ -553,7 +553,7 @@ the <a href="Model.html"><code>Model</code></a> class.</p>
 
 
 <div class="description">
-    <p>A convenience method to call <code>Meta#accessIdList</code> from
+    <p>A convenience method to call <code>Backend#accessIdList</code> from
 the <a href="Model.html"><code>Model</code></a> class with the current state.</p>
 </div>
 
@@ -598,7 +598,7 @@ the <a href="Model.html"><code>Model</code></a> class with the current state.</p
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line255">line 255</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line197">line 197</a>
     </li></ul></dd>
     
 
@@ -629,7 +629,7 @@ the <a href="Model.html"><code>Model</code></a> class with the current state.</p
 
     
 
-    <h4 class="name" id=".addMutation"><span class="type-signature">(static) </span>addMutation<span class="signature">(mutation)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id=".addUpdate"><span class="type-signature">(static) </span>addUpdate<span class="signature">(update)</span><span class="type-signature"></span></h4>
 
     
 
@@ -637,7 +637,7 @@ the <a href="Model.html"><code>Model</code></a> class with the current state.</p
 
 <div class="description">
     <p>A convenience method that delegates to the current <a href="Session.html"><code>Session</code></a> instane.
-Adds the required metadata about this <a href="Model.html"><code>Model</code></a> to the mutation object.</p>
+Adds the required backenddata about this <a href="Model.html"><code>Model</code></a> to the update object.</p>
 </div>
 
 
@@ -673,7 +673,7 @@ Adds the required metadata about this <a href="Model.html"><code>Model</code></a
 
         <tr>
             
-                <td class="name"><code>mutation</code></td>
+                <td class="name"><code>update</code></td>
             
 
             <td class="type">
@@ -689,7 +689,7 @@ Adds the required metadata about this <a href="Model.html"><code>Model</code></a
 
             
 
-            <td class="description last"><p>the mutation to add.</p></td>
+            <td class="description last"><p>the update to add.</p></td>
         </tr>
 
     
@@ -730,7 +730,7 @@ Adds the required metadata about this <a href="Model.html"><code>Model</code></a
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line294">line 294</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line236">line 236</a>
     </li></ul></dd>
     
 
@@ -812,7 +812,7 @@ Adds the required metadata about this <a href="Model.html"><code>Model</code></a
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line338">line 338</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line280">line 280</a>
     </li></ul></dd>
     
 
@@ -851,6 +851,110 @@ Adds the required metadata about this <a href="Model.html"><code>Model</code></a
     <dd>
         
 <span class="param-type"><a href="QuerySet.html">QuerySet</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".backend"><span class="type-signature">(static) </span>backend<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Returns the options object passed to the <a href="Backend.html"><code>Backend</code></a> class constructor.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line78">line 78</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>the options object used to instantiate a <a href="Backend.html"><code>Backend</code></a> class.</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
 
 
     </dd>
@@ -965,7 +1069,7 @@ Adds the required metadata about this <a href="Model.html"><code>Model</code></a
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line272">line 272</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line214">line 214</a>
     </li></ul></dd>
     
 
@@ -1096,7 +1200,7 @@ Adds the required metadata about this <a href="Model.html"><code>Model</code></a
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line348">line 348</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line290">line 290</a>
     </li></ul></dd>
     
 
@@ -1250,7 +1354,7 @@ Throws an error if <a href="Model.html"><code>Model</code></a> is not found.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line375">line 375</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line317">line 317</a>
     </li></ul></dd>
     
 
@@ -1303,6 +1407,216 @@ Throws an error if <a href="Model.html"><code>Model</code></a> is not found.</p>
 
     
 
+    <h4 class="name" id=".getBackend"><span class="type-signature">(static) </span>getBackend<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="Backend.html">Backend</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Gets the <a href="Backend.html"><code>Backend</code></a> instance linked to this <a href="Model.html"><code>Model</code></a>.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line110">line 110</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>The <a href="Backend.html"><code>Backend</code></a> instance linked to this <a href="Model.html"><code>Model</code></a>.</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Backend.html">Backend</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".getBackendClass"><span class="type-signature">(static) </span>getBackendClass<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="Backend.html">Backend</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Returns the <a href="Backend.html"><code>Backend</code></a> class used to instantiate
+the <a href="Backend.html"><code>Backend</code></a> instance for this <a href="Model.html"><code>Model</code></a>.</p>
+<p>Override this if you want to use a custom <a href="Backend.html"><code>Backend</code></a> class.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line102">line 102</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>The <a href="Backend.html"><code>Backend</code></a> class or subclass to use for this <a href="Model.html"><code>Model</code></a>.</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Backend.html">Backend</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
     <h4 class="name" id=".getDefaultState"><span class="type-signature">(static) </span>getDefaultState<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
 
     
@@ -1311,429 +1625,7 @@ Throws an error if <a href="Model.html"><code>Model</code></a> is not found.</p>
 
 <div class="description">
     <p>Gets the default, empty state of the branch.
-Delegates to a <a href="Meta.html"><code>Meta</code></a> instance.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line213">line 213</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>The default state.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Object</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".getMetaClass"><span class="type-signature">(static) </span>getMetaClass<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="Meta.html">Meta</a>}</span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Returns the <a href="Meta.html"><code>Meta</code></a> class used to instantiate
-the <a href="Meta.html"><code>Meta</code></a> instance for this <a href="Model.html"><code>Model</code></a>.</p>
-<p>Override this if you want to use a custom <a href="Meta.html"><code>Meta</code></a> class.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line147">line 147</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>The <a href="Meta.html"><code>Meta</code></a> class or subclass to use for this <a href="Model.html"><code>Model</code></a>.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="Meta.html">Meta</a></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".getMetaInstance"><span class="type-signature">(static) </span>getMetaInstance<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="Meta.html">Meta</a>}</span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Gets the <a href="Meta.html"><code>Meta</code></a> instance linked to this <a href="Model.html"><code>Model</code></a>.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line155">line 155</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>The <a href="Meta.html"><code>Meta</code></a> instance linked to this <a href="Model.html"><code>Model</code></a>.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="Meta.html">Meta</a></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".getName"><span class="type-signature">(static) </span>getName<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Gets the name of this <a href="Model.html"><code>Model</code></a> class.
-Delegates to <a href="Meta.html"><code>Meta</code></a>.</p>
-<p>Constructors have a name property which we cannot
-override, so this is implemented as a method.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line226">line 226</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>The name of this <a href="Model.html"><code>Model</code></a> class.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".getNextState"><span class="type-signature">(static) </span>getNextState<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Gets the Model's next state by applying the recorded
-mutations.</p>
+Delegates to a <a href="Backend.html"><code>Backend</code></a> instance.</p>
 </div>
 
 
@@ -1804,7 +1696,7 @@ mutations.</p>
 
         
 <div class="param-desc">
-    <p>The next state.</p>
+    <p>The default state.</p>
 </div>
 
 
@@ -1830,14 +1722,15 @@ mutations.</p>
 
     
 
-    <h4 class="name" id=".getThroughModelClass"><span class="type-signature">(static) </span>getThroughModelClass<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>}</span></h4>
+    <h4 class="name" id=".getNextState"><span class="type-signature">(static) </span>getNextState<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
 
     
 
 
 
 <div class="description">
-    <p>Returns the <a href="Model.html"><code>Model</code></a> class used to instantiate a possible Through model.</p>
+    <p>Gets the Model's next state by applying the recorded
+updates.</p>
 </div>
 
 
@@ -1881,7 +1774,7 @@ mutations.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line79">line 79</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line123">line 123</a>
     </li></ul></dd>
     
 
@@ -1908,113 +1801,7 @@ mutations.</p>
 
         
 <div class="param-desc">
-    <p>The Through model class used to handle many-to-many relations declared
-                in this model.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type"><a href="Model.html">Model</a></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id=".meta"><span class="type-signature">(static) </span>meta<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Returns the options object passed to the <a href="Meta.html"><code>Meta</code></a> class constructor.
-You need to define this for every subclass.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line125">line 125</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>the options object used to instantiate a <a href="Meta.html"><code>Meta</code></a> class.</p>
+    <p>The next state.</p>
 </div>
 
 
@@ -2092,7 +1879,7 @@ You may override this to suit your needs.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line304">line 304</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line246">line 246</a>
     </li></ul></dd>
     
 
@@ -2315,7 +2102,7 @@ If the user doesn't define a reducer, this is used.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line200">line 200</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line155">line 155</a>
     </li></ul></dd>
     
 
@@ -2353,7 +2140,7 @@ If the user doesn't define a reducer, this is used.</p>
 
 
 <div class="description">
-    <p>Records an ordering mutation for the objects.
+    <p>Records an ordering update for the objects.
 Note that if you create or update any objects after
 calling this, they won't be in order.</p>
 </div>
@@ -2456,7 +2243,7 @@ calling this, they won't be in order.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line416">line 416</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line358">line 358</a>
     </li></ul></dd>
     
 
@@ -2556,7 +2343,7 @@ calling this, they won't be in order.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line502">line 502</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line444">line 444</a>
     </li></ul></dd>
     
 
@@ -2657,7 +2444,7 @@ instantiated this instance).</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line430">line 430</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line372">line 372</a>
     </li></ul></dd>
     
 
@@ -2762,7 +2549,7 @@ instantiated this instance).</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line438">line 438</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line380">line 380</a>
     </li></ul></dd>
     
 
@@ -2822,7 +2609,7 @@ instantiated this instance).</p>
 
 
 <div class="description">
-    <p>Records a mutation to the <a href="Model.html"><code>Model</code></a> instance for a single
+    <p>Records a update to the <a href="Model.html"><code>Model</code></a> instance for a single
 field value assignment.</p>
 </div>
 
@@ -2939,7 +2726,7 @@ field value assignment.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line479">line 479</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line421">line 421</a>
     </li></ul></dd>
     
 
@@ -3040,7 +2827,7 @@ of the <a href="Model.html"><code>Model</code></a> instance.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line464">line 464</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line406">line 406</a>
     </li></ul></dd>
     
 
@@ -3144,7 +2931,7 @@ of the <a href="Model.html"><code>Model</code></a> instance.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line446">line 446</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line388">line 388</a>
     </li></ul></dd>
     
 
@@ -3204,7 +2991,7 @@ of the <a href="Model.html"><code>Model</code></a> instance.</p>
 
 
 <div class="description">
-    <p>Records a mutation to the <a href="Model.html"><code>Model</code></a> instance for multiple field value assignments.</p>
+    <p>Records a update to the <a href="Model.html"><code>Model</code></a> instance for multiple field value assignments.</p>
 </div>
 
 
@@ -3297,7 +3084,7 @@ of the <a href="Model.html"><code>Model</code></a> instance.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line488">line 488</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line430">line 430</a>
     </li></ul></dd>
     
 
@@ -3357,13 +3144,13 @@ of the <a href="Model.html"><code>Model</code></a> instance.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Meta.html">Meta</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Tue Dec 08 2015 22:52:10 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sat Dec 12 2015 16:22:53 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>

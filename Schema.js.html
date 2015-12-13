@@ -38,7 +38,15 @@ import {
     backwardOneToOneDescriptor,
     manyToManyDescriptor,
 } from './descriptors';
-import {m2mName, attachQuerySetMethods, reverseFieldName} from './utils';
+
+import {
+    m2mName,
+    attachQuerySetMethods,
+    m2mToFieldName,
+    m2mFromFieldName,
+    reverseFieldName,
+} from './utils';
+
 
 /**
  * Schema's responsibility is tracking the set of {@link Model} classes used in the database.
@@ -66,13 +74,13 @@ const Schema = class Schema {
      * @param  {string} modelName - the name of the model class
      * @param  {Object} [relatedFields] - a dictionary of `fieldName: fieldInstance`
      * @param  {Function} [reducer] - the reducer function to use for this model
-     * @param  {Object} [metaOpts] -Meta options for this model.
+     * @param  {Object} [backendOpts] -Backend options for this model.
      * @return {Model} The defined model class.
      */
-    define(modelName, relatedFields, reducer, metaOpts) {
+    define(modelName, relatedFields, reducer, backendOpts) {
         class ShortcutDefinedModel extends Model {}
-
-        ShortcutDefinedModel.meta = Object.assign({name: modelName}, metaOpts);
+        ShortcutDefinedModel.modelName = modelName;
+        ShortcutDefinedModel.backend = backendOpts;
         ShortcutDefinedModel.fields = relatedFields;
 
         if (typeof reducer === 'function') {
@@ -109,11 +117,39 @@ const Schema = class Schema {
         models.forEach(model => {
             model.invalidateCaches();
 
-            const m2m = model.getManyToManyModels();
-            m2m.forEach(m2mModel => m2mModel.invalidateCaches());
-
-            this.implicitThroughModels.push(...m2m);
+            this.registerManyToManyModelsFor(model);
             this.registry.push(model);
+        });
+    }
+
+    registerManyToManyModelsFor(model) {
+        const fields = model.fields;
+        const thisModelName = model.modelName;
+
+        forOwn(fields, (fieldInstance, fieldName) => {
+            if (fieldInstance instanceof ManyToMany) {
+                let toModelName;
+                if (fieldInstance.toModelName === 'this') {
+                    toModelName = thisModelName;
+                } else {
+                    toModelName = fieldInstance.toModelName;
+                }
+
+                const fromFieldName = m2mFromFieldName(thisModelName);
+                const toFieldName = m2mToFieldName(toModelName);
+
+                const Through = class ThroughModel extends Model {};
+
+                Through.modelName = m2mName(thisModelName, fieldName);
+
+                Through.fields = {
+                    [fromFieldName]: new ForeignKey(thisModelName),
+                    [toFieldName]: new ForeignKey(toModelName),
+                };
+
+                Through.invalidateCaches();
+                this.implicitThroughModels.push(Through);
+            }
         });
     }
 
@@ -124,7 +160,7 @@ const Schema = class Schema {
      * @return {Model} the model class, if found
      */
     get(modelName) {
-        const found = find(this.registry.concat(this.implicitThroughModels), (model) => model.getName() === modelName);
+        const found = find(this.registry.concat(this.implicitThroughModels), (model) => model.modelName === modelName);
         if (typeof found === 'undefined') {
             throw new Error(`Did not find model ${modelName} from registry.`);
         }
@@ -159,7 +195,7 @@ const Schema = class Schema {
                         model.definedProperties[fieldName] = true;
 
                         // Backwards.
-                        const backwardsFieldName = reverseFieldName(model.getName());
+                        const backwardsFieldName = reverseFieldName(model.modelName);
                         Object.defineProperty(
                             toModel.prototype,
                             backwardsFieldName,
@@ -168,7 +204,7 @@ const Schema = class Schema {
                         toModel.definedProperties[backwardsFieldName] = true;
                     } else if (fieldInstance instanceof ManyToMany) {
                         // Forwards.
-                        const throughModelName = m2mName(model.getName(), fieldName);
+                        const throughModelName = m2mName(model.modelName, fieldName);
                         const throughModel = this.get(throughModelName);
 
                         Object.defineProperty(
@@ -179,7 +215,7 @@ const Schema = class Schema {
                         model.definedProperties[fieldName] = true;
 
                         // Backwards.
-                        const backwardsFieldName = reverseFieldName(model.getName());
+                        const backwardsFieldName = reverseFieldName(model.modelName);
                         Object.defineProperty(
                             toModel.prototype,
                             backwardsFieldName,
@@ -196,7 +232,7 @@ const Schema = class Schema {
                         model.definedProperties[fieldName] = true;
 
                         // Backwards.
-                        const backwardsFieldName = model.getName().toLowerCase();
+                        const backwardsFieldName = model.modelName.toLowerCase();
                         Object.defineProperty(
                             toModel.prototype,
                             backwardsFieldName,
@@ -278,13 +314,13 @@ export default Schema;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Meta.html">Meta</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Tue Dec 08 2015 22:52:10 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sat Dec 12 2015 16:22:53 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>

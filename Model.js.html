@@ -28,16 +28,15 @@
         <article>
             <pre class="prettyprint source linenums"><code>import forOwn from 'lodash/object/forOwn';
 
-import {ManyToMany, ForeignKey} from './fields';
 import Session from './Session';
-import Meta from './Meta';
+import Backend from './Backend';
 import QuerySet from './QuerySet';
 import {CREATE, UPDATE, DELETE, ORDER} from './constants';
-import {match, m2mName, m2mToFieldName, m2mFromFieldName} from './utils';
+import {match} from './utils';
 
 /**
  * The heart of an ORM, the data model.
- * The static class methods manages the mutations
+ * The static class methods manages the updates
  * passed to this. The class itself is connected to a session,
  * and because of this you can only have a single session at a time
  * for a {@link Model} class.
@@ -74,7 +73,7 @@ const Model = class Model {
                 Object.defineProperty(this, fieldName, {
                     get: () => fieldValue,
                     set: (value) => {
-                        ModelClass.addMutation({
+                        ModelClass.addUpdate({
                             type: UPDATE,
                             payload: {
                                 [idAttribute]: this.getId(),
@@ -92,105 +91,61 @@ const Model = class Model {
      * @return {Object} The state for this {@link Model} in the current {@link Session}.
      */
     static get state() {
-        return this.session.getState(this.getName());
+        return this.session.getState(this.modelName);
     }
 
     static toString() {
-        return `ModelClass: ${this.getName()}`;
+        return `ModelClass: ${this.modelName}`;
     }
 
     /**
-     * Returns the {@link Model} class used to instantiate a possible Through model.
-     * @return {Model} The Through model class used to handle many-to-many relations declared
-     *                 in this model.
-     */
-    static getThroughModelClass() {
-        return Model;
-    }
-
-    static getManyToManyModels() {
-        const fields = this.fields;
-        const thisModelName = this.getName();
-
-        const models = [];
-        forOwn(fields, (fieldInstance, fieldName) => {
-            if (fieldInstance instanceof ManyToMany) {
-                let toModelName;
-                if (fieldInstance.toModelName === 'this') {
-                    toModelName = thisModelName;
-                } else {
-                    toModelName = fieldInstance.toModelName;
-                }
-
-                const fromFieldName = m2mFromFieldName(thisModelName);
-                const toFieldName = m2mToFieldName(toModelName);
-
-                const Through = class ThroughModel extends this.getThroughModelClass() {};
-
-                Through.meta = {
-                    name: m2mName(thisModelName, fieldName),
-                };
-
-                Through.fields = {
-                    [fromFieldName]: new ForeignKey(thisModelName),
-                    [toFieldName]: new ForeignKey(toModelName),
-                };
-
-
-                models.push(Through);
-            }
-        });
-
-        return models;
-    }
-
-    /**
-     * Returns the options object passed to the {@link Meta} class constructor.
-     * You need to define this for every subclass.
+     * Returns the options object passed to the {@link Backend} class constructor.
      *
-     * @return {Object} the options object used to instantiate a {@link Meta} class.
+     * @return {Object} the options object used to instantiate a {@link Backend} class.
      */
-    static meta() {
-        throw new Error('You must declare a static "meta" function in your Model class.');
+    static backend() {
+        return {
+            branchName: this.modelName,
+        };
     }
 
-    static getMeta() {
-        if (typeof this.meta === 'function') {
-            return this.meta();
+    static _getBackendOpts() {
+        if (typeof this.backend === 'function') {
+            return this.backend();
         }
-        if (typeof this.meta === 'undefined') {
-            throw new Error(`You must declare either a 'meta' class method or
-                            a 'meta' class variable in your Model Class`);
+        if (typeof this.backend === 'undefined') {
+            throw new Error(`You must declare either a 'backend' class method or
+                            a 'backend' class variable in your Model Class`);
         }
-        return this.meta;
+        return this.backend;
     }
 
     /**
-     * Returns the {@link Meta} class used to instantiate
-     * the {@link Meta} instance for this {@link Model}.
+     * Returns the {@link Backend} class used to instantiate
+     * the {@link Backend} instance for this {@link Model}.
      *
-     * Override this if you want to use a custom {@link Meta} class.
-     * @return {Meta} The {@link Meta} class or subclass to use for this {@link Model}.
+     * Override this if you want to use a custom {@link Backend} class.
+     * @return {Backend} The {@link Backend} class or subclass to use for this {@link Model}.
      */
-    static getMetaClass() {
-        return Meta;
+    static getBackendClass() {
+        return Backend;
     }
 
     /**
-     * Gets the {@link Meta} instance linked to this {@link Model}.
-     * @return {Meta} The {@link Meta} instance linked to this {@link Model}.
+     * Gets the {@link Backend} instance linked to this {@link Model}.
+     * @return {Backend} The {@link Backend} instance linked to this {@link Model}.
      */
-    static getMetaInstance() {
-        if (!this._meta) {
-            const MetaClass = this.getMetaClass();
-            this._meta = new MetaClass(this.getMeta());
+    static getBackend() {
+        if (!this._backend) {
+            const BackendClass = this.getBackendClass();
+            this._backend = new BackendClass(this._getBackendOpts());
         }
-        return this._meta;
+        return this._backend;
     }
 
     /**
      * Gets the Model's next state by applying the recorded
-     * mutations.
+     * updates.
      * @return {Object} The next state.
      */
     static getNextState() {
@@ -198,18 +153,18 @@ const Model = class Model {
             return this.getDefaultState();
         }
 
-        const meta = this.getMetaInstance();
+        const backend = this.getBackend();
 
-        const mutations = this.session.getMutationsFor(this);
+        const updates = this.session.getUpdatesFor(this);
 
-        return mutations.reduce((state, action) => {
+        return updates.reduce((state, action) => {
             switch (action.type) {
             case CREATE:
-                return meta.insert(state, action.payload);
+                return backend.insert(state, action.payload);
             case UPDATE:
-                return meta.update(state, action.payload.idArr, action.payload.updater);
+                return backend.update(state, action.payload.idArr, action.payload.updater);
             case DELETE:
-                return meta.delete(state, action.payload);
+                return backend.delete(state, action.payload);
             default:
                 return state;
             }
@@ -235,61 +190,48 @@ const Model = class Model {
 
     /**
      * Gets the default, empty state of the branch.
-     * Delegates to a {@link Meta} instance.
+     * Delegates to a {@link Backend} instance.
      * @return {Object} The default state.
      */
     static getDefaultState() {
-        return this.getMetaInstance().getDefaultState();
-    }
-
-    /**
-     * Gets the name of this {@link Model} class.
-     * Delegates to {@link Meta}.
-     *
-     * Constructors have a name property which we cannot
-     * override, so this is implemented as a method.
-     *
-     * @return {string} The name of this {@link Model} class.
-     */
-    static getName() {
-        return this.getMetaInstance().name;
+        return this.getBackend().getDefaultState();
     }
 
     /**
      * Returns the id attribute of this {@link Model}.
-     * Delegates to the related {@link Meta} instance.
+     * Delegates to the related {@link Backend} instance.
      *
      * @return {string} The id attribute of this {@link Model}.
      */
     static get idAttribute() {
-        return this.getMetaInstance().idAttribute;
+        return this.getBackend().idAttribute;
     }
 
     /**
-     * A convenience method to call {@link Meta#accessId} from
+     * A convenience method to call {@link Backend#accessId} from
      * the {@link Model} class.
      *
      * @param  {Number} id - the object id to access
      * @return {Object} a reference to the object in the database.
      */
     static accessId(id) {
-        return this.getMetaInstance().accessId(this.state, id);
+        return this.getBackend().accessId(this.state, id);
     }
 
     /**
-     * A convenience method to call {@link Meta#accessIdList} from
+     * A convenience method to call {@link Backend#accessIdList} from
      * the {@link Model} class with the current state.
      */
     static accessIds() {
-        return this.getMetaInstance().accessIdList(this.state);
+        return this.getBackend().accessIdList(this.state);
     }
 
     static accessList() {
-        return this.getMetaInstance().accessList(this.state);
+        return this.getBackend().accessList(this.state);
     }
 
     static iterator() {
-        return this.getMetaInstance().iterator(this.state);
+        return this.getBackend().iterator(this.state);
     }
 
     /**
@@ -316,12 +258,12 @@ const Model = class Model {
 
     /**
      * A convenience method that delegates to the current {@link Session} instane.
-     * Adds the required metadata about this {@link Model} to the mutation object.
-     * @param {Object} mutation - the mutation to add.
+     * Adds the required backenddata about this {@link Model} to the update object.
+     * @param {Object} update - the update to add.
      */
-    static addMutation(mutation) {
-        mutation.meta = {name: this.getName()};
-        this.session.addMutation(mutation);
+    static addUpdate(update) {
+        update.meta = {name: this.modelName};
+        this.session.addUpdate(update);
     }
 
     /**
@@ -348,7 +290,7 @@ const Model = class Model {
 
     static invalidateCaches() {
         this._cachedQuerySet = undefined;
-        this._meta = undefined;
+        this._backend = undefined;
         this._setupDone = undefined;
     }
 
@@ -380,7 +322,7 @@ const Model = class Model {
             props[idAttribute] = this.nextId();
         }
 
-        this.addMutation({
+        this.addUpdate({
             type: CREATE,
             payload: props,
         });
@@ -402,7 +344,7 @@ const Model = class Model {
      */
     static get(lookupObj) {
         if (!this.accessIds().length) {
-            throw new Error(`No entities found for model ${this.getName()}`);
+            throw new Error(`No entities found for model ${this.modelName}`);
         }
         const ModelClass = this;
 
@@ -432,7 +374,7 @@ const Model = class Model {
     }
 
     /**
-     * Records an ordering mutation for the objects.
+     * Records an ordering update for the objects.
      * Note that if you create or update any objects after
      * calling this, they won't be in order.
      *
@@ -442,7 +384,7 @@ const Model = class Model {
      * @return {undefined}
      */
     static setOrder(orderArg) {
-        this.addMutation({
+        this.addUpdate({
             type: ORDER,
             payload: orderArg,
         });
@@ -472,7 +414,7 @@ const Model = class Model {
      * @return {string} A string representation of this {@link Model} instance.
      */
     toString() {
-        const className = this.getClass().getName();
+        const className = this.getClass().modelName;
         const fields = this._fieldNames.map(fieldName => {
             const val = this._fields[fieldName];
             return `${fieldName}: ${val}`;
@@ -498,7 +440,7 @@ const Model = class Model {
     }
 
     /**
-     * Records a mutation to the {@link Model} instance for a single
+     * Records a update to the {@link Model} instance for a single
      * field value assignment.
      * @param {string} propertyName - name of the property to set
      * @param {*} value - value assigned to the property
@@ -509,12 +451,12 @@ const Model = class Model {
     }
 
     /**
-     * Records a mutation to the {@link Model} instance for multiple field value assignments.
+     * Records a update to the {@link Model} instance for multiple field value assignments.
      * @param  {Object} mergeObj - an object that will be merged with this instance.
      * @return {undefined}
      */
     update(mergeObj) {
-        this.getClass().addMutation({
+        this.getClass().addUpdate({
             type: UPDATE,
             payload: {
                 idArr: [this.getId()],
@@ -528,7 +470,7 @@ const Model = class Model {
      * @return {undefined}
      */
     delete() {
-        this.getClass().addMutation({
+        this.getClass().addUpdate({
             type: DELETE,
             payload: [this.getId()],
         });
@@ -550,13 +492,13 @@ export default Model;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Meta.html">Meta</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Tue Dec 08 2015 22:52:10 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sat Dec 12 2015 16:22:53 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>
