@@ -5,7 +5,6 @@ import {ListIterator} from './utils';
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
- * Implements the "database backend" functionality.
  */
 const Backend = class Backend {
     /**
@@ -14,18 +13,12 @@ const Backend = class Backend {
      */
     constructor(userOpts) {
         const defaultOpts = {
-            branchName: null,
             idAttribute: 'id',
             indexById: true,
             ordered: true,
             arrName: 'items',
             mapName: 'itemsById',
         };
-
-        if (typeof userOpts.branchName === 'undefined') {
-            throw Error(`Backend got an undefined branchName - did you
-                        declare modelName on your Model class?'`);
-        }
 
         Object.assign(this, defaultOpts, userOpts);
     }
@@ -216,5 +209,4 @@ const Backend = class Backend {
     }
 };
 
-export {Backend};
 export default Backend;

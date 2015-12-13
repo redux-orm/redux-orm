@@ -10,7 +10,15 @@ import {
     backwardOneToOneDescriptor,
     manyToManyDescriptor,
 } from './descriptors';
-import {m2mName, attachQuerySetMethods, reverseFieldName} from './utils';
+
+import {
+    m2mName,
+    attachQuerySetMethods,
+    m2mToFieldName,
+    m2mFromFieldName,
+    reverseFieldName,
+} from './utils';
+
 
 /**
  * Schema's responsibility is tracking the set of {@link Model} classes used in the database.
@@ -43,8 +51,8 @@ const Schema = class Schema {
      */
     define(modelName, relatedFields, reducer, backendOpts) {
         class ShortcutDefinedModel extends Model {}
-
-        ShortcutDefinedModel.backend = Object.assign({name: modelName}, backendOpts);
+        ShortcutDefinedModel.modelName = modelName;
+        ShortcutDefinedModel.backend = backendOpts;
         ShortcutDefinedModel.fields = relatedFields;
 
         if (typeof reducer === 'function') {
@@ -81,11 +89,39 @@ const Schema = class Schema {
         models.forEach(model => {
             model.invalidateCaches();
 
-            const m2m = model.getManyToManyModels();
-            m2m.forEach(m2mModel => m2mModel.invalidateCaches());
-
-            this.implicitThroughModels.push(...m2m);
+            this.registerManyToManyModelsFor(model);
             this.registry.push(model);
+        });
+    }
+
+    registerManyToManyModelsFor(model) {
+        const fields = model.fields;
+        const thisModelName = model.modelName;
+
+        forOwn(fields, (fieldInstance, fieldName) => {
+            if (fieldInstance instanceof ManyToMany) {
+                let toModelName;
+                if (fieldInstance.toModelName === 'this') {
+                    toModelName = thisModelName;
+                } else {
+                    toModelName = fieldInstance.toModelName;
+                }
+
+                const fromFieldName = m2mFromFieldName(thisModelName);
+                const toFieldName = m2mToFieldName(toModelName);
+
+                const Through = class ThroughModel extends Model {};
+
+                Through.modelName = m2mName(thisModelName, fieldName);
+
+                Through.fields = {
+                    [fromFieldName]: new ForeignKey(thisModelName),
+                    [toFieldName]: new ForeignKey(toModelName),
+                };
+
+                Through.invalidateCaches();
+                this.implicitThroughModels.push(Through);
+            }
         });
     }
 

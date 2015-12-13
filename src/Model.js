@@ -72,49 +72,6 @@ const Model = class Model {
     }
 
     /**
-     * Returns the {@link Model} class used to instantiate a possible Through model.
-     * @return {Model} The Through model class used to handle many-to-many relations declared
-     *                 in this model.
-     */
-    static getThroughModelClass() {
-        return Model;
-    }
-
-    static getManyToManyModels() {
-        const fields = this.fields;
-        const thisModelName = this.modelName;
-
-        const models = [];
-        forOwn(fields, (fieldInstance, fieldName) => {
-            if (fieldInstance instanceof ManyToMany) {
-                let toModelName;
-                if (fieldInstance.toModelName === 'this') {
-                    toModelName = thisModelName;
-                } else {
-                    toModelName = fieldInstance.toModelName;
-                }
-
-                const fromFieldName = m2mFromFieldName(thisModelName);
-                const toFieldName = m2mToFieldName(toModelName);
-
-                const Through = class ThroughModel extends this.getThroughModelClass() {};
-
-                Through.modelName = m2mName(thisModelName, fieldName);
-
-                Through.fields = {
-                    [fromFieldName]: new ForeignKey(thisModelName),
-                    [toFieldName]: new ForeignKey(toModelName),
-                };
-
-
-                models.push(Through);
-            }
-        });
-
-        return models;
-    }
-
-    /**
      * Returns the options object passed to the {@link Backend} class constructor.
      *
      * @return {Object} the options object used to instantiate a {@link Backend} class.

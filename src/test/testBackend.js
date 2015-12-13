@@ -6,18 +6,6 @@ import Backend from '../Backend';
 import {ListIterator} from '../utils';
 
 describe('Backend', () => {
-    describe('constructor', () => {
-        it('throws if not supplied with a branch name', () => {
-            expect(() => new Backend()).to.throw(Error);
-        });
-
-        it('correctly assigns branch name', () => {
-            const name = 'BranchName';
-            const backend = new Backend({branchName: name});
-            expect(backend.branchName).to.equal(name);
-        });
-    });
-
     describe('prototype methods', () => {
         const state = {
             items: [0, 1, 2],
@@ -36,7 +24,7 @@ describe('Backend', () => {
                 },
             },
         };
-        const backend = new Backend({branchName: 'SomeName'});
+        const backend = new Backend();
 
         it('correctly accesses an id', () => {
             expect(backend.accessId(state, 1)).to.equal(state.itemsById[1]);
