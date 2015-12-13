@@ -9,7 +9,7 @@ import {ListIterator} from './utils';
 const Backend = class Backend {
     /**
      * Creates a new {@link Backend} instance.
-     * @param  {Object} userOpts - options to use. Must have a non-empty `name` property.
+     * @param  {Object} userOpts - options to use.
      */
     constructor(userOpts) {
         const defaultOpts = {
