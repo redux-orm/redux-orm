@@ -87,7 +87,7 @@ const Schema = class Schema {
     register() {
         const models = Array.prototype.slice.call(arguments);
         models.forEach(model => {
-            model.invalidateCaches();
+            model.invalidateClassCache();
 
             this.registerManyToManyModelsFor(model);
             this.registry.push(model);
@@ -119,7 +119,7 @@ const Schema = class Schema {
                     [toFieldName]: new ForeignKey(toModelName),
                 };
 
-                Through.invalidateCaches();
+                Through.invalidateClassCache();
                 this.implicitThroughModels.push(Through);
             }
         });
@@ -151,7 +151,7 @@ const Schema = class Schema {
 
     setupModelPrototypes() {
         this.registry.forEach(model => {
-            if (!model._setupDone) {
+            if (!model.isSetUp) {
                 const fields = model.fields;
                 forOwn(fields, (fieldInstance, fieldName) => {
                     const toModelName = fieldInstance.toModelName;
@@ -214,12 +214,12 @@ const Schema = class Schema {
                     }
                 });
                 this._attachQuerySetMethods(model);
-                model._setupDone = true;
+                model.isSetUp = true;
             }
         });
 
         this.implicitThroughModels.forEach(model => {
-            if (!model._setupDone) {
+            if (!model.isSetUp) {
                 forOwn(model.fields, (fieldInstance, fieldName) => {
                     const toModelName = fieldInstance.toModelName;
                     const toModel = toModelName === 'this' ? model : this.get(toModelName);
@@ -232,9 +232,18 @@ const Schema = class Schema {
                     model.definedProperties[fieldName] = true;
                 });
                 this._attachQuerySetMethods(model);
-                model._setupDone = true;
+                model.isSetUp = true;
             }
         });
+    }
+
+    getDefaultState() {
+        const models = this.getModelClasses();
+        const state = {};
+        models.forEach(modelClass => {
+            state[modelClass.modelName] = modelClass.getDefaultState();
+        });
+        return state;
     }
 
     fromEmpty(action) {
@@ -250,6 +259,10 @@ const Schema = class Schema {
      */
     from(state, action) {
         return new Session(this.getModelClasses(), state, action);
+    }
+
+    withMutations(state) {
+        return new Session(this.getModelClasses(), state, undefined, true);
     }
 
     /**

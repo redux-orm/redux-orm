@@ -12,12 +12,13 @@ const Session = class Session {
      * @param  {Object} state - the database state
      * @param  {Object} [action] - the current action in the dispatch cycle.
      *                             Will be passed to the user defined reducers.
+     * @param  {Boolean} withMutations - whether the session should mutate data
      */
-    constructor(models, state, action) {
-        this.action = action;
-        this.state = state;
-
+    constructor(models, state, action, withMutations) {
         this.models = models;
+        this.state = state;
+        this.action = action;
+        this.withMutations = !!withMutations;
 
         this.updates = [];
 
@@ -38,7 +39,17 @@ const Session = class Session {
      *                            that contains the model name.
      */
     addUpdate(update) {
-        this.updates.push(update);
+        if (this.withMutations) {
+            const modelName = update.meta.name;
+            const modelState = this.getState(modelName);
+            const state = typeof modelState === 'undefined'
+                ? this[modelName].getDefaultState()
+                : modelState;
+
+            this[modelName].updateReducer(state, update);
+        } else {
+            this.updates.push(update);
+        }
     }
 
     /**
@@ -58,14 +69,6 @@ const Session = class Session {
         return updates;
     }
 
-    getDefaultState() {
-        const state = {};
-        this.models.forEach(modelClass => {
-            state[modelClass.modelName] = modelClass.getDefaultState();
-        });
-        return state;
-    }
-
     getState(modelName) {
         if (this.state) {
             return this.state[modelName];
@@ -81,9 +84,11 @@ const Session = class Session {
     reduce() {
         this.updates = [];
         const nextState = {};
-
+        const currentAction = this.action;
         this.models.forEach(modelClass => {
-            nextState[modelClass.modelName] = modelClass.callUserReducer();
+            const modelState = this.getState(modelClass.modelName);
+            nextState[modelClass.modelName] = modelClass.reducer(
+                modelState, currentAction, modelClass, this);
         });
         // The remaining updates are for M2M tables.
         return this.updates.reduce((state, action) => {

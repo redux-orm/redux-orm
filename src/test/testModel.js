@@ -38,19 +38,6 @@ describe('Model', () => {
             expect(Model.session).to.equal(sessionMock);
         });
 
-        it('callUserReducer calls reducer with correct arguments', () => {
-            const reducerResult = {};
-            const reducerStub = sinon.stub().returns(reducerResult);
-            Model.reducer = reducerStub;
-
-            Model._session = sessionMock;
-
-            const result = Model.callUserReducer();
-            expect(result).to.equal(reducerResult);
-            expect(reducerStub).to.have.been.calledOnce;
-            expect(reducerStub).to.have.been.calledWithExactly(stateMock, actionMock, Model, sessionMock);
-        });
-
         it('getBackend works correctly', () => {
             const BackendMockClass = sinon.stub();
             Model.getBackendClass = () => BackendMockClass;

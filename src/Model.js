@@ -103,16 +103,33 @@ const Model = class Model {
         return Backend;
     }
 
+    static get _sessionCache() {
+        if (!this.hasOwnProperty('__sessionCache')) {
+            this.__sessionCache = {};
+        }
+        return this.__sessionCache;
+    }
+
+    static clearSessionCache() {
+        this.__sessionCache = {};
+    }
+
     /**
      * Gets the {@link Backend} instance linked to this {@link Model}.
      * @return {Backend} The {@link Backend} instance linked to this {@link Model}.
      */
     static getBackend() {
-        if (!this._backend) {
+        if (!this._sessionCache.backend) {
             const BackendClass = this.getBackendClass();
-            this._backend = new BackendClass(this._getBackendOpts());
+
+            const opts = this._getBackendOpts();
+            if (this._session && this._session.withMutations) {
+                opts.withMutations = true;
+            }
+
+            this._sessionCache.backend = new BackendClass(opts);
         }
-        return this._backend;
+        return this._sessionCache.backend;
     }
 
     /**
@@ -125,22 +142,26 @@ const Model = class Model {
             return this.getDefaultState();
         }
 
-        const backend = this.getBackend();
-
         const updates = this.session.getUpdatesFor(this);
 
-        return updates.reduce((state, action) => {
-            switch (action.type) {
-            case CREATE:
-                return backend.insert(state, action.payload);
-            case UPDATE:
-                return backend.update(state, action.payload.idArr, action.payload.updater);
-            case DELETE:
-                return backend.delete(state, action.payload);
-            default:
-                return state;
-            }
-        }, this.state);
+        return updates.reduce(this.updateReducer.bind(this), this.state);
+    }
+
+    static updateReducer(state, action) {
+        const backend = this.getBackend();
+
+        switch (action.type) {
+        case CREATE:
+            return backend.insert(state, action.payload);
+        case UPDATE:
+            return backend.update(state, action.payload.idArr, action.payload.updater);
+        case ORDER:
+            return backend.order(state, action.payload);
+        case DELETE:
+            return backend.delete(state, action.payload);
+        default:
+            return state;
+        }
     }
 
     /**
@@ -154,10 +175,6 @@ const Model = class Model {
      */
     static reducer(state, action, model, session) {
         return model.getNextState();
-    }
-
-    static callUserReducer() {
-        return this.reducer(this.state, this.session.action, this, this.session);
     }
 
     /**
@@ -207,7 +224,8 @@ const Model = class Model {
     }
 
     /**
-     * Connect the model class to a {@link Session}.
+     * Connect the model class to a {@link Session}. Invalidates
+     * the session-specific cache.
      *
      * @param  {Session} session - The session to connect to.
      */
@@ -217,6 +235,7 @@ const Model = class Model {
         }
 
         this._session = session;
+        this.clearSessionCache();
     }
 
     /**
@@ -260,17 +279,15 @@ const Model = class Model {
         return new QuerySetClass(this, ids);
     }
 
-    static invalidateCaches() {
-        this._cachedQuerySet = undefined;
-        this._backend = undefined;
-        this._setupDone = undefined;
+    static invalidateClassCache() {
+        this.isSetUp = undefined;
     }
 
     static get query() {
-        if (!this._cachedQuerySet) {
-            this._cachedQuerySet = this.getQuerySet();
+        if (!this._sessionCache.queryset) {
+            this._sessionCache.queryset = this.getQuerySet();
         }
-        return this._cachedQuerySet;
+        return this._sessionCache.queryset;
     }
 
     /**

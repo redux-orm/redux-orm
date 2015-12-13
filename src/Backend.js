@@ -18,6 +18,7 @@ const Backend = class Backend {
             ordered: true,
             arrName: 'items',
             mapName: 'itemsById',
+            withMutations: false,
         };
 
         Object.assign(this, defaultOpts, userOpts);
@@ -94,24 +95,27 @@ const Backend = class Backend {
      * @return {Object} the data structure ordered with the arguments.
      */
     order(branch, iteratees, orders) {
+        const returnBranch = this.withMutations ? branch : {};
         const thisBackend = this;
         const {arrName, mapName} = this;
 
         if (this.indexById) {
+            if (!this.withMutations) {
+                returnBranch[mapName] = branch[mapName];
+            }
+
             // TODO: we don't need to build a full list to sort,
             // but it's convenient for direct use of lodash.
             // By implementing our own sorting, this could be more performant.
             const fullList = this.accessList(branch);
             const orderedObjects = sortByOrder(fullList, iteratees, orders);
-            return {
-                [arrName]: orderedObjects.map(obj => obj[thisBackend.idAttribute]),
-                [mapName]: branch[mapName],
-            };
+
+            returnBranch[arrName] = orderedObjects.map(obj => obj[thisBackend.idAttribute]);
+            return returnBranch;
         }
 
-        return {
-            [arrName]: sortByOrder(branch[arrName], iteratees, orders),
-        };
+        returnBranch[arrName] = sortByOrder(branch[arrName], iteratees, orders);
+        return returnBranch;
     }
 
     /**
@@ -123,10 +127,22 @@ const Backend = class Backend {
     insert(branch, entry) {
         if (this.indexById) {
             const id = entry[this.idAttribute];
+
+            if (this.withMutations) {
+                branch[this.arrName].push(id);
+                branch[this.mapName][id] = entry;
+                return branch;
+            }
+
             return {
                 [this.arrName]: branch[this.arrName].concat(id),
                 [this.mapName]: Object.assign({}, branch[this.mapName], {[id]: entry}),
             };
+        }
+
+        if (this.withMutations) {
+            branch[this.arrName].push(entry);
+            return branch;
         }
 
         return {
@@ -150,6 +166,8 @@ const Backend = class Backend {
      * @return {Object} the data structure with objects with their id in `idArr` updated with `patcher`.
      */
     update(branch, idArr, patcher) {
+        const returnBranch = this.withMutations ? branch : {};
+
         const {
             arrName,
             mapName,
@@ -164,28 +182,28 @@ const Backend = class Backend {
         }
 
         if (this.indexById) {
+            if (!this.withMutations) {
+                returnBranch[mapName] = Object.assign({}, branch[mapName]);
+                returnBranch[arrName] = branch[arrName];
+            }
+
             const updatedMap = {};
             idArr.reduce((map, id) => {
                 map[id] = mapFunction(branch[mapName][id]);
                 return map;
             }, updatedMap);
 
-            return {
-                [arrName]: branch[arrName],
-                [mapName]: Object.assign({}, branch[mapName], updatedMap),
-            };
+            Object.assign(returnBranch[mapName], updatedMap);
+            return returnBranch;
         }
 
-        const arrShallowCopy = branch[arrName].slice();
-
-        return {
-            [arrName]: arrShallowCopy.map(entity => {
-                if (idArr.includes(entity[idAttribute])) {
-                    return mapFunction(entity);
-                }
-                return entity;
-            }),
-        };
+        returnBranch[arrName] = branch[arrName].map(entity => {
+            if (idArr.includes(entity[idAttribute])) {
+                return mapFunction(entity);
+            }
+            return entity;
+        });
+        return returnBranch;
     }
 
     /**
@@ -196,15 +214,37 @@ const Backend = class Backend {
      */
     delete(branch, idsToDelete) {
         const {arrName, mapName, idAttribute} = this;
+        const arr = branch[arrName];
+
         if (this.indexById) {
+            if (this.withMutations) {
+                idsToDelete.forEach(id => {
+                    const idx = arr.indexOf(id);
+                    if (idx !== -1) {
+                        arr.splice(idx, 1);
+                    }
+                    delete branch[mapName][id];
+                });
+                return branch;
+            }
             return {
                 [arrName]: branch[arrName].filter(id => !idsToDelete.includes(id)),
                 [mapName]: omit(branch[mapName], idsToDelete),
             };
         }
 
+        if (this.withMutations) {
+            idsToDelete.forEach(id => {
+                const idx = arr.indexOf(id);
+                if (idx === -1) {
+                    arr.splice(idx, 1);
+                }
+            });
+            return branch;
+        }
+
         return {
-            [arrName]: branch[arrName].filter(entity => !idsToDelete.includes(entity[idAttribute])),
+            [arrName]: arr.filter(entity => !idsToDelete.includes(entity[idAttribute])),
         };
     }
 };

@@ -38,6 +38,73 @@ describe('Schema', () => {
             expect(schema.registry).to.have.length(2);
         });
     });
+
+    it('correctly works with mutations', () => {
+        const schema = new Schema();
+
+        class PersonModel extends Model {
+            static get fields() {
+                return {
+                    location: new ForeignKey('Location'),
+                };
+            }
+        }
+        PersonModel.modelName = 'Person';
+
+        class LocationModel extends Model {}
+        LocationModel.modelName = 'Location';
+
+        schema.register(PersonModel);
+        schema.register(LocationModel);
+
+        const state = schema.getDefaultState();
+        const {Person, Location} = schema.withMutations(state);
+        expect(state.Person.items).to.have.length(0);
+        expect(state.Person.itemsById).to.deep.equal({});
+        Person.create({name: 'Tommi', age: 25});
+        expect(state.Person.items).to.have.length(1);
+        expect(state.Person.itemsById).to.deep.equal({
+            0: {
+                id: 0,
+                name: 'Tommi',
+                age: 25,
+            },
+        });
+        Person.create({name: 'Matt', age: 35});
+        expect(state.Person.items).to.have.length(2);
+        expect(state.Person.itemsById).to.deep.equal({
+            0: {
+                id: 0,
+                name: 'Tommi',
+                age: 25,
+            },
+            1: {
+                id: 1,
+                name: 'Matt',
+                age: 35,
+            },
+        });
+
+        expect(state.Person.items).to.deep.equal([0, 1]);
+
+        Person.setOrder('name');
+
+        expect(state.Person.items).to.deep.equal([1, 0]);
+
+        Person.withId(1).delete();
+        expect(state.Person.items).to.have.length(1);
+        expect(state.Person.itemsById).to.deep.equal({
+            0: {
+                id: 0,
+                name: 'Tommi',
+                age: 25,
+            },
+        });
+
+        Person.withId(0).update({name: 'Michael'});
+        expect(state.Person.itemsById[0].name).to.equal('Michael');
+    });
+
     it('correctly defines models', () => {
         const schema = new Schema();
 
