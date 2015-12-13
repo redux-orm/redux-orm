@@ -1,11 +1,10 @@
 import forOwn from 'lodash/object/forOwn';
 
-import {ManyToMany, ForeignKey} from './fields';
 import Session from './Session';
 import Backend from './Backend';
 import QuerySet from './QuerySet';
 import {CREATE, UPDATE, DELETE, ORDER} from './constants';
-import {match, m2mName, m2mToFieldName, m2mFromFieldName} from './utils';
+import {match} from './utils';
 
 /**
  * The heart of an ORM, the data model.
