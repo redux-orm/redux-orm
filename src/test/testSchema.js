@@ -313,9 +313,8 @@ describe('Schema', () => {
         Book = session.Book;
         Genre = session.Genre;
         Book.withId(0).delete();
-        Book.withId(1).genres.add(1, g3);
+        Book.withId(1).update({genres: [1, g3]});
         const nextState = session.reduce();
-
         expect(nextState.BookGenres.items).to.have.length(2);
         expect(nextState.BookGenres.items).to.deep.equal([2, 3]);
     });

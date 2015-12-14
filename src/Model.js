@@ -490,10 +490,29 @@ const Model = class Model {
 
     /**
      * Records a update to the {@link Model} instance for multiple field value assignments.
-     * @param  {Object} mergeObj - an object that will be merged with this instance.
+     * @param  {Object} userMergeObj - an object that will be merged with this instance.
      * @return {undefined}
      */
-    update(mergeObj) {
+    update(userMergeObj) {
+        const relFields = this.getClass().fields;
+        const mergeObj = Object.assign({}, userMergeObj);
+
+        // If an array of entities or id's is supplied for a
+        // many-to-many related field, clear the old relations
+        // and add the new ones.
+        for (const mergeKey in mergeObj) {
+            if (relFields.hasOwnProperty(mergeKey)) {
+                const field = relFields[mergeKey];
+                if (field instanceof ManyToMany) {
+                    // TODO: instead of clearing the old records,
+                    // we should check which ones can remain.
+                    this[mergeKey].clear();
+                    this[mergeKey].add(...mergeObj[mergeKey]);
+                    delete mergeObj[mergeKey];
+                }
+            }
+        }
+
         this.getClass().addUpdate({
             type: UPDATE,
             payload: {
