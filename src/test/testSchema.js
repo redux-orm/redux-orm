@@ -299,14 +299,24 @@ describe('Schema', () => {
         schema.register(BookModel, GenreModel);
 
         const initialState = schema.getDefaultState();
-        const {Book, Genre} = schema.withMutations(initialState);
+        let {Book, Genre} = schema.withMutations(initialState);
 
-        Genre.create({name: 'Fiction'});
-        Genre.create({name: 'Non-Fiction'});
-        Genre.create({name: 'Business'});
+        const g1 = Genre.create({name: 'Fiction'});
+        const g2 = Genre.create({name: 'Non-Fiction'});
+        const g3 = Genre.create({name: 'Business'});
         const book = Book.create({name: 'A Phenomenal Novel', genres: [0, 1]});
+        Book.create({name: 'Not so good Novel', genres: []});
         expect(initialState.BookGenres.items).to.have.length(2);
         expect(book._fields.genres).to.be.undefined;
+
+        const session = schema.from(initialState);
+        Book = session.Book;
+        Genre = session.Genre;
+        Book.withId(1).genres.add(1, g3);
+        const nextState = session.reduce();
+
+        expect(nextState.BookGenres.items).to.have.length(4);
+        expect(nextState.BookGenres.items).to.deep.equal([0, 1, 2, 3]);
     });
 
     it('Correctly defined OneToOne', () => {

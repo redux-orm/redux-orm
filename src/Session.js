@@ -82,7 +82,6 @@ const Session = class Session {
      * @return {Object} The next state
      */
     reduce() {
-        this.updates = [];
         const nextState = {};
         const currentAction = this.action;
         this.models.forEach(modelClass => {
@@ -91,11 +90,14 @@ const Session = class Session {
                 modelState, currentAction, modelClass, this);
         });
         // The remaining updates are for M2M tables.
-        return this.updates.reduce((state, action) => {
+        const finalState = this.updates.reduce((state, action) => {
             const modelName = action.meta.name;
             state[modelName] = this[modelName].getNextState();
             return state;
         }, nextState);
+
+        this.updates = [];
+        return finalState;
     }
 };
 

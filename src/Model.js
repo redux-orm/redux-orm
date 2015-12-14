@@ -264,11 +264,15 @@ const Model = class Model {
      * @return {*} the id value for a new entity.
      */
     static nextId() {
-        const idArr = this.accessIds();
-        if (idArr.length === 0) {
-            return 0;
+        if (typeof this._sessionCache.nextId === 'undefined') {
+            const idArr = this.accessIds();
+            if (idArr.length === 0) {
+                this._sessionCache.nextId = 0;
+            } else {
+                this._sessionCache.nextId = Math.max(...idArr) + 1;
+            }
         }
-        return Math.max(...idArr) + 1;
+        return this._sessionCache.nextId;
     }
 
     static getQuerySet() {
@@ -308,8 +312,16 @@ const Model = class Model {
     static create(userProps) {
         const idAttribute = this.idAttribute;
         const props = Object.assign({}, userProps);
+
         if (!props.hasOwnProperty(idAttribute)) {
-            props[idAttribute] = this.nextId();
+            const nextId = this.nextId();
+            props[idAttribute] = nextId;
+            this._sessionCache.nextId++;
+        } else {
+            const id = props[idAttribute];
+            if (id > this.nextId()) {
+                this._sessionCache.nextId = id + 1;
+            }
         }
 
         const m2mVals = {};
