@@ -1,8 +1,10 @@
 import forOwn from 'lodash/object/forOwn';
+import isArray from 'lodash/lang/isArray';
 
 import Session from './Session';
 import Backend from './Backend';
 import QuerySet from './QuerySet';
+import {ManyToMany} from './fields';
 import {CREATE, UPDATE, DELETE, ORDER} from './constants';
 import {match} from './utils';
 
@@ -310,9 +312,20 @@ const Model = class Model {
             props[idAttribute] = this.nextId();
         }
 
+        const m2mVals = {};
+
         forOwn(userProps, (value, key) => {
             if (value instanceof Model) {
                 props[key] = value.getId();
+            }
+
+            // If a value is supplied for a ManyToMany field,
+            // discard them from props and save for later processing.
+            if (isArray(value)) {
+                if (this.fields.hasOwnProperty(key) && this.fields[key] instanceof ManyToMany) {
+                    m2mVals[key] = value;
+                    delete props[key];
+                }
             }
         });
 
@@ -321,7 +334,20 @@ const Model = class Model {
             payload: props,
         });
         const ModelClass = this;
-        return new ModelClass(props);
+        const instance = new ModelClass(props);
+
+        forOwn(m2mVals, (value, key) => {
+            const ids = value.map(arrVal => {
+                if (arrVal instanceof Model) {
+                    return arrVal.getId();
+                }
+                return arrVal;
+            });
+
+            instance[key].add(...ids);
+        });
+
+        return instance;
     }
 
     static withId(id) {

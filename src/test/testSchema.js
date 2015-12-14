@@ -285,6 +285,29 @@ describe('Schema', () => {
         expect(ats.locations.first().equals(hki)).to.be.ok;
     });
 
+    it('correctly handles ManyToMany relations', () => {
+        class BookModel extends Model {}
+        BookModel.modelName = 'Book';
+        BookModel.fields = {
+            genres: new ManyToMany('Genre'),
+        };
+
+        class GenreModel extends Model {}
+        GenreModel.modelName = 'Genre';
+
+        const schema = new Schema();
+        schema.register(BookModel, GenreModel);
+
+        const initialState = schema.getDefaultState();
+        const {Book, Genre} = schema.withMutations(initialState);
+
+        const g1 = Genre.create({name: 'Fiction'});
+        const g2 = Genre.create({name: 'Non-Fiction'});
+        const g3 = Genre.create({name: 'Business'});
+        Book.create({name: 'A Phenomenal Novel', genres: [0, 1]});
+        expect(initialState.BookGenres.items).to.have.length(2);
+    });
+
     it('Correctly defined OneToOne', () => {
         const schema = new Schema();
 
