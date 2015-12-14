@@ -301,11 +301,12 @@ describe('Schema', () => {
         const initialState = schema.getDefaultState();
         const {Book, Genre} = schema.withMutations(initialState);
 
-        const g1 = Genre.create({name: 'Fiction'});
-        const g2 = Genre.create({name: 'Non-Fiction'});
-        const g3 = Genre.create({name: 'Business'});
-        Book.create({name: 'A Phenomenal Novel', genres: [0, 1]});
+        Genre.create({name: 'Fiction'});
+        Genre.create({name: 'Non-Fiction'});
+        Genre.create({name: 'Business'});
+        const book = Book.create({name: 'A Phenomenal Novel', genres: [0, 1]});
         expect(initialState.BookGenres.items).to.have.length(2);
+        expect(book._fields.genres).to.be.undefined;
     });
 
     it('Correctly defined OneToOne', () => {
