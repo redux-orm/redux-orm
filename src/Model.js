@@ -233,7 +233,6 @@ const Model = class Model {
         if (!session instanceof Session) {
             throw Error('A model can only connect to a Session instance.');
         }
-
         this._session = session;
         this.clearSessionCache();
     }
@@ -304,12 +303,18 @@ const Model = class Model {
      * @param  {props} props - the new {@link Model}'s properties.
      * @return {Model} a new {@link Model} instance.
      */
-    static create(props) {
+    static create(userProps) {
         const idAttribute = this.idAttribute;
-
+        const props = Object.assign({}, userProps);
         if (!props.hasOwnProperty(idAttribute)) {
             props[idAttribute] = this.nextId();
         }
+
+        forOwn(userProps, (value, key) => {
+            if (value instanceof Model) {
+                props[key] = value.getId();
+            }
+        });
 
         this.addUpdate({
             type: CREATE,

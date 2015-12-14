@@ -37,6 +37,14 @@ describe('Schema', () => {
             schema.register(Person, Location);
             expect(schema.registry).to.have.length(2);
         });
+
+        it('correcly resolves model instance values on create', () => {
+            schema.register(Person, Location);
+            schema.from(schema.getDefaultState());
+            const tommi = Person.create({id: 0, name: 'Tommi', friend: null});
+            const friend = Person.create({id: 1, name: 'Matt', friend: tommi});
+            expect(friend._fields.friend).to.equal(0);
+        });
     });
 
     it('correctly works with mutations', () => {

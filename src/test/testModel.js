@@ -21,7 +21,7 @@ describe('Model', () => {
             // Get a fresh copy
             // of Model, so our manipulations
             // won't survive longer than each test.
-            Model = Object.create(BaseModel);
+            Model = class TestModel extends BaseModel {};
             Model.modelName = 'Model';
         });
 
