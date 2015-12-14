@@ -40,7 +40,13 @@ function backwardOneToOneDescriptor(declaredFieldName, declaredFromModel) {
     return {
         get() {
             const thisId = this.getId();
-            return declaredFromModel.get({[declaredFieldName]: thisId});
+            let found;
+            try {
+                found = declaredFromModel.get({[declaredFieldName]: thisId});
+            } catch (e) {
+                return null;
+            }
+            return found;
         },
         set() {
             throw new Error('Can\'t mutate a reverse one-to-one relation.');
@@ -107,6 +113,10 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
                 });
             };
 
+            qs.clear = function clear() {
+                throughQs.delete();
+            };
+
             qs.remove = function remove(...entities) {
                 let idsToRemove;
                 if (Number.isInteger(entities[0])) {
@@ -115,9 +125,12 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
                     idsToRemove = entities.map(entity => entity.getId());
                 }
 
+                const attrShouldMatchThisId = reverse ? toFieldName : fromFieldName;
+                const attrInIdsToRemove = reverse ? fromFieldName : toFieldName;
+
                 const entitiesToDelete = throughModel.filter(through => {
-                    if (through[fromFieldName] === thisId) {
-                        if (idsToRemove.includes(through[toFieldName])) {
+                    if (through[attrShouldMatchThisId] === thisId) {
+                        if (idsToRemove.includes(through[attrInIdsToRemove])) {
                             return true;
                         }
                     }

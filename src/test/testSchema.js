@@ -312,11 +312,12 @@ describe('Schema', () => {
         const session = schema.from(initialState);
         Book = session.Book;
         Genre = session.Genre;
+        Book.withId(0).delete();
         Book.withId(1).genres.add(1, g3);
         const nextState = session.reduce();
 
-        expect(nextState.BookGenres.items).to.have.length(4);
-        expect(nextState.BookGenres.items).to.deep.equal([0, 1, 2, 3]);
+        expect(nextState.BookGenres.items).to.have.length(2);
+        expect(nextState.BookGenres.items).to.deep.equal([2, 3]);
     });
 
     it('Correctly defined OneToOne', () => {
@@ -458,5 +459,6 @@ describe('Schema', () => {
         expect(nextProfile.count()).to.equal(5);
 
         expect(nextUser.last().profile).to.be.undefined;
+        nextUser.last().delete();
     });
 });

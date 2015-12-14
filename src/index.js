@@ -25,6 +25,7 @@ export {
     Session,
     ForeignKey,
     ManyToMany,
+    OneToOne,
     fk,
     many,
     oneToOne,

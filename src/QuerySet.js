@@ -249,6 +249,10 @@ const QuerySet = class QuerySet {
             type: DELETE,
             payload: this.idArr,
         });
+
+        const originalFlag = this._plain;
+        this.models.forEach(model => model._onDelete());
+        this._plain = originalFlag;
     }
 };
 

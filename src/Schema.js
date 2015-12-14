@@ -2,7 +2,11 @@ import forOwn from 'lodash/object/forOwn';
 import find from 'lodash/collection/find';
 import Session from './Session';
 import Model from './Model';
-import {ForeignKey, ManyToMany, OneToOne} from './fields';
+import {
+    ForeignKey,
+    ManyToMany,
+    OneToOne,
+} from './fields';
 import {
     forwardManyToOneDescriptor,
     backwardManyToOneDescriptor,
@@ -167,13 +171,17 @@ const Schema = class Schema {
                         model.definedProperties[fieldName] = true;
 
                         // Backwards.
-                        const backwardsFieldName = reverseFieldName(model.modelName);
+                        const backwardsFieldName = fieldInstance.relatedName
+                            ? fieldInstance.relatedName
+                            : reverseFieldName(model.modelName);
+
                         Object.defineProperty(
                             toModel.prototype,
                             backwardsFieldName,
                             backwardManyToOneDescriptor(fieldName, model)
                         );
                         toModel.definedProperties[backwardsFieldName] = true;
+                        toModel.virtualFields[backwardsFieldName] = new ForeignKey(model.modelName, fieldName);
                     } else if (fieldInstance instanceof ManyToMany) {
                         // Forwards.
                         const throughModelName = m2mName(model.modelName, fieldName);
@@ -185,15 +193,20 @@ const Schema = class Schema {
                             manyToManyDescriptor(model, toModel, throughModel, false)
                         );
                         model.definedProperties[fieldName] = true;
+                        model.virtualFields[fieldName] = new ManyToMany(toModel.modelName, fieldName);
 
                         // Backwards.
-                        const backwardsFieldName = reverseFieldName(model.modelName);
+                        const backwardsFieldName = fieldInstance.relatedName
+                            ? fieldInstance.relatedName
+                            : reverseFieldName(model.modelName);
+
                         Object.defineProperty(
                             toModel.prototype,
                             backwardsFieldName,
                             manyToManyDescriptor(model, toModel, throughModel, true)
                         );
                         toModel.definedProperties[backwardsFieldName] = true;
+                        toModel.virtualFields[backwardsFieldName] = new ManyToMany(model.modelName, fieldName);
                     } else if (fieldInstance instanceof OneToOne) {
                         // Forwards.
                         Object.defineProperty(
@@ -204,13 +217,17 @@ const Schema = class Schema {
                         model.definedProperties[fieldName] = true;
 
                         // Backwards.
-                        const backwardsFieldName = model.modelName.toLowerCase();
+                        const backwardsFieldName = fieldInstance.relatedName
+                            ? fieldInstance.relatedName
+                            : model.modelName.toLowerCase();
+
                         Object.defineProperty(
                             toModel.prototype,
                             backwardsFieldName,
                             backwardOneToOneDescriptor(fieldName, model)
                         );
                         model.definedProperties[backwardsFieldName] = true;
+                        model.virtualFields[backwardsFieldName] = new OneToOne(model.modelName, fieldName);
                     }
                 });
                 this._attachQuerySetMethods(model);

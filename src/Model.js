@@ -4,7 +4,11 @@ import isArray from 'lodash/lang/isArray';
 import Session from './Session';
 import Backend from './Backend';
 import QuerySet from './QuerySet';
-import {ManyToMany} from './fields';
+import {
+    ManyToMany,
+    ForeignKey,
+    OneToOne,
+} from './fields';
 import {CREATE, UPDATE, DELETE, ORDER} from './constants';
 import {match} from './utils';
 
@@ -286,6 +290,8 @@ const Model = class Model {
 
     static invalidateClassCache() {
         this.isSetUp = undefined;
+        this.definedProperties = {};
+        this.virtualFields = {};
     }
 
     static get query() {
@@ -506,11 +512,30 @@ const Model = class Model {
             type: DELETE,
             payload: [this.getId()],
         });
+        this._onDelete();
+    }
+
+    _onDelete() {
+        const virtualFields = this.getClass().virtualFields;
+        for (const key in virtualFields) { // eslint-disable-line
+            const field = virtualFields[key];
+            if (field instanceof ManyToMany) {
+                // Delete any many-to-many rows the entity is included in.
+                this[key].clear();
+            } else if (field instanceof ForeignKey || field instanceof OneToOne) {
+                // Set null to any foreign keys or one to ones pointed to
+                // this instance.
+                if (this[key] !== null ) {
+                    this[key][field.relatedName] = null;
+                }
+            }
+        }
     }
 };
 
 Model.fields = {};
 Model.definedProperties = {};
+Model.virtualFields = {};
 Model.querySetClass = QuerySet;
 
 export default Model;
