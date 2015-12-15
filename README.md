@@ -3,7 +3,9 @@ redux-orm
 
 A small, simple and immutable ORM to manage data in your Redux store.
 
-WARNING: Not ready for production. 
+Not ready for production.
+
+See an [example app using redux-orm](https://github.com/tommikaikkonen/redux-orm-example).
 
 [![npm version](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
 [![npm downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
