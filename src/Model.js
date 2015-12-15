@@ -541,7 +541,12 @@ const Model = class Model {
             if (field instanceof ManyToMany) {
                 // Delete any many-to-many rows the entity is included in.
                 this[key].clear();
-            } else if (field instanceof ForeignKey || field instanceof OneToOne) {
+            } else if (field instanceof ForeignKey) {
+                const relatedQs = this[key];
+                if (relatedQs.exists()) {
+                    relatedQs.update({[field.relatedName]: null});
+                }
+            } else if (field instanceof OneToOne) {
                 // Set null to any foreign keys or one to ones pointed to
                 // this instance.
                 if (this[key] !== null ) {
