@@ -1,5 +1,9 @@
 import UPDATE from './constants';
-import {m2mFromFieldName, m2mToFieldName} from './utils';
+import {
+    m2mFromFieldName,
+    m2mToFieldName,
+    normalizeEntity,
+} from './utils';
 
 // Forwards side a Foreign Key: returns one object.
 // Also works as forwardsOneToOneDescriptor.
@@ -98,12 +102,7 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
             const qs = qsFromModel.getQuerySetFromIds(toIds);
 
             qs.add = function add(...args) {
-                const ids = args.map(entity => {
-                    if (Number.isInteger(entity)) {
-                        return entity;
-                    }
-                    return entity.getId();
-                });
+                const ids = args.map(normalizeEntity);
 
                 ids.forEach(id => {
                     throughModel.create({
@@ -118,12 +117,7 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
             };
 
             qs.remove = function remove(...entities) {
-                let idsToRemove;
-                if (Number.isInteger(entities[0])) {
-                    idsToRemove = entities;
-                } else {
-                    idsToRemove = entities.map(entity => entity.getId());
-                }
+                const idsToRemove = entities.map(normalizeEntity);
 
                 const attrShouldMatchThisId = reverse ? toFieldName : fromFieldName;
                 const attrInIdsToRemove = reverse ? fromFieldName : toFieldName;

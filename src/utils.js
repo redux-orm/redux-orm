@@ -164,6 +164,22 @@ function attachQuerySetMethods(modelClass, querySetClass) {
     });
 }
 
+/**
+ * Normalizes `entity` to an id, where `entity` can be an id
+ * or a Model instance.
+ *
+ * @param  {*} entity - either a Model instance or an id value
+ * @return {*} the id value of `entity`
+ */
+function normalizeEntity(entity) {
+    if (entity !== null &&
+            typeof entity !== 'undefined' &&
+            typeof entity.getId === 'function') {
+        return entity.getId();
+    }
+    return entity;
+}
+
 export {
     match,
     attachQuerySetMethods,
@@ -172,4 +188,5 @@ export {
     m2mToFieldName,
     reverseFieldName,
     ListIterator,
+    normalizeEntity,
 };

@@ -10,7 +10,10 @@ import {
     OneToOne,
 } from './fields';
 import {CREATE, UPDATE, DELETE, ORDER} from './constants';
-import {match} from './utils';
+import {
+    match,
+    normalizeEntity,
+} from './utils';
 
 /**
  * The heart of an ORM, the data model.
@@ -333,9 +336,7 @@ const Model = class Model {
         const m2mVals = {};
 
         forOwn(userProps, (value, key) => {
-            if (value instanceof Model) {
-                props[key] = value.getId();
-            }
+            props[key] = normalizeEntity(value);
 
             // If a value is supplied for a ManyToMany field,
             // discard them from props and save for later processing.
@@ -355,13 +356,7 @@ const Model = class Model {
         const instance = new ModelClass(props);
 
         forOwn(m2mVals, (value, key) => {
-            const ids = value.map(arrVal => {
-                if (arrVal instanceof Model) {
-                    return arrVal.getId();
-                }
-                return arrVal;
-            });
-
+            const ids = value.map(normalizeEntity);
             instance[key].add(...ids);
         });
 
