@@ -195,6 +195,10 @@ const Model = class Model {
         return this.getBackend().getDefaultState();
     }
 
+    static markAccessed() {
+        this.session.markAccessed(this);
+    }
+
     /**
      * Returns the id attribute of this {@link Model}.
      * Delegates to the related {@link Backend} instance.
@@ -213,6 +217,7 @@ const Model = class Model {
      * @return {Object} a reference to the object in the database.
      */
     static accessId(id) {
+        this.markAccessed();
         return this.getBackend().accessId(this.state, id);
     }
 
@@ -221,14 +226,17 @@ const Model = class Model {
      * the {@link Model} class with the current state.
      */
     static accessIds() {
+        this.markAccessed();
         return this.getBackend().accessIdList(this.state);
     }
 
     static accessList() {
+        this.markAccessed();
         return this.getBackend().accessList(this.state);
     }
 
     static iterator() {
+        this.markAccessed();
         return this.getBackend().iterator(this.state);
     }
 

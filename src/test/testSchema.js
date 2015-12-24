@@ -271,10 +271,15 @@ describe('Schema', () => {
         expect(orm.PersonLocations).to.exist;
 
         const SF = orm.Location.get({name: 'San Francisco'});
+        expect(orm.accessedModels).to.deep.equal(['Location']);
         expect(SF.personSet.count()).to.equal(1);
 
         const hki = orm.Location.get({name: 'Helsinki'});
+        expect(orm.accessedModels).to.deep.equal(['Location', 'PersonLocations']);
         expect(hki.personSet.count()).to.equal(2);
+
+        hki.personSet.map(x => x);
+        expect(orm.accessedModels).to.deep.equal(['Location', 'PersonLocations', 'Person']);
 
         const tommi = orm.Person.first();
         expect(tommi.name).to.equal('Tommi');

@@ -22,6 +22,8 @@ const Session = class Session {
 
         this.updates = [];
 
+        this._accessedModels = {};
+
         models.forEach(modelClass => {
             Object.defineProperty(this, modelClass.modelName, {
                 get: () => modelClass,
@@ -29,6 +31,14 @@ const Session = class Session {
 
             modelClass.connect(this);
         });
+    }
+
+    markAccessed(model) {
+        this._accessedModels[model.modelName] = true;
+    }
+
+    get accessedModels() {
+        return Object.keys(this._accessedModels);
     }
 
     /**

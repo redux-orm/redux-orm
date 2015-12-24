@@ -53,13 +53,18 @@ describe('Model', () => {
     describe('static method delegates to Backend', () => {
         let Model;
         let backendMock;
+        let sessionMock;
+        let markAccessedSpy;
         const stateMock = {};
 
         beforeEach(() => {
             Model = Object.create(BaseModel);
             Model.modelName = 'Model';
+            markAccessedSpy = sinon.spy();
+            sessionMock = {markAccessed: markAccessedSpy};
             backendMock = {};
             Model.getBackend = () => backendMock;
+            Model._session = sessionMock;
             Object.defineProperty(Model, 'state', {
                 get: () => stateMock,
             });
@@ -74,6 +79,7 @@ describe('Model', () => {
 
             expect(accessIdSpy).to.have.been.calledOnce;
             expect(accessIdSpy).to.have.been.calledWithExactly(stateMock, arg);
+            expect(markAccessedSpy).to.have.been.calledOnce;
         });
 
         it('accessIds correctly delegates', () => {
@@ -84,6 +90,7 @@ describe('Model', () => {
 
             expect(accessIdsSpy).to.have.been.calledOnce;
             expect(accessIdsSpy).to.have.been.calledWithExactly(stateMock);
+            expect(markAccessedSpy).to.have.been.calledOnce;
         });
 
         it('accessList correctly delegates', () => {
@@ -94,6 +101,7 @@ describe('Model', () => {
 
             expect(accessIdsSpy).to.have.been.calledOnce;
             expect(accessIdsSpy).to.have.been.calledWithExactly(stateMock);
+            expect(markAccessedSpy).to.have.been.calledOnce;
         });
     });
 
