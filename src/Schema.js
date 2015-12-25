@@ -1,5 +1,7 @@
+import {createSelectorCreator} from 'reselect';
 import forOwn from 'lodash/object/forOwn';
 import find from 'lodash/collection/find';
+
 import Session from './Session';
 import Model from './Model';
 import {
@@ -14,6 +16,7 @@ import {
     backwardOneToOneDescriptor,
     manyToManyDescriptor,
 } from './descriptors';
+import {memoize, eqCheck} from './memoize';
 
 import {
     m2mName,
@@ -22,7 +25,6 @@ import {
     m2mFromFieldName,
     reverseFieldName,
 } from './utils';
-
 
 /**
  * Schema's responsibility is tracking the set of {@link Model} classes used in the database.
@@ -38,6 +40,7 @@ const Schema = class Schema {
     constructor() {
         this.registry = [];
         this.implicitThroughModels = [];
+        this.selectorCreator = createSelectorCreator(memoize, eqCheck, this);
     }
 
     /**
@@ -302,6 +305,13 @@ const Schema = class Schema {
         return (state, action) => {
             return this.from(state, action).reduce();
         };
+    }
+
+    createSelector(...args) {
+        if (args.length === 1) {
+            return memoize(args[0], eqCheck, this);
+        }
+        return this.selectorCreator(...args);
     }
 };
 
