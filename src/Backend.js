@@ -1,7 +1,7 @@
 import find from 'lodash/collection/find';
 import sortByOrder from 'lodash/collection/sortByOrder';
 import omit from 'lodash/object/omit';
-import {ListIterator} from './utils';
+import {ListIterator, objectDiff} from './utils';
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
@@ -178,7 +178,13 @@ const Backend = class Backend {
         if (typeof patcher === 'function') {
             mapFunction = patcher;
         } else {
-            mapFunction = (entity) => Object.assign({}, entity, patcher);
+            mapFunction = (entity) => {
+                const diff = objectDiff(entity, patcher);
+                if (diff) {
+                    return Object.assign({}, entity, patcher);
+                }
+                return entity;
+            };
         }
 
         if (this.indexById) {
@@ -193,17 +199,27 @@ const Backend = class Backend {
                 return map;
             }, updatedMap);
 
-            Object.assign(returnBranch[mapName], updatedMap);
+            const diff = objectDiff(returnBranch[mapName], updatedMap);
+            if (diff) {
+                Object.assign(returnBranch[mapName], updatedMap);
+            } else {
+                return branch;
+            }
             return returnBranch;
         }
 
+        let updated = false;
         returnBranch[arrName] = branch[arrName].map(entity => {
             if (idArr.includes(entity[idAttribute])) {
+                const result = mapFunction(entity);
+                if (entity !== result) {
+                    updated = true;
+                }
                 return mapFunction(entity);
             }
             return entity;
         });
-        return returnBranch;
+        return updated ? returnBranch : branch;
     }
 
     /**

@@ -13,6 +13,7 @@ import {CREATE, UPDATE, DELETE, ORDER} from './constants';
 import {
     match,
     normalizeEntity,
+    arrayDiffActions,
 } from './utils';
 
 /**
@@ -507,10 +508,22 @@ const Model = class Model {
             if (relFields.hasOwnProperty(mergeKey)) {
                 const field = relFields[mergeKey];
                 if (field instanceof ManyToMany) {
-                    // TODO: instead of clearing the old records,
-                    // we should check which ones can remain.
-                    this[mergeKey].clear();
-                    this[mergeKey].add(...mergeObj[mergeKey]);
+                    const currentIds = this[mergeKey].idArr;
+
+                    // TODO: It could be better to check this stuff in Backend.
+                    const diffActions = arrayDiffActions(currentIds, mergeObj[mergeKey]);
+                    if (diffActions) {
+                        const idsToDelete = diffActions.delete;
+                        const idsToAdd = diffActions.add;
+
+                        if (idsToDelete.length > 0) {
+                            this[mergeKey].filter(item => idsToDelete.indexOf(item.getId()) !== -1)
+                                          .delete();
+                        }
+                        if (idsToAdd.length > 0) {
+                            this[mergeKey].add(...idsToAdd);
+                        }
+                    }
                     delete mergeObj[mergeKey];
                 }
             }
