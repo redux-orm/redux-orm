@@ -517,14 +517,15 @@ const Model = class Model {
                         const idsToAdd = diffActions.add;
 
                         if (idsToDelete.length > 0) {
-                            this[mergeKey].filter(item => idsToDelete.indexOf(item.getId()) !== -1)
-                                          .delete();
+                            this[mergeKey].remove(idsToDelete);
                         }
                         if (idsToAdd.length > 0) {
                             this[mergeKey].add(...idsToAdd);
                         }
                     }
                     delete mergeObj[mergeKey];
+                } else if (field instanceof ForeignKey || field instanceof OneToOne) {
+                    mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
                 }
             }
         }
