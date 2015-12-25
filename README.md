@@ -36,8 +36,8 @@ Book.modelName = 'Book';
 
 // Declare your related fields.
 Book.fields = {
-    authors: many('Author'),
-    publisher: fk('Publisher'),
+    authors: many('Author', 'books'),
+    publisher: fk('Publisher', 'books'),
 };
 ```
 
@@ -111,35 +111,59 @@ const rootReducer = combineReducers({
 
 ### Use with React
 
-In your top level component, you can begin a `Session` to query your data with `redux-orm`.
+Use memoized selectors to make queries into the state. `redux-orm` uses smart memoization: the below selector accesses `Author` and `AuthorBooks` branches (`AuthorBooks` is a many-to-many branch generated from the model field declarations), and the selector will be recomputed only if those branches change. The accessed branches are resolved on the first run.
+
+```javascript
+// selectors.js
+import schema from './schema';
+const authorSelector = schema.createSelector(session => {
+    return session.Author.map(author => {
+        // Returns a shallow copy of the raw author object,
+        // so it doesn't include any reverse or m2m fields.
+        const obj = author.toPlain();
+        // Object.keys(obj) === ['id', 'name']
+
+        return Object.assign(obj, {
+            books: author.books.plain.map(book => book.name),
+        });
+    });
+});
+
+// Will result in something like this when run:
+// [
+//   {
+//     id: 0,
+//     name: 'Tommi Kaikkonen',
+//     books: ['Introduction to redux-orm', 'Developing Redux applications'],
+//   },
+//   {
+//     id: 1,
+//     name: 'John Doe',
+//     books: ['John Doe: an Autobiography']
+//   }
+// ]
+```
+
+Selectors created with `schema.createSelector` can be used as input to any additional `reselect` selectors you want to use. They are also great to use with `redux-thunk`: get the whole state with `getState()`, pass the ORM branch to the selector, and get your results. A good use case is serializing data to a custom format for a 3rd party API call.
+
+Because selectors are memoized, you can use pure rendering in React for performance gains.
 
 ```javascript
 // components.js
-import {Component} from 'React';
-import schema from './schema';
+import PureComponent from 'react-pure-render/component';
+import {authorSelector} from './selectors';
+import {connect} from 'react-redux';
 
-class App extends Component {
-    getORM() {
-        return schema.from(this.props.orm);
-    }
-
+class App extends PureComponent {
     render() {
-        const {
-            Book,
-            Publisher,
-            Author
-        } = this.getORM();
-
-        const authors = Author.map(author => {
-            // .bookSet is a virtual reverse field,
-            // generated from book.authors = fk('Author').
-            const authorBooks = author.bookSet;
-            const bookNames = authorBooks.map(book => book.name).join(', ');
+        const authors = this.props.authors.map(author => {
+            const bookNames = author.books.join(', ');
 
             return (
-                <li key={author.getId()}>
-                    {author.name} has written {authorBookNames}
-                </li>);
+                <li key={author.id}>
+                    {author.name} has written {author.books.join(', ')}
+                </li>
+            );
         });
 
         return (
@@ -150,6 +174,13 @@ class App extends Component {
     }
 }
 
+function mapStateToProps(state) {
+    return {
+        authors: authorSelector(state.orm),
+    };
+}
+
+export default connect(mapStateToProps)(App);
 ```
 
 ## Understanding redux-orm
@@ -223,6 +254,7 @@ Instance methods:
 - `define(name, [relatedFields], [backendOpts])`: shortcut to define and register simple models.
 - `from(state, [action])`: begins a new `Session` with `state`. If `action` is omitted, the session can be used to query the state data.
 - `reducer()`: returns a reducer function that can be plugged into Redux. The reducer will return the next state of the database given the provided action. You need to register your models before calling this.
+- `createSelector([...inputSelectors], selectorFunc)`: returns a memoized selector function for `selectorFunc`. `selectorFunc` receives `session` as the first argument, followed by any inputs from `inputSelectors`. Read the full documentation for details.
 
 ### Model
 
