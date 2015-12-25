@@ -157,8 +157,6 @@ import {connect} from 'react-redux';
 class App extends PureComponent {
     render() {
         const authors = this.props.authors.map(author => {
-            const bookNames = author.books.join(', ');
-
             return (
                 <li key={author.id}>
                     {author.name} has written {author.books.join(', ')}
