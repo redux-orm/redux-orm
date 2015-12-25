@@ -195,13 +195,14 @@ const Backend = class Backend {
 
             const updatedMap = {};
             idArr.reduce((map, id) => {
-                map[id] = mapFunction(branch[mapName][id]);
+                const result = mapFunction(branch[mapName][id]);
+                if (result !== branch[mapName][id]) map[id] = result;
                 return map;
             }, updatedMap);
 
             const diff = objectDiff(returnBranch[mapName], updatedMap);
             if (diff) {
-                Object.assign(returnBranch[mapName], updatedMap);
+                Object.assign(returnBranch[mapName], diff);
             } else {
                 return branch;
             }
