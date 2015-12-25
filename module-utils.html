@@ -170,7 +170,7 @@ model id where the many-to-many relation was declared.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line109">line 109</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line113">line 113</a>
     </li></ul></dd>
     
 
@@ -350,7 +350,7 @@ in the <code>Author</code> field <code>books</code>. The many-to-many branch nam
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line96">line 96</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line100">line 100</a>
     </li></ul></dd>
     
 
@@ -506,7 +506,7 @@ model where the many-to-many relation was declared.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line123">line 123</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line127">line 127</a>
     </li></ul></dd>
     
 
@@ -683,7 +683,7 @@ the corresponding properties in <code>entity</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line73">line 73</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line77">line 77</a>
     </li></ul></dd>
     
 
@@ -839,7 +839,7 @@ or a Model instance.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line174">line 174</a>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line178">line 178</a>
     </li></ul></dd>
     
 
@@ -888,6 +888,194 @@ or a Model instance.</p>
 
 
         
+            
+
+    
+
+    <h4 class="name" id="~objectDiff"><span class="type-signature">(inner) </span>objectDiff<span class="signature">(target, source)</span><span class="type-signature"> &rarr; {Object|null}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Checks if <code>target</code> needs to be merged with
+<code>source</code>. Does a shallow equal check on the <code>source</code>
+object's own properties against the same
+properties on <code>target</code>. If all properties are equal,
+returns <code>null</code>. Otherwise returns an object
+with the properties that did not pass
+the equality check. The returned object
+can be used to update <code>target</code> immutably
+while sharing more structure.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>target</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the object to update</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>source</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the updated props</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line203">line 203</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>an object with the inequal props from <code>source</code>
+                       or <code>null</code> if no updates or needed.</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+|
+
+<span class="param-type">null</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
     
 
     
@@ -903,13 +1091,13 @@ or a Model instance.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#memoize">memoize</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sat Dec 19 2015 07:09:19 GMT+0200 (EET)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Dec 25 2015 22:39:06 GMT+0200 (EET)
 </footer>
 
 <script> prettyPrint(); </script>

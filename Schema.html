@@ -98,7 +98,7 @@ shortcut <a href="Schema.html#define"><code>Schema#define</code></a> methods.</p
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line34">line 34</a>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line36">line 36</a>
     </li></ul></dd>
     
 
@@ -141,6 +141,196 @@ shortcut <a href="Schema.html#define"><code>Schema#define</code></a> methods.</p
 
     
         <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id="createSelector"><span class="type-signature"></span>createSelector<span class="signature">(&hellip;args)</span><span class="type-signature"> &rarr; {function}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Returns a memoized selector based on passed arguments.
+This is similar to <code>reselect</code>'s <code>createSelector</code>,
+except you can also pass a single function to be memoized.</p>
+<p>If you pass multiple functions, the format will be the
+same as in <code>reselect</code>. The last argument is the selector
+function and the previous are input selectors.</p>
+<p>When you use this method to create a selector, the returned selector
+expects the whole <code>redux-orm</code> state branch as input. In the selector
+function that you pass as the last argument, you will receive
+<code>session</code> argument (a <code>Session</code> instance) followed by any
+input arguments, like in <code>reselect</code>.</p>
+<p>This is an example selector:</p>
+<pre class="prettyprint source lang-javascript"><code>const bookSelector = schema.createSelector(session => {
+    return session.Book.map(book => {
+        return Object.assign(book.toPlain(), {
+            authors: book.authors.map(author => author.name),
+            genres: book.genres.map(genre => genre.name),
+        });
+    });
+});</code></pre><p>redux-orm uses a special memoization function to avoid recomputations.
+When a selector runs for the first time, it checks which Models' state
+branches were accessed. On subsequent runs, the selector first checks
+if those branches have changed -- if not, it just returns the previous
+result. This way you can use the <code>PureRenderMixin</code> in your React
+components for performance gains.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                    &lt;repeatable><br>
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>zero or more input selectors
+                             and the selector function.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line349">line 349</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>memoized selector</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">function</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
 
         
             
@@ -359,7 +549,7 @@ with ES6 classes.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line56">line 56</a>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line59">line 59</a>
     </li></ul></dd>
     
 
@@ -535,7 +725,7 @@ with ES6 classes.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line277">line 277</a>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line280">line 280</a>
     </li></ul></dd>
     
 
@@ -688,7 +878,7 @@ with ES6 classes.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line138">line 138</a>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line141">line 141</a>
     </li></ul></dd>
     
 
@@ -811,7 +1001,7 @@ reducer. One way to do that is to declare your root reducer:</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line301">line 301</a>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line304">line 304</a>
     </li></ul></dd>
     
 
@@ -980,7 +1170,7 @@ this call.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line91">line 91</a>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line94">line 94</a>
     </li></ul></dd>
     
 
@@ -1152,7 +1342,7 @@ this call.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line76">line 76</a>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line79">line 79</a>
     </li></ul></dd>
     
 
@@ -1194,13 +1384,13 @@ this call.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#memoize">memoize</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sat Dec 19 2015 07:09:19 GMT+0200 (EET)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Dec 25 2015 22:39:06 GMT+0200 (EET)
 </footer>
 
 <script> prettyPrint(); </script>
