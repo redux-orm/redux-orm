@@ -88,15 +88,7 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
             }
 
             const throughQs = throughModel.filter(lookupObj);
-            const toIdsSet = {};
-
-            throughQs.plain.objects().forEach(throughObject => {
-                const id = throughObject[reverse ? fromFieldName : toFieldName];
-                if (typeof id !== 'undefined') {
-                    toIdsSet[id] = true;
-                }
-            });
-            const toIds = Object.keys(toIdsSet);
+            const toIds = throughQs.plain.map(obj => obj[reverse ? fromFieldName : toFieldName]);
 
             const qsFromModel = reverse ? declaredFromModel : declaredToModel;
             const qs = qsFromModel.getQuerySetFromIds(toIds);
@@ -119,17 +111,9 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
             qs.remove = function remove(...entities) {
                 const idsToRemove = entities.map(normalizeEntity);
 
-                const attrShouldMatchThisId = reverse ? toFieldName : fromFieldName;
                 const attrInIdsToRemove = reverse ? fromFieldName : toFieldName;
-
-                const entitiesToDelete = throughModel.filter(through => {
-                    if (through[attrShouldMatchThisId] === thisId) {
-                        if (idsToRemove.includes(through[attrInIdsToRemove])) {
-                            return true;
-                        }
-                    }
-
-                    return false;
+                const entitiesToDelete = throughQs.plain.filter(through => {
+                    return idsToRemove.includes(through[attrInIdsToRemove]);
                 });
 
                 entitiesToDelete.delete();

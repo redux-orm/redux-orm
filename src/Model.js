@@ -511,13 +511,14 @@ const Model = class Model {
                     const currentIds = this[mergeKey].idArr;
 
                     // TODO: It could be better to check this stuff in Backend.
-                    const diffActions = arrayDiffActions(currentIds, mergeObj[mergeKey]);
+                    const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
+                    const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
                     if (diffActions) {
                         const idsToDelete = diffActions.delete;
                         const idsToAdd = diffActions.add;
 
                         if (idsToDelete.length > 0) {
-                            this[mergeKey].remove(idsToDelete);
+                            this[mergeKey].remove(...idsToDelete);
                         }
                         if (idsToAdd.length > 0) {
                             this[mergeKey].add(...idsToAdd);
