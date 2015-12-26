@@ -72,16 +72,6 @@ const Schema = class Schema {
     }
 
     /**
-     * Sets a reducer function to the model with `modelName`.
-     * @param {string} modelName - The name of the model you want to set a reducer to
-     * @param {Function} reducer - The reducer function.
-     */
-    setReducer(modelName, reducer) {
-        const model = this.get(modelName);
-        model.reducer = reducer;
-    }
-
-    /**
      * Registers a model class to the schema.
      *
      * If the model has declared any ManyToMany fields, their
@@ -146,8 +136,8 @@ const Schema = class Schema {
         return found;
     }
 
-    getModelClasses() {
-        this.setupModelPrototypes();
+    _getModelClasses() {
+        this._setupModelPrototypes();
         return this.registry.concat(this.implicitThroughModels);
     }
 
@@ -156,7 +146,7 @@ const Schema = class Schema {
         attachQuerySetMethods(model, querySetClass);
     }
 
-    setupModelPrototypes() {
+    _setupModelPrototypes() {
         this.registry.forEach(model => {
             if (!model.isSetUp) {
                 const fields = model.fields;
@@ -258,7 +248,7 @@ const Schema = class Schema {
     }
 
     getDefaultState() {
-        const models = this.getModelClasses();
+        const models = this._getModelClasses();
         const state = {};
         models.forEach(modelClass => {
             state[modelClass.modelName] = modelClass.getDefaultState();
@@ -267,7 +257,7 @@ const Schema = class Schema {
     }
 
     fromEmpty(action) {
-        return new Session(this.getModelClasses(), this.getDefaultState(), action);
+        return new Session(this._getModelClasses(), this.getDefaultState(), action);
     }
 
     /**
@@ -278,11 +268,11 @@ const Schema = class Schema {
      * @return {Session} a new session instance
      */
     from(state, action) {
-        return new Session(this.getModelClasses(), state, action);
+        return new Session(this._getModelClasses(), state, action);
     }
 
     withMutations(state) {
-        return new Session(this.getModelClasses(), state, undefined, true);
+        return new Session(this._getModelClasses(), state, undefined, true);
     }
 
     /**
