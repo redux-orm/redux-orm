@@ -44,18 +44,18 @@ const Session = class Session {
     /**
      * Records an update to the session.
      * @param {Object} update - the update object. Must have keys
-     *                            `type`, `payload` and `meta`. `meta`
-     *                            must also include a `name` attribute
-     *                            that contains the model name.
+     *                          `type`, `payload` and `meta`. `meta`
+     *                          must also include a `name` attribute
+     *                          that contains the model name.
      */
     addUpdate(update) {
         if (this.withMutations) {
             const modelName = update.meta.name;
             const modelState = this.getState(modelName);
-            const state = typeof modelState === 'undefined'
-                ? this[modelName].getDefaultState()
-                : modelState;
+            const state = modelState || this[modelName].getDefaultState();
 
+            // The backend used in the updateReducer
+            // will mutate the model state.
             this[modelName].updateReducer(state, update);
         } else {
             this.updates.push(update);

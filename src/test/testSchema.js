@@ -1,8 +1,7 @@
 import {expect} from 'chai';
 import Schema from '../Schema';
 import Session from '../Session';
-import Model from '../Model';
-import {ForeignKey, ManyToMany, OneToOne} from '../fields';
+import {createTestModels} from './utils';
 
 describe('Schema', () => {
     it('constructor works', () => {
@@ -12,35 +11,32 @@ describe('Schema', () => {
 
     describe('simple schema', () => {
         let schema;
-        let Person;
-        let Location;
+        let Book;
+        let Author;
+        let Cover;
+        let Genre;
         beforeEach(() => {
+            ({
+                Book,
+                Author,
+                Cover,
+                Genre,
+            } = createTestModels());
+
             schema = new Schema();
-            Person = class PersonModel extends Model {
-                static get fields() {
-                    return {
-                        location: new ForeignKey('Location'),
-                    };
-                }
-            };
-
-            Person.modelName = 'Person';
-
-            Location = class LocationModel extends Model {};
-            Location.modelName = 'Location';
         });
 
         it('correctly registers a single model at a time', () => {
             expect(schema.registry).to.have.length(0);
-            schema.register(Person);
+            schema.register(Book);
             expect(schema.registry).to.have.length(1);
-            schema.register(Location);
+            schema.register(Author);
             expect(schema.registry).to.have.length(2);
         });
 
         it('correctly registers multiple models', () => {
             expect(schema.registry).to.have.length(0);
-            schema.register(Person, Location);
+            schema.register(Book, Author);
             expect(schema.registry).to.have.length(2);
         });
 
@@ -51,9 +47,54 @@ describe('Schema', () => {
         });
 
         it('correctly gets models from registry', () => {
-            schema.register(Person, Location);
-            expect(schema.get('Person')).to.equal(Person);
-            expect(schema.get('Location')).to.equal(Location);
+            schema.register(Book);
+            expect(schema.get('Book')).to.equal(Book);
+        });
+
+        it('correctly sets model prototypes', () => {
+            schema.register(Book, Author, Cover, Genre);
+            expect(Book.isSetUp).to.not.be.ok;
+
+            let coverDescriptor = Object.getOwnPropertyDescriptor(
+                Book.prototype,
+                'cover'
+            );
+            expect(coverDescriptor).to.be.undefined;
+            let authorDescriptor = Object.getOwnPropertyDescriptor(
+                Book.prototype,
+                'author'
+            );
+            expect(authorDescriptor).to.be.undefined;
+            let genresDescriptor = Object.getOwnPropertyDescriptor(
+                Book.prototype,
+                'genres'
+            );
+            expect(genresDescriptor).to.be.undefined;
+
+            schema._setupModelPrototypes();
+
+            expect(Book.isSetUp).to.be.ok;
+
+            coverDescriptor = Object.getOwnPropertyDescriptor(
+                Book.prototype,
+                'cover'
+            );
+            expect(coverDescriptor.get).to.be.a('function');
+            expect(coverDescriptor.set).to.be.a('function');
+
+            authorDescriptor = Object.getOwnPropertyDescriptor(
+                Book.prototype,
+                'author'
+            );
+            expect(authorDescriptor.get).to.be.a('function');
+            expect(authorDescriptor.set).to.be.a('function');
+
+            genresDescriptor = Object.getOwnPropertyDescriptor(
+                Book.prototype,
+                'genres'
+            );
+            expect(genresDescriptor.get).to.be.a('function');
+            expect(genresDescriptor.set).to.be.a('function');
         });
     });
 });
