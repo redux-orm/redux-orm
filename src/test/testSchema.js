@@ -96,5 +96,33 @@ describe('Schema', () => {
             expect(genresDescriptor.get).to.be.a('function');
             expect(genresDescriptor.set).to.be.a('function');
         });
+
+        it('correctly gets the default state', () => {
+            schema.register(Book, Author, Cover, Genre);
+            const defaultState = schema.getDefaultState();
+
+            expect(defaultState).to.deep.equal({
+                Book: {
+                    items: [],
+                    itemsById: {},
+                },
+                BookGenres: {
+                    items: [],
+                    itemsById: {},
+                },
+                Author: {
+                    items: [],
+                    itemsById: {},
+                },
+                Cover: {
+                    items: [],
+                    itemsById: {},
+                },
+                Genre: {
+                    items: [],
+                    itemsById: {},
+                },
+            });
+        });
     });
 });
