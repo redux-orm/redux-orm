@@ -113,15 +113,9 @@ const Model = class Model {
         return Backend;
     }
 
-    static get _sessionCache() {
-        if (!this.hasOwnProperty('__sessionCache')) {
-            this.__sessionCache = {};
-        }
-        return this.__sessionCache;
-    }
-
-    static clearSessionCache() {
-        this.__sessionCache = {};
+    static get _sessionData() {
+        if (!this.session) return {};
+        return this.session.getDataForModel(this.modelName);
     }
 
     /**
@@ -129,17 +123,22 @@ const Model = class Model {
      * @return {Backend} The {@link Backend} instance linked to this {@link Model}.
      */
     static getBackend() {
-        if (!this._sessionCache.backend) {
+        if (!this._sessionData.backend) {
             const BackendClass = this.getBackendClass();
-
             const opts = this._getBackendOpts();
-            if (this._session && this._session.withMutations) {
+
+            if (this.session && this.session.withMutations) {
                 opts.withMutations = true;
             }
 
-            this._sessionCache.backend = new BackendClass(opts);
+            const backend = new BackendClass(opts);
+
+            if (!this.session) {
+                return backend;
+            }
+            this._sessionData.backend = backend;
         }
-        return this._sessionCache.backend;
+        return this._sessionData.backend;
     }
 
     /**
@@ -193,7 +192,7 @@ const Model = class Model {
      * @param {Session} session - the current {@link Session} instance
      * @return {Object} the next state for the Model
      */
-    static reducer(state, action, model, session) {
+    static reducer(state, action, model, session) { // eslint-disable-line
         return model.getNextState();
     }
 
@@ -252,8 +251,7 @@ const Model = class Model {
     }
 
     /**
-     * Connect the model class to a {@link Session}. Invalidates
-     * the session-specific cache.
+     * Connect the model class to a {@link Session}.
      *
      * @param  {Session} session - The session to connect to.
      */
@@ -262,7 +260,6 @@ const Model = class Model {
             throw Error('A model can only connect to a Session instance.');
         }
         this._session = session;
-        this.clearSessionCache();
     }
 
     /**
@@ -290,15 +287,15 @@ const Model = class Model {
      * @return {*} the id value for a new entity.
      */
     static nextId() {
-        if (typeof this._sessionCache.nextId === 'undefined') {
+        if (typeof this._sessionData.nextId === 'undefined') {
             const idArr = this.accessIds();
             if (idArr.length === 0) {
-                this._sessionCache.nextId = 0;
+                this._sessionData.nextId = 0;
             } else {
-                this._sessionCache.nextId = Math.max(...idArr) + 1;
+                this._sessionData.nextId = Math.max(...idArr) + 1;
             }
         }
-        return this._sessionCache.nextId;
+        return this._sessionData.nextId;
     }
 
     static getQuerySet() {
@@ -317,10 +314,10 @@ const Model = class Model {
     }
 
     static get query() {
-        if (!this._sessionCache.queryset) {
-            this._sessionCache.queryset = this.getQuerySet();
+        if (!this._sessionData.queryset) {
+            this._sessionData.queryset = this.getQuerySet();
         }
-        return this._sessionCache.queryset;
+        return this._sessionData.queryset;
     }
 
     /**
@@ -344,11 +341,11 @@ const Model = class Model {
         if (!props.hasOwnProperty(idAttribute)) {
             const nextId = this.nextId();
             props[idAttribute] = nextId;
-            this._sessionCache.nextId++;
+            this._sessionData.nextId++;
         } else {
             const id = props[idAttribute];
             if (id > this.nextId()) {
-                this._sessionCache.nextId = id + 1;
+                this._sessionData.nextId = id + 1;
             }
         }
 

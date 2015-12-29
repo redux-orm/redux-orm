@@ -139,5 +139,13 @@ describe('Schema', () => {
             selector(schema.getDefaultState());
             expect(selectorTimesRun).to.equal(1);
         });
+
+        it('correctly starts a mutating session', () => {
+            schema.register(Book, Author, Cover, Genre);
+            const initialState = schema.getDefaultState();
+            const session = schema.withMutations(initialState);
+            expect(session).to.be.an.instanceOf(Session);
+            expect(session.withMutations).to.be.true;
+        });
     });
 });

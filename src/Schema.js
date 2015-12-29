@@ -247,6 +247,10 @@ const Schema = class Schema {
         });
     }
 
+    /**
+     * Returns the default state
+     * @return {Object} the default state
+     */
     getDefaultState() {
         const models = this._getModelClasses();
         const state = {};

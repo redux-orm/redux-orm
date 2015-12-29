@@ -44,9 +44,6 @@ describe('Model', () => {
 
             const instance = Model.getBackend();
             expect(instance).to.be.an.instanceOf(BackendMockClass);
-
-            // Make sure the previous instance is cached
-            expect(Model.getBackend()).to.equal(instance);
         });
     });
 
