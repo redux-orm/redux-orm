@@ -256,15 +256,11 @@ const Schema = class Schema {
         return state;
     }
 
-    fromEmpty(action) {
-        return new Session(this._getModelClasses(), this.getDefaultState(), action);
-    }
-
     /**
      * Begins a database {@link Session}.
      *
      * @param  {Object} state  - the state the database manages
-     * @param  {Object} action - the dispatched action object
+     * @param  {Object} [action] - the dispatched action object
      * @return {Session} a new session instance
      */
     from(state, action) {
