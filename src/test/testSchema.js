@@ -124,5 +124,20 @@ describe('Schema', () => {
                 },
             });
         });
+
+        it('correctly creates a selector', () => {
+            schema.register(Book, Author, Cover, Genre);
+            let selectorTimesRun = 0;
+            const selector = schema.createSelector(() => selectorTimesRun++);
+            expect(selector).to.be.a('function');
+
+            const state = schema.getDefaultState();
+            selector(state);
+            expect(selectorTimesRun).to.equal(1);
+            selector(state);
+            expect(selectorTimesRun).to.equal(1);
+            selector(schema.getDefaultState());
+            expect(selectorTimesRun).to.equal(1);
+        });
     });
 });
