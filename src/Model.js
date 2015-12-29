@@ -157,6 +157,15 @@ const Model = class Model {
         return updates.reduce(this.updateReducer.bind(this), this.state);
     }
 
+    /**
+     * A reducer that takes the Model's state and an internal redux-orm
+     * action object and applies the update specified by the `action` object
+     * by delegating to this model's Backend instance.
+     *
+     * @param  {Object} state - the Model's state
+     * @param  {Object} action - the internal redux-orm update action to apply
+     * @return {Object} the state after applying the action
+     */
     static updateReducer(state, action) {
         const backend = this.getBackend();
 
@@ -182,6 +191,7 @@ const Model = class Model {
      * @param {Object} action - the dispatched action
      * @param {Model} model - the concrete model class being used
      * @param {Session} session - the current {@link Session} instance
+     * @return {Object} the next state for the Model
      */
     static reducer(state, action, model, session) {
         return model.getNextState();
