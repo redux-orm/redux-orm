@@ -9,6 +9,69 @@ import {ForeignKey, ManyToMany, OneToOne} from '../fields';
  * named reverse relations.
  */
 
+const AUTHORS_INITIAL = [
+    {
+        name: 'Tommi Kaikkonen',
+    },
+    {
+        name: 'John Doe',
+    },
+    {
+        name: 'Stephen King',
+    },
+];
+
+const COVERS_INITIAL = [
+    {
+        src: 'cover.jpg',
+    },
+    {
+        src: 'cover.jpg',
+    },
+    {
+        src: 'cover.jpg',
+    },
+];
+
+const GENRES_INITIAL = [
+    {
+        name: 'Biography',
+    },
+    {
+        name: 'Autobiography',
+    },
+    {
+        name: 'Software Development',
+    },
+    {
+        name: 'Redux',
+    },
+];
+
+const BOOKS_INITIAL = [
+    {
+        name: 'Tommi Kaikkonen - an Autobiography',
+        author: 0,
+        cover: 0,
+        genres: [0, 1],
+        releaseYear: 2050,
+    },
+    {
+        name: 'Clean Code',
+        author: 1,
+        cover: 1,
+        genres: [2],
+        releaseYear: 2008,
+    },
+    {
+        name: 'Getting Started with Redux',
+        author: 2,
+        cover: 2,
+        genres: [2, 3],
+        releaseYear: 2015,
+    },
+];
+
 
 export function createTestModels() {
     const Book = class BookModel extends Model {
@@ -40,13 +103,14 @@ export function createTestModels() {
     };
 }
 
-export function createTestSchema() {
+export function createTestSchema(customModels) {
+    const models = customModels || createTestModels();
     const {
         Book,
         Author,
         Cover,
         Genre,
-    } = createTestModels();
+    } = models;
 
     const schema = new Schema();
     schema.register(Book, Author, Cover, Genre);
@@ -56,4 +120,18 @@ export function createTestSchema() {
 export function createTestSession() {
     const schema = createTestSchema();
     return schema.from(schema.getDefaultState());
+}
+
+export function createTestSessionWithData(customSchema) {
+    const schema = customSchema || createTestSchema();
+    const state = schema.getDefaultState();
+    const mutatingSession = schema.withMutations(state);
+
+    AUTHORS_INITIAL.forEach(props => mutatingSession.Author.create(props));
+    COVERS_INITIAL.forEach(props => mutatingSession.Cover.create(props));
+    GENRES_INITIAL.forEach(props => mutatingSession.Genre.create(props));
+    BOOKS_INITIAL.forEach(props => mutatingSession.Book.create(props));
+
+    const normalSession = schema.from(state);
+    return {session: normalSession, schema, state};
 }

@@ -33,10 +33,10 @@ const QuerySet = class QuerySet {
         // the result in plain javascript objects
         // or {@link Model} instances.
         // Results are plain objects by default.
-        if (opts && opts.hasOwnProperty('plain')) {
-            this._plain = opts.plain;
+        if (opts && opts.hasOwnProperty('withRefs')) {
+            this._withRefs = opts.withRefs;
         } else {
-            this._plain = false;
+            this._withRefs = false;
         }
     }
 
@@ -44,19 +44,36 @@ const QuerySet = class QuerySet {
         this.sharedMethods = this.sharedMethods.concat(methodName);
     }
 
-    _new(ids) {
-        const plain = this._plain;
-        const opts = Object.assign({}, this._opts, {plain});
+    _new(ids, userOpts) {
+        const opts = Object.assign({}, this._opts, userOpts);
         return new this.constructor(this.modelClass, ids, opts);
     }
 
-    get plain() {
-        this._plain = true;
+    /**
+     * Returns a new QuerySet representing the same entities
+     * with the `withRefs` flag on.
+     *
+     * @return {QuerySet}
+     */
+    get withRefs() {
+        if (!this._withRefs) {
+            return this._new(this.idArr, {withRefs: true});
+        }
         return this;
     }
 
-    get models() {
-        this._plain = false;
+    /**
+     * Alias for withRefs
+     * @return {QuerySet}
+     */
+    get ref() {
+        return this.withRefs;
+    }
+
+    get withModels() {
+        if (this._withRefs) {
+            return this._new(this.idArr, {withRefs: false});
+        }
         return this;
     }
 
@@ -68,11 +85,24 @@ const QuerySet = class QuerySet {
 
     /**
      * Returns an array of the plain objects represented by the QuerySet.
-     * @return {Object[]}
+     * The plain objects are direct references to the store.
+     *
+     * @return {Object[]} references to the plain JS objects represented by
+     *                    the QuerySet
      */
-    toPlain() {
+    toRefArray() {
         return this.idArr.map(id => {
             return this.modelClass.accessId(id);
+        });
+    }
+
+    /**
+     * Returns an array of the Model instances represented by the QuerySet.
+     * @return {Model[]} model instances represented by the QuerySet
+     */
+    toModelArray() {
+        return this.idArr.map((_, idx) => {
+            return this.at(idx);
         });
     }
 
@@ -93,15 +123,18 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns the {@link Model} instance at index `index` in the QuerySet.
+     * Returns the {@link Model} instance at index `index` in the QuerySet if
+     * `withRefs` flag is set to `false`, or a reference to the plain JavaScript
+     * object in the model state if `true`.
      * @param  {number} index - index of the model instance to get
-     * @return {Model} an {@link Model} instance at index `index` in the QuerySet
+     * @return {Model|Object} a {@link Model} instance or a plain JavaScript
+     *                        object at index `index` in the QuerySet
      */
     at(index) {
-        if (this._plain) {
+        if (this._withRefs) {
             return this.modelClass.accessId(this.idArr[index]);
         }
-        return this.modelClass.get({[this.modelClass.idAttribute]: this.idArr[index]});
+        return this.modelClass.withId(this.idArr[index]);
     }
 
     /**
@@ -129,17 +162,6 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns all objects in this QuerySet. If the plain flag
-     * is on (default), this will be a list of ordinary JavaScript objects.
-     * If it is off, these will be Model instances.
-     *
-     * @return {Array} An array of either JavaScript objects or Model instances.
-     */
-    objects() {
-        return this.idArr.map((_, idx) => this.at(idx));
-    }
-
-    /**
      * Returns a new {@link QuerySet} with objects that match properties in `lookupObj`.
      *
      * @param  {Object} lookupObj - the properties to match objects with.
@@ -160,30 +182,32 @@ const QuerySet = class QuerySet {
     }
 
     _filterOrExclude(lookupObj, exclude) {
-        const startPlainFlag = this._plain;
         const func = exclude ? reject : filter;
+        let operationWithRefs = true;
         let entities;
         if (typeof lookupObj === 'function') {
             // For filtering with function,
             // use whatever object type
             // is flagged.
-            entities = this.objects();
+            if (this._withRefs) {
+                entities = this.toRefArray();
+            } else {
+                entities = this.toModelArray();
+                operationWithRefs = false;
+            }
         } else {
             // Lodash filtering doesn't work with
             // Model instances.
-            entities = this.plain.objects();
+            entities = this.toRefArray();
         }
         const filteredEntities = func(entities, lookupObj);
-
-        const getIdFunc = this._plain
+        const getIdFunc = operationWithRefs
             ? (obj) => obj[this.modelClass.idAttribute]
             : (obj) => obj.getId();
 
         const newIdArr = filteredEntities.map(getIdFunc);
 
-        // Return flag to original value.
-        this._plain = startPlainFlag;
-        return this._new(newIdArr);
+        return this._new(newIdArr, {withRefs: false});
     }
 
     /**
@@ -196,13 +220,19 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     forEach(func) {
-        this.objects().forEach(func);
+        const arr = this._withRefs
+            ? this.toRefArray()
+            : this.toModelArray();
+
+        arr.forEach(func);
     }
 
     /**
      * Maps the {@link Model} instances in the {@link QuerySet}.
      * @param  {Function} func - the mapping function that takes one argument, a
-     *                           {@link Model} instance.
+     *                           {@link Model} instance or a reference to the plain
+     *                           JavaScript object in the store, depending on the
+     *                           QuerySet's `withRefs` flag.
      * @return {Array}  the mapped array
      */
     map(func) {
@@ -217,9 +247,30 @@ const QuerySet = class QuerySet {
      * @param  {string[]} fieldNames - the property names to order by.
      * @return {QuerySet} a new {@link QuerySet} with objects ordered by `fieldNames`.
      */
-    orderBy(args) {
-        const entities = sortByOrder.apply([this.objects()].concat(args));
-        return this._new(entities.map(entity => entity[this.modelClass.idAttribute]));
+    orderBy(userArgs) {
+        const entities = this.toRefArray();
+        let args = userArgs;
+
+        // Lodash only works on plain javascript objects.
+        // If the argument is a function, and the `withRefs`
+        // flag is false, the argument function is wrapped
+        // to get the model instance and pass that as the argument
+        // to the user-supplied function.
+        if (!this._withRefs) {
+            args = userArgs.map(arg => {
+                if (typeof arg === 'function') {
+                    return entity => {
+                        const id = entity[this.modelClass.idAttribute];
+                        const instance = this.modelClass.withId(id);
+                        return arg(instance);
+                    };
+                }
+                return arg;
+            });
+        }
+
+        const sortedEntities = sortByOrder.apply([null, entities].concat(args));
+        return this._new(sortedEntities.map(entity => entity[this.modelClass.idAttribute]));
     }
 
     /**
@@ -250,14 +301,11 @@ const QuerySet = class QuerySet {
             payload: this.idArr,
         });
 
-        const originalFlag = this._plain;
-        this.models.forEach(model => model._onDelete());
-        this._plain = originalFlag;
+        this.withModels.forEach(model => model._onDelete());
     }
 };
 
 QuerySet.sharedMethods = [
-    'toPlain',
     'count',
     'at',
     'all',
@@ -271,6 +319,9 @@ QuerySet.sharedMethods = [
     'orderBy',
     'update',
     'delete',
+    'ref',
+    'withRefs',
+    'withModels',
 ];
 
 export default QuerySet;

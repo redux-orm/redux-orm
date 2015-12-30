@@ -138,33 +138,46 @@ function querySetDelegatorFactory(methodName) {
     };
 }
 
-function attachQuerySetMethods(modelClass, querySetClass) {
-    const querySetSharedMethods = querySetClass.sharedMethods;
-    querySetSharedMethods.forEach(methodName => {
-        // Check for descriptor.
-        const descriptor = Object.getOwnPropertyDescriptor(querySetClass.prototype, methodName);
-        if (typeof descriptor !== 'undefined' && typeof descriptor.get !== 'undefined') {
-            Object.defineProperty(modelClass, methodName, descriptor);
-        } else {
-            modelClass[methodName] = querySetDelegatorFactory(methodName);
-        }
-    });
+function querySetGetterDelegatorFactory(getterName) {
+    return function querySetGetterDelegator() {
+        const qs = this.getQuerySet();
+        return qs[getterName];
+    };
+}
 
-    // `plain` and `models` are specially handled cases
-    // as they're static getters.
-    Object.defineProperties(modelClass, {
-        plain: {
-            get() {
-                this._plain = true;
-                return this;
-            },
-        },
-        models: {
-            get() {
-                this._plain = false;
-                return this;
-            },
-        },
+function forEachSuperClass(subClass, func) {
+    let currClass = subClass;
+    while (currClass !== Function.prototype) {
+        func(currClass);
+        currClass = Object.getPrototypeOf(currClass);
+    }
+}
+
+function attachQuerySetMethods(modelClass, querySetClass) {
+    const leftToDefine = querySetClass.sharedMethods.slice();
+
+    // There is no way to get a property descriptor for the whole prototype chain;
+    // only from an objects own properties. Therefore we traverse the whole prototype
+    // chain for querySet.
+    forEachSuperClass(querySetClass, (cls) => {
+        for (let i = 0; i < leftToDefine.length; i++) {
+            let defined = false;
+            const methodName = leftToDefine[i];
+            const descriptor = Object.getOwnPropertyDescriptor(cls.prototype, methodName);
+            if (typeof descriptor !== 'undefined') {
+                if (typeof descriptor.get !== 'undefined') {
+                    descriptor.get = querySetGetterDelegatorFactory(methodName);
+                    Object.defineProperty(modelClass, methodName, descriptor);
+                    defined = true;
+                } else if (typeof descriptor.value === 'function') {
+                    modelClass[methodName] = querySetDelegatorFactory(methodName);
+                    defined = true;
+                }
+            }
+            if (defined) {
+                leftToDefine.splice(i--, 1);
+            }
+        }
     });
 }
 

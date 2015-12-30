@@ -48,7 +48,6 @@ const Model = class Model {
         forOwn(props, (fieldValue, fieldName) => {
             this._fields[fieldName] = fieldValue;
             this._fieldNames.push(fieldName);
-
             // If the field has not already been defined on the
             // prototype for a relation.
             if (!ModelClass.definedProperties[fieldName]) {
@@ -459,6 +458,16 @@ const Model = class Model {
     }
 
     /**
+     * Returns a reference to the plain JS object in the store.
+     * Make sure to not mutate this.
+     *
+     * @return {Object} a reference to the plain JS object in the store
+     */
+    get ref() {
+        return this.getClass().accessId(this.getId());
+    }
+
+    /**
      * Returns a string representation of the {@link Model} instance.
      * @return {string} A string representation of this {@link Model} instance.
      */
@@ -574,7 +583,7 @@ const Model = class Model {
             } else if (field instanceof OneToOne) {
                 // Set null to any foreign keys or one to ones pointed to
                 // this instance.
-                if (this[key] !== null ) {
+                if (this[key] !== null) {
                     this[key][field.relatedName] = null;
                 }
             }

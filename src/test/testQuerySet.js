@@ -11,156 +11,136 @@ import {
     UPDATE,
     DELETE,
 } from '../constants';
+import {
+    createTestModels,
+    createTestSchema,
+    createTestSessionWithData,
+} from './utils';
 
-describe('QuerySet', () => {
-    let modelClassMock;
-
-    let PersonClass;
-
-    const state = {
-        Person: {
-            items: [0, 1, 2],
-            itemsById: {
-                0: {
-                    id: 0,
-                    name: 'Tommi',
-                    age: 25,
-                },
-                1: {
-                    id: 1,
-                    name: 'John',
-                    age: 50,
-                },
-                2: {
-                    id: 2,
-                    name: 'Mary',
-                    age: 60,
-                },
-            },
-        },
-    };
-    let schema;
+describe('QuerySet tests', () => {
     let session;
-    let qs;
+    let bookQs;
+    let genreQs;
     beforeEach(() => {
-        schema = new Schema();
-        // Start off with a fresh Model class for each
-        // test.
-        PersonClass = class Person extends Model {};
-        PersonClass.modelName = 'Person';
-
-        schema.register(PersonClass);
-        session = schema.from(state);
-        qs = session.Person.query;
+        ({session} = createTestSessionWithData());
+        bookQs = session.Book.getQuerySet();
+        genreQs = session.Genre.getQuerySet();
     });
 
     it('count works correctly', () => {
-        expect(qs.count()).to.equal(3);
-        const emptyQs = new QuerySet(session.Person, []);
-        expect(emptyQs.count()).to.equal(0);
+        expect(bookQs.count()).to.equal(3);
+        expect(genreQs.count()).to.equal(4);
     });
 
     it('exists works correctly', () => {
-        expect(qs.exists()).to.equal(true);
+        expect(bookQs.exists()).to.be.true;
 
-        const empty = new QuerySet(session.Person, []);
-        expect(empty.exists()).to.equal(false);
+        const emptyQs = new QuerySet(session.Book, []);
+        expect(emptyQs.exists()).to.be.false;
     });
 
     it('at works correctly', () => {
-        expect(qs.plain.at(0)).to.equal(state.Person.itemsById[0]);
-        expect(qs.plain.at(2)).to.equal(state.Person.itemsById[2]);
-
-        expect(qs.at(0)).to.deep.equal({id: 0, name: 'Tommi', age: 25});
+        expect(bookQs.at(0)).to.be.an.instanceOf(Model);
+        expect(bookQs.ref.at(0)).to.equal(session.Book.state.itemsById[0]);
     });
 
     it('first works correctly', () => {
-        expect(qs.first()).to.deep.equal(qs.at(0));
-        expect(qs.plain.first()).to.deep.equal(qs.at(0));
+        expect(bookQs.first()).to.deep.equal(bookQs.at(0));
     });
 
     it('last works correctly', () => {
-        expect(qs.last()).to.deep.equal(qs.at(2));
-        expect(qs.plain.last()).to.equal(state.Person.itemsById[2]);
+        const lastIndex = bookQs.count() - 1;
+        expect(bookQs.last()).to.deep.equal(bookQs.at(lastIndex));
     });
 
     it('all works correctly', () => {
-        const all = qs.all();
+        const all = bookQs.all();
 
-        expect(all).not.to.equal(qs);
-        expect(all.idArr).to.deep.equal(qs.idArr);
+        expect(all).not.to.equal(bookQs);
+        expect(all.idArr).to.deep.equal(bookQs.idArr);
     });
 
     it('filter works correctly with object argument', () => {
-        const filtered = qs.plain.filter({name: 'Tommi'});
+        const filtered = bookQs.withRefs.filter({name: 'Clean Code'});
         expect(filtered.count()).to.equal(1);
-        expect(filtered.first()).to.equal(state.Person.itemsById[0]);
+        expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[1]);
     });
 
     it('exclude works correctly with object argument', () => {
-        const excluded = qs.exclude({name: 'Tommi'});
+        const excluded = bookQs.exclude({name: 'Clean Code'});
         expect(excluded.count()).to.equal(2);
-        expect(excluded.idArr).to.deep.equal([1, 2]);
+        expect(excluded.idArr).to.deep.equal([0, 2]);
     });
 
     it('update records a update', () => {
-        const updater = {name: 'Mark'};
+        const updater = {name: 'Updated Book Name'};
         expect(session.updates).to.have.length(0);
-        qs.update(updater);
+        bookQs.update(updater);
         expect(session.updates).to.have.length(1);
 
         expect(session.updates[0]).to.deep.equal({
             type: UPDATE,
             payload: {
-                idArr: qs.idArr,
+                idArr: bookQs.idArr,
                 updater,
             },
             meta: {
-                name: 'Person',
+                name: 'Book',
             },
         });
     });
 
     it('delete records a update', () => {
         expect(session.updates).to.have.length(0);
-        qs.delete();
-        expect(session.updates).to.have.length(1);
+        bookQs.delete();
+        expect(session.updates).to.have.length.of.at.least(1);
 
         expect(session.updates[0]).to.deep.equal({
             type: DELETE,
-            payload: qs.idArr,
+            payload: bookQs.idArr,
             meta: {
-                name: 'Person',
+                name: 'Book',
             },
         });
     });
 
     it('custom methods works', () => {
+        const {
+            Book,
+            Genre,
+            Cover,
+            Author,
+        } = createTestModels();
+
+        const currentYear = 2015;
         class CustomQuerySet extends QuerySet {
-            overMiddleAge() {
-                const origPlain = this._plain;
-                const filtered = this.plain.filter(person => person.age > 50);
-                return origPlain ? filtered : filtered.models;
+            unreleased() {
+                return this.withRefs.filter(book => book.releaseYear > currentYear);
             }
         }
-        CustomQuerySet.addSharedMethod('overMiddleAge');
+        CustomQuerySet.addSharedMethod('unreleased');
 
-        class PersonSub extends PersonClass {}
+        Book.querySetClass = CustomQuerySet;
 
-        PersonSub.modelName = 'Person';
+        const schema = new Schema();
+        schema.register(Book, Genre, Cover, Author);
+        const {session: sess} = createTestSessionWithData(schema);
 
-        PersonSub.querySetClass = CustomQuerySet;
-        const aSchema = new Schema();
-        aSchema.register(PersonSub);
-        const sess = aSchema.from(state);
-        const customQs = sess.Person.query;
+        const customQs = sess.Book.getQuerySet();
 
-        const overMiddleAged = customQs.overMiddleAge();
-        expect(overMiddleAged.count()).to.equal(1);
-        expect(overMiddleAged.first().toPlain()).to.deep.equal({id: 2, name: 'Mary', age: 60});
+        expect(customQs).to.be.an.instanceOf(CustomQuerySet);
 
-        expect(PersonSub.overMiddleAge().count()).to.equal(1);
-        expect(PersonSub.plain.filter({name: 'Tommi'}).count()).to.equal(1);
+        const unreleased = customQs.unreleased();
+        expect(unreleased.count()).to.equal(1);
+
+        expect(unreleased.first().ref).to.deep.equal({
+            id: 0,
+            name: 'Tommi Kaikkonen - an Autobiography',
+            author: 0,
+            cover: 0,
+            releaseYear: 2050,
+        });
+        expect(sess.Book.unreleased().count()).to.equal(1);
+        expect(sess.Book.withRefs.filter({name: 'Clean Code'}).count()).to.equal(1);
     });
 });
-
