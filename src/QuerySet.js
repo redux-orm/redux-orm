@@ -247,9 +247,9 @@ const QuerySet = class QuerySet {
      * @param  {string[]} fieldNames - the property names to order by.
      * @return {QuerySet} a new {@link QuerySet} with objects ordered by `fieldNames`.
      */
-    orderBy(userArgs) {
+    orderBy(iteratees, orders) {
         const entities = this.toRefArray();
-        let args = userArgs;
+        let iterateeArgs = iteratees;
 
         // Lodash only works on plain javascript objects.
         // If the argument is a function, and the `withRefs`
@@ -257,7 +257,7 @@ const QuerySet = class QuerySet {
         // to get the model instance and pass that as the argument
         // to the user-supplied function.
         if (!this._withRefs) {
-            args = userArgs.map(arg => {
+            iterateeArgs = iteratees.map(arg => {
                 if (typeof arg === 'function') {
                     return entity => {
                         const id = entity[this.modelClass.idAttribute];
@@ -268,8 +268,7 @@ const QuerySet = class QuerySet {
                 return arg;
             });
         }
-
-        const sortedEntities = sortByOrder.apply([null, entities].concat(args));
+        const sortedEntities = sortByOrder.call(null, entities, iterateeArgs, orders);
         return this._new(sortedEntities.map(entity => entity[this.modelClass.idAttribute]));
     }
 

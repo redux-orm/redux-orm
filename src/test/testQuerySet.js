@@ -66,6 +66,16 @@ describe('QuerySet tests', () => {
         expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[1]);
     });
 
+    it('orderBy works correctly with prop argument', () => {
+        const ordered = bookQs.orderBy(['releaseYear']);
+        expect(ordered.idArr).to.deep.equal([1, 2, 0]);
+    });
+
+    it('orderBy works correctly with function argument', () => {
+        const ordered = bookQs.orderBy([(book) => book.releaseYear]);
+        expect(ordered.idArr).to.deep.equal([1, 2, 0]);
+    });
+
     it('exclude works correctly with object argument', () => {
         const excluded = bookQs.exclude({name: 'Clean Code'});
         expect(excluded.count()).to.equal(2);
