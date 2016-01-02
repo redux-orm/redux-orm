@@ -28,4 +28,17 @@ describe('Integration', () => {
         const nextSession = schema.from(nextState);
         expect(nextSession.Book.count()).to.equal(4);
     });
+
+    it('Models correctly update when setting properties', () => {
+        const {Book} = session;
+        const book = Book.first();
+        const newName = 'New Name';
+        expect(session.updates).to.have.length(0);
+        book.name = newName;
+        expect(session.updates).to.have.length(1);
+
+        const nextState = session.reduce();
+        const nextSession = schema.from(nextState);
+        expect(nextSession.Book.first().name).to.equal(newName);
+    });
 });
