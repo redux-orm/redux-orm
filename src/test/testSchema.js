@@ -45,6 +45,23 @@ describe('Schema', () => {
             const friend = Person.create({id: 1, name: 'Matt', friend: tommi});
             expect(friend._fields.friend).to.equal(0);
         });
+
+        it('correctly sets field value on assignment', () => {
+            schema.register(Person, Location);
+            const session = schema.from(schema.getDefaultState());
+
+            Person.create({id: 0, name: 'Tommi', friend: null});
+            const nextState = session.reduce();
+            const nextSession = schema.from(nextState);
+
+            const newName = 'NewName';
+            nextSession.Person.withId(0).name = newName;
+
+            const nextNextState = session.reduce();
+            const nextNextSession = schema.from(nextNextState);
+
+            expect(nextNextSession.Person.withId(0).name).to.equal(newName);
+        });
     });
 
     it('correctly works with mutations', () => {

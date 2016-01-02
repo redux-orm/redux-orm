@@ -54,15 +54,7 @@ const Model = class Model {
             if (!ModelClass.definedProperties[fieldName]) {
                 Object.defineProperty(this, fieldName, {
                     get: () => fieldValue,
-                    set: (value) => {
-                        ModelClass.addUpdate({
-                            type: UPDATE,
-                            payload: {
-                                [idAttribute]: this.getId(),
-                                [fieldName]: value,
-                            },
-                        });
-                    },
+                    set: (value) => this.set(fieldName, value),
                 });
             }
         });
