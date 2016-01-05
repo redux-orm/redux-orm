@@ -53,6 +53,7 @@ const Model = class Model {
                 Object.defineProperty(this, fieldName, {
                     get: () => fieldValue,
                     set: (value) => this.set(fieldName, value),
+                    configurable: true,
                 });
             }
         });
@@ -500,7 +501,8 @@ const Model = class Model {
     }
 
     /**
-     * Records a update to the {@link Model} instance for multiple field value assignments.
+     * Records an update to the {@link Model} instance for multiple field value assignments.
+     * If the session is with mutations, updates the instance to reflect the new values.
      * @param  {Object} userMergeObj - an object that will be merged with this instance.
      * @return {undefined}
      */
@@ -536,6 +538,11 @@ const Model = class Model {
                     mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
                 }
             }
+        }
+
+        const session = this.getClass().session;
+        if (session && session.withMutations) {
+            this._initFields(Object.assign({}, this._fields, mergeObj));
         }
 
         this.getClass().addUpdate({

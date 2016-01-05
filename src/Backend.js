@@ -179,9 +179,10 @@ const Backend = class Backend {
             mapFunction = patcher;
         } else {
             mapFunction = (entity) => {
+                const assignTo = this.withMutations ? entity : {};
                 const diff = objectDiff(entity, patcher);
                 if (diff) {
-                    return Object.assign({}, entity, patcher);
+                    return Object.assign(assignTo, entity, patcher);
                 }
                 return entity;
             };

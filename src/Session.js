@@ -100,9 +100,13 @@ const Session = class Session {
     /**
      * Calls the user defined reducers and returns
      * the next state.
+     * If the session uses mutations, just returns the state.
+     *
      * @return {Object} The next state
      */
     reduce() {
+        if (this.withMutations) return this.state;
+
         const nextState = {};
         const currentAction = this.action;
         this.models.forEach(modelClass => {
