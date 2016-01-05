@@ -71,26 +71,17 @@ const Model = class Model {
 
         this._fieldNames = [];
         this._fields = props;
-        const idAttribute = ModelClass.idAttribute;
 
         forOwn(props, (fieldValue, fieldName) => {
             this._fields[fieldName] = fieldValue;
             this._fieldNames.push(fieldName);
-
             // If the field has not already been defined on the
             // prototype for a relation.
             if (!ModelClass.definedProperties[fieldName]) {
                 Object.defineProperty(this, fieldName, {
                     get: () => fieldValue,
-                    set: (value) => {
-                        ModelClass.addUpdate({
-                            type: UPDATE,
-                            payload: {
-                                [idAttribute]: this.getId(),
-                                [fieldName]: value,
-                            },
-                        });
-                    },
+                    set: (value) => this.set(fieldName, value),
+                    configurable: true,
                 });
             }
         });
@@ -141,15 +132,9 @@ const Model = class Model {
         return Backend;
     }
 
-    static get _sessionCache() {
-        if (!this.hasOwnProperty('__sessionCache')) {
-            this.__sessionCache = {};
-        }
-        return this.__sessionCache;
-    }
-
-    static clearSessionCache() {
-        this.__sessionCache = {};
+    static get _sessionData() {
+        if (!this.session) return {};
+        return this.session.getDataForModel(this.modelName);
     }
 
     /**
@@ -157,17 +142,22 @@ const Model = class Model {
      * @return {Backend} The {@link Backend} instance linked to this {@link Model}.
      */
     static getBackend() {
-        if (!this._sessionCache.backend) {
+        if (!this._sessionData.backend) {
             const BackendClass = this.getBackendClass();
-
             const opts = this._getBackendOpts();
-            if (this._session &amp;&amp; this._session.withMutations) {
+
+            if (this.session &amp;&amp; this.session.withMutations) {
                 opts.withMutations = true;
             }
 
-            this._sessionCache.backend = new BackendClass(opts);
+            const backend = new BackendClass(opts);
+
+            if (!this.session) {
+                return backend;
+            }
+            this._sessionData.backend = backend;
         }
-        return this._sessionCache.backend;
+        return this._sessionData.backend;
     }
 
     /**
@@ -185,6 +175,15 @@ const Model = class Model {
         return updates.reduce(this.updateReducer.bind(this), this.state);
     }
 
+    /**
+     * A reducer that takes the Model's state and an internal redux-orm
+     * action object and applies the update specified by the `action` object
+     * by delegating to this model's Backend instance.
+     *
+     * @param  {Object} state - the Model's state
+     * @param  {Object} action - the internal redux-orm update action to apply
+     * @return {Object} the state after applying the action
+     */
     static updateReducer(state, action) {
         const backend = this.getBackend();
 
@@ -210,8 +209,9 @@ const Model = class Model {
      * @param {Object} action - the dispatched action
      * @param {Model} model - the concrete model class being used
      * @param {Session} session - the current {@link Session} instance
+     * @return {Object} the next state for the Model
      */
-    static reducer(state, action, model, session) {
+    static reducer(state, action, model, session) { // eslint-disable-line
         return model.getNextState();
     }
 
@@ -270,8 +270,7 @@ const Model = class Model {
     }
 
     /**
-     * Connect the model class to a {@link Session}. Invalidates
-     * the session-specific cache.
+     * Connect the model class to a {@link Session}.
      *
      * @param  {Session} session - The session to connect to.
      */
@@ -280,7 +279,6 @@ const Model = class Model {
             throw Error('A model can only connect to a Session instance.');
         }
         this._session = session;
-        this.clearSessionCache();
     }
 
     /**
@@ -308,15 +306,15 @@ const Model = class Model {
      * @return {*} the id value for a new entity.
      */
     static nextId() {
-        if (typeof this._sessionCache.nextId === 'undefined') {
+        if (typeof this._sessionData.nextId === 'undefined') {
             const idArr = this.accessIds();
             if (idArr.length === 0) {
-                this._sessionCache.nextId = 0;
+                this._sessionData.nextId = 0;
             } else {
-                this._sessionCache.nextId = Math.max(...idArr) + 1;
+                this._sessionData.nextId = Math.max(...idArr) + 1;
             }
         }
-        return this._sessionCache.nextId;
+        return this._sessionData.nextId;
     }
 
     static getQuerySet() {
@@ -335,10 +333,10 @@ const Model = class Model {
     }
 
     static get query() {
-        if (!this._sessionCache.queryset) {
-            this._sessionCache.queryset = this.getQuerySet();
+        if (!this._sessionData.queryset) {
+            this._sessionData.queryset = this.getQuerySet();
         }
-        return this._sessionCache.queryset;
+        return this._sessionData.queryset;
     }
 
     /**
@@ -362,11 +360,11 @@ const Model = class Model {
         if (!props.hasOwnProperty(idAttribute)) {
             const nextId = this.nextId();
             props[idAttribute] = nextId;
-            this._sessionCache.nextId++;
+            this._sessionData.nextId++;
         } else {
             const id = props[idAttribute];
             if (id > this.nextId()) {
-                this._sessionCache.nextId = id + 1;
+                this._sessionData.nextId = id + 1;
             }
         }
 
@@ -480,6 +478,16 @@ const Model = class Model {
     }
 
     /**
+     * Returns a reference to the plain JS object in the store.
+     * Make sure to not mutate this.
+     *
+     * @return {Object} a reference to the plain JS object in the store
+     */
+    get ref() {
+        return this.getClass().accessId(this.getId());
+    }
+
+    /**
      * Returns a string representation of the {@link Model} instance.
      * @return {string} A string representation of this {@link Model} instance.
      */
@@ -497,19 +505,6 @@ const Model = class Model {
     }
 
     /**
-     * Returns a plain JavaScript object representation
-     * of the {@link Model} instance.
-     * @return {Object} a plain JavaScript object representing the {@link Model}
-     */
-    toPlain() {
-        const obj = {};
-        this._fieldNames.forEach((fieldName) => {
-            obj[fieldName] = this._fields[fieldName];
-        });
-        return obj;
-    }
-
-    /**
      * Records a update to the {@link Model} instance for a single
      * field value assignment.
      * @param {string} propertyName - name of the property to set
@@ -521,7 +516,8 @@ const Model = class Model {
     }
 
     /**
-     * Records a update to the {@link Model} instance for multiple field value assignments.
+     * Records an update to the {@link Model} instance for multiple field value assignments.
+     * If the session is with mutations, updates the instance to reflect the new values.
      * @param  {Object} userMergeObj - an object that will be merged with this instance.
      * @return {undefined}
      */
@@ -557,6 +553,11 @@ const Model = class Model {
                     mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
                 }
             }
+        }
+
+        const session = this.getClass().session;
+        if (session &amp;&amp; session.withMutations) {
+            this._initFields(Object.assign({}, this._fields, mergeObj));
         }
 
         this.getClass().addUpdate({
@@ -595,7 +596,7 @@ const Model = class Model {
             } else if (field instanceof OneToOne) {
                 // Set null to any foreign keys or one to ones pointed to
                 // this instance.
-                if (this[key] !== null ) {
+                if (this[key] !== null) {
                     this[key][field.relatedName] = null;
                 }
             }
@@ -625,7 +626,7 @@ export default Model;
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Dec 25 2015 22:39:06 GMT+0200 (EET)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Jan 06 2016 01:31:56 GMT+0200 (EET)
 </footer>
 
 <script> prettyPrint(); </script>

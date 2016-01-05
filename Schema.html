@@ -284,7 +284,7 @@ components for performance gains.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line349">line 349</a>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line342">line 342</a>
     </li></ul></dd>
     
 
@@ -602,7 +602,7 @@ with ES6 classes.</p>
 
     
 
-    <h4 class="name" id="from"><span class="type-signature"></span>from<span class="signature">(state, action)</span><span class="type-signature"> &rarr; {<a href="Session.html">Session</a>}</span></h4>
+    <h4 class="name" id="from"><span class="type-signature"></span>from<span class="signature">(state, action<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Session.html">Session</a>}</span></h4>
 
     
 
@@ -633,6 +633,8 @@ with ES6 classes.</p>
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
         
 
@@ -658,6 +660,14 @@ with ES6 classes.</p>
             </td>
 
             
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
 
             
 
@@ -680,6 +690,16 @@ with ES6 classes.</p>
             
             </td>
 
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
             
 
             
@@ -725,7 +745,7 @@ with ES6 classes.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line280">line 280</a>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line273">line 273</a>
     </li></ul></dd>
     
 
@@ -878,7 +898,7 @@ with ES6 classes.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line141">line 141</a>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line131">line 131</a>
     </li></ul></dd>
     
 
@@ -929,6 +949,110 @@ with ES6 classes.</p>
     <dd>
         
 <span class="param-type"><a href="Model.html">Model</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="getDefaultState"><span class="type-signature"></span>getDefaultState<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Returns the default state</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line257">line 257</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>the default state</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
 
 
     </dd>
@@ -1001,7 +1125,7 @@ reducer. One way to do that is to declare your root reducer:</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line304">line 304</a>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line297">line 297</a>
     </li></ul></dd>
     
 
@@ -1170,7 +1294,7 @@ this call.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line94">line 94</a>
+        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line84">line 84</a>
     </li></ul></dd>
     
 
@@ -1215,160 +1339,6 @@ this call.</p>
 
 
         
-            
-
-    
-
-    <h4 class="name" id="setReducer"><span class="type-signature"></span>setReducer<span class="signature">(modelName, reducer)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Sets a reducer function to the model with <code>modelName</code>.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>modelName</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The name of the model you want to set a reducer to</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>reducer</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>The reducer function.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Schema.js.html">Schema.js</a>, <a href="Schema.js.html#line79">line 79</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
     
 
     
@@ -1390,7 +1360,7 @@ this call.</p>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Fri Dec 25 2015 22:39:06 GMT+0200 (EET)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Wed Jan 06 2016 01:31:56 GMT+0200 (EET)
 </footer>
 
 <script> prettyPrint(); </script>
