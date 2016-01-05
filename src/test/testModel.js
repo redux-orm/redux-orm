@@ -105,20 +105,24 @@ describe('Model', () => {
     describe('Instance methods', () => {
         let Model;
         let instance;
-        const sessionMock = {};
-        const stateMock = {};
-        const actionMock = {};
-
-        sessionMock.action = actionMock;
-
-        sessionMock.getState = () => stateMock;
+        let sessionMock;
+        let stateMock;
+        let actionMock;
 
         beforeEach(() => {
+            sessionMock = {};
+            stateMock = {};
+            actionMock = {};
+
+            sessionMock.action = actionMock;
+
+            sessionMock.getState = () => stateMock;
             // Get a fresh copy
             // of Model, so our manipulations
             // won't survive longer than each test.
             Model = class TestModel extends BaseModel {};
             Model.modelName = 'Model';
+            Model.markAccessed = () => undefined;
 
             instance = new Model({id: 0, name: 'Tommi'});
         });
@@ -167,11 +171,15 @@ describe('Model', () => {
             });
         });
 
-        it('toPlain works correctly', () => {
-            expect(instance.toPlain()).to.deep.equal({
-                id: 0,
-                name: 'Tommi',
-            });
+        it('ref works correctly', () => {
+            const backendMock = {};
+            Model.getBackend = () => backendMock;
+            const dbObj = {};
+            backendMock.accessId = () => dbObj;
+            Model._session = sessionMock;
+            sessionMock.backend = backendMock;
+
+            expect(instance.ref).to.equal(dbObj);
         });
 
         it('equals works correctly', () => {

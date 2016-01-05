@@ -70,6 +70,12 @@ const QuerySet = class QuerySet {
         return this.withRefs;
     }
 
+    /**
+     * Returns a new QuerySet representing the same entities
+     * with the `withRefs` flag off.
+     *
+     * @return {QuerySet}
+     */
     get withModels() {
         if (this._withRefs) {
             return this._new(this.idArr, {withRefs: false});
@@ -269,7 +275,9 @@ const QuerySet = class QuerySet {
             });
         }
         const sortedEntities = sortByOrder.call(null, entities, iterateeArgs, orders);
-        return this._new(sortedEntities.map(entity => entity[this.modelClass.idAttribute]));
+        return this._new(
+            sortedEntities.map(entity => entity[this.modelClass.idAttribute]),
+            {withRefs: false});
     }
 
     /**

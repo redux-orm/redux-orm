@@ -477,19 +477,6 @@ const Model = class Model {
     }
 
     /**
-     * Returns a plain JavaScript object representation
-     * of the {@link Model} instance.
-     * @return {Object} a plain JavaScript object representing the {@link Model}
-     */
-    toPlain() {
-        const obj = {};
-        this._fieldNames.forEach((fieldName) => {
-            obj[fieldName] = this._fields[fieldName];
-        });
-        return obj;
-    }
-
-    /**
      * Records a update to the {@link Model} instance for a single
      * field value assignment.
      * @param {string} propertyName - name of the property to set

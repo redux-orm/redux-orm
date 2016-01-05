@@ -268,9 +268,11 @@ See the full documentation for `Model` [here](http://tommikaikkonen.github.io/re
 
 You will also have access to almost all [QuerySet instance methods](http://tommikaikkonen.github.io/redux-orm/QuerySet.html) from the class object for convenience.
 
+**Instance Attributes**:
+- `ref`: returns a direct reference to the plain JavaScript object representing the Model instance in the store.
+
 **Instance methods**:
 
-- `toPlain`: returns a plain JavaScript object presentation of the Model.
 - `set`: marks a supplied `propertyName` to be updated to `value` at `Model.getNextState`. Returns `undefined`. Is equivalent to normal assignment.
 - `update`: marks a supplied object of property names and values to be merged with the Model instance at `Model.getNextState()`. Returns `undefined`.
 - `delete`: marks the Model instance to be deleted at `Model.getNextState()`. Returns `undefined`.
@@ -325,11 +327,12 @@ You can access all of these methods straight from a `Model` class, as if they we
 
 **Instance methods**:
 
-- `toPlain()`: returns the `Model` instances in `QuerySet`  as an array of plain JavaScript objects.
+- `toRefArray()`: returns the objects represented by the `QuerySet` as an array of plain JavaScript objects. The objects are direct references to the store.
+- `toModelArray()`: returns the objects represented by the `QuerySet` as an array of `Model` instances objects.
 - `count()`: returns the number of `Model` instances in the `QuerySet`.
 - `exists()`: return `true` if number of entities is more than 0, else `false`.
-- `filter(filterArg)`: returns a new `QuerySet` with the entities that pass the filter. For `filterArg`, you can either pass an object that `redux-orm` tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not.
-- `exclude` returns a new `QuerySet` with the entities that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function.
+- `filter(filterArg)`: returns a new `QuerySet` with the entities that pass the filter. For `filterArg`, you can either pass an object that `redux-orm` tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not. The function receives a model instance as its sole argument.
+- `exclude` returns a new `QuerySet` with the entities that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function. The function receives a model instance as its sole argument.
 - `map(func)` map the entities in `QuerySet`, returning a JavaScript array.
 - `all()` returns a new `QuerySet` with the same entities.
 - `at(index)` returns an `Model` instance at the supplied `index` in the `QuerySet`.
@@ -338,26 +341,28 @@ You can access all of these methods straight from a `Model` class, as if they we
 - `delete()` marks all the `QuerySet` entities for deletion on `Model.getNextState`.
 - `update(updateArg)` marks all the `QuerySet` entities for an update based on the supplied argument. The argument can either be an object that will be merged with the entity, or a mapping function that takes the entity as an argument and **returns a new, updated entity**. Do not mutate the entity if you pass a function to `update`.
 
-**Plain/models flagging**
+**withRefs/withModels flagging**
 
-When you want to iterate through all entities with `filter`, `exclude`, `forEach`, `map`, or get an item with `first`, `last` or `at`, you don't always need access to the full Model instance - a plain JavaScript object could do. QuerySets maintain a flag indicating whether these methods operate on plain JavaScript objects (a straight reference from the store) or a Model instances that are instantiated during the operations.
+When you want to iterate through all entities with `filter`, `exclude`, `forEach`, `map`, or get an item with `first`, `last` or `at`, you don't always need access to the full Model instance - a reference to the plain JavaScript object in the database could do. QuerySets maintain a flag indicating whether these methods operate on plain JavaScript objects (a straight reference from the store) or a Model instances that are instantiated during the operations.
 
 ```javascript
-const clean = Book.plain.filter(book => book.author === 'Tommi Kaikkonen')
+const clean = Book.withRefs.filter(book => book.author === 'Tommi Kaikkonen')
 // `book` is a plain javascript object, `clean` is a QuerySet
 // 
 const clean2 = Book.filter(book => book.name === 'Tommi Kaikkonen - An Autobiography')
 // `book` is a Model instance. `clean2` is a QuerySet equivalent to `clean`.
 ```
 
-The flag persists after settings the flag. The default is to operate on Model instances. You can invert the flag by chaining `plain`. You can flip it back with `models`.
+The flag persists after setting the flag. If you use `filter`, `exclude` or `orderBy`, the returned `QuerySet` will have the flag set to operate on Model instances either way. The default is to operate on Model instances. You can get a copy of the current `QuerySet` with the flag set to operate on references from the `withRefs` attribute. Likewise a `QuerySet` copy with the flag set to operate on model instances can be gotten by accessing the `withModels` attribute.
 
 ```javascript
 clean.filter(book => book.release_year > 2014)
-// Since the plain flag was used in `clean`, `book` is a plain instance.
+// The `withRefs` flag was reverted back to using models after the `filter` operation,
+// so `book` here is a model instance.
 
-clean.models.filter(book => book.isReleasedAfterYear(2014))
-// `models` inverts the flag, `book` is a Model instance.
+clean.withRefs.filter(book => book.isReleasedAfterYear(2014))
+// `book` is once again a model instance.
+// You rarely need to use `withModels`, unless you're unsure which way the flag is.
 ```
 
 ### Session
@@ -394,6 +399,22 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
     mapName: 'itemsById', // will be ignored if `indexById` is `false`
 };
 ```
+
+
+## Changelog
+
+### 0.2.0
+
+Includes various bugfixes and improvements.
+
+**Breaking changes**:
+- Replaced `plain` and `models` instance attributes in `QuerySet` with `withRefs` and `withModels` respectively. The attributes return a new `QuerySet` instead of modifying the existing one. A `ref` alias is also added for `withRefs`, so you can do `Book.ref.at(2)`.
+- After calling `filter`, `exclude` or `orderBy` method on a `QuerySet` instance, the `withRefs` flag is always flipped off so that calling the same methods on the returned `QuerySet` would use model instances in the operations. Previously the flag value remained after calling those methods.
+- `.toPlain()` from `QuerySet` is renamed to `.toRefArray()` for clarity.
+- Added `.toModelArray()` method to `QuerySet`.
+- Removed `.objects()` method from `QuerySet`. Use `.toRefArray()` or `.toModelArray()` instead.
+- Removed `.toPlain()` method from `Model`, which returned a copy of the Model instance's property values. To replace that, `ref` instance getter was added. It returns a reference to the plain JavaScript object in the database. So you can do `Book.withId(0).ref`. If you need a copy, you can do `Object.assign({}, Book.withId(0).ref)`.
+
 
 ## License
 
