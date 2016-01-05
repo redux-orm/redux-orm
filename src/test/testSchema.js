@@ -46,6 +46,7 @@ describe('Schema', () => {
             expect(session).to.be.instanceOf(Session);
         });
 
+
         it('correctly gets models from registry', () => {
             schema.register(Book);
             expect(schema.get('Book')).to.equal(Book);
