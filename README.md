@@ -124,7 +124,7 @@ const authorSelector = schema.createSelector(session => {
         // Object.keys(obj) === ['id', 'name']
 
         return Object.assign(obj, {
-            books: author.books.plain.map(book => book.name),
+            books: author.books.withRefs.map(book => book.name),
         });
     });
 });
@@ -414,6 +414,8 @@ Includes various bugfixes and improvements.
 - Added `.toModelArray()` method to `QuerySet`.
 - Removed `.objects()` method from `QuerySet`. Use `.toRefArray()` or `.toModelArray()` instead.
 - Removed `.toPlain()` method from `Model`, which returned a copy of the Model instance's property values. To replace that, `ref` instance getter was added. It returns a reference to the plain JavaScript object in the database. So you can do `Book.withId(0).ref`. If you need a copy, you can do `Object.assign({}, Book.withId(0).ref)`.
+- Removed `.fromEmpty()` instance method from `Schema`.
+- Removed `.setReducer()` instance method from `Schema`. You can just do `ModelClass.reducer = reducerFunc;`.
 
 
 ## License
