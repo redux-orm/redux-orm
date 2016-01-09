@@ -118,12 +118,13 @@ Use memoized selectors to make queries into the state. `redux-orm` uses smart me
 import schema from './schema';
 const authorSelector = schema.createSelector(session => {
     return session.Author.map(author => {
-        // Returns a shallow copy of the raw author object,
+
+        // Returns a reference to the raw object in the store,
         // so it doesn't include any reverse or m2m fields.
-        const obj = author.toPlain();
+        const obj = author.ref;
         // Object.keys(obj) === ['id', 'name']
 
-        return Object.assign(obj, {
+        return Object.assign({}, obj, {
             books: author.books.withRefs.map(book => book.name),
         });
     });
