@@ -5,12 +5,18 @@ const Field = class Field {
     }
 };
 
-const ForeignKey = class ForeignKey extends Field {};
-const ManyToMany = class ManyToMany extends Field {};
-const OneToOne = class OneToOne extends Field {};
+export const ForeignKey = class ForeignKey extends Field {};
+export const ManyToMany = class ManyToMany extends Field {};
+export const OneToOne = class OneToOne extends Field {};
 
-export {
-    ForeignKey,
-    ManyToMany,
-    OneToOne,
-};
+export function fk(...args) {
+    return new ForeignKey(...args);
+}
+
+export function many(...args) {
+    return new ManyToMany(...args);
+}
+
+export function oneToOne(...args) {
+    return new OneToOne(...args);
+}

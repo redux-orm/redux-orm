@@ -1,6 +1,6 @@
 import Schema from '../Schema';
 import Model from '../Model';
-import {ForeignKey, ManyToMany, OneToOne} from '../fields';
+import {fk, many, oneToOne} from '../fields';
 
 /**
  * These utils create a database schema for testing.
@@ -77,9 +77,9 @@ export function createTestModels() {
     const Book = class BookModel extends Model {
         static get fields() {
             return {
-                author: new ForeignKey('Author', 'books'),
-                cover: new OneToOne('Cover'),
-                genres: new ManyToMany('Genre', 'books'),
+                author: fk('Author', 'books'),
+                cover: oneToOne('Cover'),
+                genres: many('Genre', 'books'),
             };
         }
     };
