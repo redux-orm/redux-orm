@@ -92,6 +92,11 @@ describe('Integration', () => {
         expect(state.Cover.itemsById[coverId].src).to.equal('somecover.png');
     });
 
+    it('withId throws if model instance not found', () => {
+        const { Book } = session;
+        expect(() => Book.withId(10)).to.throw(Error);
+    });
+
     it('many-to-many relationship descriptors work', () => {
         const {
             Book,

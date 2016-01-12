@@ -370,9 +370,19 @@ const Model = class Model {
         return instance;
     }
 
+    /**
+     * Returns a Model instance for the object with id `id`.
+     * @param  {*} id - the `id` of the object to get
+     * @throws If object with id `id` doesn't exist
+     * @return {Model} `Model` instance with id `id`
+     */
     static withId(id) {
         const ModelClass = this;
-        return new ModelClass(this.accessId(id));
+        const ref = this.accessId(id);
+        if (typeof ref === 'undefined') {
+            throw new Error(`${this.modelName} instance with id ${id} not found`);
+        }
+        return new ModelClass(ref);
     }
 
     /**
