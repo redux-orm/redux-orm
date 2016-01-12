@@ -404,6 +404,12 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
 
 ## Changelog
 
+### 0.3.0
+
+**Breaking changes**:
+
+- `Model.withId(id)` now throws if object with id `id` does not exist in the database. 
+
 ### 0.2.0
 
 Includes various bugfixes and improvements.
