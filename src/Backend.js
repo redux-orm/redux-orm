@@ -30,7 +30,8 @@ const Backend = class Backend {
      *
      * @param  {Object} branch - the state
      * @param  {Number} id - the id of the object to get
-     * @return {Object} A reference to the raw object in the state.
+     * @return {Object|undefined} A reference to the raw object in the state or
+     *                            `undefined` if not found.
      */
     accessId(branch, id) {
         if (this.indexById) {
