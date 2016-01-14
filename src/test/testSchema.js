@@ -1,12 +1,62 @@
-import {expect} from 'chai';
+import { expect } from 'chai';
 import Schema from '../Schema';
 import Session from '../Session';
-import {createTestModels} from './utils';
+import Model from '../Model';
+import { oneToOne, fk, many } from '../fields';
+
+import { createTestModels } from './utils';
 
 describe('Schema', () => {
     it('constructor works', () => {
         const schema = new Schema();
         expect(schema.selectorCreator).to.be.a('function');
+    });
+
+    describe('throws on invalid model declarations', () => {
+        it('with multiple one-to-one fields to the same model without related name', () => {
+            class A extends Model {}
+            A.modelName = 'A';
+
+            class B extends Model {}
+            B.modelName = 'B';
+            B.fields = {
+                field1: oneToOne('A'),
+                field2: oneToOne('A'),
+            };
+            const schema = new Schema();
+            schema.register(A, B);
+            expect(() => schema._getModelClasses()).to.throw(/field/);
+        });
+
+        it('with multiple foreign keys to the same model without related name', () => {
+            class A extends Model {}
+            A.modelName = 'A';
+
+            class B extends Model {}
+            B.modelName = 'B';
+            B.fields = {
+                field1: fk('A'),
+                field2: fk('A'),
+            };
+            const schema = new Schema();
+            schema.register(A, B);
+            expect(() => schema._getModelClasses()).to.throw(/field/);
+        });
+
+        it('with multiple many-to-manys to the same model without related name', () => {
+            class A extends Model {}
+            A.modelName = 'A';
+
+            class B extends Model {}
+            B.modelName = 'B';
+            B.fields = {
+                field1: many('A'),
+                field2: many('A'),
+            };
+            const schema = new Schema();
+            schema.register(A, B);
+            expect(() => schema._getModelClasses()).to.throw(/field/);
+        });
     });
 
     describe('simple schema', () => {

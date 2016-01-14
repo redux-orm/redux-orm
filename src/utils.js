@@ -240,6 +240,12 @@ function arrayDiffActions(targetArr, sourceArr) {
     return null;
 }
 
+function reverseFieldErrorMessage(modelName, fieldName, toModelName, backwardsFieldName) {
+    return [`Reverse field ${backwardsFieldName} already defined`,
+           ` on model ${toModelName}. To fix, set a custom related`,
+           ` name on ${modelName}.${fieldName}.`].join('');
+}
+
 export {
     match,
     attachQuerySetMethods,
@@ -251,4 +257,5 @@ export {
     normalizeEntity,
     objectDiff,
     arrayDiffActions,
+    reverseFieldErrorMessage,
 };

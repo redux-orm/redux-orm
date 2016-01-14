@@ -24,6 +24,7 @@ import {
     m2mToFieldName,
     m2mFromFieldName,
     reverseFieldName,
+    reverseFieldErrorMessage,
 } from './utils';
 
 /**
@@ -170,6 +171,16 @@ const Schema = class Schema {
                                 ? fieldInstance.relatedName
                                 : reverseFieldName(model.modelName);
 
+                            if (toModel.definedProperties[backwardsFieldName]) {
+                                const errorMsg = reverseFieldErrorMessage(
+                                    model.modelName,
+                                    fieldName,
+                                    toModel.modelName,
+                                    backwardsFieldName
+                                );
+                                throw new Error(errorMsg);
+                            }
+
                             Object.defineProperty(
                                 toModel.prototype,
                                 backwardsFieldName,
@@ -195,6 +206,16 @@ const Schema = class Schema {
                                 ? fieldInstance.relatedName
                                 : reverseFieldName(model.modelName);
 
+                            if (toModel.definedProperties[backwardsFieldName]) {
+                                const errorMsg = reverseFieldErrorMessage(
+                                    model.modelName,
+                                    fieldName,
+                                    toModel.modelName,
+                                    backwardsFieldName
+                                );
+                                throw new Error(errorMsg);
+                            }
+
                             Object.defineProperty(
                                 toModel.prototype,
                                 backwardsFieldName,
@@ -215,6 +236,16 @@ const Schema = class Schema {
                             const backwardsFieldName = fieldInstance.relatedName
                                 ? fieldInstance.relatedName
                                 : model.modelName.toLowerCase();
+
+                            if (toModel.definedProperties[backwardsFieldName]) {
+                                const errorMsg = reverseFieldErrorMessage(
+                                    model.modelName,
+                                    fieldName,
+                                    toModel.modelName,
+                                    backwardsFieldName
+                                );
+                                throw new Error(errorMsg);
+                            }
 
                             Object.defineProperty(
                                 toModel.prototype,
