@@ -404,6 +404,25 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
 
 ## Changelog
 
+### 0.3.1
+
+A descriptive error is now thrown when a reverse field conflicts with another field declaration.
+For example, the following schema:
+
+```javascript
+class A extends Model {}
+A.modelName = 'A';
+
+class B extends Model {}
+B.modelName = 'B';
+B.fields = {
+    field1: one('A'),
+    field2: one('A'),
+};
+```
+
+would try to define the reverse field `b` on `A` twice, throwing an error with an undescriptive message.
+
 ### 0.3.0
 
 **Breaking changes**:
