@@ -403,6 +403,38 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
 
 ## Changelog
 
+Minor changes before 1.0.0 can include breaking changes.
+
+### 0.4.0
+
+API cleanup.
+
+**Breaking changes**:
+
+- Removed static methods `Model.setOrder()` and `Backend.order`. If you want ordered entities, use the QuerySet instance method `orderBy`.
+- Removed ability to supply a mapping function to QuerySet instance method `update`. If you need to record updates dynamically based on each entity, iterate through the objects with `forEach` and record updates separately:
+
+```javascript
+const authors = publisher.authors;
+authors.forEach(author => {
+    const isAdult = author.age >= 18;
+    author.update({ isAdult });
+})
+```
+
+or use the ability to merge an object with all objects in a QuerySet. Since the update operation is batched for all objects in the QuerySet, it can be more performant with a large amount of entities:
+
+```javascript
+const authors = publisher.authors;
+const isAdult = author => author.age >= 18;
+
+const adultAuthors = authors.filter(isAdult);
+adultAuthors.update({ isAdult: true });
+
+const youngAuthors = authors.exclude(isAdult);
+youngAuthors.update({ isAdult: false });
+```
+
 ### 0.3.1
 
 A descriptive error is now thrown when a reverse field conflicts with another field declaration.
