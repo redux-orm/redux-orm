@@ -210,7 +210,7 @@ Book.getNextState()
 // the item we edited will have now values {... name: 'Clean Code'}
 ```
 
-the update will be reflected in the new state. The same principle holds true when you're creating new instances, deleting them and ordering them.
+the update will be reflected in the new state. The same principle holds true when you're creating new instances and deleting them.
 
 ### How Updates Work Internally
 
@@ -395,7 +395,6 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
 {
     idAttribute: 'id',
     indexById: true, // if false, data will be held in a single object array
-    ordered: true,
     arrName: 'items',
     mapName: 'itemsById', // will be ignored if `indexById` is `false`
 };

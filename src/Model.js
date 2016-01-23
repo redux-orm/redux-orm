@@ -424,23 +424,6 @@ const Model = class Model {
     }
 
     /**
-     * Records an ordering update for the objects.
-     * Note that if you create or update any objects after
-     * calling this, they won't be in order.
-     *
-     * @param {function|string|string[]} orderArg - A function, an attribute name or a list of attribute
-     *                                              names to order the objects by. If you supply a function,
-     *                                              it must return a value user to order the entities.
-     * @return {undefined}
-     */
-    static setOrder(orderArg) {
-        this.addUpdate({
-            type: ORDER,
-            payload: orderArg,
-        });
-    }
-
-    /**
      * Gets the {@link Model} class or subclass constructor (the class that
      * instantiated this instance).
      *

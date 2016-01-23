@@ -15,7 +15,6 @@ const Backend = class Backend {
         const defaultOpts = {
             idAttribute: 'id',
             indexById: true,
-            ordered: true,
             arrName: 'items',
             mapName: 'itemsById',
             withMutations: false,
@@ -82,41 +81,6 @@ const Backend = class Backend {
         return {
             [this.arrName]: [],
         };
-    }
-
-    /**
-     * Returns the data structure with objects in ascending order.
-     * This function uses the `lodash `[sortByOrder](https://lodash.com/docs#sortByOrder)
-     * internally, so you can supply it the same `iteratees` and `orders`
-     * arguments. Please read there for the full docs.
-     *
-     * @param  {Object} branch - the state of the data structure
-     * @param  {Function[]|Object[]|string[]} iteratees - the iteratees to sort by
-     * @param  {string[]} orders - the sort orders of `iteratees`
-     * @return {Object} the data structure ordered with the arguments.
-     */
-    order(branch, iteratees, orders) {
-        const returnBranch = this.withMutations ? branch : {};
-        const thisBackend = this;
-        const {arrName, mapName} = this;
-
-        if (this.indexById) {
-            if (!this.withMutations) {
-                returnBranch[mapName] = branch[mapName];
-            }
-
-            // TODO: we don't need to build a full list to sort,
-            // but it's convenient for direct use of lodash.
-            // By implementing our own sorting, this could be more performant.
-            const fullList = this.accessList(branch);
-            const orderedObjects = sortByOrder(fullList, iteratees, orders);
-
-            returnBranch[arrName] = orderedObjects.map(obj => obj[thisBackend.idAttribute]);
-            return returnBranch;
-        }
-
-        returnBranch[arrName] = sortByOrder(branch[arrName], iteratees, orders);
-        return returnBranch;
     }
 
     /**

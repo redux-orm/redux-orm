@@ -146,13 +146,5 @@ describe('Backend', () => {
                 },
             });
         });
-
-        it('correctly orders entries', () => {
-            const newState = backend.order(state, ['id'], ['desc']);
-
-            expect(newState).to.not.equal(state);
-            expect(newState.items).to.deep.equal([2, 1, 0]);
-            expect(newState.itemsById).to.equal(state.itemsById);
-        });
     });
 });
