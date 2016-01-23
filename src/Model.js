@@ -163,7 +163,7 @@ const Model = class Model {
         case CREATE:
             return backend.insert(state, action.payload);
         case UPDATE:
-            return backend.update(state, action.payload.idArr, action.payload.updater);
+            return backend.update(state, action.payload.idArr, action.payload.mergeObj);
         case ORDER:
             return backend.order(state, action.payload);
         case DELETE:
@@ -529,7 +529,7 @@ const Model = class Model {
             type: UPDATE,
             payload: {
                 idArr: [this.getId()],
-                updater: mergeObj,
+                mergeObj,
             },
         });
     }

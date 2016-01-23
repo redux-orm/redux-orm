@@ -107,32 +107,6 @@ describe('Backend', () => {
             });
         });
 
-        it('correctly updates entries with a mapping function', () => {
-            const mapperFunc = obj => {
-                const id = obj.id;
-                return Object.assign({}, obj, {data: `data${id}`});
-            };
-            const idsToUpdate = [1, 2];
-            const newState = backend.update(state, idsToUpdate, mapperFunc);
-
-            expect(newState).to.not.equal(state);
-            expect(newState.items).to.equal(state.items);
-            expect(newState.itemsById).to.deep.equal({
-                0: {
-                    id: 0,
-                    data: 'cooldata',
-                },
-                1: {
-                    id: 1,
-                    data: 'data1',
-                },
-                2: {
-                    id: 2,
-                    data: 'data2',
-                },
-            });
-        });
-
         it('correctly deletes entries', () => {
             const idsToDelete = [1, 2];
             const newState = backend.delete(state, idsToDelete);

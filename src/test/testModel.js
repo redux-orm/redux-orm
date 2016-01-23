@@ -151,7 +151,7 @@ describe('Model', () => {
                 type: UPDATE,
                 payload: {
                     idArr: [instance.id],
-                    updater: {
+                    mergeObj: {
                         name: 'Matt',
                     },
                 },

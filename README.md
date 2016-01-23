@@ -340,7 +340,7 @@ You can access all of these methods straight from a `Model` class, as if they we
 - `first()` returns an `Model` instance at the `0` index.
 - `last()` returns an `Model` instance at the `querySet.count() - 1` index.
 - `delete()` marks all the `QuerySet` entities for deletion on `Model.getNextState`.
-- `update(updateArg)` marks all the `QuerySet` entities for an update based on the supplied argument. The argument can either be an object that will be merged with the entity, or a mapping function that takes the entity as an argument and **returns a new, updated entity**. Do not mutate the entity if you pass a function to `update`.
+- `update(mergeObj)` marks all the `QuerySet` entities for an update based on the supplied object. The object will be merged with each entity.
 
 **withRefs/withModels flagging**
 

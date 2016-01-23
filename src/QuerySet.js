@@ -281,19 +281,17 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Records a update specified with `updater` to all the objects in the {@link QuerySet}.
-     * @param  {Object|function} updater - an object to merge with all the objects in this
-     *                                     queryset, or a mapper function that takes the
-     *                                     object as an argument and returns an updated
-     *                                     object.
+     * Records an update specified with `mergeObj` to all the objects in the {@link QuerySet}.
+     * @param  {Object} mergeObj - an object to merge with all the objects in this
+     *                             queryset.
      * @return {undefined}
      */
-    update(updater) {
+    update(mergeObj) {
         this.modelClass.addUpdate({
             type: UPDATE,
             payload: {
                 idArr: this.idArr,
-                updater,
+                mergeObj,
             },
         });
     }

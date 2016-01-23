@@ -83,16 +83,16 @@ describe('QuerySet tests', () => {
     });
 
     it('update records a update', () => {
-        const updater = {name: 'Updated Book Name'};
+        const mergeObj = {name: 'Updated Book Name'};
         expect(session.updates).to.have.length(0);
-        bookQs.update(updater);
+        bookQs.update(mergeObj);
         expect(session.updates).to.have.length(1);
 
         expect(session.updates[0]).to.deep.equal({
             type: UPDATE,
             payload: {
                 idArr: bookQs.idArr,
-                updater,
+                mergeObj,
             },
             meta: {
                 name: 'Book',

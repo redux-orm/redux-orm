@@ -117,20 +117,15 @@ const Backend = class Backend {
 
     /**
      * Returns the data structure with objects where id in `idArr`
-     * are:
-     *
-     * 1. merged with `patcher`, if `patcher` is an object.
-     * 2. mapped with `patcher`, if `patcher` is a function.
+     * are merged with `mergeObj`.
      *
      * @param  {Object} branch - the data structure state
      * @param  {Array} idArr - the id's of the objects to update
-     * @param  {Object|Function} patcher - If an object, the object to merge with objects
-     *                                     where their id is in `idArr`. If a function,
-     *                                     the mapping function for the objects in the
-     *                                     data structure.
-     * @return {Object} the data structure with objects with their id in `idArr` updated with `patcher`.
+     * @param  {Object} mergeObj - The object to merge with objects
+     *                             where their id is in `idArr`.
+     * @return {Object} the data structure with objects with their id in `idArr` updated with `mergeObj`.
      */
-    update(branch, idArr, patcher) {
+    update(branch, idArr, mergeObj) {
         const returnBranch = this.withMutations ? branch : {};
 
         const {
@@ -139,19 +134,14 @@ const Backend = class Backend {
             idAttribute,
         } = this;
 
-        let mapFunction;
-        if (typeof patcher === 'function') {
-            mapFunction = patcher;
-        } else {
-            mapFunction = (entity) => {
-                const assignTo = this.withMutations ? entity : {};
-                const diff = objectDiff(entity, patcher);
-                if (diff) {
-                    return Object.assign(assignTo, entity, patcher);
-                }
-                return entity;
-            };
-        }
+        const mapFunction = entity => {
+            const assignTo = this.withMutations ? entity : {};
+            const diff = objectDiff(entity, mergeObj);
+            if (diff) {
+                return Object.assign(assignTo, entity, mergeObj);
+            }
+            return entity;
+        };
 
         if (this.indexById) {
             if (!this.withMutations) {
