@@ -4,7 +4,7 @@ import sinon from 'sinon';
 chai.use(sinonChai);
 const {expect} = chai;
 import BaseModel from '../Model';
-import {UPDATE, DELETE, CREATE, ORDER} from '../constants';
+import {UPDATE, DELETE, CREATE} from '../constants';
 
 describe('Model', () => {
     describe('static method', () => {
