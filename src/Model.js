@@ -10,7 +10,7 @@ import {
     ForeignKey,
     OneToOne,
 } from './fields';
-import {CREATE, UPDATE, DELETE, ORDER} from './constants';
+import { CREATE, UPDATE, DELETE } from './constants';
 import {
     match,
     normalizeEntity,
@@ -178,8 +178,6 @@ const Model = class Model {
             return backend.insert(state, action.payload);
         case UPDATE:
             return backend.update(state, action.payload.idArr, action.payload.mergeObj);
-        case ORDER:
-            return backend.order(state, action.payload);
         case DELETE:
             return backend.delete(state, action.payload);
         default:
