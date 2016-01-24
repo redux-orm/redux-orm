@@ -1,7 +1,6 @@
 import forOwn from 'lodash/object/forOwn';
 import isArray from 'lodash/lang/isArray';
 import uniq from 'lodash/array/uniq';
-import difference from 'lodash/array/difference';
 
 import Session from './Session';
 import Backend from './Backend';
