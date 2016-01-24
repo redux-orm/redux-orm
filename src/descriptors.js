@@ -104,7 +104,7 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
                 });
 
                 if (existingQs.exists()) {
-                    const existingIds = existingQs.idArr.join(', ');
+                    const existingIds = existingQs.withRefs.map(through => through[filterWithAttr]);
 
                     const toAddModel = reverse
                         ? declaredFromModel.modelName
@@ -139,7 +139,8 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
 
                 if (entitiesToDelete.count() !== idsToRemove.length) {
                     // Tried deleting non-existing entities.
-                    const unexistingIds = difference(idsToRemove, entitiesToDelete.idArr).join(', ');
+                    const entitiesToDeleteIds = entitiesToDelete.withRefs.map(through => through[attrInIdsToRemove]);
+                    const unexistingIds = difference(idsToRemove, entitiesToDeleteIds);
 
                     const toDeleteModel = reverse
                         ? declaredFromModel.modelName
