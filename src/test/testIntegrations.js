@@ -109,6 +109,42 @@ describe('Integration', () => {
             expect(relatedBooks.modelClass).to.equal(Book);
         });
 
+        it('adding related many-to-many entities works', () => {
+            const { Book, Genre } = session;
+            const book = Book.withId(0);
+            expect(book.genres.count()).to.equal(2);
+            book.genres.add(Genre.withId(2));
+
+            const nextState = session.reduce();
+            const nextSession = schema.from(nextState);
+
+            expect(nextSession.Book.withId(0).genres.count()).to.equal(3);
+        });
+
+        it('removing related many-to-many entities works', () => {
+            const { Book, Genre } = session;
+            const book = Book.withId(0);
+            expect(book.genres.count()).to.equal(2);
+            book.genres.remove(Genre.withId(0));
+
+            const nextState = session.reduce();
+            const nextSession = schema.from(nextState);
+
+            expect(nextSession.Book.withId(0).genres.count()).to.equal(1);
+        });
+
+        it('clearing related many-to-many entities works', () => {
+            const { Book } = session;
+            const book = Book.withId(0);
+            expect(book.genres.count()).to.equal(2);
+            book.genres.clear();
+
+            const nextState = session.reduce();
+            const nextSession = schema.from(nextState);
+
+            expect(nextSession.Book.withId(0).genres.count()).to.equal(0);
+        });
+
         it('foreign key relationship descriptors work', () => {
             const {
                 Book,
