@@ -148,6 +148,11 @@ describe('Schema', () => {
             expect(genresDescriptor.set).to.be.a('function');
         });
 
+        it('calling reducer with undefined state doesn\'t throw', () => {
+            schema.register(Book, Author, Cover, Genre);
+            schema.reducer()(undefined, { type: '______init' });
+        });
+
         it('correctly gets the default state', () => {
             schema.register(Book, Author, Cover, Genre);
             const defaultState = schema.getDefaultState();

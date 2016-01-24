@@ -107,7 +107,7 @@ const Session = class Session {
     reduce() {
         if (this.withMutations) return this.state;
 
-        const prevState = this.state;
+        const prevState = this.state || {};
         const action = this.action;
 
         const nextState = this.models.reduce((_nextState, modelClass) => {
