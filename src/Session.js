@@ -107,21 +107,56 @@ const Session = class Session {
     reduce() {
         if (this.withMutations) return this.state;
 
-        const nextState = {};
-        const currentAction = this.action;
-        this.models.forEach(modelClass => {
+        const prevState = this.state;
+        const action = this.action;
+
+        const nextState = this.models.reduce((_nextState, modelClass) => {
             const modelState = this.getState(modelClass.modelName);
-            nextState[modelClass.modelName] = modelClass.reducer(
-                modelState, currentAction, modelClass, this);
-        });
+            let nextModelState = modelClass.reducer(modelState, action, modelClass, this);
+
+            if (typeof nextModelState === 'undefined') {
+                // If nothing was returned from the reducer,
+                // use the return value of getNextState.
+                nextModelState = modelClass.getNextState();
+            }
+
+            if (nextModelState !== prevState[modelClass.modelName]) {
+                if (_nextState === prevState) {
+                    // We know that something has changed, so we cannot
+                    // return the previous state. Switching this reduce function
+                    // to use a shallowcopied version of the previous state.
+                    const prevStateCopied = Object.assign({}, prevState);
+                    prevStateCopied[modelClass.modelName] = nextModelState;
+                    return prevStateCopied;
+                }
+
+                _nextState[modelClass.modelName] = nextModelState;
+            }
+
+            return _nextState;
+        }, prevState);
+
         // The remaining updates are for M2M tables.
-        const finalState = this.updates.reduce((state, action) => {
-            const modelName = action.meta.name;
-            state[modelName] = this[modelName].getNextState();
-            return state;
-        }, nextState);
+        let finalState = nextState;
+
+        if (this.updates.length > 0) {
+            if (finalState === prevState) {
+                // If we're still working with the previous state,
+                // shallow copy it since we have updates for sure now.
+                finalState = Object.assign({}, prevState);
+            }
+
+            finalState = this.updates.reduce((state, update) => {
+                const modelName = update.meta.name;
+                state[modelName] = this[modelName].getNextState();
+                return state;
+            }, finalState);
+        } else {
+            finalState = nextState;
+        }
 
         this.updates = [];
+
         return finalState;
     }
 };

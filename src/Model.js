@@ -144,7 +144,20 @@ const Model = class Model {
 
         const updates = this.session.getUpdatesFor(this);
 
-        return updates.reduce(this.updateReducer.bind(this), this.state);
+        let state;
+        if (this._sessionData.hasOwnProperty('nextState')) {
+            state = this._sessionData.nextState;
+        } else {
+            state = this.state;
+        }
+
+        if (updates.length > 0) {
+            const nextState = updates.reduce(this.updateReducer.bind(this), state);
+            this._sessionData.nextState = nextState;
+            return nextState;
+        }
+
+        return state;
     }
 
     /**
