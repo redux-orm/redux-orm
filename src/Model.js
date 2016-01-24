@@ -42,7 +42,7 @@ const Model = class Model {
         const ModelClass = this.getClass();
 
         this._fieldNames = [];
-        this._fields = props;
+        this._fields = Object.assign({}, props);
 
         forOwn(props, (fieldValue, fieldName) => {
             this._fields[fieldName] = fieldValue;
