@@ -407,7 +407,9 @@ Minor changes before 1.0.0 can include breaking changes.
 
 ### 0.4.0
 
-API cleanup.
+- Fixed a bug that mutated props passed to Model constructors, which could be a reference from the state. I highly recommend updating from 0.3.1.
+- API cleanup, see breaking changes below.
+- Calling getNextState is no longer mandatory in your Model reducers. If your reducer returns `undefined`, `getNextState` will be called for you.
 
 **Breaking changes**:
 
