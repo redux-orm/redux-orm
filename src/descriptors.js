@@ -1,3 +1,4 @@
+import difference from 'lodash/array/difference';
 import UPDATE from './constants';
 import {
     m2mFromFieldName,
@@ -94,9 +95,29 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
             const qs = qsFromModel.getQuerySetFromIds(toIds);
 
             qs.add = function add(...args) {
-                const ids = args.map(normalizeEntity);
+                const idsToAdd = args.map(normalizeEntity);
 
-                ids.forEach(id => {
+                const filterWithAttr = reverse ? fromFieldName : toFieldName;
+
+                const existingQs = throughQs.withRefs.filter(through => {
+                    return idsToAdd.includes(through[filterWithAttr]);
+                });
+
+                if (existingQs.exists()) {
+                    const existingIds = existingQs.idArr.join(', ');
+
+                    const toAddModel = reverse
+                        ? declaredFromModel.modelName
+                        : declaredToModel.modelName;
+
+                    const addFromModel = reverse
+                        ? declaredToModel.modelName
+                        : declaredFromModel.modelName;
+
+                    throw new Error(`Tried to add already existing ${toAddModel} id(s) ${existingIds} to the ${addFromModel} instance with id ${thisId}`);
+                }
+
+                idsToAdd.forEach(id => {
                     throughModel.create({
                         [fromFieldName]: thisId,
                         [toFieldName]: id,
@@ -115,6 +136,21 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
                 const entitiesToDelete = throughQs.withRefs.filter(through => {
                     return idsToRemove.includes(through[attrInIdsToRemove]);
                 });
+
+                if (entitiesToDelete.count() !== idsToRemove.length) {
+                    // Tried deleting non-existing entities.
+                    const unexistingIds = difference(idsToRemove, entitiesToDelete.idArr).join(', ');
+
+                    const toDeleteModel = reverse
+                        ? declaredFromModel.modelName
+                        : declaredToModel.modelName;
+
+                    const deleteFromModel = reverse
+                        ? declaredToModel.modelName
+                        : declaredFromModel.modelName;
+
+                    throw new Error(`Tried to delete non-existing ${toDeleteModel} id(s) ${unexistingIds} from the ${deleteFromModel} instance with id ${thisId}`);
+                }
 
                 entitiesToDelete.delete();
             };

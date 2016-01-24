@@ -121,6 +121,14 @@ describe('Integration', () => {
             expect(nextSession.Book.withId(0).genres.count()).to.equal(3);
         });
 
+        it('trying to add existing related many-to-many entities throws', () => {
+            const { Book } = session;
+            const book = Book.withId(0);
+
+            const existingId = 1;
+            expect(() => book.genres.add(existingId)).to.throw(existingId.toString());
+        });
+
         it('removing related many-to-many entities works', () => {
             const { Book, Genre } = session;
             const book = Book.withId(0);
@@ -131,6 +139,14 @@ describe('Integration', () => {
             const nextSession = schema.from(nextState);
 
             expect(nextSession.Book.withId(0).genres.count()).to.equal(1);
+        });
+
+        it('trying to remove unexisting related many-to-many entities throws', () => {
+            const { Book } = session;
+            const book = Book.withId(0);
+
+            const unexistingId = 2012384;
+            expect(() => book.genres.remove(0, unexistingId)).to.throw(unexistingId.toString());
         });
 
         it('clearing related many-to-many entities works', () => {
