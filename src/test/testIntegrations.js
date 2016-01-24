@@ -60,6 +60,17 @@ describe('Integration', () => {
             expect(nextSession.Book.count()).to.equal(4);
         });
 
+        it('Models are correctly deleted', () => {
+            const { Book } = session;
+            expect(Book.count()).to.equal(3);
+
+            Book.withId(0).delete();
+
+            const nextState = session.reduce();
+            const nextSession = schema.from(nextState);
+            expect(nextSession.Book.count()).to.equal(2);
+        });
+
         it('Models correctly update when setting properties', () => {
             const {Book} = session;
             const book = Book.first();
