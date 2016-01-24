@@ -1,5 +1,4 @@
 import find from 'lodash/collection/find';
-import sortByOrder from 'lodash/collection/sortByOrder';
 import omit from 'lodash/object/omit';
 import {ListIterator, objectDiff} from './utils';
 
