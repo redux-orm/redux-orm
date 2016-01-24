@@ -60,6 +60,19 @@ describe('Integration', () => {
             expect(nextSession.Book.count()).to.equal(4);
         });
 
+        it('Model.create throws if passing duplicate ids to many-to-many field', () => {
+            const { Book } = session;
+
+            const newProps = {
+                name: 'New Book',
+                author: 0,
+                releaseYear: 2015,
+                genres: [0, 0],
+            };
+
+            expect(() => Book.create(newProps)).to.throw('Book.genres');
+        });
+
         it('Models are correctly deleted', () => {
             const { Book } = session;
             expect(Book.count()).to.equal(3);

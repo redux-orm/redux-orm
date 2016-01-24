@@ -1,5 +1,7 @@
 import forOwn from 'lodash/object/forOwn';
 import isArray from 'lodash/lang/isArray';
+import uniq from 'lodash/array/uniq';
+import difference from 'lodash/array/difference';
 
 import Session from './Session';
 import Backend from './Backend';
@@ -377,6 +379,13 @@ const Model = class Model {
 
         forOwn(m2mVals, (value, key) => {
             const ids = value.map(normalizeEntity);
+            const uniqueIds = uniq(ids);
+
+            if (ids.length !== uniqueIds.length) {
+                const idsString = ids;
+                throw new Error(`Found duplicate id(s) when passing "${idsString}" to ${this.modelName}.${key} value on create`);
+            }
+
             instance[key].add(...ids);
         });
 
