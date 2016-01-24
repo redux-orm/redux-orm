@@ -33,10 +33,15 @@ export function memoize(func, equalityCheck = eqCheck, modelSchema) {
 
     return (...args) => {
         const [ormState, ...otherArgs] = args;
-        if (lastOrmState === ormState ||
-                !shouldRun(modelNameToInvalidatorMap, ormState) &&
-                lastArgs &&
-                otherArgs.every((value, index) => equalityCheck(value, lastArgs[index]))) {
+
+        const ormIsEqual = lastOrmState === ormState ||
+                           !shouldRun(modelNameToInvalidatorMap, ormState);
+
+        const argsAreEqual = lastArgs && otherArgs.every((value, index) => {
+            return equalityCheck(value, lastArgs[index]);
+        });
+
+        if (ormIsEqual && argsAreEqual) {
             return lastResult;
         }
 

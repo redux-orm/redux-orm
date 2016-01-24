@@ -1,10 +1,16 @@
-import { expect } from 'chai';
+import chai from 'chai';
+import sinonChai from 'sinon-chai';
+import sinon from 'sinon';
+
 import Schema from '../Schema';
 import Session from '../Session';
 import Model from '../Model';
 import { oneToOne, fk, many } from '../fields';
 
 import { createTestModels } from './utils';
+
+chai.use(sinonChai);
+const { expect } = chai;
 
 describe('Schema', () => {
     it('constructor works', () => {
@@ -194,6 +200,43 @@ describe('Schema', () => {
             expect(selectorTimesRun).to.equal(1);
             selector(schema.getDefaultState());
             expect(selectorTimesRun).to.equal(1);
+        });
+
+        it('correctly creates a selector with input selectors', () => {
+            schema.register(Book, Author, Cover, Genre);
+
+            const _selectorFunc = sinon.spy();
+
+            const selector = schema.createSelector(
+                state => state.orm,
+                state => state.selectedUser,
+                _selectorFunc
+            );
+
+            const _state = schema.getDefaultState();
+
+            const appState = {
+                orm: _state,
+                selectedUser: 5,
+            };
+
+            expect(selector).to.be.a('function');
+
+            selector(appState);
+            expect(_selectorFunc.callCount).to.equal(1);
+
+            expect(_selectorFunc.lastCall.args[0]).to.be.an.instanceOf(Session);
+            expect(_selectorFunc.lastCall.args[0].state).to.equal(_state);
+
+            expect(_selectorFunc.lastCall.args[1]).to.equal(5);
+
+            selector(appState);
+            expect(_selectorFunc.callCount).to.equal(1);
+
+            const otherUserState = { ...appState, selectedUser: 0 };
+
+            selector(otherUserState);
+            expect(_selectorFunc.callCount).to.equal(2);
         });
 
         it('correctly starts a mutating session', () => {
