@@ -8,15 +8,15 @@ const Session = class Session {
     /**
      * Creates a new Session.
      *
-     * @param  {Schema} schema - a Schema instance
+     * @param  {Schema} schema - a {@link Schema} instance
      * @param  {Object} state - the database state
      * @param  {Object} [action] - the current action in the dispatch cycle.
      *                             Will be passed to the user defined reducers.
      * @param  {Boolean} withMutations - whether the session should mutate data
      */
-    constructor(models, state, action, withMutations) {
-        this.models = models;
-        this.state = state;
+    constructor(schema, state, action, withMutations) {
+        this.schema = schema;
+        this.state = state || schema.getDefaultState();
         this.action = action;
         this.withMutations = !!withMutations;
 
@@ -25,7 +25,9 @@ const Session = class Session {
         this._accessedModels = {};
         this.modelData = {};
 
-        models.forEach(modelClass => {
+        this.models = schema.getModelClasses();
+
+        this.models.forEach(modelClass => {
             Object.defineProperty(this, modelClass.modelName, {
                 get: () => modelClass,
             });
@@ -63,11 +65,10 @@ const Session = class Session {
         if (this.withMutations) {
             const modelName = update.meta.name;
             const modelState = this.getState(modelName);
-            const state = modelState || this[modelName].getDefaultState();
 
             // The backend used in the updateReducer
             // will mutate the model state.
-            this[modelName].updateReducer(state, update);
+            this[modelName].updateReducer(modelState, update);
         } else {
             this.updates.push(update);
         }
@@ -75,7 +76,7 @@ const Session = class Session {
 
     /**
      * Gets the recorded updates for `modelClass` and
-     * deletes them from the Session instance updates list.
+     * deletes them from the {@link Session} instance updates list.
      *
      * @param  {Model} modelClass - the model class to get updates for
      * @return {Object[]} A list of the user-recorded updates for `modelClass`.
@@ -90,33 +91,50 @@ const Session = class Session {
         return updates;
     }
 
+    /**
+     * Returns the current state for a model with name `modelName`.
+     * @param  {string} modelName - the name of the model to get state for.
+     * @return {*} The state for model with name `modelName`.
+     */
     getState(modelName) {
-        if (this.state) {
-            return this.state[modelName];
-        }
-        return undefined;
+        return this.state[modelName];
     }
 
     /**
-     * Calls the user defined reducers and returns
-     * the next state.
-     * If the session uses mutations, just returns the state.
-     *
+     * Applies recorded updates and returns the next state.
+     * @param  {Object} [opts] - Options object
+     * @param  {Boolean} [opts.runReducers] - A boolean indicating if the user-defined
+     *                                        model reducers should be run. If not specified,
+     *                                        is set to `true` if an action object was specified
+     *                                        on session instantiation, otherwise `false`.
      * @return {Object} The next state
      */
-    reduce() {
+    getNextState(opts) {
         if (this.withMutations) return this.state;
 
-        const prevState = this.state || {};
+        const prevState = this.state;
         const action = this.action;
+
+        // If the session does not have a specified action object,
+        // don't run the user-defined model reducers unless
+        // explicitly specified.
+        const runReducers = opts.hasOwnProperty('runReducers')
+            ? opts.runReducers
+            : !!action;
 
         const nextState = this.models.reduce((_nextState, modelClass) => {
             const modelState = this.getState(modelClass.modelName);
-            let nextModelState = modelClass.reducer(modelState, action, modelClass, this);
+
+            let nextModelState;
+
+            if (runReducers) {
+                nextModelState = modelClass.reducer(modelState, action, modelClass, this);
+            }
 
             if (typeof nextModelState === 'undefined') {
-                // If nothing was returned from the reducer,
-                // use the return value of getNextState.
+                // If the reducer wasn't run or it didn't
+                // return the next state,
+                // we get the next state manually.
                 nextModelState = modelClass.getNextState();
             }
 
@@ -158,6 +176,18 @@ const Session = class Session {
         this.updates = [];
 
         return finalState;
+    }
+
+    /**
+     * Calls the user-defined reducers and returns the next state.
+     * If the session uses mutations, just returns the state.
+     * Delegates to {@link Session#getNextState}
+     *
+     * @param  {[type]} opts [description]
+     * @return {[type]}      [description]
+     */
+    reduce() {
+        return this.getNextState({ runReducers: true });
     }
 };
 

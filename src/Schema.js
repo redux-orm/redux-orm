@@ -45,16 +45,16 @@ const Schema = class Schema {
     }
 
     /**
-     * Defines a Model class with the provided options and registers
+     * Defines a {@link Model} class with the provided options and registers
      * it to the schema instance.
      *
-     * Note that you can also define Model classes by yourself
+     * Note that you can also define {@link Model} classes by yourself
      * with ES6 classes.
      *
-     * @param  {string} modelName - the name of the model class
+     * @param  {string} modelName - the name of the {@link Model} class
      * @param  {Object} [relatedFields] - a dictionary of `fieldName: fieldInstance`
      * @param  {Function} [reducer] - the reducer function to use for this model
-     * @param  {Object} [backendOpts] -Backend options for this model.
+     * @param  {Object} [backendOpts] - {@link Backend} options for this model.
      * @return {Model} The defined model class.
      */
     define(modelName, relatedFields, reducer, backendOpts) {
@@ -73,13 +73,13 @@ const Schema = class Schema {
     }
 
     /**
-     * Registers a model class to the schema.
+     * Registers a {@link Model} class to the schema.
      *
      * If the model has declared any ManyToMany fields, their
      * through models will be generated and registered with
      * this call.
      *
-     * @param  {...Model} model - a model to register
+     * @param  {...Model} model - a {@link Model} class to register
      * @return {undefined}
      */
     register() {
@@ -124,10 +124,10 @@ const Schema = class Schema {
     }
 
     /**
-     * Gets a model by its name from the registry.
-     * @param  {string} modelName - the name of the model to get
-     * @throws If model is not found.
-     * @return {Model} the model class, if found
+     * Gets a {@link Model} class by its name from the registry.
+     * @param  {string} modelName - the name of the {@link Model} class to get
+     * @throws If {@link Model} class is not found.
+     * @return {Model} the {@link Model} class, if found
      */
     get(modelName) {
         const found = find(this.registry.concat(this.implicitThroughModels), (model) => model.modelName === modelName);
@@ -137,7 +137,7 @@ const Schema = class Schema {
         return found;
     }
 
-    _getModelClasses() {
+    getModelClasses() {
         this._setupModelPrototypes();
         return this.registry.concat(this.implicitThroughModels);
     }
@@ -282,11 +282,11 @@ const Schema = class Schema {
     }
 
     /**
-     * Returns the default state
+     * Returns the default state.
      * @return {Object} the default state
      */
     getDefaultState() {
-        const models = this._getModelClasses();
+        const models = this.getModelClasses();
         const state = {};
         models.forEach(modelClass => {
             state[modelClass.modelName] = modelClass.getDefaultState();
@@ -295,18 +295,25 @@ const Schema = class Schema {
     }
 
     /**
-     * Begins a database {@link Session}.
+     * Begins an immutable database session.
      *
      * @param  {Object} state  - the state the database manages
      * @param  {Object} [action] - the dispatched action object
-     * @return {Session} a new session instance
+     * @return {Session} a new {@link Session} instance
      */
     from(state, action) {
-        return new Session(this._getModelClasses(), state, action);
+        return new Session(this, state, action);
     }
 
-    withMutations(state) {
-        return new Session(this._getModelClasses(), state, undefined, true);
+    /**
+     * Begins a mutable database session.
+     *
+     * @param  {Object} state  - the state the database manages
+     * @param  {Object} [action] - the dispatched action object
+     * @return {Session} a new {@link Session} instance
+     */
+    withMutations(state, action) {
+        return new Session(this, state, action, true);
     }
 
     /**
@@ -351,7 +358,7 @@ const Schema = class Schema {
      * ```javascript
      * const bookSelector = schema.createSelector(session => {
      *     return session.Book.map(book => {
-     *         return Object.assign(book.toPlain(), {
+     *         return Object.assign({}, book.ref, {
      *             authors: book.authors.map(author => author.name),
      *             genres: book.genres.map(genre => genre.name),
      *         });

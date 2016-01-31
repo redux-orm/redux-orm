@@ -31,7 +31,7 @@ describe('Schema', () => {
             };
             const schema = new Schema();
             schema.register(A, B);
-            expect(() => schema._getModelClasses()).to.throw(/field/);
+            expect(() => schema.getModelClasses()).to.throw(/field/);
         });
 
         it('with multiple foreign keys to the same model without related name', () => {
@@ -46,7 +46,7 @@ describe('Schema', () => {
             };
             const schema = new Schema();
             schema.register(A, B);
-            expect(() => schema._getModelClasses()).to.throw(/field/);
+            expect(() => schema.getModelClasses()).to.throw(/field/);
         });
 
         it('with multiple many-to-manys to the same model without related name', () => {
@@ -61,7 +61,7 @@ describe('Schema', () => {
             };
             const schema = new Schema();
             schema.register(A, B);
-            expect(() => schema._getModelClasses()).to.throw(/field/);
+            expect(() => schema.getModelClasses()).to.throw(/field/);
         });
     });
 
