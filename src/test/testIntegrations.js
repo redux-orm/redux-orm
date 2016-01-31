@@ -45,6 +45,13 @@ describe('Integration', () => {
             expect(Object.keys(state.Author.itemsById)).to.have.length(3);
         });
 
+        it('Models correctly indicate if id exists', () => {
+            const { Book } = session;
+            expect(Book.hasId(0)).to.be.true;
+            expect(Book.hasId(92384)).to.be.false;
+            expect(Book.hasId()).to.be.false;
+        });
+
         it('Models correctly create new instances', () => {
             const {Book} = session;
             expect(session.updates).to.have.length(0);

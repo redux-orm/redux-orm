@@ -140,10 +140,6 @@ const Model = class Model {
      * @return {Object} The next state.
      */
     static getNextState() {
-        if (typeof this.state === 'undefined') {
-            return this.getDefaultState();
-        }
-
         let state;
         if (this._sessionData.hasOwnProperty('nextState')) {
             state = this._sessionData.nextState;
@@ -506,21 +502,12 @@ const Model = class Model {
 
     /**
      * Returns a boolean indicating if `otherModel` equals this {@link Model} instance.
-     * Equality is determined in the following manner:
+     * Equality is determined by shallow comparing their attributes.
      *
-     * 1. If both exist in the state, return `true` if the state references point
-     *    to the same object, `false` otherwise.
-     * 2. If either of the models don't exist in the state yet, get the attributes of both models
-     *    and shallow compare them.
      * @param  {Model} otherModel - a {@link Model} instance to compare
-     * @return {Boolean} a boolean indicating the {@link Model} instance's are equal.
+     * @return {Boolean} a boolean indicating if the {@link Model} instance's are equal.
      */
     equals(otherModel) {
-        const thisHasRef = typeof this.ref !== 'undefined';
-        const otherHasRef = typeof otherModel.ref !== 'undefined';
-
-        if (thisHasRef && otherHasRef) return this.ref === otherModel.ref;
-
         return objectShallowEquals(this._fields, otherModel._fields);
     }
 

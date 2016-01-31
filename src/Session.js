@@ -109,11 +109,12 @@ const Session = class Session {
      *                                        on session instantiation, otherwise `false`.
      * @return {Object} The next state
      */
-    getNextState(opts) {
+    getNextState(userOpts) {
         if (this.withMutations) return this.state;
 
         const prevState = this.state;
         const action = this.action;
+        const opts = userOpts || {};
 
         // If the session does not have a specified action object,
         // don't run the user-defined model reducers unless
