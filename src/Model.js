@@ -15,6 +15,7 @@ import {
     match,
     normalizeEntity,
     arrayDiffActions,
+    objectShallowEquals,
 } from './utils';
 
 /**
@@ -484,8 +485,24 @@ const Model = class Model {
         return `${className}: {${fields}}`;
     }
 
+    /**
+     * Returns a boolean indicating if `otherModel` equals this {@link Model} instance.
+     * Equality is determined in the following manner:
+     *
+     * 1. If both exist in the state, return `true` if the state references point
+     *    to the same object, `false` otherwise.
+     * 2. If either of the models don't exist in the state yet, get the attributes of both models
+     *    and shallow compare them.
+     * @param  {Model} otherModel - a {@link Model} instance to compare
+     * @return {Boolean} a boolean indicating the {@link Model} instance's are equal.
+     */
     equals(otherModel) {
-        return this.getClass() === otherModel.getClass() && this.getId() === otherModel.getId();
+        const thisHasRef = typeof this.ref !== 'undefined';
+        const otherHasRef = typeof otherModel.ref !== 'undefined';
+
+        if (thisHasRef && otherHasRef) return this.ref === otherModel.ref;
+
+        return objectShallowEquals(this._fields, otherModel._fields);
     }
 
     /**

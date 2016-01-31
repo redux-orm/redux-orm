@@ -246,6 +246,24 @@ function reverseFieldErrorMessage(modelName, fieldName, toModelName, backwardsFi
            ` name on ${modelName}.${fieldName}.`].join('');
 }
 
+function objectShallowEquals(a, b) {
+    let keysInA = 0;
+    let keysInB = 0;
+
+    forOwn(a, (value, key) => {
+        if (!b.hasOwnProperty(key) || b[key] !== value) {
+            return false;
+        }
+        keysInA++;
+    });
+
+    for (const key in b) {
+        if (b.hasOwnProperty(key)) keysInB++;
+    }
+
+    return keysInA === keysInB;
+}
+
 export {
     match,
     attachQuerySetMethods,
@@ -258,4 +276,5 @@ export {
     objectDiff,
     arrayDiffActions,
     reverseFieldErrorMessage,
+    objectShallowEquals,
 };
