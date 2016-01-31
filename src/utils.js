@@ -68,6 +68,8 @@ class ListIterator {
 /**
  * Checks if the properties in `lookupObj` match
  * the corresponding properties in `entity`.
+ *
+ * @private
  * @param  {Object} lookupObj - properties to match against
  * @param  {Object} entity - object to match
  * @return {Boolean} Returns `true` if the property names in
@@ -93,6 +95,7 @@ function capitalize(string) {
  * Example: model `Author` has a many-to-many relation to the model `Book`, defined
  * in the `Author` field `books`. The many-to-many branch name will be `AuthorBooks`.
  *
+ * @private
  * @param  {string} declarationModelName - the name of the model the many-to-many relation was declared on
  * @param  {string} fieldName            - the field name where the many-to-many relation was declared on
  * @return {string} The branch name for the many-to-many relation.
@@ -107,6 +110,7 @@ function m2mName(declarationModelName, fieldName) {
  *
  * Example: `Author` => `fromAuthorId`
  *
+ * @private
  * @param  {string} declarationModelName - the name of the model where the relation was declared
  * @return {string} the field name in the through model for `declarationModelName`'s foreign key.
  */
@@ -120,6 +124,7 @@ function m2mFromFieldName(declarationModelName) {
  *
  * Example: `Book` => `toBookId`
  *
+ * @private
  * @param  {string} otherModelName - the name of the model that was the target of the many-to-many
  *                                   declaration.
  * @return {string} the field name in the through model for `otherModelName`'s foreign key..
@@ -185,6 +190,7 @@ function attachQuerySetMethods(modelClass, querySetClass) {
  * Normalizes `entity` to an id, where `entity` can be an id
  * or a Model instance.
  *
+ * @private
  * @param  {*} entity - either a Model instance or an id value
  * @return {*} the id value of `entity`
  */
@@ -208,6 +214,7 @@ function normalizeEntity(entity) {
  * can be used to update `target` immutably
  * while sharing more structure.
  *
+ * @private
  * @param  {Object} target - the object to update
  * @param  {Object} source - the updated props
  * @return {Object|null} an object with the inequal props from `source`

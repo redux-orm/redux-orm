@@ -111,6 +111,8 @@ const Model = class Model {
 
     /**
      * Gets the {@link Backend} instance linked to this {@link Model}.
+     *
+     * @private
      * @return {Backend} The {@link Backend} instance linked to this {@link Model}.
      */
     static getBackend() {
@@ -135,6 +137,8 @@ const Model = class Model {
     /**
      * Gets the Model's next state by applying the recorded
      * updates.
+     *
+     * @private
      * @return {Object} The next state.
      */
     static getNextState() {
@@ -161,6 +165,7 @@ const Model = class Model {
      * action object and applies the update specified by the `action` object
      * by delegating to this model's Backend instance.
      *
+     * @private
      * @param  {Object} state - the Model's state
      * @param  {Object} action - the internal redux-orm update action to apply
      * @return {Object} the state after applying the action
@@ -197,6 +202,8 @@ const Model = class Model {
     /**
      * Gets the default, empty state of the branch.
      * Delegates to a {@link Backend} instance.
+     *
+     * @private
      * @return {Object} The default state.
      */
     static getDefaultState() {
@@ -251,6 +258,7 @@ const Model = class Model {
     /**
      * Connect the model class to a {@link Session}.
      *
+     * @private
      * @param  {Session} session - The session to connect to.
      */
     static connect(session) {
@@ -263,6 +271,7 @@ const Model = class Model {
     /**
      * Get the current {@link Session} instance.
      *
+     * @private
      * @return {Session} The current {@link Session} instance.
      */
     static get session() {
@@ -272,6 +281,8 @@ const Model = class Model {
     /**
      * A convenience method that delegates to the current {@link Session} instane.
      * Adds the required backenddata about this {@link Model} to the update object.
+     *
+     * @private
      * @param {Object} update - the update to add.
      */
     static addUpdate(update) {
@@ -468,7 +479,7 @@ const Model = class Model {
     }
 
     /**
-     * Gets the id value of the current instance.
+     * Gets the id value of the current instance by looking up the id attribute.
      * @return {*} The id value of the current instance.
      */
     getId() {
@@ -487,6 +498,7 @@ const Model = class Model {
 
     /**
      * Returns a string representation of the {@link Model} instance.
+     *
      * @return {string} A string representation of this {@link Model} instance.
      */
     toString() {
@@ -512,6 +524,7 @@ const Model = class Model {
     /**
      * Records a update to the {@link Model} instance for a single
      * field value assignment.
+     *
      * @param {string} propertyName - name of the property to set
      * @param {*} value - value assigned to the property
      * @return {undefined}
@@ -523,6 +536,7 @@ const Model = class Model {
     /**
      * Records an update to the {@link Model} instance for multiple field value assignments.
      * If the session is with mutations, updates the instance to reflect the new values.
+     *
      * @param  {Object} userMergeObj - an object that will be merged with this instance.
      * @return {undefined}
      */

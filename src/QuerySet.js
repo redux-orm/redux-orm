@@ -17,6 +17,7 @@ import {
 const QuerySet = class QuerySet {
     /**
      * Creates a QuerySet.
+     *
      * @param  {Model} modelClass - the model class of objects in this QuerySet.
      * @param  {number[]} idArr - an array of the id's this QuerySet includes.
      * @param {Object} [opts] - additional options
@@ -103,7 +104,7 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns an array of the Model instances represented by the QuerySet.
+     * Returns an array of Model instances represented by the QuerySet.
      * @return {Model[]} model instances represented by the QuerySet
      */
     toModelArray() {
@@ -114,6 +115,7 @@ const QuerySet = class QuerySet {
 
     /**
      * Returns the number of model instances represented by the QuerySet.
+     *
      * @return {number} length of the QuerySet
      */
     count() {
@@ -122,6 +124,7 @@ const QuerySet = class QuerySet {
 
     /**
      * Checks if the {@link QuerySet} instance has any entities.
+     *
      * @return {Boolean} `true` if the {@link QuerySet} instance contains entities, else `false`.
      */
     exists() {
@@ -132,6 +135,7 @@ const QuerySet = class QuerySet {
      * Returns the {@link Model} instance at index `index` in the {@link QuerySet} instance if
      * `withRefs` flag is set to `false`, or a reference to the plain JavaScript
      * object in the model state if `true`.
+     *
      * @param  {number} index - index of the model instance to get
      * @return {Model|Object} a {@link Model} instance or a plain JavaScript
      *                        object at index `index` in the {@link QuerySet} instance

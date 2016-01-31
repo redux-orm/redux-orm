@@ -56,6 +56,8 @@ const Session = class Session {
 
     /**
      * Records an update to the session.
+     *
+     * @private
      * @param {Object} update - the update object. Must have keys
      *                          `type`, `payload` and `meta`. `meta`
      *                          must also include a `name` attribute
@@ -78,6 +80,7 @@ const Session = class Session {
      * Gets the recorded updates for `modelClass` and
      * deletes them from the {@link Session} instance updates list.
      *
+     * @private
      * @param  {Model} modelClass - the model class to get updates for
      * @return {Object[]} A list of the user-recorded updates for `modelClass`.
      */
@@ -93,6 +96,8 @@ const Session = class Session {
 
     /**
      * Returns the current state for a model with name `modelName`.
+     *
+     * @private
      * @param  {string} modelName - the name of the model to get state for.
      * @return {*} The state for model with name `modelName`.
      */
