@@ -391,18 +391,37 @@ const Model = class Model {
     }
 
     /**
-     * Returns a Model instance for the object with id `id`.
+     * Returns a {@link Model} instance for the object with id `id`.
+     *
      * @param  {*} id - the `id` of the object to get
      * @throws If object with id `id` doesn't exist
-     * @return {Model} `Model` instance with id `id`
+     * @return {Model} {@link Model} instance with id `id`
      */
     static withId(id) {
         const ModelClass = this;
-        const ref = this.accessId(id);
-        if (typeof ref === 'undefined') {
+
+        if (!this.hasId(id)) {
             throw new Error(`${this.modelName} instance with id ${id} not found`);
         }
+
+        const ref = this.accessId(id);
+
         return new ModelClass(ref);
+    }
+
+    /**
+     * Returns a boolean indicating if an entity with the id `id` exists
+     * in the state.
+     *
+     * @param  {*}  id - a value corresponding to the id attribute of the {@link Model} class.
+     * @return {Boolean} a boolean indicating if entity with `id` exists in the state
+     */
+    static hasId(id) {
+        const ref = this.accessId(id);
+
+        if (typeof ref === 'undefined') return false;
+
+        return true;
     }
 
     /**
