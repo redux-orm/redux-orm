@@ -149,7 +149,7 @@ Selectors created with `schema.createSelector` can be used as input to any addit
 
 Because selectors are memoized, you can use pure rendering in React for performance gains.
 
-```javascript
+```jsx
 // components.js
 import PureComponent from 'react-pure-render/component';
 import {authorSelector} from './selectors';
@@ -263,6 +263,7 @@ See the full documentation for `Model` [here](http://tommikaikkonen.github.io/re
 
 **Class Methods**:
 
+- `hasId(id)`: returns a boolean indicating if entity with id `id` exists in the state.
 - `withId(id)`: gets the Model instance with id `id`.
 - `get(matchObj)`: to get a Model instance based on matching properties in `matchObj`,
 - `create(props)`: to create a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`. You can override the `nextId` class method on your model.
@@ -274,9 +275,10 @@ You will also have access to almost all [QuerySet instance methods](http://tommi
 
 **Instance methods**:
 
-- `set`: marks a supplied `propertyName` to be updated to `value` at `Model.getNextState`. Returns `undefined`. Is equivalent to normal assignment.
-- `update`: marks a supplied object of property names and values to be merged with the Model instance at `Model.getNextState()`. Returns `undefined`.
-- `delete`: marks the Model instance to be deleted at `Model.getNextState()`. Returns `undefined`.
+- `equals(otherModel)`: returns a boolean indicating equality with `otherModel`. Equality is determined by shallow comparison of both model's attributes.
+- `set(propertyName, value)`: marks a supplied `propertyName` to be updated to `value` at `Model.getNextState`. Returns `undefined`. Is equivalent to normal assignment.
+- `update(mergeObj)`: marks a supplied object of property names and values (`mergeObj`) to be merged with the Model instance at `Model.getNextState()`. Returns `undefined`.
+- `delete()`: marks the Model instance to be deleted at `Model.getNextState()`. Returns `undefined`.
 
 **Subclassing**:
 
@@ -373,7 +375,11 @@ See the full documentation for Session [here](http://tommikaikkonen.github.io/re
 **Instantiation**: you don't need to do this yourself. Use `schema.from`.
 
 **Instance properties**:
-You can access all the registered Models in the schema for querying and updates as properties of this instance. For example, given a schema with `Book` and `Author` models,
+
+- `getNextState(opts)`: applies all the recorded updates in the session and returns the next state. You may pass options with the `opts` object.
+- `reduce()`: calls model-specific reducers and returns the next state.
+
+Additionally, you can access all the registered Models in the schema for querying and updates as properties of this instance. For example, given a schema with `Book` and `Author` models,
 
 ```javascript
 const session = schema.from(state, action);
@@ -404,6 +410,19 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
 ## Changelog
 
 Minor changes before 1.0.0 can include breaking changes.
+
+### 0.5.0
+
+**Breaking changes**:
+
+- Model instance method `equals(otherModel)` now checks if the two model's attributes are shallow equal. Previously, it checked if the id's and model classes are equal.
+- Session constructor now receives a Schema instance as its first argument, instead of an array of Model classes (this only affects you if you're manually instantiating Sessions with the `new` operator).
+
+Other changes:
+
+- Added `hasId` static method to the Model class. It tests for the existence of the supplied id in the model's state.
+- Added instance method `getNextState` to the Session class. This enables you to get the next state without running model-reducers. Useful if you're bootstrapping data, writing tests, or otherwise operating on the data outside reducers. You can pass an options object that currently accepts a `runReducers` key. It's value indicates if reducers should be run or not.
+- Improved API documentation.
 
 ### 0.4.0
 
