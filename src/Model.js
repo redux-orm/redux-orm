@@ -75,22 +75,20 @@ const Model = class Model {
 
     /**
      * Returns the options object passed to the {@link Backend} class constructor.
+     * By default, returns an empty object (which means the {@link Backend} instance
+     * will use default options). You can either override this function to return the options
+     * you want to use, or assign the options object as a static property to the
+     * Model class.
      *
      * @return {Object} the options object used to instantiate a {@link Backend} class.
      */
     static backend() {
-        return {
-            branchName: this.modelName,
-        };
+        return {};
     }
 
     static _getBackendOpts() {
         if (typeof this.backend === 'function') {
             return this.backend();
-        }
-        if (typeof this.backend === 'undefined') {
-            throw new Error(`You must declare either a 'backend' class method or
-                            a 'backend' class variable in your Model Class`);
         }
         return this.backend;
     }
