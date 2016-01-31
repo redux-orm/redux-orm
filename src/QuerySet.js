@@ -121,20 +121,20 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Checks if QuerySet has any objects.
-     * @return {Boolean} `true` if QuerySet contains entities, else `false`.
+     * Checks if the {@link QuerySet} instance has any entities.
+     * @return {Boolean} `true` if the {@link QuerySet} instance contains entities, else `false`.
      */
     exists() {
         return Boolean(this.count());
     }
 
     /**
-     * Returns the {@link Model} instance at index `index` in the QuerySet if
+     * Returns the {@link Model} instance at index `index` in the {@link QuerySet} instance if
      * `withRefs` flag is set to `false`, or a reference to the plain JavaScript
      * object in the model state if `true`.
      * @param  {number} index - index of the model instance to get
      * @return {Model|Object} a {@link Model} instance or a plain JavaScript
-     *                        object at index `index` in the QuerySet
+     *                        object at index `index` in the {@link QuerySet} instance
      */
     at(index) {
         if (this._withRefs) {
@@ -144,7 +144,7 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns the {@link Model} instance at index 0 in the QuerySet.
+     * Returns the {@link Model} instance at index 0 in the {@link QuerySet} instance.
      * @return {Model}
      */
     first() {
@@ -160,28 +160,28 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns a new QuerySet with the same objects.
-     * @return {QuerySet} a new QuerySet with the same objects.
+     * Returns a new {@link QuerySet} instance with the same entities.
+     * @return {QuerySet} a new QuerySet with the same entities.
      */
     all() {
         return this._new(this.idArr);
     }
 
     /**
-     * Returns a new {@link QuerySet} with objects that match properties in `lookupObj`.
+     * Returns a new {@link QuerySet} instance with entities that match properties in `lookupObj`.
      *
      * @param  {Object} lookupObj - the properties to match objects with.
-     * @return {QuerySet} a new {@link QuerySet} with objects that passed the filter.
+     * @return {QuerySet} a new {@link QuerySet} instance with objects that passed the filter.
      */
     filter(lookupObj) {
         return this._filterOrExclude(lookupObj, false);
     }
 
     /**
-     * Returns a new {@link QuerySet} with objects that do not match properties in `lookupObj`.
+     * Returns a new {@link QuerySet} instance with entities that do not match properties in `lookupObj`.
      *
      * @param  {Object} lookupObj - the properties to unmatch objects with.
-     * @return {QuerySet} a new {@link QuerySet} with objects that passed the filter.
+     * @return {QuerySet} a new {@link QuerySet} instance with objects that passed the filter.
      */
     exclude(lookupObj) {
         return this._filterOrExclude(lookupObj, true);
@@ -217,9 +217,9 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Calls `func` for each object in the QuerySet.
+     * Calls `func` for each object in the {@link QuerySet} instance.
      * The object is either a reference to the plain
-     * object in the database or a Model instance, depending
+     * object in the database or a {@link Model} instance, depending
      * on the flag.
      *
      * @param  {Function} func - the function to call with each object
@@ -234,7 +234,7 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Maps the {@link Model} instances in the {@link QuerySet}.
+     * Maps the {@link Model} instances in the {@link QuerySet} instance.
      * @param  {Function} func - the mapping function that takes one argument, a
      *                           {@link Model} instance or a reference to the plain
      *                           JavaScript object in the store, depending on the
@@ -248,10 +248,19 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns a new {@link QuerySet} with objects ordered by `fieldNames` in ascending
-     * order.
-     * @param  {string[]} fieldNames - the property names to order by.
-     * @return {QuerySet} a new {@link QuerySet} with objects ordered by `fieldNames`.
+     * Returns a new {@link QuerySet} instance with entities ordered by `iteratees` in ascending
+     * order, unless otherwise specified. Delegates to `lodash.sortByOrder`.
+     *
+     * @param  {string[]|Function[]} iteratees - an array where each item can be a string or a
+     *                                           function. If a string is supplied, it should
+     *                                           correspond to property on the entity that will
+     *                                           determine the order. If a function is supplied,
+     *                                           it should return the value to order by.
+     * @param {Boolean[]} [orders] - the sort orders of `iteratees`. If unspecified, all iteratees
+     *                               will be sorted in ascending order. `true` and `'asc'`
+     *                               correspond to ascending order, and `false` and `'desc`
+     *                               to descending order.
+     * @return {QuerySet} a new {@link QuerySet} with objects ordered by `iteratees`.
      */
     orderBy(iteratees, orders) {
         const entities = this.toRefArray();
@@ -281,7 +290,9 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Records an update specified with `mergeObj` to all the objects in the {@link QuerySet}.
+     * Records an update specified with `mergeObj` to all the objects
+     * in the {@link QuerySet} instance.
+     *
      * @param  {Object} mergeObj - an object to merge with all the objects in this
      *                             queryset.
      * @return {undefined}
@@ -297,7 +308,7 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Records a deletion of all the objects in this {@link QuerySet}.
+     * Records a deletion of all the objects in this {@link QuerySet} instance.
      * @return {undefined}
      */
     delete() {
