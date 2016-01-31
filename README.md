@@ -1,11 +1,11 @@
 redux-orm
 ===============
 
-A small, simple and immutable ORM to manage data in your Redux store.
+A small, simple and immutable ORM to manage relational data in your Redux store.
 
-Not ready for production.
+See a [a guide to creating a simple app with Redux-ORM](https://github.com/tommikaikkonen/redux-orm-primer) (includes the source).
 
-See an [example app using redux-orm](https://github.com/tommikaikkonen/redux-orm-example).
+API can be unstable until 1.0.0. Minor version bumps before 1.0.0 can and will introduce breaking changes. They will be noted in the [changelog](https://github.com/tommikaikkonen/redux-orm#changelog).
 
 [![npm version](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
 [![npm downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
