@@ -183,8 +183,7 @@ const Session = class Session {
      * If the session uses mutations, just returns the state.
      * Delegates to {@link Session#getNextState}
      *
-     * @param  {[type]} opts [description]
-     * @return {[type]}      [description]
+     * @return {Object} the next state
      */
     reduce() {
         return this.getNextState({ runReducers: true });
