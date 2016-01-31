@@ -38,11 +38,12 @@ import {
     ForeignKey,
     OneToOne,
 } from './fields';
-import {CREATE, UPDATE, DELETE, ORDER} from './constants';
+import { CREATE, UPDATE, DELETE } from './constants';
 import {
     match,
     normalizeEntity,
     arrayDiffActions,
+    objectShallowEquals,
 } from './utils';
 
 /**
@@ -102,22 +103,20 @@ const Model = class Model {
 
     /**
      * Returns the options object passed to the {@link Backend} class constructor.
+     * By default, returns an empty object (which means the {@link Backend} instance
+     * will use default options). You can either override this function to return the options
+     * you want to use, or assign the options object as a static property to the
+     * Model class.
      *
      * @return {Object} the options object used to instantiate a {@link Backend} class.
      */
     static backend() {
-        return {
-            branchName: this.modelName,
-        };
+        return {};
     }
 
     static _getBackendOpts() {
         if (typeof this.backend === 'function') {
             return this.backend();
-        }
-        if (typeof this.backend === 'undefined') {
-            throw new Error(`You must declare either a 'backend' class method or
-                            a 'backend' class variable in your Model Class`);
         }
         return this.backend;
     }
@@ -140,6 +139,8 @@ const Model = class Model {
 
     /**
      * Gets the {@link Backend} instance linked to this {@link Model}.
+     *
+     * @private
      * @return {Backend} The {@link Backend} instance linked to this {@link Model}.
      */
     static getBackend() {
@@ -164,21 +165,19 @@ const Model = class Model {
     /**
      * Gets the Model's next state by applying the recorded
      * updates.
+     *
+     * @private
      * @return {Object} The next state.
      */
     static getNextState() {
-        if (typeof this.state === 'undefined') {
-            return this.getDefaultState();
-        }
-
-        const updates = this.session.getUpdatesFor(this);
-
         let state;
         if (this._sessionData.hasOwnProperty('nextState')) {
             state = this._sessionData.nextState;
         } else {
             state = this.state;
         }
+
+        const updates = this.session.getUpdatesFor(this);
 
         if (updates.length > 0) {
             const nextState = updates.reduce(this.updateReducer.bind(this), state);
@@ -194,6 +193,7 @@ const Model = class Model {
      * action object and applies the update specified by the `action` object
      * by delegating to this model's Backend instance.
      *
+     * @private
      * @param  {Object} state - the Model's state
      * @param  {Object} action - the internal redux-orm update action to apply
      * @return {Object} the state after applying the action
@@ -206,8 +206,6 @@ const Model = class Model {
             return backend.insert(state, action.payload);
         case UPDATE:
             return backend.update(state, action.payload.idArr, action.payload.mergeObj);
-        case ORDER:
-            return backend.order(state, action.payload);
         case DELETE:
             return backend.delete(state, action.payload);
         default:
@@ -232,6 +230,8 @@ const Model = class Model {
     /**
      * Gets the default, empty state of the branch.
      * Delegates to a {@link Backend} instance.
+     *
+     * @private
      * @return {Object} The default state.
      */
     static getDefaultState() {
@@ -286,6 +286,7 @@ const Model = class Model {
     /**
      * Connect the model class to a {@link Session}.
      *
+     * @private
      * @param  {Session} session - The session to connect to.
      */
     static connect(session) {
@@ -298,6 +299,7 @@ const Model = class Model {
     /**
      * Get the current {@link Session} instance.
      *
+     * @private
      * @return {Session} The current {@link Session} instance.
      */
     static get session() {
@@ -307,6 +309,8 @@ const Model = class Model {
     /**
      * A convenience method that delegates to the current {@link Session} instane.
      * Adds the required backenddata about this {@link Model} to the update object.
+     *
+     * @private
      * @param {Object} update - the update to add.
      */
     static addUpdate(update) {
@@ -420,18 +424,37 @@ const Model = class Model {
     }
 
     /**
-     * Returns a Model instance for the object with id `id`.
+     * Returns a {@link Model} instance for the object with id `id`.
+     *
      * @param  {*} id - the `id` of the object to get
      * @throws If object with id `id` doesn't exist
-     * @return {Model} `Model` instance with id `id`
+     * @return {Model} {@link Model} instance with id `id`
      */
     static withId(id) {
         const ModelClass = this;
-        const ref = this.accessId(id);
-        if (typeof ref === 'undefined') {
+
+        if (!this.hasId(id)) {
             throw new Error(`${this.modelName} instance with id ${id} not found`);
         }
+
+        const ref = this.accessId(id);
+
         return new ModelClass(ref);
+    }
+
+    /**
+     * Returns a boolean indicating if an entity with the id `id` exists
+     * in the state.
+     *
+     * @param  {*}  id - a value corresponding to the id attribute of the {@link Model} class.
+     * @return {Boolean} a boolean indicating if entity with `id` exists in the state
+     */
+    static hasId(id) {
+        const ref = this.accessId(id);
+
+        if (typeof ref === 'undefined') return false;
+
+        return true;
     }
 
     /**
@@ -484,7 +507,7 @@ const Model = class Model {
     }
 
     /**
-     * Gets the id value of the current instance.
+     * Gets the id value of the current instance by looking up the id attribute.
      * @return {*} The id value of the current instance.
      */
     getId() {
@@ -503,6 +526,7 @@ const Model = class Model {
 
     /**
      * Returns a string representation of the {@link Model} instance.
+     *
      * @return {string} A string representation of this {@link Model} instance.
      */
     toString() {
@@ -514,13 +538,21 @@ const Model = class Model {
         return `${className}: {${fields}}`;
     }
 
+    /**
+     * Returns a boolean indicating if `otherModel` equals this {@link Model} instance.
+     * Equality is determined by shallow comparing their attributes.
+     *
+     * @param  {Model} otherModel - a {@link Model} instance to compare
+     * @return {Boolean} a boolean indicating if the {@link Model} instance's are equal.
+     */
     equals(otherModel) {
-        return this.getClass() === otherModel.getClass() &amp;&amp; this.getId() === otherModel.getId();
+        return objectShallowEquals(this._fields, otherModel._fields);
     }
 
     /**
      * Records a update to the {@link Model} instance for a single
      * field value assignment.
+     *
      * @param {string} propertyName - name of the property to set
      * @param {*} value - value assigned to the property
      * @return {undefined}
@@ -532,6 +564,7 @@ const Model = class Model {
     /**
      * Records an update to the {@link Model} instance for multiple field value assignments.
      * If the session is with mutations, updates the instance to reflect the new values.
+     *
      * @param  {Object} userMergeObj - an object that will be merged with this instance.
      * @return {undefined}
      */
@@ -634,13 +667,13 @@ export default Model;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#memoize">memoize</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Jan 24 2016 01:27:10 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Jan 31 2016 15:47:14 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>

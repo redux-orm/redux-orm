@@ -103,7 +103,240 @@
 
             
 
-            <td class="description last"><p>options to use.</p></td>
+            <td class="description last"><p>options to use.</p>
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+        <th>Default</th>
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>idAttribute</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    id
+                
+                </td>
+            
+
+            <td class="description last"><p>the id attribute of the entity.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>indexById</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    true
+                
+                </td>
+            
+
+            <td class="description last"><p>a boolean indicating if the entities
+                                              should be indexed by <code>idAttribute</code>.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>arrName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    items
+                
+                </td>
+            
+
+            <td class="description last"><p>the state attribute where an array of
+                                            either entity id's (if <code>indexById === true</code>)
+                                            or the entity objects are stored.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>mapName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    itemsById
+                
+                </td>
+            
+
+            <td class="description last"><p>if <code>indexById === true</code>, the state
+                                                attribute where the entity objects
+                                                are stored in a id to entity object
+                                                map.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>withMutations</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                    false
+                
+                </td>
+            
+
+            <td class="description last"><p>a boolean indicating if the backend
+                                                   operations should be executed
+                                                   with or without mutations.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -317,7 +550,7 @@ in state <code>branch</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line34">line 34</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line47">line 47</a>
     </li></ul></dd>
     
 
@@ -497,7 +730,7 @@ in state <code>branch</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line187">line 187</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line200">line 200</a>
     </li></ul></dd>
     
 
@@ -601,7 +834,7 @@ in state <code>branch</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line72">line 72</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line85">line 85</a>
     </li></ul></dd>
     
 
@@ -777,7 +1010,7 @@ in state <code>branch</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line91">line 91</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line104">line 104</a>
     </li></ul></dd>
     
 
@@ -931,7 +1164,7 @@ the list of objects in <code>branch</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line53">line 53</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line66">line 66</a>
     </li></ul></dd>
     
 
@@ -1132,7 +1365,7 @@ are merged with <code>mergeObj</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line127">line 127</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line140">line 140</a>
     </li></ul></dd>
     
 
@@ -1196,13 +1429,13 @@ are merged with <code>mergeObj</code>.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#memoize">memoize</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Jan 24 2016 01:27:10 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Jan 31 2016 15:47:14 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>

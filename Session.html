@@ -114,7 +114,7 @@ action dispatch.</p></div>
 
             
 
-            <td class="description last"><p>a Schema instance</p></td>
+            <td class="description last"><p>a <a href="Schema.html"><code>Schema</code></a> instance</p></td>
         </tr>
 
     
@@ -300,14 +300,14 @@ action dispatch.</p></div>
 
     
 
-    <h4 class="name" id="addUpdate"><span class="type-signature"></span>addUpdate<span class="signature">(update)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="getNextState"><span class="type-signature"></span>getNextState<span class="signature">(opts<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Object}</span></h4>
 
     
 
 
 
 <div class="description">
-    <p>Records an update to the session.</p>
+    <p>Applies recorded updates and returns the next state.</p>
 </div>
 
 
@@ -331,6 +331,8 @@ action dispatch.</p></div>
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
         
 
@@ -343,7 +345,7 @@ action dispatch.</p></div>
 
         <tr>
             
-                <td class="name"><code>update</code></td>
+                <td class="name"><code>opts</code></td>
             
 
             <td class="type">
@@ -356,105 +358,22 @@ action dispatch.</p></div>
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
 
             
 
-            <td class="description last"><p>the update object. Must have keys
-                         <code>type</code>, <code>payload</code> and <code>meta</code>. <code>meta</code>
-                         must also include a <code>name</code> attribute
-                         that contains the model name.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Session.js.html">Session.js</a>, <a href="Session.js.html#line62">line 62</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="getUpdatesFor"><span class="type-signature"></span>getUpdatesFor<span class="signature">(modelClass)</span><span class="type-signature"> &rarr; {Array.&lt;Object>}</span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Gets the recorded updates for <code>modelClass</code> and
-deletes them from the Session instance updates list.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
+            <td class="description last"><p>Options object</p>
+                <h6>Properties</h6>
+                
 
 <table class="params">
     <thead>
@@ -465,6 +384,8 @@ deletes them from the Session instance updates list.</p>
 
         <th>Type</th>
 
+        
+        <th>Attributes</th>
         
 
         
@@ -478,23 +399,43 @@ deletes them from the Session instance updates list.</p>
 
         <tr>
             
-                <td class="name"><code>modelClass</code></td>
+                <td class="name"><code>runReducers</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="Model.html">Model</a></span>
+<span class="param-type">Boolean</span>
 
 
             
             </td>
 
             
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
 
             
 
-            <td class="description last"><p>the model class to get updates for</p></td>
+            <td class="description last"><p>A boolean indicating if the user-defined
+                                       model reducers should be run. If not specified,
+                                       is set to <code>true</code> if an action object was specified
+                                       on session instantiation, otherwise <code>false</code>.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
         </tr>
 
     
@@ -535,113 +476,7 @@ deletes them from the Session instance updates list.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Session.js.html">Session.js</a>, <a href="Session.js.html#line83">line 83</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>A list of the user-recorded updates for <code>modelClass</code>.</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Array.&lt;Object></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="reduce"><span class="type-signature"></span>reduce<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Calls the user defined reducers and returns
-the next state.
-If the session uses mutations, just returns the state.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Session.js.html">Session.js</a>, <a href="Session.js.html#line107">line 107</a>
+        <a href="Session.js.html">Session.js</a>, <a href="Session.js.html#line117">line 117</a>
     </li></ul></dd>
     
 
@@ -690,6 +525,112 @@ If the session uses mutations, just returns the state.</p>
 
 
         
+            
+
+    
+
+    <h4 class="name" id="reduce"><span class="type-signature"></span>reduce<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Calls the user-defined reducers and returns the next state.
+If the session uses mutations, just returns the state.
+Delegates to <a href="Session.html#getNextState"><code>Session#getNextState</code></a></p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Session.js.html">Session.js</a>, <a href="Session.js.html#line194">line 194</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>the next state</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
     
 
     
@@ -705,13 +646,13 @@ If the session uses mutations, just returns the state.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#memoize">memoize</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Jan 24 2016 01:27:10 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Jan 31 2016 15:47:14 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>
