@@ -2,9 +2,9 @@ import chai from 'chai';
 import sinonChai from 'sinon-chai';
 import sinon from 'sinon';
 chai.use(sinonChai);
-const {expect} = chai;
+const { expect } = chai;
 import BaseModel from '../Model';
-import {UPDATE, DELETE, CREATE} from '../constants';
+import { UPDATE, DELETE } from '../constants';
 
 describe('Model', () => {
     describe('static method', () => {

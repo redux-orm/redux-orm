@@ -3,9 +3,8 @@ import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
 import Schema from '../Schema';
-import Model from '../Model';
 import {createTestModels} from './utils';
-import {UPDATE, DELETE, CREATE} from '../constants';
+import { CREATE } from '../constants';
 
 chai.use(sinonChai);
 const { expect } = chai;

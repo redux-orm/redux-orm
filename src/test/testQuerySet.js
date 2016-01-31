@@ -2,7 +2,7 @@ import chai from 'chai';
 import sinonChai from 'sinon-chai';
 import sinon from 'sinon';
 chai.use(sinonChai);
-const {expect} = chai;
+const { expect } = chai;
 
 import Model from '../Model';
 import Schema from '../Schema';
@@ -13,7 +13,6 @@ import {
 } from '../constants';
 import {
     createTestModels,
-    createTestSchema,
     createTestSessionWithData,
 } from './utils';
 
@@ -22,7 +21,7 @@ describe('QuerySet tests', () => {
     let bookQs;
     let genreQs;
     beforeEach(() => {
-        ({session} = createTestSessionWithData());
+        ({ session } = createTestSessionWithData());
         bookQs = session.Book.getQuerySet();
         genreQs = session.Genre.getQuerySet();
     });
@@ -134,7 +133,7 @@ describe('QuerySet tests', () => {
 
         const schema = new Schema();
         schema.register(Book, Genre, Cover, Author);
-        const {session: sess} = createTestSessionWithData(schema);
+        const { session: sess } = createTestSessionWithData(schema);
 
         const customQs = sess.Book.getQuerySet();
 

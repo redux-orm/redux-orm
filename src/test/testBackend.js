@@ -1,9 +1,9 @@
 import chai from 'chai';
 import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
-const {expect} = chai;
+const { expect } = chai;
 import Backend from '../Backend';
-import {ListIterator} from '../utils';
+import { ListIterator } from '../utils';
 
 describe('Backend', () => {
     describe('prototype methods', () => {
