@@ -9,6 +9,19 @@ const Backend = class Backend {
     /**
      * Creates a new {@link Backend} instance.
      * @param  {Object} userOpts - options to use.
+     * @param  {string} [userOpts.idAttribute=id] - the id attribute of the entity.
+     * @param  {Boolean} [userOpts.indexById=true] - a boolean indicating if the entities
+     *                                               should be indexed by `idAttribute`.
+     * @param  {string} [userOpts.arrName=items] - the state attribute where an array of
+     *                                             either entity id's (if `indexById === true`)
+     *                                             or the entity objects are stored.
+     * @param  {string} [userOpts.mapName=itemsById] - if `indexById === true`, the state
+     *                                                 attribute where the entity objects
+     *                                                 are stored in a id to entity object
+     *                                                 map.
+     * @param  {Boolean} [userOpts.withMutations=false] - a boolean indicating if the backend
+     *                                                    operations should be executed
+     *                                                    with or without mutations.
      */
     constructor(userOpts) {
         const defaultOpts = {
