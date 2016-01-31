@@ -143,14 +143,14 @@ const Model = class Model {
             return this.getDefaultState();
         }
 
-        const updates = this.session.getUpdatesFor(this);
-
         let state;
         if (this._sessionData.hasOwnProperty('nextState')) {
             state = this._sessionData.nextState;
         } else {
             state = this.state;
         }
+
+        const updates = this.session.getUpdatesFor(this);
 
         if (updates.length > 0) {
             const nextState = updates.reduce(this.updateReducer.bind(this), state);
