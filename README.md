@@ -10,6 +10,10 @@ API can be unstable until 1.0.0. Minor version bumps before 1.0.0 can and will i
 [![npm version](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
 [![npm downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
 
+## Extensions
+
+- [`redux-orm-proptypes`](https://github.com/tommikaikkonen/redux-orm-proptypes): React PropTypes validation and defaultProps mixin for Redux-ORM Models
+
 ## Installation
 
 ```bash
