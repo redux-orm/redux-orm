@@ -346,26 +346,26 @@ You can access all of these methods straight from a `Model` class, as if they we
 
 **withRefs/withModels flagging**
 
-When you want to iterate through all entities with `filter`, `exclude`, `forEach`, `map`, or get an item with `first`, `last` or `at`, you don't always need access to the full Model instance - a reference to the plain JavaScript object in the database could do. QuerySets maintain a flag indicating whether these methods operate on plain JavaScript objects (a straight reference from the store) or a Model instances that are instantiated during the operations.
+When you want to iterate through all entities with `filter`, `exclude`, `forEach`, `map`, or get an item with `first`, `last` or `at`, you don't always need access to the full Model instance - a reference to the plain JavaScript object in the database could do. QuerySets maintain a flag indicating whether these methods operate on plain JavaScript objects (a direct reference from the store) or a Model instances that are instantiated during the operations.
 
 ```javascript
-const clean = Book.withRefs.filter(book => book.author === 'Tommi Kaikkonen')
-// `book` is a plain javascript object, `clean` is a QuerySet
+const queryset = Book.withRefs.filter(book => book.author === 'Tommi Kaikkonen')
+// `book` is a plain javascript object, `queryset` is a QuerySet
 // 
-const clean2 = Book.filter(book => book.name === 'Tommi Kaikkonen - An Autobiography')
-// `book` is a Model instance. `clean2` is a QuerySet equivalent to `clean`.
+const queryset2 = Book.filter(book => book.name === 'Tommi Kaikkonen - An Autobiography')
+// `book` is a Model instance. `queryset2` is a QuerySet equivalent to `queryset`.
 ```
 
 The flag persists after setting the flag. If you use `filter`, `exclude` or `orderBy`, the returned `QuerySet` will have the flag set to operate on Model instances either way. The default is to operate on Model instances. You can get a copy of the current `QuerySet` with the flag set to operate on references from the `withRefs` attribute. Likewise a `QuerySet` copy with the flag set to operate on model instances can be gotten by accessing the `withModels` attribute.
 
 ```javascript
-clean.filter(book => book.release_year > 2014)
+queryset.filter(book => book.isReleasedAfterYear(2014))
 // The `withRefs` flag was reverted back to using models after the `filter` operation,
 // so `book` here is a model instance.
-
-clean.withRefs.filter(book => book.isReleasedAfterYear(2014))
-// `book` is once again a model instance.
 // You rarely need to use `withModels`, unless you're unsure which way the flag is.
+
+queryset2.withRefs.filter(book => book.release_year > 2014)
+// `book` is once again a plain JavaScript object, a direct reference from the store.
 ```
 
 ### Session
