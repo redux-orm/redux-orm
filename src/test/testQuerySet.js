@@ -65,6 +65,14 @@ describe('QuerySet tests', () => {
         expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[1]);
     });
 
+    it('filter works correctly with object argument, with model instance value', () => {
+        const filtered = bookQs.withRefs.filter({
+            author: session.Author.withId(0),
+        });
+        expect(filtered.count()).to.equal(1);
+        expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[0]);
+    });
+
     it('orderBy works correctly with prop argument', () => {
         const ordered = bookQs.orderBy(['releaseYear']);
         expect(ordered.idArr).to.deep.equal([1, 2, 0]);
