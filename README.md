@@ -411,6 +411,24 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
 
 Minor changes before 1.0.0 can include breaking changes.
 
+### 0.6.0
+
+**Breaking changes**:
+
+- When calling `QuerySet.filter` or `QuerySet.exclude` with an object argument, any values of that object that look like a `Model` instance (i.e. they have a `getId` property that is a function), will be turned into the id of that instance before performing the filtering or excluding.
+
+E.g.
+
+```javascript
+Book.filter({ author: Author.withId(0) });
+```
+
+Is equivalent to
+
+```javascript
+Book.filter({ author: 0 });
+```
+
 ### 0.5.0
 
 **Breaking changes**:
