@@ -1,6 +1,8 @@
 import reject from 'lodash/collection/reject';
 import filter from 'lodash/collection/filter';
+import mapValues from 'lodash/object/mapValues';
 import sortByOrder from 'lodash/collection/sortByOrder';
+import { normalizeEntity } from './utils';
 
 import {
     UPDATE,
@@ -191,8 +193,9 @@ const QuerySet = class QuerySet {
         return this._filterOrExclude(lookupObj, true);
     }
 
-    _filterOrExclude(lookupObj, exclude) {
+    _filterOrExclude(_lookupObj, exclude) {
         const func = exclude ? reject : filter;
+        let lookupObj = _lookupObj;
         let operationWithRefs = true;
         let entities;
         if (typeof lookupObj === 'function') {
@@ -206,6 +209,10 @@ const QuerySet = class QuerySet {
                 operationWithRefs = false;
             }
         } else {
+            if (typeof lookupObj === 'object') {
+                lookupObj = mapValues(lookupObj, normalizeEntity);
+            }
+
             // Lodash filtering doesn't work with
             // Model instances.
             entities = this.toRefArray();
