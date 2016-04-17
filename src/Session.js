@@ -27,12 +27,14 @@ const Session = class Session {
 
         this.models = schema.getModelClasses();
 
-        this.models.forEach(modelClass => {
+        this.sessionBoundModels = this.models.map(modelClass => {
+            const sessionBoundModel = class SessionBoundModel extends modelClass {};
             Object.defineProperty(this, modelClass.modelName, {
-                get: () => modelClass,
+                get: () => sessionBoundModel,
             });
 
-            modelClass.connect(this);
+            sessionBoundModel.connect(this);
+            return sessionBoundModel;
         });
     }
 
@@ -41,7 +43,7 @@ const Session = class Session {
     }
 
     get accessedModels() {
-        return this.models.filter(model => {
+        return this.sessionBoundModels.filter(model => {
             return !!this.getDataForModel(model.modelName).accessed;
         }).map(model => model.modelName);
     }
@@ -128,7 +130,7 @@ const Session = class Session {
             ? opts.runReducers
             : !!action;
 
-        const nextState = this.models.reduce((_nextState, modelClass) => {
+        const nextState = this.sessionBoundModels.reduce((_nextState, modelClass) => {
             const modelState = this.getState(modelClass.modelName);
 
             let nextModelState;

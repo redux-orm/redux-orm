@@ -254,4 +254,29 @@ describe('Integration', () => {
             expect(state.Cover.itemsById[coverId].src).to.equal('somecover.png');
         });
     });
+
+    describe('Multiple concurrent sessions', () => {
+        it('works', () => {
+            const firstSession = session;
+            const secondSession = schema.from(state);
+
+            expect(firstSession.Book.count()).to.equal(3);
+            expect(secondSession.Book.count()).to.equal(3);
+
+            const newBookProps = {
+                name: 'New Book',
+                author: 0,
+                releaseYear: 2015,
+                genres: [0, 1],
+            };
+
+            firstSession.Book.create(newBookProps);
+
+            const nextFirstSession = schema.from(firstSession.getNextState());
+            const nextSecondSession = schema.from(secondSession.getNextState());
+
+            expect(nextFirstSession.Book.count()).to.equal(4);
+            expect(nextSecondSession.Book.count()).to.equal(3);
+        });
+    });
 });

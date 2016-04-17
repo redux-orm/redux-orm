@@ -388,7 +388,6 @@ const Model = class Model {
                 const idsString = ids;
                 throw new Error(`Found duplicate id(s) when passing "${idsString}" to ${this.modelName}.${key} value on create`);
             }
-
             instance[key].add(...ids);
         });
 

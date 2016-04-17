@@ -3,7 +3,10 @@ import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
 import Schema from '../Schema';
-import {createTestModels} from './utils';
+import {
+    createTestModels,
+    isSubclass,
+} from './utils';
 import { CREATE } from '../constants';
 
 chai.use(sinonChai);
@@ -36,18 +39,18 @@ describe('Session', () => {
 
         const session = schema.from(defaultState);
 
-        expect(Book.session).to.equal(session);
-        expect(Cover.session).to.equal(session);
-        expect(Genre.session).to.equal(session);
-        expect(Cover.session).to.equal(session);
+        expect(session.Book.session).to.equal(session);
+        expect(session.Cover.session).to.equal(session);
+        expect(session.Genre.session).to.equal(session);
+        expect(session.Cover.session).to.equal(session);
     });
 
     it('exposes models as getter properties', () => {
         const session = schema.from(defaultState);
-        expect(session.Book).to.equal(Book);
-        expect(session.Author).to.equal(Author);
-        expect(session.Cover).to.equal(Cover);
-        expect(session.Genre).to.equal(Genre);
+        expect(isSubclass(session.Book, Book)).to.be.true;
+        expect(isSubclass(session.Author, Author)).to.be.true;
+        expect(isSubclass(session.Cover, Cover)).to.be.true;
+        expect(isSubclass(session.Genre, Genre)).to.be.true;
     });
 
     it('marks accessed models', () => {
@@ -147,5 +150,19 @@ describe('Session', () => {
 
         expect(getNextStateSpy).to.be.calledOnce;
         expect(getNextStateSpy).to.be.calledWithMatch({ runReducers: true });
+    });
+
+    it('two concurrent sessions', () => {
+        const otherState = schema.getDefaultState();
+
+        const firstSession = schema.from(defaultState);
+        const secondSession = schema.from(otherState);
+
+        expect(firstSession.sessionBoundModels).to.have.lengthOf(5);
+
+        expect(firstSession.Book).not.to.equal(secondSession.Book);
+        expect(firstSession.Author).not.to.equal(secondSession.Author);
+        expect(firstSession.Genre).not.to.equal(secondSession.Genre);
+        expect(firstSession.Cover).not.to.equal(secondSession.Cover);
     });
 });

@@ -8,9 +8,11 @@ import {
 
 // Forwards side a Foreign Key: returns one object.
 // Also works as forwardsOneToOneDescriptor.
-function forwardManyToOneDescriptor(fieldName, declaredToModel) {
+function forwardManyToOneDescriptor(fieldName, declaredToModelName) {
     return {
         get() {
+            const currentSession = this.getClass().session;
+            const declaredToModel = currentSession[declaredToModelName];
             const toId = this._fields[fieldName];
             if (typeof toId !== 'undefined' && toId !== null) {
                 return declaredToModel.withId(toId);
@@ -18,6 +20,8 @@ function forwardManyToOneDescriptor(fieldName, declaredToModel) {
             return undefined;
         },
         set(value) {
+            const currentSession = this.getClass().session;
+            const declaredToModel = currentSession[declaredToModelName];
             const thisId = this.getId();
             let toId;
             if (value instanceof declaredToModel) {
@@ -41,9 +45,11 @@ function forwardManyToOneDescriptor(fieldName, declaredToModel) {
 
 const forwardOneToOneDescriptor = forwardManyToOneDescriptor;
 
-function backwardOneToOneDescriptor(declaredFieldName, declaredFromModel) {
+function backwardOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
     return {
         get() {
+            const currentSession = this.getClass().session;
+            const declaredFromModel = currentSession[declaredFromModelName];
             const thisId = this.getId();
             let found;
             try {
@@ -60,9 +66,11 @@ function backwardOneToOneDescriptor(declaredFieldName, declaredFromModel) {
 }
 
 // Reverse side of a Foreign Key: returns many objects.
-function backwardManyToOneDescriptor(declaredFieldName, declaredFromModel) {
+function backwardManyToOneDescriptor(declaredFieldName, declaredFromModelName) {
     return {
         get() {
+            const currentSession = this.getClass().session;
+            const declaredFromModel = currentSession[declaredFromModelName];
             const thisId = this.getId();
             return declaredFromModel.filter({[declaredFieldName]: thisId});
         },
@@ -73,9 +81,13 @@ function backwardManyToOneDescriptor(declaredFieldName, declaredFromModel) {
 }
 
 // Both sides of Many to Many, use the reverse flag.
-function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, reverse) {
+function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throughModelName, reverse) {
     return {
         get() {
+            const currentSession = this.getClass().session;
+            const declaredFromModel = currentSession[declaredFromModelName];
+            const declaredToModel = currentSession[declaredToModelName];
+            const throughModel = currentSession[throughModelName];
             const thisId = this.getId();
 
             const fromFieldName = m2mFromFieldName(declaredFromModel.modelName);
@@ -87,7 +99,6 @@ function manyToManyDescriptor(declaredFromModel, declaredToModel, throughModel, 
             } else {
                 lookupObj[toFieldName] = thisId;
             }
-
             const throughQs = throughModel.filter(lookupObj);
             const toIds = throughQs.withRefs.map(obj => obj[reverse ? fromFieldName : toFieldName]);
 

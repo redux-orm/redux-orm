@@ -162,7 +162,7 @@ const Schema = class Schema {
                             Object.defineProperty(
                                 model.prototype,
                                 fieldName,
-                                forwardManyToOneDescriptor(fieldName, toModel)
+                                forwardManyToOneDescriptor(fieldName, toModel.modelName)
                             );
                             model.definedProperties[fieldName] = true;
 
@@ -184,19 +184,24 @@ const Schema = class Schema {
                             Object.defineProperty(
                                 toModel.prototype,
                                 backwardsFieldName,
-                                backwardManyToOneDescriptor(fieldName, model)
+                                backwardManyToOneDescriptor(fieldName, model.modelName)
                             );
                             toModel.definedProperties[backwardsFieldName] = true;
                             toModel.virtualFields[backwardsFieldName] = new ForeignKey(model.modelName, fieldName);
                         } else if (fieldInstance instanceof ManyToMany) {
                             // Forwards.
                             const throughModelName = m2mName(model.modelName, fieldName);
-                            const throughModel = this.get(throughModelName);
+                            // const throughModel = this.get(throughModelName);
 
                             Object.defineProperty(
                                 model.prototype,
                                 fieldName,
-                                manyToManyDescriptor(model, toModel, throughModel, false)
+                                manyToManyDescriptor(
+                                    model.modelName,
+                                    toModel.modelName,
+                                    throughModelName,
+                                    false
+                                )
                             );
                             model.definedProperties[fieldName] = true;
                             model.virtualFields[fieldName] = new ManyToMany(toModel.modelName, fieldName);
@@ -219,7 +224,12 @@ const Schema = class Schema {
                             Object.defineProperty(
                                 toModel.prototype,
                                 backwardsFieldName,
-                                manyToManyDescriptor(model, toModel, throughModel, true)
+                                manyToManyDescriptor(
+                                    model.modelName,
+                                    toModel.modelName,
+                                    throughModelName,
+                                    true
+                                )
                             );
                             toModel.definedProperties[backwardsFieldName] = true;
                             toModel.virtualFields[backwardsFieldName] = new ManyToMany(model.modelName, fieldName);
@@ -228,7 +238,7 @@ const Schema = class Schema {
                             Object.defineProperty(
                                 model.prototype,
                                 fieldName,
-                                forwardOneToOneDescriptor(fieldName, toModel)
+                                forwardOneToOneDescriptor(fieldName, toModel.modelName)
                             );
                             model.definedProperties[fieldName] = true;
 
@@ -250,7 +260,7 @@ const Schema = class Schema {
                             Object.defineProperty(
                                 toModel.prototype,
                                 backwardsFieldName,
-                                backwardOneToOneDescriptor(fieldName, model)
+                                backwardOneToOneDescriptor(fieldName, model.modelName)
                             );
                             toModel.definedProperties[backwardsFieldName] = true;
                             toModel.virtualFields[backwardsFieldName] = new OneToOne(model.modelName, fieldName);
@@ -271,7 +281,7 @@ const Schema = class Schema {
                     Object.defineProperty(
                         model.prototype,
                         fieldName,
-                        forwardManyToOneDescriptor(fieldName, toModel)
+                        forwardManyToOneDescriptor(fieldName, toModel.modelName)
                     );
                     model.definedProperties[fieldName] = true;
                 });

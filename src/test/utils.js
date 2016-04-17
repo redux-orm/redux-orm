@@ -135,3 +135,5 @@ export function createTestSessionWithData(customSchema) {
     const normalSession = schema.from(state);
     return {session: normalSession, schema, state};
 }
+
+export const isSubclass = (a, b) => a.prototype instanceof b;
