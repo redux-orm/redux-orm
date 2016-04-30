@@ -172,14 +172,15 @@ const Model = class Model {
      */
     static updateReducer(state, action) {
         const backend = this.getBackend();
+        const session = this.session;
 
         switch (action.type) {
         case CREATE:
-            return backend.insert(state, action.payload);
+            return backend.insert(session, state, action.payload);
         case UPDATE:
-            return backend.update(state, action.payload.idArr, action.payload.mergeObj);
+            return backend.update(session, state, action.payload.idArr, action.payload.mergeObj);
         case DELETE:
-            return backend.delete(state, action.payload);
+            return backend.delete(session, state, action.payload);
         default:
             return state;
         }

@@ -1,6 +1,7 @@
 import find from 'lodash/collection/find';
 import omit from 'lodash/object/omit';
 import {ListIterator, objectDiff} from './utils';
+import getOps from 'immutable-ops';
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
@@ -97,11 +98,12 @@ const Backend = class Backend {
 
     /**
      * Returns the data structure including a new object `entry`
+     * @param  {Object} session - the current Session instance
      * @param  {Object} branch - the data structure state
      * @param  {Object} entry - the object to insert
      * @return {Object} the data structure including `entry`.
      */
-    insert(branch, entry) {
+    insert(session, branch, entry) {
         if (this.indexById) {
             const id = entry[this.idAttribute];
 
@@ -131,13 +133,14 @@ const Backend = class Backend {
      * Returns the data structure with objects where id in `idArr`
      * are merged with `mergeObj`.
      *
+     * @param  {Object} session - the current Session instance
      * @param  {Object} branch - the data structure state
      * @param  {Array} idArr - the id's of the objects to update
      * @param  {Object} mergeObj - The object to merge with objects
      *                             where their id is in `idArr`.
      * @return {Object} the data structure with objects with their id in `idArr` updated with `mergeObj`.
      */
-    update(branch, idArr, mergeObj) {
+    update(session, branch, idArr, mergeObj) {
         const returnBranch = this.withMutations ? branch : {};
 
         const {
@@ -193,11 +196,12 @@ const Backend = class Backend {
 
     /**
      * Returns the data structure without objects with their id included in `idsToDelete`.
+     * @param  {Object} session - the current Session instance
      * @param  {Object} branch - the data structure state
      * @param  {Array} idsToDelete - the ids to delete from the data structure
      * @return {Object} the data structure without ids in `idsToDelete`.
      */
-    delete(branch, idsToDelete) {
+    delete(session, branch, idsToDelete) {
         const {arrName, mapName, idAttribute} = this;
         const arr = branch[arrName];
 
