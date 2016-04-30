@@ -33,6 +33,7 @@
     "sinon-chai": "^2.8.0"
   },
   "dependencies": {
+    "immutable-ops": "^0.2.0",
     "lodash": "^3.10.1",
     "reselect": "^2.0.1"
   }
