@@ -1,5 +1,7 @@
 import { expect } from 'chai';
+import Model from '../Model';
 import QuerySet from '../QuerySet';
+import Schema from '../Schema';
 import {
     createTestSessionWithData,
 } from './utils';
@@ -278,5 +280,32 @@ describe('Integration', () => {
             expect(nextFirstSession.Book.count()).to.equal(4);
             expect(nextSecondSession.Book.count()).to.equal(3);
         });
+    });
+});
+
+describe('Big Data Test', () => {
+    let Item;
+    let schema;
+
+    beforeEach(() => {
+        Item = class extends Model {};
+        Item.modelName = 'Item';
+        schema = new Schema();
+        schema.register(Item);
+    });
+
+    it('adds a big amount of items in acceptable time', function() {
+        this.timeout(30000);
+        const session = schema.from(schema.getDefaultState());
+        const start = new Date().getTime();
+
+        for (let i = 0; i < 10000; i++) {
+            session.Item.create({ id: i, name: 'TestItem'});
+        }
+        session.getNextState();
+        const end = new Date().getTime();
+        const tookSeconds = (end - start) / 1000;
+
+        expect(tookSeconds).to.be.at.most(3);
     });
 });
