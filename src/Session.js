@@ -1,4 +1,5 @@
 import partition from 'lodash/partition';
+import Transaction from './Transaction';
 
 /**
  * Session handles a single
@@ -72,7 +73,7 @@ const Session = class Session {
 
             // The backend used in the updateReducer
             // will mutate the model state.
-            this[modelName].updateReducer(modelState, update);
+            this[modelName].updateReducer(null, modelState, update);
         } else {
             this.updates.push(update);
         }
@@ -128,22 +129,17 @@ const Session = class Session {
             ? opts.runReducers
             : !!action;
 
+        if (runReducers) {
+            this.sessionBoundModels.forEach(modelClass => {
+                const modelState = this.getState(modelClass.modelName);
+                modelClass.reducer(modelState, action, modelClass, this);
+            });
+        }
+
+        const tx = new Transaction(this.updates);
+
         const nextState = this.sessionBoundModels.reduce((_nextState, modelClass) => {
-            const modelState = this.getState(modelClass.modelName);
-
-            let nextModelState;
-
-            if (runReducers) {
-                nextModelState = modelClass.reducer(modelState, action, modelClass, this);
-            }
-
-            if (typeof nextModelState === 'undefined') {
-                // If the reducer wasn't run or it didn't
-                // return the next state,
-                // we get the next state manually.
-                nextModelState = modelClass.getNextState();
-            }
-
+            const nextModelState = modelClass.getNextState(tx);
             if (nextModelState !== prevState[modelClass.modelName]) {
                 if (_nextState === prevState) {
                     // We know that something has changed, so we cannot
@@ -153,34 +149,14 @@ const Session = class Session {
                     prevStateCopied[modelClass.modelName] = nextModelState;
                     return prevStateCopied;
                 }
-
                 _nextState[modelClass.modelName] = nextModelState;
             }
             return _nextState;
         }, prevState);
 
-        // The remaining updates are for M2M tables.
-        let finalState = nextState;
-
-        if (this.updates.length > 0) {
-            if (finalState === prevState) {
-                // If we're still working with the previous state,
-                // shallow copy it since we have updates for sure now.
-                finalState = Object.assign({}, prevState);
-            }
-
-            finalState = this.updates.reduce((state, update) => {
-                const modelName = update.meta.name;
-                state[modelName] = this[modelName].getNextState();
-                return state;
-            }, finalState);
-        } else {
-            finalState = nextState;
-        }
-
         this.updates = [];
 
-        return finalState;
+        return nextState;
     }
 
     /**

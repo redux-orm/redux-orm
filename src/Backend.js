@@ -101,7 +101,7 @@ const Backend = class Backend {
      * @param  {Object} entry - the object to insert
      * @return {Object} the data structure including `entry`.
      */
-    insert(session, branch, entry) {
+    insert(tx, branch, entry) {
         if (this.indexById) {
             const id = entry[this.idAttribute];
 
@@ -137,7 +137,7 @@ const Backend = class Backend {
      *                             where their id is in `idArr`.
      * @return {Object} the data structure with objects with their id in `idArr` updated with `mergeObj`.
      */
-    update(session, branch, idArr, mergeObj) {
+    update(tx, branch, idArr, mergeObj) {
         const returnBranch = this.withMutations ? branch : {};
 
         const {
@@ -198,7 +198,7 @@ const Backend = class Backend {
      * @param  {Array} idsToDelete - the ids to delete from the data structure
      * @return {Object} the data structure without ids in `idsToDelete`.
      */
-    delete(session, branch, idsToDelete) {
+    delete(tx, branch, idsToDelete) {
         const {arrName, mapName, idAttribute} = this;
         const arr = branch[arrName];
 
