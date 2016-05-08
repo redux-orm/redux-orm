@@ -1,4 +1,4 @@
-import difference from 'lodash/array/difference';
+import difference from 'lodash/difference';
 import UPDATE from './constants';
 import {
     m2mFromFieldName,

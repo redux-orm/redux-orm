@@ -1,6 +1,6 @@
 import {createSelectorCreator} from 'reselect';
-import forOwn from 'lodash/object/forOwn';
-import find from 'lodash/collection/find';
+import forOwn from 'lodash/forOwn';
+import find from 'lodash/find';
 
 import Session from './Session';
 import Model from './Model';

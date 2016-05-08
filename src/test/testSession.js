@@ -93,6 +93,7 @@ describe('Session', () => {
                     name: Author.modelName,
                 },
                 payload: {
+                    id: 0,
                     name: 'Caesar',
                 },
             });

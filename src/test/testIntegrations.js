@@ -85,7 +85,6 @@ describe('Integration', () => {
         it('Models are correctly deleted', () => {
             const { Book } = session;
             expect(Book.count()).to.equal(3);
-
             Book.withId(0).delete();
 
             const nextState = session.reduce();
@@ -294,8 +293,9 @@ describe('Big Data Test', () => {
         schema.register(Item);
     });
 
-    it('adds a big amount of items in acceptable time', function() {
+    xit('adds a big amount of items in acceptable time', function() {
         this.timeout(30000);
+
         const session = schema.from(schema.getDefaultState());
         const start = new Date().getTime();
 

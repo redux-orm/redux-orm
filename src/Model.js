@@ -1,6 +1,6 @@
-import forOwn from 'lodash/object/forOwn';
-import isArray from 'lodash/lang/isArray';
-import uniq from 'lodash/array/uniq';
+import forOwn from 'lodash/forOwn';
+import isArray from 'lodash/isArray';
+import uniq from 'lodash/uniq';
 
 import Session from './Session';
 import Backend from './Backend';
@@ -150,7 +150,6 @@ const Model = class Model {
         }
 
         const updates = this.session.getUpdatesFor(this);
-
         if (updates.length > 0) {
             const nextState = updates.reduce(this.updateReducer.bind(this), state);
             this._sessionData.nextState = nextState;
@@ -173,7 +172,6 @@ const Model = class Model {
     static updateReducer(state, action) {
         const backend = this.getBackend();
         const session = this.session;
-
         switch (action.type) {
         case CREATE:
             return backend.insert(session, state, action.payload);

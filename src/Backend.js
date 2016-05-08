@@ -1,7 +1,6 @@
-import find from 'lodash/collection/find';
-import omit from 'lodash/object/omit';
+import find from 'lodash/find';
+import omit from 'lodash/omit';
 import {ListIterator, objectDiff} from './utils';
-import getOps from 'immutable-ops';
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
@@ -49,7 +48,6 @@ const Backend = class Backend {
         if (this.indexById) {
             return branch[this.mapName][id];
         }
-
         return find(branch[this.arrName], {[this.idAttribute]: id});
     }
 
@@ -112,7 +110,6 @@ const Backend = class Backend {
                 branch[this.mapName][id] = entry;
                 return branch;
             }
-
             return {
                 [this.arrName]: branch[this.arrName].concat(id),
                 [this.mapName]: Object.assign({}, branch[this.mapName], {[id]: entry}),

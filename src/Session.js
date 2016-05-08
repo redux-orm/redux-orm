@@ -1,4 +1,4 @@
-import partition from 'lodash/collection/partition';
+import partition from 'lodash/partition';
 
 /**
  * Session handles a single
@@ -89,9 +89,7 @@ const Session = class Session {
     getUpdatesFor(modelClass) {
         const [updates, other] = partition(
             this.updates,
-            'meta.name',
-            modelClass.modelName);
-
+            ['meta.name', modelClass.modelName]);
         this.updates = other;
         return updates;
     }
@@ -158,7 +156,6 @@ const Session = class Session {
 
                 _nextState[modelClass.modelName] = nextModelState;
             }
-
             return _nextState;
         }, prevState);
 

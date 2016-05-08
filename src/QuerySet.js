@@ -1,7 +1,7 @@
-import reject from 'lodash/collection/reject';
-import filter from 'lodash/collection/filter';
-import mapValues from 'lodash/object/mapValues';
-import sortByOrder from 'lodash/collection/sortByOrder';
+import reject from 'lodash/reject';
+import filter from 'lodash/filter';
+import mapValues from 'lodash/mapValues';
+import orderBy from 'lodash/orderBy';
 import { normalizeEntity } from './utils';
 
 import {
@@ -260,7 +260,7 @@ const QuerySet = class QuerySet {
 
     /**
      * Returns a new {@link QuerySet} instance with entities ordered by `iteratees` in ascending
-     * order, unless otherwise specified. Delegates to `lodash.sortByOrder`.
+     * order, unless otherwise specified. Delegates to `lodash.orderBy`.
      *
      * @param  {string[]|Function[]} iteratees - an array where each item can be a string or a
      *                                           function. If a string is supplied, it should
@@ -294,7 +294,7 @@ const QuerySet = class QuerySet {
                 return arg;
             });
         }
-        const sortedEntities = sortByOrder.call(null, entities, iterateeArgs, orders);
+        const sortedEntities = orderBy.call(null, entities, iterateeArgs, orders);
         return this._new(
             sortedEntities.map(entity => entity[this.modelClass.idAttribute]),
             {withRefs: false});

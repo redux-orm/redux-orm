@@ -1,6 +1,6 @@
-import forOwn from 'lodash/object/forOwn';
-import intersection from 'lodash/array/intersection';
-import difference from 'lodash/array/difference';
+import forOwn from 'lodash/forOwn';
+import intersection from 'lodash/intersection';
+import difference from 'lodash/difference';
 
 /**
  * @module utils
