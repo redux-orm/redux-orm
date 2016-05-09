@@ -1,6 +1,6 @@
-import forOwn from 'lodash/object/forOwn';
-import isArray from 'lodash/lang/isArray';
-import uniq from 'lodash/array/uniq';
+import forOwn from 'lodash/forOwn';
+import isArray from 'lodash/isArray';
+import uniq from 'lodash/uniq';
 
 import Session from './Session';
 import Backend from './Backend';
@@ -139,9 +139,12 @@ const Model = class Model {
      * updates.
      *
      * @private
+     * @param {Transction} tx - the current Transaction instance
      * @return {Object} The next state.
      */
-    static getNextState() {
+    static getNextState(_tx) {
+        const tx = _tx || this.session.currentTx;
+
         let state;
         if (this._sessionData.hasOwnProperty('nextState')) {
             state = this._sessionData.nextState;
@@ -149,11 +152,12 @@ const Model = class Model {
             state = this.state;
         }
 
-        const updates = this.session.getUpdatesFor(this);
+        const updates = tx.getUpdatesFor(this);
 
         if (updates.length > 0) {
-            const nextState = updates.reduce(this.updateReducer.bind(this), state);
+            const nextState = updates.reduce(this.updateReducer.bind(this, tx), state);
             this._sessionData.nextState = nextState;
+            tx.markApplied(this);
             return nextState;
         }
 
@@ -170,16 +174,15 @@ const Model = class Model {
      * @param  {Object} action - the internal redux-orm update action to apply
      * @return {Object} the state after applying the action
      */
-    static updateReducer(state, action) {
+    static updateReducer(tx, state, action) {
         const backend = this.getBackend();
-
         switch (action.type) {
         case CREATE:
-            return backend.insert(state, action.payload);
+            return backend.insert(tx, state, action.payload);
         case UPDATE:
-            return backend.update(state, action.payload.idArr, action.payload.mergeObj);
+            return backend.update(tx, state, action.payload.idArr, action.payload.mergeObj);
         case DELETE:
-            return backend.delete(state, action.payload);
+            return backend.delete(tx, state, action.payload);
         default:
             return state;
         }
@@ -196,7 +199,7 @@ const Model = class Model {
      * @return {Object} the next state for the Model
      */
     static reducer(state, action, model, session) { // eslint-disable-line
-        return model.getNextState();
+        return this.getNextState();
     }
 
     /**

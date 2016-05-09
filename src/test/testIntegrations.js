@@ -1,5 +1,7 @@
 import { expect } from 'chai';
+import Model from '../Model';
 import QuerySet from '../QuerySet';
+import Schema from '../Schema';
 import {
     createTestSessionWithData,
 } from './utils';
@@ -83,7 +85,6 @@ describe('Integration', () => {
         it('Models are correctly deleted', () => {
             const { Book } = session;
             expect(Book.count()).to.equal(3);
-
             Book.withId(0).delete();
 
             const nextState = session.reduce();
@@ -278,5 +279,34 @@ describe('Integration', () => {
             expect(nextFirstSession.Book.count()).to.equal(4);
             expect(nextSecondSession.Book.count()).to.equal(3);
         });
+    });
+});
+
+describe('Big Data Test', () => {
+    let Item;
+    let schema;
+
+    beforeEach(() => {
+        Item = class extends Model {};
+        Item.modelName = 'Item';
+        schema = new Schema();
+        schema.register(Item);
+    });
+
+    it('adds a big amount of items in acceptable time', function() {
+        this.timeout(30000);
+
+        const session = schema.from(schema.getDefaultState());
+        const start = new Date().getTime();
+
+        const amount = 10000;
+        for (let i = 0; i < amount; i++) {
+            session.Item.create({ id: i, name: 'TestItem'});
+        }
+        const nextState = session.getNextState();
+        const end = new Date().getTime();
+        const tookSeconds = (end - start) / 1000;
+        console.log(`Creating ${amount} objects took ${tookSeconds}s`);
+        expect(tookSeconds).to.be.at.most(3);
     });
 });

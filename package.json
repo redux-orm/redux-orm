@@ -1,6 +1,6 @@
 {
   "name": "redux-orm",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Simple ORM to manage and query your state trees",
   "main": "lib/index.js",
   "scripts": {
@@ -33,7 +33,8 @@
     "sinon-chai": "^2.8.0"
   },
   "dependencies": {
-    "lodash": "^3.10.1",
+    "immutable-ops": "^0.4.2",
+    "lodash": "^4.12.0",
     "reselect": "^2.0.1"
   }
 }
