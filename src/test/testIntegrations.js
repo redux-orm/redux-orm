@@ -55,7 +55,7 @@ describe('Integration', () => {
         });
 
         it('Models correctly create new instances', () => {
-            const {Book} = session;
+            const { Book } = session;
             expect(session.updates).to.have.length(0);
             const book = Book.create({
                 name: 'New Book',
@@ -93,7 +93,7 @@ describe('Integration', () => {
         });
 
         it('Models correctly update when setting properties', () => {
-            const {Book} = session;
+            const { Book } = session;
             const book = Book.first();
             const newName = 'New Name';
             expect(session.updates).to.have.length(0);
@@ -235,7 +235,7 @@ describe('Integration', () => {
                 Cover,
             } = mutating;
 
-            const cover = Cover.create({src: 'somecover.png'});
+            const cover = Cover.create({ src: 'somecover.png' });
             const coverId = cover.getId();
 
             const book = Book.first();
@@ -293,7 +293,7 @@ describe('Big Data Test', () => {
         schema.register(Item);
     });
 
-    it('adds a big amount of items in acceptable time', function() {
+    it('adds a big amount of items in acceptable time', function () {
         this.timeout(30000);
 
         const session = schema.from(schema.getDefaultState());
@@ -301,7 +301,7 @@ describe('Big Data Test', () => {
 
         const amount = 10000;
         for (let i = 0; i < amount; i++) {
-            session.Item.create({ id: i, name: 'TestItem'});
+            session.Item.create({ id: i, name: 'TestItem' });
         }
         const nextState = session.getNextState();
         const end = new Date().getTime();

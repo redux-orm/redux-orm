@@ -1,6 +1,6 @@
 import Schema from '../Schema';
 import Model from '../Model';
-import {fk, many, oneToOne} from '../fields';
+import { fk, many, oneToOne } from '../fields';
 
 /**
  * These utils create a database schema for testing.
@@ -133,7 +133,7 @@ export function createTestSessionWithData(customSchema) {
     BOOKS_INITIAL.forEach(props => mutatingSession.Book.create(props));
 
     const normalSession = schema.from(state);
-    return {session: normalSession, schema, state};
+    return { session: normalSession, schema, state };
 }
 
 export const isSubclass = (a, b) => a.prototype instanceof b;

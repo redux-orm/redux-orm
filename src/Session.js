@@ -44,9 +44,9 @@ const Session = class Session {
     }
 
     get accessedModels() {
-        return this.sessionBoundModels.filter(model => {
-            return !!this.getDataForModel(model.modelName).accessed;
-        }).map(model => model.modelName);
+        return this.sessionBoundModels
+            .filter(model => !!this.getDataForModel(model.modelName).accessed)
+            .map(model => model.modelName);
     }
 
     getDataForModel(modelName) {

@@ -289,7 +289,7 @@ const Model = class Model {
      * @param {Object} update - the update to add.
      */
     static addUpdate(update) {
-        update.meta = {name: this.modelName};
+        update.meta = { name: this.modelName };
         this.session.addUpdate(update);
     }
 
@@ -532,7 +532,7 @@ const Model = class Model {
      * @return {undefined}
      */
     set(propertyName, value) {
-        this.update({[propertyName]: value});
+        this.update({ [propertyName]: value });
     }
 
     /**
@@ -549,7 +549,7 @@ const Model = class Model {
         // If an array of entities or id's is supplied for a
         // many-to-many related field, clear the old relations
         // and add the new ones.
-        for (const mergeKey in mergeObj) {
+        for (const mergeKey in mergeObj) { // eslint-disable-line no-restricted-syntax
             if (relFields.hasOwnProperty(mergeKey)) {
                 const field = relFields[mergeKey];
                 if (field instanceof ManyToMany) {
@@ -612,7 +612,7 @@ const Model = class Model {
             } else if (field instanceof ForeignKey) {
                 const relatedQs = this[key];
                 if (relatedQs.exists()) {
-                    relatedQs.update({[field.relatedName]: null});
+                    relatedQs.update({ [field.relatedName]: null });
                 }
             } else if (field instanceof OneToOne) {
                 // Set null to any foreign keys or one to ones pointed to

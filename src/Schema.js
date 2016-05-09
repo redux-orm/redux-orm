@@ -1,4 +1,4 @@
-import {createSelectorCreator} from 'reselect';
+import { createSelectorCreator } from 'reselect';
 import forOwn from 'lodash/forOwn';
 import find from 'lodash/find';
 
@@ -16,7 +16,7 @@ import {
     backwardOneToOneDescriptor,
     manyToManyDescriptor,
 } from './descriptors';
-import {memoize, eqCheck} from './memoize';
+import { memoize, eqCheck } from './memoize';
 
 import {
     m2mName,
@@ -130,7 +130,11 @@ const Schema = class Schema {
      * @return {Model} the {@link Model} class, if found
      */
     get(modelName) {
-        const found = find(this.registry.concat(this.implicitThroughModels), (model) => model.modelName === modelName);
+        const found = find(
+            this.registry.concat(this.implicitThroughModels),
+            (model) => model.modelName === modelName
+        );
+
         if (typeof found === 'undefined') {
             throw new Error(`Did not find model ${modelName} from registry.`);
         }
@@ -143,7 +147,7 @@ const Schema = class Schema {
     }
 
     _attachQuerySetMethods(model) {
-        const {querySetClass} = model;
+        const { querySetClass } = model;
         attachQuerySetMethods(model, querySetClass);
     }
 
@@ -343,9 +347,8 @@ const Schema = class Schema {
      *                    each action dispatch.
      */
     reducer() {
-        return (state, action) => {
-            return this.from(state, action).reduce();
-        };
+        return (state, action) =>
+            this.from(state, action).reduce();
     }
 
     /**

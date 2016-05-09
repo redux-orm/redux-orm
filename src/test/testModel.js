@@ -58,7 +58,7 @@ describe('Model', () => {
             Model = Object.create(BaseModel);
             Model.modelName = 'Model';
             markAccessedSpy = sinon.spy();
-            sessionMock = {markAccessed: markAccessedSpy};
+            sessionMock = { markAccessed: markAccessedSpy };
             backendMock = {};
             Model.getBackend = () => backendMock;
             Model._session = sessionMock;
@@ -124,7 +124,7 @@ describe('Model', () => {
             Model.modelName = 'Model';
             Model.markAccessed = () => undefined;
 
-            instance = new Model({id: 0, name: 'Tommi'});
+            instance = new Model({ id: 0, name: 'Tommi' });
         });
 
         it('delete works correctly', () => {
@@ -145,7 +145,7 @@ describe('Model', () => {
             Model.addUpdate = addUpdateSpy;
 
             expect(addUpdateSpy).not.called;
-            instance.update({name: 'Matt'});
+            instance.update({ name: 'Matt' });
             expect(addUpdateSpy).calledOnce;
             expect(addUpdateSpy.getCall(0).args[0]).to.deep.equal({
                 type: UPDATE,
@@ -183,7 +183,7 @@ describe('Model', () => {
         });
 
         it('equals works correctly', () => {
-            const anotherInstance = new Model({id: 0, name: 'Tommi'});
+            const anotherInstance = new Model({ id: 0, name: 'Tommi' });
             expect(instance.equals(anotherInstance)).to.be.ok;
         });
 

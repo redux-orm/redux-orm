@@ -60,7 +60,7 @@ describe('QuerySet tests', () => {
     });
 
     it('filter works correctly with object argument', () => {
-        const filtered = bookQs.withRefs.filter({name: 'Clean Code'});
+        const filtered = bookQs.withRefs.filter({ name: 'Clean Code' });
         expect(filtered.count()).to.equal(1);
         expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[1]);
     });
@@ -84,13 +84,13 @@ describe('QuerySet tests', () => {
     });
 
     it('exclude works correctly with object argument', () => {
-        const excluded = bookQs.exclude({name: 'Clean Code'});
+        const excluded = bookQs.exclude({ name: 'Clean Code' });
         expect(excluded.count()).to.equal(2);
         expect(excluded.idArr).to.deep.equal([0, 2]);
     });
 
     it('update records a update', () => {
-        const mergeObj = {name: 'Updated Book Name'};
+        const mergeObj = { name: 'Updated Book Name' };
         expect(session.updates).to.have.length(0);
         bookQs.update(mergeObj);
         expect(session.updates).to.have.length(1);
@@ -158,6 +158,6 @@ describe('QuerySet tests', () => {
             releaseYear: 2050,
         });
         expect(sess.Book.unreleased().count()).to.equal(1);
-        expect(sess.Book.withRefs.filter({name: 'Clean Code'}).count()).to.equal(1);
+        expect(sess.Book.withRefs.filter({ name: 'Clean Code' }).count()).to.equal(1);
     });
 });

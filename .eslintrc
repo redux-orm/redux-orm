@@ -8,6 +8,14 @@
     "no-unused-vars": 1,
     "id-length": 0,
     "no-unused-expressions": 0,
+    "prefer-rest-params": 0,
+    "no-underscore-dangle": ["warn", { "allowAfterThis": true }],
+    "no-param-reassign": ["error", { "props": false }],
+    "max-len": 1,
+    "prefer-template": 1,
+    "no-restricted-syntax": 1,
+    "consistent-return": 1
+
   },
   "ecmaFeatures": {
     "restParams": true,

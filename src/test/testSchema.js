@@ -233,7 +233,7 @@ describe('Schema', () => {
             selector(appState);
             expect(_selectorFunc.callCount).to.equal(1);
 
-            const otherUserState = { ...appState, selectedUser: 0 };
+            const otherUserState = Object.assign({}, appState, { selectedUser: 0 });
 
             selector(otherUserState);
             expect(_selectorFunc.callCount).to.equal(2);

@@ -70,7 +70,7 @@ describe('Session', () => {
     it('adds updates', () => {
         const session = schema.from(defaultState);
         expect(session.updates).to.have.length(0);
-        const updateObj = { meta: { name: 'MockModel' }};
+        const updateObj = { meta: { name: 'MockModel' } };
         session.addUpdate(updateObj);
         expect(session.updates).to.have.length(1);
     });

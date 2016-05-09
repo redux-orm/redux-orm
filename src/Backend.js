@@ -70,13 +70,17 @@ const Backend = class Backend {
      * @return {ListIterator} An iterator that loops through the objects in `branch`
      */
     iterator(branch) {
-        return new ListIterator(branch[this.arrName], 0, (list, idx) => branch[this.mapName][list[idx]]);
+        return new ListIterator(
+            branch[this.arrName],
+            0,
+            (list, idx) => branch[this.mapName][list[idx]]
+        );
     }
 
     accessList(branch) {
         return branch[this.arrName].map(id => {
             const obj = this.accessId(branch, id);
-            return Object.assign({[this.idAttribute]: id}, obj);
+            return Object.assign({ [this.idAttribute]: id }, obj);
         });
     }
 
@@ -111,7 +115,7 @@ const Backend = class Backend {
 
         return ops.merge({
             [this.arrName]: ops.push(id, branch[this.arrName]),
-            [this.mapName]: ops.merge({[id]: entry}, branch[this.mapName]),
+            [this.mapName]: ops.merge({ [id]: entry }, branch[this.mapName]),
         }, branch);
     }
 

@@ -46,7 +46,7 @@ describe('Backend', () => {
                 if (iteratorIndex === times - 1) done = true;
                 expect(iterator.next()).to.deep.equal({
                     value: state.itemsById[iteratorIndex],
-                    done: done,
+                    done,
                 });
                 iteratorIndex++;
             }
@@ -60,7 +60,7 @@ describe('Backend', () => {
         });
 
         it('correctly inserts an entry', () => {
-            const entry = {id: 3, data: 'newdata!'};
+            const entry = { id: 3, data: 'newdata!' };
             const newState = backend.insert(mockTx, state, entry);
 
             expect(newState).to.not.equal(state);
@@ -86,7 +86,7 @@ describe('Backend', () => {
         });
 
         it('correctly updates entries with a merging object', () => {
-            const toMergeObj = {data: 'modifiedData'};
+            const toMergeObj = { data: 'modifiedData' };
             const idsToUpdate = [1, 2];
             const newState = backend.update(mockTx, state, idsToUpdate, toMergeObj);
 

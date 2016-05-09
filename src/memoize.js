@@ -58,9 +58,9 @@ export function memoize(func, equalityCheck = eqCheck, modelSchema) {
         const ormIsEqual = lastOrmState === ormState ||
                            !shouldRun(modelNameToInvalidatorMap, ormState);
 
-        const argsAreEqual = lastArgs && otherArgs.every((value, index) => {
-            return equalityCheck(value, lastArgs[index]);
-        });
+        const argsAreEqual = lastArgs && otherArgs.every(
+            (value, index) => equalityCheck(value, lastArgs[index])
+        );
 
         if (ormIsEqual && argsAreEqual) {
             return lastResult;
@@ -76,9 +76,8 @@ export function memoize(func, equalityCheck = eqCheck, modelSchema) {
         // models are accessed and add their invalidator functions.
         session.accessedModels.forEach(modelName => {
             if (!modelNameToInvalidatorMap.hasOwnProperty(modelName)) {
-                modelNameToInvalidatorMap[modelName] = nextState => {
-                    return lastOrmState[modelName] !== nextState[modelName];
-                };
+                modelNameToInvalidatorMap[modelName] = nextState =>
+                    lastOrmState[modelName] !== nextState[modelName];
             }
         });
 

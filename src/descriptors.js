@@ -54,7 +54,7 @@ function backwardOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
             const thisId = this.getId();
             let found;
             try {
-                found = declaredFromModel.get({[declaredFieldName]: thisId});
+                found = declaredFromModel.get({ [declaredFieldName]: thisId });
             } catch (e) {
                 return null;
             }
@@ -73,7 +73,7 @@ function backwardManyToOneDescriptor(declaredFieldName, declaredFromModelName) {
             const currentSession = this.getClass().session;
             const declaredFromModel = currentSession[declaredFromModelName];
             const thisId = this.getId();
-            return declaredFromModel.filter({[declaredFieldName]: thisId});
+            return declaredFromModel.filter({ [declaredFieldName]: thisId });
         },
         set() {
             throw new Error('Can\'t mutate a reverse many-to-one relation.');
@@ -111,9 +111,8 @@ function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throug
 
                 const filterWithAttr = reverse ? fromFieldName : toFieldName;
 
-                const existingQs = throughQs.withRefs.filter(through => {
-                    return includes(idsToAdd, through[filterWithAttr]);
-                });
+                const existingQs = throughQs.withRefs
+                    .filter(through => includes(idsToAdd, through[filterWithAttr]));
 
                 if (existingQs.exists()) {
                     const existingIds = existingQs.withRefs.map(through => through[filterWithAttr]);
@@ -145,9 +144,8 @@ function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throug
                 const idsToRemove = entities.map(normalizeEntity);
 
                 const attrInIdsToRemove = reverse ? fromFieldName : toFieldName;
-                const entitiesToDelete = throughQs.withRefs.filter(through => {
-                    return includes(idsToRemove, through[attrInIdsToRemove]);
-                });
+                const entitiesToDelete = throughQs.withRefs
+                    .filter(through => includes(idsToRemove, through[attrInIdsToRemove]));
 
                 if (entitiesToDelete.count() !== idsToRemove.length) {
                     // Tried deleting non-existing entities.

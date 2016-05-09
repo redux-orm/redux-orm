@@ -60,7 +60,7 @@ const QuerySet = class QuerySet {
      */
     get withRefs() {
         if (!this._withRefs) {
-            return this._new(this.idArr, {withRefs: true});
+            return this._new(this.idArr, { withRefs: true });
         }
         return this;
     }
@@ -81,15 +81,16 @@ const QuerySet = class QuerySet {
      */
     get withModels() {
         if (this._withRefs) {
-            return this._new(this.idArr, {withRefs: false});
+            return this._new(this.idArr, { withRefs: false });
         }
         return this;
     }
 
     toString() {
-        return 'QuerySet contents: \n    - ' + this.idArr.map(id => {
-            return this.modelClass.withId(id).toString();
-        }).join('\n    - ');
+        const contents = this.idArr.map(id =>
+            this.modelClass.withId(id).toString()
+        ).join('\n    - ');
+        return `QuerySet contents: \n    - ${contents}`;
     }
 
     /**
@@ -100,9 +101,7 @@ const QuerySet = class QuerySet {
      *                    the QuerySet
      */
     toRefArray() {
-        return this.idArr.map(id => {
-            return this.modelClass.accessId(id);
-        });
+        return this.idArr.map(id => this.modelClass.accessId(id));
     }
 
     /**
@@ -110,9 +109,7 @@ const QuerySet = class QuerySet {
      * @return {Model[]} model instances represented by the QuerySet
      */
     toModelArray() {
-        return this.idArr.map((_, idx) => {
-            return this.at(idx);
-        });
+        return this.idArr.map((_, idx) => this.at(idx));
     }
 
     /**
@@ -224,7 +221,7 @@ const QuerySet = class QuerySet {
 
         const newIdArr = filteredEntities.map(getIdFunc);
 
-        return this._new(newIdArr, {withRefs: false});
+        return this._new(newIdArr, { withRefs: false });
     }
 
     /**
@@ -253,9 +250,7 @@ const QuerySet = class QuerySet {
      * @return {Array}  the mapped array
      */
     map(func) {
-        return this.idArr.map((_, idx) => {
-            return func(this.at(idx));
-        });
+        return this.idArr.map((_, idx) => func(this.at(idx)));
     }
 
     /**
@@ -297,7 +292,7 @@ const QuerySet = class QuerySet {
         const sortedEntities = orderBy.call(null, entities, iterateeArgs, orders);
         return this._new(
             sortedEntities.map(entity => entity[this.modelClass.idAttribute]),
-            {withRefs: false});
+            { withRefs: false });
     }
 
     /**

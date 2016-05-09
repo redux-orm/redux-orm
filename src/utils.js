@@ -78,9 +78,7 @@ class ListIterator {
  */
 function match(lookupObj, entity) {
     const keys = Object.keys(lookupObj);
-    return keys.every((key) => {
-        return lookupObj[key] === entity[key];
-    });
+    return keys.every(key => lookupObj[key] === entity[key]);
 }
 
 function capitalize(string) {
