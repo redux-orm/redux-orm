@@ -404,9 +404,8 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
 ```javascript
 {
     idAttribute: 'id',
-    indexById: true, // if false, data will be held in a single object array
     arrName: 'items',
-    mapName: 'itemsById', // will be ignored if `indexById` is `false`
+    mapName: 'itemsById',
 };
 ```
 
@@ -415,11 +414,15 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
 
 Minor changes before 1.0.0 can include breaking changes.
 
-### 0.7.1
+### 0.8.0
 
-Added **batched mutations.** This is a big performance improvement. Previously adding 10,000 objects would take 15s, now it takes about 0.5s.
+Adds **batched mutations.** This is a big performance improvement. Previously adding 10,000 objects would take 15s, now it takes about 0.5s. Batched mutations are implemented using [`immutable-ops`](https://github.com/tommikaikkonen/immutable-ops) internally.
 
-No breaking changes unless you've had custom `Backend` or `Session` classes, or have overridden `Model.getNextState`. In that case, please check out the diff.
+**Breaking changes**:
+
+- Removed `indexById` option from Backend. This means that data will always be stored in both an array of id's and a map of `id => entity`, which was the default setting. If you didn't explicitly set `indexById` to `false`, you don't need to change anything.
+
+- Batched mutations brought some internal changes. If you had custom `Backend` or `Session` classes, or have overridden `Model.getNextState`, please check out the diff.
 
 ### 0.7.0
 
