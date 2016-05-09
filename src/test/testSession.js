@@ -70,10 +70,9 @@ describe('Session', () => {
     it('adds updates', () => {
         const session = schema.from(defaultState);
         expect(session.updates).to.have.length(0);
-        const updateObj = {};
+        const updateObj = { meta: { name: 'MockModel' }};
         session.addUpdate(updateObj);
         expect(session.updates).to.have.length(1);
-        expect(session.updates[0]).to.equal(updateObj);
     });
 
     describe('gets the next state', () => {
@@ -87,7 +86,7 @@ describe('Session', () => {
         it('with updates, a new state is returned', () => {
             const session = schema.from(defaultState);
 
-            session.updates.push({
+            session.addUpdate({
                 type: CREATE,
                 meta: {
                     name: Author.modelName,

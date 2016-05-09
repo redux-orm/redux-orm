@@ -1,5 +1,5 @@
-import partition from 'lodash/partition';
 import Transaction from './Transaction';
+import { ops } from './utils';
 
 /**
  * Session handles a single
@@ -21,7 +21,7 @@ const Session = class Session {
         this.action = action;
         this.withMutations = !!withMutations;
 
-        this.updates = [];
+        this.currentTx = new Transaction();
 
         this._accessedModels = {};
         this.modelData = {};
@@ -75,24 +75,16 @@ const Session = class Session {
             // will mutate the model state.
             this[modelName].updateReducer(null, modelState, update);
         } else {
-            this.updates.push(update);
+            this.currentTx.addUpdate(update);
         }
     }
 
-    /**
-     * Gets the recorded updates for `modelClass` and
-     * deletes them from the {@link Session} instance updates list.
-     *
-     * @private
-     * @param  {Model} modelClass - the model class to get updates for
-     * @return {Object[]} A list of the user-recorded updates for `modelClass`.
-     */
-    getUpdatesFor(modelClass) {
-        const [updates, other] = partition(
-            this.updates,
-            ['meta.name', modelClass.modelName]);
-        this.updates = other;
-        return updates;
+    getUpdatesFor(modelName) {
+        return this.currentTx.getUpdatesFor(modelName);
+    }
+
+    get updates() {
+        return this.currentTx.updates.map(update => update.update);
     }
 
     /**
@@ -129,33 +121,38 @@ const Session = class Session {
             ? opts.runReducers
             : !!action;
 
+        const tx = this.currentTx;
+        ops.open();
+
+        let nextState = prevState;
         if (runReducers) {
-            this.sessionBoundModels.forEach(modelClass => {
+            nextState = this.sessionBoundModels.reduce((_nextState, modelClass) => {
                 const modelState = this.getState(modelClass.modelName);
-                modelClass.reducer(modelState, action, modelClass, this);
-            });
+
+                let returnValue = modelClass.reducer(modelState, action, modelClass, this);
+                if (typeof returnValue === 'undefined') {
+                    returnValue = modelClass.getNextState(tx);
+                }
+                return ops.set(modelClass.modelName, returnValue, _nextState);
+            }, nextState);
         }
 
-        const tx = new Transaction(this.updates);
-
-        const nextState = this.sessionBoundModels.reduce((_nextState, modelClass) => {
-            const nextModelState = modelClass.getNextState(tx);
-            if (nextModelState !== prevState[modelClass.modelName]) {
-                if (_nextState === prevState) {
-                    // We know that something has changed, so we cannot
-                    // return the previous state. Switching this reduce function
-                    // to use a shallowcopied version of the previous state.
-                    const prevStateCopied = Object.assign({}, prevState);
-                    prevStateCopied[modelClass.modelName] = nextModelState;
-                    return prevStateCopied;
+        // There might be some m2m updates left.
+        const unappliedUpdates = this.currentTx.getUnappliedUpdatesByModel();
+        if (unappliedUpdates) {
+            nextState = this.sessionBoundModels.reduce((_nextState, modelClass) => {
+                const modelName = modelClass.modelName;
+                if (!unappliedUpdates.hasOwnProperty(modelName)) {
+                    return _nextState;
                 }
-                _nextState[modelClass.modelName] = nextModelState;
-            }
-            return _nextState;
-        }, prevState);
 
-        this.updates = [];
+                return ops.set(modelName, modelClass.getNextState(tx), _nextState);
+            }, nextState);
+        }
+
+        ops.close();
         tx.close();
+        this.currentTx = new Transaction();
 
         return nextState;
     }

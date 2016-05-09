@@ -1,7 +1,8 @@
 import find from 'lodash/find';
-import omit from 'lodash/omit';
-import {ListIterator, objectDiff} from './utils';
+import { ListIterator } from './utils';
 import getImmutableOps from 'immutable-ops';
+
+const globalOps = getImmutableOps();
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
@@ -58,7 +59,7 @@ const Backend = class Backend {
 
     getOps(tx) {
         if (!tx) {
-            return getImmutableOps();
+            return globalOps;
         }
         if (!tx.meta.hasOwnProperty('ops')) {
             tx.meta.ops = getImmutableOps();
@@ -122,25 +123,25 @@ const Backend = class Backend {
             const id = entry[this.idAttribute];
 
             if (this.withMutations) {
-                branch[this.arrName].push(id);
-                branch[this.mapName][id] = entry;
+                ops.mutable.push(id, branch[this.arrName]);
+                ops.mutable.set(id, entry, branch[this.mapName]);
                 return branch;
             }
 
-            return {
+
+            return ops.merge({
                 [this.arrName]: ops.push(id, branch[this.arrName]),
                 [this.mapName]: ops.merge({[id]: entry}, branch[this.mapName]),
-            };
+            }, branch);
         }
 
         if (this.withMutations) {
-            branch[this.arrName].push(entry);
-            return branch;
+            return ops.mutable.push(entry, branch);
         }
 
-        return {
+        return ops.merge({
             [this.arrName]: ops.push(entry, branch[this.arrName]),
-        };
+        }, branch);
     }
 
     /**
@@ -156,7 +157,6 @@ const Backend = class Backend {
      */
     update(tx, branch, idArr, mergeObj) {
         const ops = this.getOps(tx);
-        const returnBranch = this.withMutations ? branch : {};
 
         const {
             arrName,
@@ -165,29 +165,22 @@ const Backend = class Backend {
         } = this;
 
         const mapFunction = entity => {
-            const assignTo = this.withMutations ? entity : {};
             const merge = this.withMutations ? ops.mutable.merge : ops.merge;
-            return merge([entity, mergeObj], assignTo);
+            return merge(mergeObj, entity);
         };
 
+        const set = this.withMutations ? ops.mutable.set : ops.set;
+
         if (this.indexById) {
-            if (!this.withMutations) {
-                returnBranch[mapName] = Object.assign({}, branch[mapName]);
-                returnBranch[arrName] = branch[arrName];
-            }
-
-            const updatedMap = idArr.reduce((map, id) => {
+            const newMap = idArr.reduce((map, id) => {
                 const result = mapFunction(branch[mapName][id]);
-                if (result !== branch[mapName][id]) map[id] = result;
-                return map;
-            }, {});
-
-            returnBranch[mapName] = ops.merge(updatedMap, returnBranch[mapName]);
-            return returnBranch;
+                return set(id, result, map);
+            }, branch[mapName]);
+            return ops.set(mapName, newMap, branch);
         }
 
         let updated = false;
-        returnBranch[arrName] = branch[arrName].map(entity => {
+        const newArr = branch[arrName].map(entity => {
             if (idArr.includes(entity[idAttribute])) {
                 const result = mapFunction(entity);
                 if (entity !== result) {
@@ -197,7 +190,8 @@ const Backend = class Backend {
             }
             return entity;
         });
-        return updated ? returnBranch : branch;
+
+        return updated ? set(arrName, newArr, branch) : branch;
     }
 
     /**
@@ -224,10 +218,11 @@ const Backend = class Backend {
                 });
                 return branch;
             }
-            return {
+
+            return ops.merge({
                 [arrName]: ops.filter(id => !idsToDelete.includes(id), branch[arrName]),
                 [mapName]: ops.omit(idsToDelete, branch[mapName]),
-            };
+            }, branch);
         }
 
         if (this.withMutations) {
@@ -240,9 +235,9 @@ const Backend = class Backend {
             return branch;
         }
 
-        return {
+        return ops.merge({
             [arrName]: ops.filter(entity => !idsToDelete.includes(entity[idAttribute]), arr),
-        };
+        }, branch);
     }
 };
 

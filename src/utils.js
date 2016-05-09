@@ -1,6 +1,5 @@
 import forOwn from 'lodash/forOwn';
-import intersection from 'lodash/intersection';
-import difference from 'lodash/difference';
+import getImmutableOps from 'immutable-ops';
 
 /**
  * @module utils
@@ -203,50 +202,6 @@ function normalizeEntity(entity) {
     return entity;
 }
 
-/**
- * Checks if `target` needs to be merged with
- * `source`. Does a shallow equal check on the `source`
- * object's own properties against the same
- * properties on `target`. If all properties are equal,
- * returns `null`. Otherwise returns an object
- * with the properties that did not pass
- * the equality check. The returned object
- * can be used to update `target` immutably
- * while sharing more structure.
- *
- * @private
- * @param  {Object} target - the object to update
- * @param  {Object} source - the updated props
- * @return {Object|null} an object with the inequal props from `source`
- *                        or `null` if no updates or needed.
- */
-function objectDiff(target, source) {
-    const diffObj = {};
-    let shouldUpdate = false;
-    forOwn(source, (value, key) => {
-        if (!target.hasOwnProperty(key) ||
-                target[key] !== source[key]) {
-            shouldUpdate = true;
-            diffObj[key] = value;
-        }
-    });
-    return shouldUpdate ? diffObj : null;
-}
-
-function arrayDiffActions(targetArr, sourceArr) {
-    const itemsInBoth = intersection(targetArr, sourceArr);
-    const deleteItems = difference(targetArr, itemsInBoth);
-    const addItems = difference(sourceArr, itemsInBoth);
-
-    if (deleteItems.length || addItems.length) {
-        return {
-            delete: deleteItems,
-            add: addItems,
-        };
-    }
-    return null;
-}
-
 function reverseFieldErrorMessage(modelName, fieldName, toModelName, backwardsFieldName) {
     return [`Reverse field ${backwardsFieldName} already defined`,
            ` on model ${toModelName}. To fix, set a custom related`,
@@ -271,6 +226,9 @@ function objectShallowEquals(a, b) {
     return keysInA === keysInB;
 }
 
+// A global instance of immutable-ops for general use
+const ops = getImmutableOps();
+
 export {
     match,
     attachQuerySetMethods,
@@ -280,8 +238,7 @@ export {
     reverseFieldName,
     ListIterator,
     normalizeEntity,
-    objectDiff,
-    arrayDiffActions,
     reverseFieldErrorMessage,
     objectShallowEquals,
+    ops,
 };

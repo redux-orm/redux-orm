@@ -4,10 +4,10 @@ import groupBy from 'lodash/groupBy';
  * Handles a single unit of work on the database backend.
  */
 const Transaction = class Transaction {
-    constructor(updates) {
-        this.updates = updates.map(update => ({ update, applied: false }));
+    constructor() {
+        this.updates = [];
+        this.updatesByModelName = {};
 
-        this.updatesByModelName = groupBy(this.updates, 'update.meta.name');
         this.meta = {};
         this.onCloseCallbacks = [];
     }
@@ -23,11 +23,36 @@ const Transaction = class Transaction {
             .map(update => update.update);
     }
 
+    getUnappliedUpdatesByModel() {
+        const unappliedUpdates = this.updates
+            .filter(update => !update.applied)
+            .map(update => update.update);
+        if (unappliedUpdates.length) {
+            return groupBy(unappliedUpdates, 'meta.name');
+        }
+        return null;
+    }
+
     markApplied(modelClass) {
         const modelName = modelClass.modelName;
         this.updatesByModelName[modelName].forEach(update => {
             update.applied = true; // eslint-disable-line no-param-reassign
         });
+    }
+
+    addUpdate(_update) {
+        const update = { update: _update, applied: false };
+        this.updates.push(update);
+        const modelName = _update.meta.name;
+        if (this.updatesByModelName.hasOwnProperty(modelName)) {
+            this.updatesByModelName[modelName].push(update);
+        } else {
+            this.updatesByModelName[modelName] = [update];
+        }
+    }
+
+    addUpdates(updates) {
+        updates.forEach(update => this.addUpdate(update));
     }
 
     onClose(fn) {

@@ -142,7 +142,9 @@ const Model = class Model {
      * @param {Transction} tx - the current Transaction instance
      * @return {Object} The next state.
      */
-    static getNextState(tx) {
+    static getNextState(_tx) {
+        const tx = _tx || this.session.currentTx;
+
         let state;
         if (this._sessionData.hasOwnProperty('nextState')) {
             state = this._sessionData.nextState;
@@ -151,6 +153,7 @@ const Model = class Model {
         }
 
         const updates = tx.getUpdatesFor(this);
+
         if (updates.length > 0) {
             const nextState = updates.reduce(this.updateReducer.bind(this, tx), state);
             this._sessionData.nextState = nextState;
@@ -196,7 +199,7 @@ const Model = class Model {
      * @return {Object} the next state for the Model
      */
     static reducer(state, action, model, session) { // eslint-disable-line
-        return undefined;
+        return this.getNextState();
     }
 
     /**
