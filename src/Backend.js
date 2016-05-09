@@ -1,6 +1,7 @@
 import find from 'lodash/find';
 import omit from 'lodash/omit';
 import {ListIterator, objectDiff} from './utils';
+import getImmutableOps from 'immutable-ops';
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
@@ -55,6 +56,20 @@ const Backend = class Backend {
         return branch[this.arrName];
     }
 
+    getOps(tx) {
+        if (!tx) {
+            return getImmutableOps();
+        }
+        if (!tx.meta.hasOwnProperty('ops')) {
+            tx.meta.ops = getImmutableOps();
+            tx.meta.ops.open();
+            tx.onClose(_tx => {
+                _tx.meta.ops.close();
+            });
+        }
+        return tx.meta.ops;
+    }
+
     /**
      * Returns a {@link ListIterator} instance for
      * the list of objects in `branch`.
@@ -102,6 +117,7 @@ const Backend = class Backend {
      * @return {Object} the data structure including `entry`.
      */
     insert(tx, branch, entry) {
+        const ops = this.getOps(tx);
         if (this.indexById) {
             const id = entry[this.idAttribute];
 
@@ -110,9 +126,10 @@ const Backend = class Backend {
                 branch[this.mapName][id] = entry;
                 return branch;
             }
+
             return {
-                [this.arrName]: branch[this.arrName].concat(id),
-                [this.mapName]: Object.assign({}, branch[this.mapName], {[id]: entry}),
+                [this.arrName]: ops.push(id, branch[this.arrName]),
+                [this.mapName]: ops.merge({[id]: entry}, branch[this.mapName]),
             };
         }
 
@@ -122,7 +139,7 @@ const Backend = class Backend {
         }
 
         return {
-            [this.arrName]: branch[this.arrName].concat(entry),
+            [this.arrName]: ops.push(entry, branch[this.arrName]),
         };
     }
 
@@ -138,6 +155,7 @@ const Backend = class Backend {
      * @return {Object} the data structure with objects with their id in `idArr` updated with `mergeObj`.
      */
     update(tx, branch, idArr, mergeObj) {
+        const ops = this.getOps(tx);
         const returnBranch = this.withMutations ? branch : {};
 
         const {
@@ -148,11 +166,8 @@ const Backend = class Backend {
 
         const mapFunction = entity => {
             const assignTo = this.withMutations ? entity : {};
-            const diff = objectDiff(entity, mergeObj);
-            if (diff) {
-                return Object.assign(assignTo, entity, mergeObj);
-            }
-            return entity;
+            const merge = this.withMutations ? ops.mutable.merge : ops.merge;
+            return merge([entity, mergeObj], assignTo);
         };
 
         if (this.indexById) {
@@ -161,19 +176,13 @@ const Backend = class Backend {
                 returnBranch[arrName] = branch[arrName];
             }
 
-            const updatedMap = {};
-            idArr.reduce((map, id) => {
+            const updatedMap = idArr.reduce((map, id) => {
                 const result = mapFunction(branch[mapName][id]);
                 if (result !== branch[mapName][id]) map[id] = result;
                 return map;
-            }, updatedMap);
+            }, {});
 
-            const diff = objectDiff(returnBranch[mapName], updatedMap);
-            if (diff) {
-                Object.assign(returnBranch[mapName], diff);
-            } else {
-                return branch;
-            }
+            returnBranch[mapName] = ops.merge(updatedMap, returnBranch[mapName]);
             return returnBranch;
         }
 
@@ -199,7 +208,9 @@ const Backend = class Backend {
      * @return {Object} the data structure without ids in `idsToDelete`.
      */
     delete(tx, branch, idsToDelete) {
-        const {arrName, mapName, idAttribute} = this;
+        const ops = this.getOps(tx);
+
+        const { arrName, mapName, idAttribute } = this;
         const arr = branch[arrName];
 
         if (this.indexById) {
@@ -207,15 +218,15 @@ const Backend = class Backend {
                 idsToDelete.forEach(id => {
                     const idx = arr.indexOf(id);
                     if (idx !== -1) {
-                        arr.splice(idx, 1);
+                        ops.mutable.splice(idx, 1, [], arr);
                     }
-                    delete branch[mapName][id];
+                    ops.mutable.omit(id, branch[mapName]);
                 });
                 return branch;
             }
             return {
-                [arrName]: branch[arrName].filter(id => !idsToDelete.includes(id)),
-                [mapName]: omit(branch[mapName], idsToDelete),
+                [arrName]: ops.filter(id => !idsToDelete.includes(id), branch[arrName]),
+                [mapName]: ops.omit(idsToDelete, branch[mapName]),
             };
         }
 
@@ -223,14 +234,14 @@ const Backend = class Backend {
             idsToDelete.forEach(id => {
                 const idx = arr.indexOf(id);
                 if (idx === -1) {
-                    arr.splice(idx, 1);
+                    ops.mutable.splice(idx, 1, [], arr);
                 }
             });
             return branch;
         }
 
         return {
-            [arrName]: arr.filter(entity => !idsToDelete.includes(entity[idAttribute])),
+            [arrName]: ops.filter(entity => !idsToDelete.includes(entity[idAttribute]), arr),
         };
     }
 };

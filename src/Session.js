@@ -155,6 +155,7 @@ const Session = class Session {
         }, prevState);
 
         this.updates = [];
+        tx.close();
 
         return nextState;
     }

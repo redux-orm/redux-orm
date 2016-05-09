@@ -9,6 +9,7 @@ const Transaction = class Transaction {
 
         this.updatesByModelName = groupBy(this.updates, 'update.meta.name');
         this.meta = {};
+        this.onCloseCallbacks = [];
     }
 
     getUpdatesFor(modelClass) {
@@ -27,6 +28,14 @@ const Transaction = class Transaction {
         this.updatesByModelName[modelName].forEach(update => {
             update.applied = true; // eslint-disable-line no-param-reassign
         });
+    }
+
+    onClose(fn) {
+        this.onCloseCallbacks.push(fn);
+    }
+
+    close() {
+        this.onCloseCallbacks.forEach(cb => cb.call(null, this));
     }
 };
 
