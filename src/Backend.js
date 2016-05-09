@@ -1,4 +1,4 @@
-import { ListIterator } from './utils';
+import { ListIterator, includes } from './utils';
 import getImmutableOps from 'immutable-ops';
 
 const globalOps = getImmutableOps();
@@ -172,7 +172,7 @@ const Backend = class Backend {
         }
 
         return ops.merge({
-            [arrName]: ops.filter(id => !idsToDelete.includes(id), branch[arrName]),
+            [arrName]: ops.filter(id => !includes(idsToDelete, id), branch[arrName]),
             [mapName]: ops.omit(idsToDelete, branch[mapName]),
         }, branch);
     }

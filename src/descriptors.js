@@ -4,6 +4,7 @@ import {
     m2mFromFieldName,
     m2mToFieldName,
     normalizeEntity,
+    includes,
 } from './utils';
 
 // Forwards side a Foreign Key: returns one object.
@@ -111,7 +112,7 @@ function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throug
                 const filterWithAttr = reverse ? fromFieldName : toFieldName;
 
                 const existingQs = throughQs.withRefs.filter(through => {
-                    return idsToAdd.includes(through[filterWithAttr]);
+                    return includes(idsToAdd, through[filterWithAttr]);
                 });
 
                 if (existingQs.exists()) {
@@ -145,7 +146,7 @@ function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throug
 
                 const attrInIdsToRemove = reverse ? fromFieldName : toFieldName;
                 const entitiesToDelete = throughQs.withRefs.filter(through => {
-                    return idsToRemove.includes(through[attrInIdsToRemove]);
+                    return includes(idsToRemove, through[attrInIdsToRemove]);
                 });
 
                 if (entitiesToDelete.count() !== idsToRemove.length) {

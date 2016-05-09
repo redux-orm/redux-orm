@@ -1,4 +1,5 @@
 import forOwn from 'lodash/forOwn';
+import includes from 'lodash/includes';
 import getImmutableOps from 'immutable-ops';
 
 /**
@@ -241,4 +242,5 @@ export {
     reverseFieldErrorMessage,
     objectShallowEquals,
     ops,
+    includes,
 };
