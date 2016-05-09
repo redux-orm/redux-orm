@@ -415,6 +415,12 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
 
 Minor changes before 1.0.0 can include breaking changes.
 
+### 0.7.1
+
+Added **batched mutations.** This is a big performance improvement. Previously adding 10,000 objects would take 15s, now it takes about 0.5s.
+
+No breaking changes unless you've had custom `Backend` or `Session` classes, or have overridden `Model.getNextState`. In that case, please check out the diff.
+
 ### 0.7.0
 
 **Breaking changes**:
