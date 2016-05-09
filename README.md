@@ -229,7 +229,7 @@ By default, each Model has the following JavaScript object representation:
 
 This representation maintains an array of object ID's and an index of id's for quick access. (A single object array representation is also provided for use. It is possible to subclass `Backend` to use any structure you want).
 
-`redux-orm` runs a mini-redux inside it. It queues any updates the library user records with action-like objects, and when `getNextState` is called, it applies those actions with its internal reducers. There's some room here to provide performance optimizations similar to Immutable.js.
+`redux-orm` runs a mini-redux inside it. It queues any updates the library user records with action-like objects, and when `getNextState` is called, it applies those actions with its internal reducers. Updates within each `getNextState` are implemented with batched mutations, so even a big number of updates should be pretty performant.
 
 ### Customizability
 
