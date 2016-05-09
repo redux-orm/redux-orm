@@ -26,9 +26,10 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import find from 'lodash/collection/find';
-import omit from 'lodash/object/omit';
-import {ListIterator, objectDiff} from './utils';
+            <pre class="prettyprint source linenums"><code>import { ListIterator, includes } from './utils';
+import getImmutableOps from 'immutable-ops';
+
+const globalOps = getImmutableOps();
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
@@ -38,13 +39,9 @@ const Backend = class Backend {
      * Creates a new {@link Backend} instance.
      * @param  {Object} userOpts - options to use.
      * @param  {string} [userOpts.idAttribute=id] - the id attribute of the entity.
-     * @param  {Boolean} [userOpts.indexById=true] - a boolean indicating if the entities
-     *                                               should be indexed by `idAttribute`.
      * @param  {string} [userOpts.arrName=items] - the state attribute where an array of
-     *                                             either entity id's (if `indexById === true`)
-     *                                             or the entity objects are stored.
-     * @param  {string} [userOpts.mapName=itemsById] - if `indexById === true`, the state
-     *                                                 attribute where the entity objects
+     *                                             entity id's are stored
+     * @param  {string} [userOpts.mapName=itemsById] - the state attribute where the entity objects
      *                                                 are stored in a id to entity object
      *                                                 map.
      * @param  {Boolean} [userOpts.withMutations=false] - a boolean indicating if the backend
@@ -54,7 +51,6 @@ const Backend = class Backend {
     constructor(userOpts) {
         const defaultOpts = {
             idAttribute: 'id',
-            indexById: true,
             arrName: 'items',
             mapName: 'itemsById',
             withMutations: false,
@@ -73,15 +69,25 @@ const Backend = class Backend {
      *                            `undefined` if not found.
      */
     accessId(branch, id) {
-        if (this.indexById) {
-            return branch[this.mapName][id];
-        }
-
-        return find(branch[this.arrName], {[this.idAttribute]: id});
+        return branch[this.mapName][id];
     }
 
     accessIdList(branch) {
         return branch[this.arrName];
+    }
+
+    getOps(tx) {
+        if (!tx) {
+            return globalOps;
+        }
+        if (!tx.meta.hasOwnProperty('ops')) {
+            tx.meta.ops = getImmutableOps();
+            tx.meta.ops.open();
+            tx.onClose(_tx => {
+                _tx.meta.ops.close();
+            });
+        }
+        return tx.meta.ops;
     }
 
     /**
@@ -92,17 +98,17 @@ const Backend = class Backend {
      * @return {ListIterator} An iterator that loops through the objects in `branch`
      */
     iterator(branch) {
-        if (this.indexById) {
-            return new ListIterator(branch[this.arrName], 0, (list, idx) => branch[this.mapName][list[idx]]);
-        }
-
-        return new ListIterator(branch[this.arrName], 0);
+        return new ListIterator(
+            branch[this.arrName],
+            0,
+            (list, idx) => branch[this.mapName][list[idx]]
+        );
     }
 
     accessList(branch) {
         return branch[this.arrName].map(id => {
             const obj = this.accessId(branch, id);
-            return Object.assign({[this.idAttribute]: id}, obj);
+            return Object.assign({ [this.idAttribute]: id }, obj);
         });
     }
 
@@ -111,154 +117,96 @@ const Backend = class Backend {
      * @return {Object} The default state for this {@link Backend} instance's data structure
      */
     getDefaultState() {
-        if (this.indexById) {
-            return {
-                [this.arrName]: [],
-                [this.mapName]: {},
-            };
-        }
-
         return {
             [this.arrName]: [],
+            [this.mapName]: {},
         };
     }
 
     /**
      * Returns the data structure including a new object `entry`
+     * @param  {Object} session - the current Session instance
      * @param  {Object} branch - the data structure state
      * @param  {Object} entry - the object to insert
      * @return {Object} the data structure including `entry`.
      */
-    insert(branch, entry) {
-        if (this.indexById) {
-            const id = entry[this.idAttribute];
-
-            if (this.withMutations) {
-                branch[this.arrName].push(id);
-                branch[this.mapName][id] = entry;
-                return branch;
-            }
-
-            return {
-                [this.arrName]: branch[this.arrName].concat(id),
-                [this.mapName]: Object.assign({}, branch[this.mapName], {[id]: entry}),
-            };
-        }
+    insert(tx, branch, entry) {
+        const ops = this.getOps(tx);
+        const id = entry[this.idAttribute];
 
         if (this.withMutations) {
-            branch[this.arrName].push(entry);
+            ops.mutable.push(id, branch[this.arrName]);
+            ops.mutable.set(id, entry, branch[this.mapName]);
             return branch;
         }
 
-        return {
-            [this.arrName]: branch[this.arrName].concat(entry),
-        };
+
+        return ops.merge({
+            [this.arrName]: ops.push(id, branch[this.arrName]),
+            [this.mapName]: ops.merge({ [id]: entry }, branch[this.mapName]),
+        }, branch);
     }
 
     /**
      * Returns the data structure with objects where id in `idArr`
      * are merged with `mergeObj`.
      *
+     * @param  {Object} session - the current Session instance
      * @param  {Object} branch - the data structure state
      * @param  {Array} idArr - the id's of the objects to update
      * @param  {Object} mergeObj - The object to merge with objects
      *                             where their id is in `idArr`.
      * @return {Object} the data structure with objects with their id in `idArr` updated with `mergeObj`.
      */
-    update(branch, idArr, mergeObj) {
-        const returnBranch = this.withMutations ? branch : {};
+    update(tx, branch, idArr, mergeObj) {
+        const ops = this.getOps(tx);
 
         const {
-            arrName,
             mapName,
-            idAttribute,
         } = this;
 
         const mapFunction = entity => {
-            const assignTo = this.withMutations ? entity : {};
-            const diff = objectDiff(entity, mergeObj);
-            if (diff) {
-                return Object.assign(assignTo, entity, mergeObj);
-            }
-            return entity;
+            const merge = this.withMutations ? ops.mutable.merge : ops.merge;
+            return merge(mergeObj, entity);
         };
 
-        if (this.indexById) {
-            if (!this.withMutations) {
-                returnBranch[mapName] = Object.assign({}, branch[mapName]);
-                returnBranch[arrName] = branch[arrName];
-            }
+        const set = this.withMutations ? ops.mutable.set : ops.set;
 
-            const updatedMap = {};
-            idArr.reduce((map, id) => {
-                const result = mapFunction(branch[mapName][id]);
-                if (result !== branch[mapName][id]) map[id] = result;
-                return map;
-            }, updatedMap);
-
-            const diff = objectDiff(returnBranch[mapName], updatedMap);
-            if (diff) {
-                Object.assign(returnBranch[mapName], diff);
-            } else {
-                return branch;
-            }
-            return returnBranch;
-        }
-
-        let updated = false;
-        returnBranch[arrName] = branch[arrName].map(entity => {
-            if (idArr.includes(entity[idAttribute])) {
-                const result = mapFunction(entity);
-                if (entity !== result) {
-                    updated = true;
-                }
-                return mapFunction(entity);
-            }
-            return entity;
-        });
-        return updated ? returnBranch : branch;
+        const newMap = idArr.reduce((map, id) => {
+            const result = mapFunction(branch[mapName][id]);
+            return set(id, result, map);
+        }, branch[mapName]);
+        return ops.set(mapName, newMap, branch);
     }
 
     /**
      * Returns the data structure without objects with their id included in `idsToDelete`.
+     * @param  {Object} session - the current Session instance
      * @param  {Object} branch - the data structure state
      * @param  {Array} idsToDelete - the ids to delete from the data structure
      * @return {Object} the data structure without ids in `idsToDelete`.
      */
-    delete(branch, idsToDelete) {
-        const {arrName, mapName, idAttribute} = this;
-        const arr = branch[arrName];
+    delete(tx, branch, idsToDelete) {
+        const ops = this.getOps(tx);
 
-        if (this.indexById) {
-            if (this.withMutations) {
-                idsToDelete.forEach(id => {
-                    const idx = arr.indexOf(id);
-                    if (idx !== -1) {
-                        arr.splice(idx, 1);
-                    }
-                    delete branch[mapName][id];
-                });
-                return branch;
-            }
-            return {
-                [arrName]: branch[arrName].filter(id => !idsToDelete.includes(id)),
-                [mapName]: omit(branch[mapName], idsToDelete),
-            };
-        }
+        const { arrName, mapName } = this;
+        const arr = branch[arrName];
 
         if (this.withMutations) {
             idsToDelete.forEach(id => {
                 const idx = arr.indexOf(id);
-                if (idx === -1) {
-                    arr.splice(idx, 1);
+                if (idx !== -1) {
+                    ops.mutable.splice(idx, 1, [], arr);
                 }
+                ops.mutable.omit(id, branch[mapName]);
             });
             return branch;
         }
 
-        return {
-            [arrName]: arr.filter(entity => !idsToDelete.includes(entity[idAttribute])),
-        };
+        return ops.merge({
+            [arrName]: ops.filter(id => !includes(idsToDelete, id), branch[arrName]),
+            [mapName]: ops.omit(idsToDelete, branch[mapName]),
+        }, branch);
     }
 };
 
@@ -273,13 +221,13 @@ export default Backend;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li><li><a href="Transaction.html">Transaction</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Apr 17 2016 15:06:35 GMT-0700 (PDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Mon May 09 2016 00:21:39 GMT-0700 (PDT)
 </footer>
 
 <script> prettyPrint(); </script>

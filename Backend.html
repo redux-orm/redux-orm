@@ -172,46 +172,6 @@
 
         <tr>
             
-                <td class="name"><code>indexById</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Boolean</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-                <td class="default">
-                
-                    true
-                
-                </td>
-            
-
-            <td class="description last"><p>a boolean indicating if the entities
-                                              should be indexed by <code>idAttribute</code>.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
                 <td class="name"><code>arrName</code></td>
             
 
@@ -245,8 +205,7 @@
             
 
             <td class="description last"><p>the state attribute where an array of
-                                            either entity id's (if <code>indexById === true</code>)
-                                            or the entity objects are stored.</p></td>
+                                            entity id's are stored</p></td>
         </tr>
 
     
@@ -285,8 +244,7 @@
                 </td>
             
 
-            <td class="description last"><p>if <code>indexById === true</code>, the state
-                                                attribute where the entity objects
+            <td class="description last"><p>the state attribute where the entity objects
                                                 are stored in a id to entity object
                                                 map.</p></td>
         </tr>
@@ -377,7 +335,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line8">line 8</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line9">line 9</a>
     </li></ul></dd>
     
 
@@ -550,7 +508,7 @@ in state <code>branch</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line47">line 47</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line43">line 43</a>
     </li></ul></dd>
     
 
@@ -607,7 +565,7 @@ in state <code>branch</code>.</p>
 
     
 
-    <h4 class="name" id="delete"><span class="type-signature"></span>delete<span class="signature">(branch, idsToDelete)</span><span class="type-signature"> &rarr; {Object}</span></h4>
+    <h4 class="name" id="delete"><span class="type-signature"></span>delete<span class="signature">(session, branch, idsToDelete)</span><span class="type-signature"> &rarr; {Object}</span></h4>
 
     
 
@@ -646,6 +604,29 @@ in state <code>branch</code>.</p>
     </thead>
 
     <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>session</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the current Session instance</p></td>
+        </tr>
+
     
 
         <tr>
@@ -730,7 +711,7 @@ in state <code>branch</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line200">line 200</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line161">line 161</a>
     </li></ul></dd>
     
 
@@ -834,7 +815,7 @@ in state <code>branch</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line85">line 85</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line91">line 91</a>
     </li></ul></dd>
     
 
@@ -887,7 +868,7 @@ in state <code>branch</code>.</p>
 
     
 
-    <h4 class="name" id="insert"><span class="type-signature"></span>insert<span class="signature">(branch, entry)</span><span class="type-signature"> &rarr; {Object}</span></h4>
+    <h4 class="name" id="insert"><span class="type-signature"></span>insert<span class="signature">(session, branch, entry)</span><span class="type-signature"> &rarr; {Object}</span></h4>
 
     
 
@@ -926,6 +907,29 @@ in state <code>branch</code>.</p>
     </thead>
 
     <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>session</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the current Session instance</p></td>
+        </tr>
+
     
 
         <tr>
@@ -1010,7 +1014,7 @@ in state <code>branch</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line104">line 104</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line105">line 105</a>
     </li></ul></dd>
     
 
@@ -1164,7 +1168,7 @@ the list of objects in <code>branch</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line66">line 66</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line72">line 72</a>
     </li></ul></dd>
     
 
@@ -1217,7 +1221,7 @@ the list of objects in <code>branch</code>.</p>
 
     
 
-    <h4 class="name" id="update"><span class="type-signature"></span>update<span class="signature">(branch, idArr, mergeObj)</span><span class="type-signature"> &rarr; {Object}</span></h4>
+    <h4 class="name" id="update"><span class="type-signature"></span>update<span class="signature">(session, branch, idArr, mergeObj)</span><span class="type-signature"> &rarr; {Object}</span></h4>
 
     
 
@@ -1257,6 +1261,29 @@ are merged with <code>mergeObj</code>.</p>
     </thead>
 
     <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>session</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the current Session instance</p></td>
+        </tr>
+
     
 
         <tr>
@@ -1365,7 +1392,7 @@ are merged with <code>mergeObj</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line140">line 140</a>
+        <a href="Backend.js.html">Backend.js</a>, <a href="Backend.js.html#line133">line 133</a>
     </li></ul></dd>
     
 
@@ -1429,13 +1456,13 @@ are merged with <code>mergeObj</code>.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li><li><a href="Transaction.html">Transaction</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Sun Apr 17 2016 15:06:35 GMT-0700 (PDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a> on Mon May 09 2016 00:21:39 GMT-0700 (PDT)
 </footer>
 
 <script> prettyPrint(); </script>
