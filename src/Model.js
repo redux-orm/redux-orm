@@ -561,7 +561,6 @@ const Model = class Model {
                     if (diffActions) {
                         const idsToDelete = diffActions.delete;
                         const idsToAdd = diffActions.add;
-
                         if (idsToDelete.length > 0) {
                             this[mergeKey].remove(...idsToDelete);
                         }

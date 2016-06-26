@@ -1,6 +1,8 @@
 import forOwn from 'lodash/forOwn';
 import includes from 'lodash/includes';
 import getImmutableOps from 'immutable-ops';
+import intersection from 'lodash/intersection';
+import difference from 'lodash/difference';
 
 /**
  * @module utils
@@ -225,6 +227,20 @@ function objectShallowEquals(a, b) {
     return keysInA === keysInB;
 }
 
+function arrayDiffActions(sourceArr, targetArr) {
+    const itemsInBoth = intersection(sourceArr, targetArr);
+    const deleteItems = difference(sourceArr, itemsInBoth);
+    const addItems = difference(targetArr, itemsInBoth);
+
+    if (deleteItems.length || addItems.length) {
+        return {
+            delete: deleteItems,
+            add: addItems,
+        };
+    }
+    return null;
+}
+
 // A global instance of immutable-ops for general use
 const ops = getImmutableOps();
 
@@ -241,4 +257,5 @@ export {
     objectShallowEquals,
     ops,
     includes,
+    arrayDiffActions,
 };

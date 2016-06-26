@@ -5,6 +5,7 @@ chai.use(sinonChai);
 const { expect } = chai;
 import BaseModel from '../Model';
 import { UPDATE, DELETE } from '../constants';
+import { ManyToMany } from '../fields';
 
 describe('Model', () => {
     describe('static method', () => {
@@ -104,6 +105,7 @@ describe('Model', () => {
 
     describe('Instance methods', () => {
         let Model;
+        let Tag;
         let instance;
         let sessionMock;
         let stateMock;
@@ -122,6 +124,11 @@ describe('Model', () => {
             // won't survive longer than each test.
             Model = class TestModel extends BaseModel {};
             Model.modelName = 'Model';
+            Model.fields = {
+                tags: new ManyToMany('Tag'),
+            };
+            Tag = class extends BaseModel {};
+
             Model.markAccessed = () => undefined;
 
             instance = new Model({ id: 0, name: 'Tommi' });
@@ -156,6 +163,34 @@ describe('Model', () => {
                     },
                 },
             });
+        });
+
+        it('update works correctly when updating many-to-many relation', () => {
+            const addSpy = sinon.spy();
+            const removeSpy = sinon.spy();
+
+            const addUpdateSpy = sinon.spy();
+            Model.addUpdate = addUpdateSpy;
+            Model.fields = { fakem2m: new ManyToMany('_') };
+            instance = new Model({ id: 0, name: 'Tommi', fakem2m: [1, 2, 3] });
+
+            // instance.fakem2m = ... evokes a setter, needs to use defineProperty
+            // for mocking
+            Object.defineProperty(instance, 'fakem2m', {
+                value: {
+                    add: addSpy,
+                    remove: removeSpy,
+                    idArr: [1, 2, 3],
+                },
+            });
+
+            instance.update({ fakem2m: [3, 4] });
+
+            expect(removeSpy).to.have.been.calledOnce;
+            expect(removeSpy).to.have.been.calledWith(1, 2);
+
+            expect(addSpy).to.have.been.calledOnce;
+            expect(addSpy).to.have.been.calledWith(4);
         });
 
         it('set works correctly', () => {
