@@ -414,6 +414,14 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
 
 Minor changes before 1.0.0 can include breaking changes.
 
+### 0.8.2
+
+Fixed [regression in `Model.prototype.update`](https://github.com/tommikaikkonen/redux-orm/issues/23)
+
+### 0.8.1
+
+Added `babel-runtime to dependencies`
+
 ### 0.8.0
 
 Adds **batched mutations.** This is a big performance improvement. Previously adding 10,000 objects would take 15s, now it takes about 0.5s. Batched mutations are implemented using [`immutable-ops`](https://github.com/tommikaikkonen/immutable-ops) internally.
