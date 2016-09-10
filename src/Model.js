@@ -118,7 +118,7 @@ const Model = class Model {
     static getBackend() {
         if (!this._sessionData.backend) {
             const BackendClass = this.getBackendClass();
-            const opts = this._getBackendOpts();
+            const opts = { ...this._getBackendOpts() };
 
             if (this.session && this.session.withMutations) {
                 opts.withMutations = true;
