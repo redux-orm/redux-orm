@@ -1,7 +1,13 @@
 const Field = class Field {
-    constructor(toModelName, relatedName) {
-        this.toModelName = toModelName;
-        this.relatedName = relatedName;
+    constructor(...args) {
+        if (args.length === 1 && typeof args[0] === 'object') {
+            const opts = args[0];
+            this.toModelName = opts.to;
+            this.relatedName = opts.relatedName;
+        } else {
+            this.toModelName = args[0];
+            this.relatedName = args[1];
+        }
     }
 };
 
