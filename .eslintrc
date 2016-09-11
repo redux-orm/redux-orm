@@ -17,8 +17,9 @@
     "consistent-return": 1
 
   },
-  "ecmaFeatures": {
-    "restParams": true,
-    "experimentalObjectRestSpread": true
+  "parserOptions": {
+    "ecmaFeatures": {
+      "experimentalObjectRestSpread": true
+    }
   }
 }
