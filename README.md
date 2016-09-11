@@ -414,6 +414,10 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
 
 Minor changes before 1.0.0 can include breaking changes.
 
+### 0.8.3
+
+Fixed bug that mutated the backend options in `Model` if you supplied custom ones, see [Issue 37](https://github.com/tommikaikkonen/redux-orm/issues/37). Thanks to [@diffcunha](https://github.com/diffcunha) for the [fix](https://github.com/tommikaikkonen/redux-orm/pull/38)!
+
 ### 0.8.2
 
 Fixed [regression in `Model.prototype.update`](https://github.com/tommikaikkonen/redux-orm/issues/23)
