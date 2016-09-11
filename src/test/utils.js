@@ -55,6 +55,7 @@ const BOOKS_INITIAL = [
         cover: 0,
         genres: [0, 1],
         releaseYear: 2050,
+        publisher: 1,
     },
     {
         name: 'Clean Code',
@@ -62,6 +63,7 @@ const BOOKS_INITIAL = [
         cover: 1,
         genres: [2],
         releaseYear: 2008,
+        publisher: 0,
     },
     {
         name: 'Getting Started with Redux',
@@ -69,9 +71,18 @@ const BOOKS_INITIAL = [
         cover: 2,
         genres: [2, 3],
         releaseYear: 2015,
+        publisher: 0,
     },
 ];
 
+const PUBLISHERS_INITIAL = [
+    {
+        name: 'Technical Publishing',
+    },
+    {
+        name: 'Autobiographies Inc',
+    },
+];
 
 export function createTestModels() {
     const Book = class BookModel extends Model {
@@ -80,13 +91,24 @@ export function createTestModels() {
                 author: fk('Author', 'books'),
                 cover: oneToOne('Cover'),
                 genres: many('Genre', 'books'),
+                publisher: fk('Publisher', 'books'),
             };
         }
     };
 
     Book.modelName = 'Book';
 
-    const Author = class AuthorModel extends Model {};
+    const Author = class AuthorModel extends Model {
+        static get fields() {
+            return {
+                publishers: many({
+                    to: 'Publisher',
+                    through: 'Book',
+                    relatedName: 'authors',
+                }),
+            };
+        }
+    };
     Author.modelName = 'Author';
 
     const Cover = class CoverModel extends Model {};
@@ -95,11 +117,15 @@ export function createTestModels() {
     const Genre = class GenreModel extends Model {};
     Genre.modelName = 'Genre';
 
+    const Publisher = class PublisherModel extends Model {};
+    Publisher.modelName = 'Publisher';
+
     return {
         Book,
         Author,
         Cover,
         Genre,
+        Publisher,
     };
 }
 
@@ -110,10 +136,11 @@ export function createTestSchema(customModels) {
         Author,
         Cover,
         Genre,
+        Publisher,
     } = models;
 
     const schema = new Schema();
-    schema.register(Book, Author, Cover, Genre);
+    schema.register(Book, Author, Cover, Genre, Publisher);
     return schema;
 }
 
@@ -131,6 +158,7 @@ export function createTestSessionWithData(customSchema) {
     COVERS_INITIAL.forEach(props => mutatingSession.Cover.create(props));
     GENRES_INITIAL.forEach(props => mutatingSession.Genre.create(props));
     BOOKS_INITIAL.forEach(props => mutatingSession.Book.create(props));
+    PUBLISHERS_INITIAL.forEach(props => mutatingSession.Publisher.create(props));
 
     const normalSession = schema.from(state);
     return { session: normalSession, schema, state };

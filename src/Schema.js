@@ -1,6 +1,7 @@
 import { createSelectorCreator } from 'reselect';
 import forOwn from 'lodash/forOwn';
 import find from 'lodash/find';
+import findKey from 'lodash/findKey';
 
 import Session from './Session';
 import Model from './Model';
@@ -194,9 +195,46 @@ const Schema = class Schema {
                             toModel.virtualFields[backwardsFieldName] = new ForeignKey(model.modelName, fieldName);
                         } else if (fieldInstance instanceof ManyToMany) {
                             // Forwards.
+
                             const throughModelName =
                                 fieldInstance.through ||
                                 m2mName(model.modelName, fieldName);
+
+                            const throughModel = this.get(throughModelName);
+
+                            let throughFields;
+                            if (!fieldInstance.throughFields) {
+                                const toFieldName = findKey(
+                                    throughModel.fields,
+                                    field =>
+                                        field instanceof ForeignKey &&
+                                        field.toModelName === toModel.modelName
+                                );
+                                const fromFieldName = findKey(
+                                    throughModel.fields,
+                                    field =>
+                                        field instanceof ForeignKey &&
+                                        field.toModelName === model.modelName
+                                );
+                                throughFields = {
+                                    to: toFieldName,
+                                    from: fromFieldName,
+                                };
+                            } else {
+                                const [fieldAName, fieldBName] = throughFields;
+                                const fieldA = throughModel.fields[fieldAName];
+                                if (fieldA.toModelName === toModel.modelName) {
+                                    throughFields = {
+                                        to: fieldAName,
+                                        from: fieldBName,
+                                    };
+                                } else {
+                                    throughFields = {
+                                        to: fieldBName,
+                                        from: fieldAName,
+                                    };
+                                }
+                            }
 
                             Object.defineProperty(
                                 model.prototype,
@@ -205,6 +243,7 @@ const Schema = class Schema {
                                     model.modelName,
                                     toModel.modelName,
                                     throughModelName,
+                                    throughFields,
                                     false
                                 )
                             );
@@ -238,11 +277,16 @@ const Schema = class Schema {
                                     model.modelName,
                                     toModel.modelName,
                                     throughModelName,
+                                    throughFields,
                                     true
                                 )
                             );
                             toModel.definedProperties[backwardsFieldName] = true;
-                            toModel.virtualFields[backwardsFieldName] = new ManyToMany(model.modelName, fieldName);
+                            toModel.virtualFields[backwardsFieldName] = new ManyToMany({
+                                to: model.modelName,
+                                relatedName: fieldName,
+                                through: throughModelName,
+                            });
                         } else if (fieldInstance instanceof OneToOne) {
                             // Forwards.
                             Object.defineProperty(

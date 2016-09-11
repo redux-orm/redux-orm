@@ -127,6 +127,7 @@ describe('QuerySet tests', () => {
             Genre,
             Cover,
             Author,
+            Publisher,
         } = createTestModels();
 
         const currentYear = 2015;
@@ -140,7 +141,7 @@ describe('QuerySet tests', () => {
         Book.querySetClass = CustomQuerySet;
 
         const schema = new Schema();
-        schema.register(Book, Genre, Cover, Author);
+        schema.register(Book, Genre, Cover, Author, Publisher);
         const { session: sess } = createTestSessionWithData(schema);
 
         const customQs = sess.Book.getQuerySet();
@@ -156,6 +157,7 @@ describe('QuerySet tests', () => {
             author: 0,
             cover: 0,
             releaseYear: 2050,
+            publisher: 1,
         });
         expect(sess.Book.unreleased().count()).to.equal(1);
         expect(sess.Book.withRefs.filter({ name: 'Clean Code' }).count()).to.equal(1);

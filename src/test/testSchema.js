@@ -71,12 +71,14 @@ describe('Schema', () => {
         let Author;
         let Cover;
         let Genre;
+        let Publisher;
         beforeEach(() => {
             ({
                 Book,
                 Author,
                 Cover,
                 Genre,
+                Publisher,
             } = createTestModels());
 
             schema = new Schema();
@@ -109,7 +111,7 @@ describe('Schema', () => {
         });
 
         it('correctly sets model prototypes', () => {
-            schema.register(Book, Author, Cover, Genre);
+            schema.register(Book, Author, Cover, Genre, Publisher);
             expect(Book.isSetUp).to.not.be.ok;
 
             let coverDescriptor = Object.getOwnPropertyDescriptor(
@@ -127,6 +129,12 @@ describe('Schema', () => {
                 'genres'
             );
             expect(genresDescriptor).to.be.undefined;
+
+            let publisherDescriptor = Object.getOwnPropertyDescriptor(
+                Book.prototype,
+                'publisher'
+            );
+            expect(publisherDescriptor).to.be.undefined;
 
             schema._setupModelPrototypes();
 
@@ -152,15 +160,22 @@ describe('Schema', () => {
             );
             expect(genresDescriptor.get).to.be.a('function');
             expect(genresDescriptor.set).to.be.a('function');
+
+            publisherDescriptor = Object.getOwnPropertyDescriptor(
+                Book.prototype,
+                'publisher'
+            );
+            expect(publisherDescriptor.get).to.be.a('function');
+            expect(publisherDescriptor.set).to.be.a('function');
         });
 
         it('calling reducer with undefined state doesn\'t throw', () => {
-            schema.register(Book, Author, Cover, Genre);
+            schema.register(Book, Author, Cover, Genre, Publisher);
             schema.reducer()(undefined, { type: '______init' });
         });
 
         it('correctly gets the default state', () => {
-            schema.register(Book, Author, Cover, Genre);
+            schema.register(Book, Author, Cover, Genre, Publisher);
             const defaultState = schema.getDefaultState();
 
             expect(defaultState).to.deep.equal({
@@ -184,11 +199,15 @@ describe('Schema', () => {
                     items: [],
                     itemsById: {},
                 },
+                Publisher: {
+                    items: [],
+                    itemsById: {},
+                },
             });
         });
 
         it('correctly creates a selector', () => {
-            schema.register(Book, Author, Cover, Genre);
+            schema.register(Book, Author, Cover, Genre, Publisher);
             let selectorTimesRun = 0;
             const selector = schema.createSelector(() => selectorTimesRun++);
             expect(selector).to.be.a('function');
@@ -203,7 +222,7 @@ describe('Schema', () => {
         });
 
         it('correctly creates a selector with input selectors', () => {
-            schema.register(Book, Author, Cover, Genre);
+            schema.register(Book, Author, Cover, Genre, Publisher);
 
             const _selectorFunc = sinon.spy();
 
@@ -240,7 +259,7 @@ describe('Schema', () => {
         });
 
         it('correctly starts a mutating session', () => {
-            schema.register(Book, Author, Cover, Genre);
+            schema.register(Book, Author, Cover, Genre, Publisher);
             const initialState = schema.getDefaultState();
             const session = schema.withMutations(initialState);
             expect(session).to.be.an.instanceOf(Session);

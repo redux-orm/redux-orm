@@ -18,6 +18,7 @@ describe('Session', () => {
     let Cover;
     let Genre;
     let Author;
+    let Publisher;
     let defaultState;
     beforeEach(() => {
         ({
@@ -25,9 +26,10 @@ describe('Session', () => {
             Cover,
             Genre,
             Author,
+            Publisher,
         } = createTestModels());
         schema = new Schema();
-        schema.register(Book, Cover, Genre, Author);
+        schema.register(Book, Cover, Genre, Author, Publisher);
         defaultState = schema.getDefaultState();
     });
 
@@ -36,6 +38,7 @@ describe('Session', () => {
         expect(Cover.session).to.be.undefined;
         expect(Genre.session).to.be.undefined;
         expect(Cover.session).to.be.undefined;
+        expect(Publisher.session).to.be.undefined;
 
         const session = schema.from(defaultState);
 
@@ -43,6 +46,7 @@ describe('Session', () => {
         expect(session.Cover.session).to.equal(session);
         expect(session.Genre.session).to.equal(session);
         expect(session.Cover.session).to.equal(session);
+        expect(session.Publisher.session).to.equal(session);
     });
 
     it('exposes models as getter properties', () => {
@@ -51,6 +55,7 @@ describe('Session', () => {
         expect(isSubclass(session.Author, Author)).to.be.true;
         expect(isSubclass(session.Cover, Cover)).to.be.true;
         expect(isSubclass(session.Genre, Genre)).to.be.true;
+        expect(isSubclass(session.Publisher, Publisher)).to.be.true;
     });
 
     it('marks accessed models', () => {
@@ -107,6 +112,7 @@ describe('Session', () => {
             expect(nextState[Book.modelName]).to.equal(defaultState[Book.modelName]);
             expect(nextState[Cover.modelName]).to.equal(defaultState[Cover.modelName]);
             expect(nextState[Genre.modelName]).to.equal(defaultState[Genre.modelName]);
+            expect(nextState[Publisher.modelName]).to.equal(defaultState[Publisher.modelName]);
         });
 
         it('runs reducers if explicitly specified', () => {
@@ -116,6 +122,7 @@ describe('Session', () => {
             const bookReducerSpy = sinon.spy(Book, 'reducer');
             const coverReducerSpy = sinon.spy(Cover, 'reducer');
             const genreReducerSpy = sinon.spy(Genre, 'reducer');
+            const publisherReducerSpy = sinon.spy(Publisher, 'reducer');
 
             session.getNextState({ runReducers: true });
 
@@ -123,6 +130,7 @@ describe('Session', () => {
             expect(bookReducerSpy).to.be.calledOnce;
             expect(coverReducerSpy).to.be.calledOnce;
             expect(genreReducerSpy).to.be.calledOnce;
+            expect(publisherReducerSpy).to.be.calledOnce;
         });
 
         it('doesn\'t run reducers if explicitly specified', () => {
@@ -132,6 +140,7 @@ describe('Session', () => {
             const bookReducerSpy = sinon.spy(Book, 'reducer');
             const coverReducerSpy = sinon.spy(Cover, 'reducer');
             const genreReducerSpy = sinon.spy(Genre, 'reducer');
+            const publisherReducerSpy = sinon.spy(Publisher, 'reducer');
 
             session.getNextState({ runReducers: false });
 
@@ -139,6 +148,7 @@ describe('Session', () => {
             expect(bookReducerSpy).not.to.be.called;
             expect(coverReducerSpy).not.to.be.called;
             expect(genreReducerSpy).not.to.be.called;
+            expect(publisherReducerSpy).not.to.be.called;
         });
     });
 
@@ -158,11 +168,12 @@ describe('Session', () => {
         const firstSession = schema.from(defaultState);
         const secondSession = schema.from(otherState);
 
-        expect(firstSession.sessionBoundModels).to.have.lengthOf(5);
+        expect(firstSession.sessionBoundModels).to.have.lengthOf(6);
 
         expect(firstSession.Book).not.to.equal(secondSession.Book);
         expect(firstSession.Author).not.to.equal(secondSession.Author);
         expect(firstSession.Genre).not.to.equal(secondSession.Genre);
         expect(firstSession.Cover).not.to.equal(secondSession.Cover);
+        expect(firstSession.Publisher).not.to.equal(secondSession.Publisher);
     });
 });

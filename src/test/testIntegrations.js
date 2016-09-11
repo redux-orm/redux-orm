@@ -29,7 +29,7 @@ describe('Integration', () => {
 
         it('Initial data bootstrapping results in a correct state', () => {
             expect(state).to.have.all.keys(
-                'Book', 'Cover', 'Genre', 'Author', 'BookGenres');
+                'Book', 'Cover', 'Genre', 'Author', 'BookGenres', 'Publisher');
 
             expect(state.Book.items).to.have.length(3);
             expect(Object.keys(state.Book.itemsById)).to.have.length(3);
@@ -45,6 +45,9 @@ describe('Integration', () => {
 
             expect(state.Author.items).to.have.length(3);
             expect(Object.keys(state.Author.itemsById)).to.have.length(3);
+
+            expect(state.Publisher.items).to.have.length(2);
+            expect(Object.keys(state.Publisher.itemsById)).to.have.length(2);
         });
 
         it('Models correctly indicate if id exists', () => {
@@ -61,6 +64,7 @@ describe('Integration', () => {
                 name: 'New Book',
                 author: 0,
                 releaseYear: 2015,
+                publisher: 0,
             });
             expect(session.updates).to.have.length(1);
 
@@ -77,6 +81,7 @@ describe('Integration', () => {
                 author: 0,
                 releaseYear: 2015,
                 genres: [0, 0],
+                publisher: 0,
             };
 
             expect(() => Book.create(newProps)).to.throw('Book.genres');
@@ -128,6 +133,27 @@ describe('Integration', () => {
             const relatedBooks = genre.books;
             expect(relatedBooks).to.be.an.instanceOf(QuerySet);
             expect(relatedBooks.modelClass).to.equal(Book);
+        });
+
+        it('many-to-many relationship descriptors work with a custom through model', () => {
+            const {
+                Author,
+                Publisher,
+            } = session;
+
+            // Forward (from many-to-many field declaration)
+            const author = Author.get({ name: 'Tommi Kaikkonen' });
+            const relatedPublishers = author.publishers;
+            expect(relatedPublishers).to.be.an.instanceOf(QuerySet);
+            expect(relatedPublishers.modelClass).to.equal(Publisher);
+            expect(relatedPublishers.count()).to.equal(1);
+
+            // Backward
+            const publisher = Publisher.get({ name: 'Technical Publishing' });
+            const relatedAuthors = publisher.authors;
+            expect(relatedAuthors).to.be.an.instanceOf(QuerySet);
+            expect(relatedAuthors.modelClass).to.equal(Author);
+            expect(relatedAuthors.count()).to.equal(2);
         });
 
         it('adding related many-to-many entities works', () => {

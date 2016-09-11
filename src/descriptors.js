@@ -82,7 +82,12 @@ function backwardManyToOneDescriptor(declaredFieldName, declaredFromModelName) {
 }
 
 // Both sides of Many to Many, use the reverse flag.
-function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throughModelName, reverse) {
+function manyToManyDescriptor(
+    declaredFromModelName,
+    declaredToModelName,
+    throughModelName,
+    throughFields,
+    reverse) {
     return {
         get() {
             const currentSession = this.getClass().session;
@@ -91,8 +96,8 @@ function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throug
             const throughModel = currentSession[throughModelName];
             const thisId = this.getId();
 
-            const fromFieldName = m2mFromFieldName(declaredFromModel.modelName);
-            const toFieldName = m2mToFieldName(declaredToModel.modelName);
+            const fromFieldName = throughFields.from;
+            const toFieldName = throughFields.to;
 
             const lookupObj = {};
             if (!reverse) {
@@ -100,6 +105,7 @@ function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throug
             } else {
                 lookupObj[toFieldName] = thisId;
             }
+
             const throughQs = throughModel.filter(lookupObj);
             const toIds = throughQs.withRefs.map(obj => obj[reverse ? fromFieldName : toFieldName]);
 
