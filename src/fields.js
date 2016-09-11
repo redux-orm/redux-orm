@@ -4,6 +4,7 @@ const Field = class Field {
             const opts = args[0];
             this.toModelName = opts.to;
             this.relatedName = opts.relatedName;
+            this.through = opts.through;
         } else {
             this.toModelName = args[0];
             this.relatedName = args[1];

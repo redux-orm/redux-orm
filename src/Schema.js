@@ -97,7 +97,7 @@ const Schema = class Schema {
         const thisModelName = model.modelName;
 
         forOwn(fields, (fieldInstance, fieldName) => {
-            if (fieldInstance instanceof ManyToMany) {
+            if (fieldInstance instanceof ManyToMany && !fieldInstance.through) {
                 let toModelName;
                 if (fieldInstance.toModelName === 'this') {
                     toModelName = thisModelName;
@@ -194,8 +194,9 @@ const Schema = class Schema {
                             toModel.virtualFields[backwardsFieldName] = new ForeignKey(model.modelName, fieldName);
                         } else if (fieldInstance instanceof ManyToMany) {
                             // Forwards.
-                            const throughModelName = m2mName(model.modelName, fieldName);
-                            // const throughModel = this.get(throughModelName);
+                            const throughModelName =
+                                fieldInstance.through ||
+                                m2mName(model.modelName, fieldName);
 
                             Object.defineProperty(
                                 model.prototype,
@@ -208,7 +209,11 @@ const Schema = class Schema {
                                 )
                             );
                             model.definedProperties[fieldName] = true;
-                            model.virtualFields[fieldName] = new ManyToMany(toModel.modelName, fieldName);
+                            model.virtualFields[fieldName] = new ManyToMany({
+                                to: toModel.modelName,
+                                relatedName: fieldName,
+                                through: fieldInstance.through,
+                            });
 
                             // Backwards.
                             const backwardsFieldName = fieldInstance.relatedName
@@ -216,6 +221,7 @@ const Schema = class Schema {
                                 : reverseFieldName(model.modelName);
 
                             if (toModel.definedProperties[backwardsFieldName]) {
+                                // Backwards field was already defined on toModel.
                                 const errorMsg = reverseFieldErrorMessage(
                                     model.modelName,
                                     fieldName,
