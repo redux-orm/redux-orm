@@ -20,6 +20,15 @@ API can be unstable until 1.0.0. Minor version bumps before 1.0.0 can and will i
 npm install redux-orm --save
 ```
 
+Or with a script tag
+
+```html
+<script src="https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.js"></script>
+```
+
+- [Browser build following master](https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.js)
+- [Browser build following master (minimized)](https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.min.js)
+
 ## Usage
 
 ### Declare Your Models
@@ -413,6 +422,16 @@ See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/
 ## Changelog
 
 Minor changes before 1.0.0 can include breaking changes.
+
+### 0.8.4
+
+Adds UMD build to partially fix [#41](https://github.com/tommikaikkonen/redux-orm/issues/41). You can now use or try out `redux-orm` through a script tag:
+
+```html
+<script src="https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.js"></script>
+```
+
+`redux-orm.js` will point to the master version of the library; If you need to stick to a version, make a copy or build it yourself.
 
 ### 0.8.3
 
