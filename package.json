@@ -2,7 +2,7 @@
   "name": "redux-orm",
   "version": "0.8.3",
   "description": "Simple ORM to manage and query your state trees",
-  "main": "lib/index.js",
+  "main": "dist/redux-orm.js",
   "scripts": {
     "test": "make test",
     "prepublish": "make build"
