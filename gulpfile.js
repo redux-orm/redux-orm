@@ -20,5 +20,5 @@ gulp.task('deploy', () =>
             filepath.dirname = withoutLeadingSlash;
         }
     }))
-    .pipe(ghPages({ push: false }))
+    .pipe(ghPages())
 );
