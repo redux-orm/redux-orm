@@ -1,8 +1,6 @@
 import difference from 'lodash/difference';
 import UPDATE from './constants';
 import {
-    m2mFromFieldName,
-    m2mToFieldName,
     normalizeEntity,
     includes,
 } from './utils';
