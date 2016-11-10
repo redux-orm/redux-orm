@@ -209,14 +209,37 @@ function reverseFieldErrorMessage(modelName, fieldName, toModelName, backwardsFi
            ` name on ${modelName}.${fieldName}.`].join('');
 }
 
+function arrayShallowEquals(a, b) {
+    if (a.length !== b.length) {
+        return false;
+    }
+
+    return a.reduce((prev, item, index) => prev && item === b[index], true);
+}
+
 function objectShallowEquals(a, b) {
     let keysInA = 0;
     let keysInB = 0;
 
     forOwn(a, (value, key) => {
-        if (!b.hasOwnProperty(key) || b[key] !== value) {
+        const otherValue = b[key];
+
+        if (!b.hasOwnProperty(key)) {
             return false;
         }
+
+        if (Array.isArray(value) && Array.isArray(otherValue)) {
+            if (value.length !== otherValue.length) {
+                return false;
+            }
+
+            if (!arrayShallowEquals(value, otherValue)) {
+                return false;
+            }
+        } else if (otherValue !== value) {
+            return false;
+        }
+
         keysInA++;
     });
 
@@ -255,6 +278,7 @@ export {
     normalizeEntity,
     reverseFieldErrorMessage,
     objectShallowEquals,
+    arrayShallowEquals,
     ops,
     includes,
     arrayDiffActions,

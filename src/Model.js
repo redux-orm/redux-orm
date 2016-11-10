@@ -9,6 +9,8 @@ import {
     ManyToMany,
     ForeignKey,
     OneToOne,
+    Attribute,
+    attribute,
 } from './fields';
 import { CREATE, UPDATE, DELETE } from './constants';
 import {
@@ -41,24 +43,48 @@ const Model = class Model {
     }
 
     _initFields(props) {
-        const ModelClass = this.getClass();
+        const fields = this.getClass().fields;
+        const keys = Object.keys(fields);
 
-        this._fieldNames = [];
-        this._fields = Object.assign({}, props);
+        this._fields = {};
 
-        forOwn(props, (fieldValue, fieldName) => {
-            this._fields[fieldName] = fieldValue;
-            this._fieldNames.push(fieldName);
-            // If the field has not already been defined on the
-            // prototype for a relation.
-            if (!ModelClass.definedProperties[fieldName]) {
-                Object.defineProperty(this, fieldName, {
-                    get: () => fieldValue,
-                    set: (value) => this.set(fieldName, value),
-                    configurable: true,
-                });
+        for (const name of keys) {
+            const field = fields[name];
+            let value;
+
+            if (field instanceof Attribute) {
+                value = field.defaultValue;
+                if (props.hasOwnProperty(name)) {
+                    value = props[name];
+                }
+            } else {
+                if (props.hasOwnProperty(name)) {
+                    value = props[name];
+                } else {
+                    if (field instanceof ManyToMany) {
+                        value = [];
+                    } else {
+                        value = null;
+                    }
+                }
             }
-        });
+
+            this._fields[name] = value;
+        }
+    }
+
+    static get autoFields() {
+        return {
+            [this.idAttribute]: attribute(),
+        };
+    }
+
+    static get fields() {
+        return this.__fields || this.autoFields;
+    }
+
+    static set fields(value) {
+        this.__fields = Object.assign({}, value, this.autoFields);
     }
 
     /**
@@ -505,7 +531,8 @@ const Model = class Model {
      */
     toString() {
         const className = this.getClass().modelName;
-        const fields = this._fieldNames.map(fieldName => {
+        const fieldNames = Object.keys(this._fields);
+        const fields = fieldNames.map(fieldName => {
             const val = this._fields[fieldName];
             return `${fieldName}: ${val}`;
         }).join(', ');
@@ -549,7 +576,7 @@ const Model = class Model {
         // If an array of entities or id's is supplied for a
         // many-to-many related field, clear the old relations
         // and add the new ones.
-        for (const mergeKey in mergeObj) { // eslint-disable-line no-restricted-syntax
+        for (const mergeKey of Object.keys(mergeObj)) {
             if (relFields.hasOwnProperty(mergeKey)) {
                 const field = relFields[mergeKey];
                 if (field instanceof ManyToMany) {
@@ -571,7 +598,12 @@ const Model = class Model {
                     delete mergeObj[mergeKey];
                 } else if (field instanceof ForeignKey || field instanceof OneToOne) {
                     mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
+                } else if (field instanceof Attribute) {
+                    // no-op
                 }
+            } else {
+                // delete fields that aren't part of model
+                delete mergeObj[mergeKey];
             }
         }
 

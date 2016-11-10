@@ -7,6 +7,18 @@ import {
     includes,
 } from './utils';
 
+function attributeDescriptor(fieldName) {
+    return {
+        get() {
+            return this._fields[fieldName];
+        },
+        set(value) {
+            this.set(fieldName, value);
+        },
+        configurable: false,
+    };
+}
+
 // Forwards side a Foreign Key: returns one object.
 // Also works as forwardsOneToOneDescriptor.
 function forwardManyToOneDescriptor(fieldName, declaredToModelName) {
@@ -176,6 +188,7 @@ function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throug
 }
 
 export {
+    attributeDescriptor,
     forwardManyToOneDescriptor,
     forwardOneToOneDescriptor,
     backwardOneToOneDescriptor,

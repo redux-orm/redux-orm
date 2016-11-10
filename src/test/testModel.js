@@ -5,7 +5,7 @@ chai.use(sinonChai);
 const { expect } = chai;
 import BaseModel from '../Model';
 import { UPDATE, DELETE } from '../constants';
-import { ManyToMany } from '../fields';
+import { many, attribute } from '../fields';
 
 describe('Model', () => {
     describe('static method', () => {
@@ -125,7 +125,8 @@ describe('Model', () => {
             Model = class TestModel extends BaseModel {};
             Model.modelName = 'Model';
             Model.fields = {
-                tags: new ManyToMany('Tag'),
+                tags: many('Tag'),
+                name: attribute(),
             };
             Tag = class extends BaseModel {};
 
@@ -165,13 +166,27 @@ describe('Model', () => {
             });
         });
 
+        it('update does not save unknown fields', () => {
+            const addUpdateSpy = sinon.spy();
+            Model.addUpdate = addUpdateSpy;
+
+            instance.update({ unknownKey: 'test' });
+            expect(addUpdateSpy.getCall(0).args[0]).to.deep.equal({
+                type: UPDATE,
+                payload: {
+                    idArr: [instance.id],
+                    mergeObj: {},
+                },
+            });
+        });
+
         it('update works correctly when updating many-to-many relation', () => {
             const addSpy = sinon.spy();
             const removeSpy = sinon.spy();
 
             const addUpdateSpy = sinon.spy();
             Model.addUpdate = addUpdateSpy;
-            Model.fields = { fakem2m: new ManyToMany('_') };
+            Model.fields = { fakem2m: many('_') };
             instance = new Model({ id: 0, name: 'Tommi', fakem2m: [1, 2, 3] });
 
             // instance.fakem2m = ... evokes a setter, needs to use defineProperty
@@ -218,12 +233,12 @@ describe('Model', () => {
         });
 
         it('equals works correctly', () => {
-            const anotherInstance = new Model({ id: 0, name: 'Tommi' });
+            const anotherInstance = new Model({ id: 0, name: 'Tommi', tags: [] });
             expect(instance.equals(anotherInstance)).to.be.ok;
         });
 
         it('toString works correctly', () => {
-            expect(instance.toString()).to.equal('Model: {id: 0, name: Tommi}');
+            expect(instance.toString()).to.equal('Model: {tags: , name: Tommi, id: 0}');
         });
 
         it('getId works correctly', () => {

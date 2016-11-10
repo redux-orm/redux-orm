@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import Model from '../Model';
 import QuerySet from '../QuerySet';
 import Schema from '../Schema';
+import { attribute } from '../fields';
 import {
     createTestSessionWithData,
 } from './utils';
@@ -288,6 +289,9 @@ describe('Big Data Test', () => {
 
     beforeEach(() => {
         Item = class extends Model {};
+        Item.fields = {
+            name: attribute(),
+        };
         Item.modelName = 'Item';
         schema = new Schema();
         schema.register(Item);

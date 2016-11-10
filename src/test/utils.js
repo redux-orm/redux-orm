@@ -1,6 +1,6 @@
 import Schema from '../Schema';
 import Model from '../Model';
-import { fk, many, oneToOne } from '../fields';
+import { fk, many, oneToOne, attribute } from '../fields';
 
 /**
  * These utils create a database schema for testing.
@@ -74,25 +74,32 @@ const BOOKS_INITIAL = [
 
 
 export function createTestModels() {
-    const Book = class BookModel extends Model {
-        static get fields() {
-            return {
-                author: fk('Author', 'books'),
-                cover: oneToOne('Cover'),
-                genres: many('Genre', 'books'),
-            };
-        }
+    const Book = class BookModel extends Model {};
+    Book.fields = {
+        name: attribute(),
+        author: fk('Author', 'books'),
+        cover: oneToOne('Cover'),
+        genres: many('Genre', 'books'),
+        releaseYear: attribute(),
     };
-
     Book.modelName = 'Book';
 
     const Author = class AuthorModel extends Model {};
+    Author.fields = {
+        name: attribute(),
+    };
     Author.modelName = 'Author';
 
     const Cover = class CoverModel extends Model {};
+    Cover.fields = {
+        src: attribute(),
+    };
     Cover.modelName = 'Cover';
 
     const Genre = class GenreModel extends Model {};
+    Genre.fields = {
+        name: attribute(),
+    };
     Genre.modelName = 'Genre';
 
     return {
