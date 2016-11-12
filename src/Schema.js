@@ -8,8 +8,11 @@ import {
     ForeignKey,
     ManyToMany,
     OneToOne,
+    Attribute,
+    Relationship,
 } from './fields';
 import {
+    attributeDescriptor,
     forwardManyToOneDescriptor,
     backwardManyToOneDescriptor,
     forwardOneToOneDescriptor,
@@ -108,7 +111,15 @@ const Schema = class Schema {
                 const fromFieldName = m2mFromFieldName(thisModelName);
                 const toFieldName = m2mToFieldName(toModelName);
 
-                const Through = class ThroughModel extends Model {};
+                const Through = class ThroughModel extends Model {
+                    static get fields() {
+                        return this.__fields;
+                    }
+
+                    static set fields(value) {
+                        this.__fields = value;
+                    }
+                };
 
                 Through.modelName = m2mName(thisModelName, fieldName);
 
@@ -157,7 +168,18 @@ const Schema = class Schema {
                 const fields = model.fields;
                 forOwn(fields, (fieldInstance, fieldName) => {
                     const descriptor = Object.getOwnPropertyDescriptor(model.prototype, fieldName);
-                    if (typeof descriptor === 'undefined') {
+
+                    if (typeof descriptor !== 'undefined') {
+                        return;
+                    }
+
+                    if (fieldInstance instanceof Attribute) {
+                        Object.defineProperty(
+                            model.prototype,
+                            fieldName,
+                            attributeDescriptor(fieldName)
+                        );
+                    } else if (fieldInstance instanceof Relationship) {
                         const toModelName = fieldInstance.toModelName;
                         const toModel = toModelName === 'this' ? model : this.get(toModelName);
 
