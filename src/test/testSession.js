@@ -72,14 +72,6 @@ describe('Session', () => {
         expect(session.accessedModels[0]).to.equal('Book');
     });
 
-    it('adds updates', () => {
-        const session = schema.from(defaultState);
-        expect(session.updates).to.have.length(0);
-        const updateObj = { meta: { name: 'MockModel' } };
-        session.addUpdate(updateObj);
-        expect(session.updates).to.have.length(1);
-    });
-
     describe('gets the next state', () => {
         it('without any updates, the same state is returned', () => {
             const session = schema.from(defaultState);
@@ -91,7 +83,7 @@ describe('Session', () => {
         it('with updates, a new state is returned', () => {
             const session = schema.from(defaultState);
 
-            session.addUpdate({
+            session.applyUpdate({
                 type: CREATE,
                 meta: {
                     name: Author.modelName,

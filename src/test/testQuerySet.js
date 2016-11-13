@@ -34,13 +34,14 @@ describe('QuerySet tests', () => {
     it('exists works correctly', () => {
         expect(bookQs.exists()).to.be.true;
 
-        const emptyQs = new QuerySet(session.Book, []);
+        const emptyQs = (new QuerySet(session.Book, [])).filter(() => false);
+
         expect(emptyQs.exists()).to.be.false;
     });
 
     it('at works correctly', () => {
         expect(bookQs.at(0)).to.be.an.instanceOf(Model);
-        expect(bookQs.ref.at(0)).to.equal(session.Book.state.itemsById[0]);
+        expect(bookQs.toRefArray()[0]).to.equal(session.Book.state.itemsById[0]);
     });
 
     it('first works correctly', () => {
@@ -60,26 +61,28 @@ describe('QuerySet tests', () => {
     });
 
     it('filter works correctly with object argument', () => {
-        const filtered = bookQs.withRefs.filter({ name: 'Clean Code' });
+        const filtered = bookQs.filter({ name: 'Clean Code' });
         expect(filtered.count()).to.equal(1);
-        expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[1]);
+        expect(filtered.first().ref).to.equal(session.Book.state.itemsById[1]);
     });
 
     it('filter works correctly with object argument, with model instance value', () => {
-        const filtered = bookQs.withRefs.filter({
+        const filtered = bookQs.filter({
             author: session.Author.withId(0),
         });
         expect(filtered.count()).to.equal(1);
-        expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[0]);
+        expect(filtered.first().ref).to.equal(session.Book.state.itemsById[0]);
     });
 
     it('orderBy works correctly with prop argument', () => {
         const ordered = bookQs.orderBy(['releaseYear']);
+        ordered._evaluate();
         expect(ordered.idArr).to.deep.equal([1, 2, 0]);
     });
 
     it('orderBy works correctly with function argument', () => {
         const ordered = bookQs.orderBy([(book) => book.releaseYear]);
+        ordered._evaluate();
         expect(ordered.idArr).to.deep.equal([1, 2, 0]);
     });
 
@@ -91,34 +94,14 @@ describe('QuerySet tests', () => {
 
     it('update records a update', () => {
         const mergeObj = { name: 'Updated Book Name' };
-        expect(session.updates).to.have.length(0);
         bookQs.update(mergeObj);
-        expect(session.updates).to.have.length(1);
 
-        expect(session.updates[0]).to.deep.equal({
-            type: UPDATE,
-            payload: {
-                idArr: bookQs.idArr,
-                mergeObj,
-            },
-            meta: {
-                name: 'Book',
-            },
-        });
+        bookQs.forEach(instance => expect(instance.name).to.equal('Updated Book Name'));
     });
 
     it('delete records a update', () => {
-        expect(session.updates).to.have.length(0);
         bookQs.delete();
-        expect(session.updates).to.have.length.of.at.least(1);
-
-        expect(session.updates[0]).to.deep.equal({
-            type: DELETE,
-            payload: bookQs.idArr,
-            meta: {
-                name: 'Book',
-            },
-        });
+        expect(bookQs.count()).to.equal(0);
     });
 
     it('custom methods works', () => {
@@ -133,7 +116,7 @@ describe('QuerySet tests', () => {
         const currentYear = 2015;
         class CustomQuerySet extends QuerySet {
             unreleased() {
-                return this.withRefs.filter(book => book.releaseYear > currentYear);
+                return this.filter(book => book.releaseYear > currentYear);
             }
         }
         CustomQuerySet.addSharedMethod('unreleased');
@@ -160,6 +143,6 @@ describe('QuerySet tests', () => {
             publisher: 1,
         });
         expect(sess.Book.unreleased().count()).to.equal(1);
-        expect(sess.Book.withRefs.filter({ name: 'Clean Code' }).count()).to.equal(1);
+        expect(sess.Book.filter({ name: 'Clean Code' }).count()).to.equal(1);
     });
 });

@@ -12,18 +12,17 @@ describe('Integration', () => {
     let schema;
     let state;
 
-    beforeEach(() => {
-        ({
-            session,
-            schema,
-            state,
-        } = createTestSessionWithData());
-    });
-
     describe('Immutable session', () => {
         beforeEach(() => {
             // Deep freeze state. This will raise an error if we
             // mutate the state.
+
+            ({
+                session,
+                schema,
+                state,
+            } = createTestSessionWithData());
+
             deepFreeze(state);
         });
 
@@ -59,18 +58,14 @@ describe('Integration', () => {
 
         it('Models correctly create new instances', () => {
             const { Book } = session;
-            expect(session.updates).to.have.length(0);
             const book = Book.create({
                 name: 'New Book',
                 author: 0,
                 releaseYear: 2015,
                 publisher: 0,
             });
-            expect(session.updates).to.have.length(1);
-
-            const nextState = session.reduce();
-            const nextSession = schema.from(nextState);
-            expect(nextSession.Book.count()).to.equal(4);
+            expect(session.Book.count()).to.equal(4);
+            expect(session.Book.last().ref).to.equal(book.ref);
         });
 
         it('Model.create throws if passing duplicate ids to many-to-many field', () => {
@@ -91,23 +86,16 @@ describe('Integration', () => {
             const { Book } = session;
             expect(Book.count()).to.equal(3);
             Book.withId(0).delete();
-
-            const nextState = session.reduce();
-            const nextSession = schema.from(nextState);
-            expect(nextSession.Book.count()).to.equal(2);
+            expect(session.Book.count()).to.equal(2);
+            expect(session.Book.hasId(0)).to.be.false;
         });
 
         it('Models correctly update when setting properties', () => {
             const { Book } = session;
             const book = Book.first();
             const newName = 'New Name';
-            expect(session.updates).to.have.length(0);
             book.name = newName;
-            expect(session.updates).to.have.length(1);
-
-            const nextState = session.reduce();
-            const nextSession = schema.from(nextState);
-            expect(nextSession.Book.first().name).to.equal(newName);
+            expect(session.Book.first().name).to.equal(newName);
         });
 
         it('withId throws if model instance not found', () => {
@@ -162,10 +150,7 @@ describe('Integration', () => {
             expect(book.genres.count()).to.equal(2);
             book.genres.add(Genre.withId(2));
 
-            const nextState = session.reduce();
-            const nextSession = schema.from(nextState);
-
-            expect(nextSession.Book.withId(0).genres.count()).to.equal(3);
+            expect(session.Book.withId(0).genres.count()).to.equal(3);
         });
 
         it('trying to add existing related many-to-many entities throws', () => {
@@ -182,10 +167,7 @@ describe('Integration', () => {
             expect(book.genres.count()).to.equal(2);
             book.genres.remove(Genre.withId(0));
 
-            const nextState = session.reduce();
-            const nextSession = schema.from(nextState);
-
-            expect(nextSession.Book.withId(0).genres.count()).to.equal(1);
+            expect(session.Book.withId(0).genres.count()).to.equal(1);
         });
 
         it('trying to remove unexisting related many-to-many entities throws', () => {
@@ -202,10 +184,7 @@ describe('Integration', () => {
             expect(book.genres.count()).to.equal(2);
             book.genres.clear();
 
-            const nextState = session.reduce();
-            const nextSession = schema.from(nextState);
-
-            expect(nextSession.Book.withId(0).genres.count()).to.equal(0);
+            expect(session.Book.withId(0).genres.count()).to.equal(0);
         });
 
         it('foreign key relationship descriptors work', () => {
@@ -224,6 +203,7 @@ describe('Integration', () => {
             // Backward
             const relatedBooks = author.books;
             expect(relatedBooks).to.be.an.instanceOf(QuerySet);
+            relatedBooks._evaluate();
             expect(relatedBooks.idArr).to.include(book.getId());
             expect(relatedBooks.modelClass).to.equal(Book);
         });
@@ -254,6 +234,14 @@ describe('Integration', () => {
     });
 
     describe('Mutating session', () => {
+        beforeEach(() => {
+            ({
+                session,
+                schema,
+                state,
+            } = createTestSessionWithData());
+        });
+
         it('works', () => {
             const mutating = schema.withMutations(state);
             const {
@@ -283,6 +271,14 @@ describe('Integration', () => {
     });
 
     describe('Multiple concurrent sessions', () => {
+        beforeEach(() => {
+            ({
+                session,
+                schema,
+                state,
+            } = createTestSessionWithData());
+        });
+
         it('works', () => {
             const firstSession = session;
             const secondSession = schema.from(state);

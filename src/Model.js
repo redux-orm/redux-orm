@@ -142,40 +142,29 @@ const Model = class Model {
      * @param {Transction} tx - the current Transaction instance
      * @return {Object} The next state.
      */
-    static getNextState(_tx) {
-        const tx = _tx || this.session.currentTx;
-
-        let state;
-        if (this._sessionData.hasOwnProperty('nextState')) {
-            state = this._sessionData.nextState;
-        } else {
-            state = this.state;
-        }
-
-        const updates = tx.getUpdatesFor(this);
-
-        if (updates.length > 0) {
-            const nextState = updates.reduce(this.updateReducer.bind(this, tx), state);
-            this._sessionData.nextState = nextState;
-            tx.markApplied(this);
-            return nextState;
-        }
-
-        return state;
+    static getNextState() {
+        return this.session.getState(this.modelName);
     }
 
     /**
      * A reducer that takes the Model's state and an internal redux-orm
      * action object and applies the update specified by the `action` object
      * by delegating to this model's Backend instance.
+     * Applies an update to the state based on `action`, delegates to the model's
+     * Backend instance.
      *
      * @private
      * @param  {Object} state - the Model's state
      * @param  {Object} action - the internal redux-orm update action to apply
+     * @param  {Boolean} withMutations
+     * @param  {Object} batchToken - used by the backend to identify objects that can be mutated
+     *                               in the update.
      * @return {Object} the state after applying the action
      */
-    static updateReducer(tx, state, action) {
+    static applyUpdate(state, action, withMutations, batchToken) {
         const backend = this.getBackend();
+        const tx = { batchToken, withMutations };
+
         switch (action.type) {
         case CREATE:
             return backend.insert(tx, state, action.payload);
@@ -283,14 +272,14 @@ const Model = class Model {
 
     /**
      * A convenience method that delegates to the current {@link Session} instane.
-     * Adds the required backenddata about this {@link Model} to the update object.
+     * Adds the required backend data about this {@link Model} to the update object.
      *
      * @private
      * @param {Object} update - the update to add.
      */
     static addUpdate(update) {
         update.meta = { name: this.modelName };
-        this.session.addUpdate(update);
+        this.session.applyUpdate(update);
     }
 
     /**
@@ -311,12 +300,8 @@ const Model = class Model {
     }
 
     static getQuerySet() {
-        return this.getQuerySetFromIds(this.accessIds());
-    }
-
-    static getQuerySetFromIds(ids) {
         const QuerySetClass = this.querySetClass;
-        return new QuerySetClass(this, ids);
+        return new QuerySetClass(this);
     }
 
     static invalidateClassCache() {
@@ -575,10 +560,7 @@ const Model = class Model {
             }
         }
 
-        const session = this.getClass().session;
-        if (session && session.withMutations) {
-            this._initFields(Object.assign({}, this._fields, mergeObj));
-        }
+        this._initFields(Object.assign({}, this._fields, mergeObj));
 
         this.getClass().addUpdate({
             type: UPDATE,
@@ -589,16 +571,26 @@ const Model = class Model {
         });
     }
 
+
+    /**
+     * Updates {@link Model} instance attributes to reflect the
+     * session state.
+     * @return {undefined}
+     */
+    refreshFromState() {
+        this._initFields(this.ref);
+    }
+
     /**
      * Records the {@link Model} to be deleted.
      * @return {undefined}
      */
     delete() {
+        this._onDelete();
         this.getClass().addUpdate({
             type: DELETE,
             payload: [this.getId()],
         });
-        this._onDelete();
     }
 
     _onDelete() {

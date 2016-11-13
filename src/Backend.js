@@ -1,7 +1,10 @@
-import { ListIterator, includes } from './utils';
-import getImmutableOps from 'immutable-ops';
+import reject from 'lodash/reject';
+import filter from 'lodash/filter';
+import orderBy from 'lodash/orderBy';
+import ops from 'immutable-ops';
 
-const globalOps = getImmutableOps();
+import { FILTER, EXCLUDE, ORDER_BY } from './constants';
+import { ListIterator, includes } from './utils';
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
@@ -16,16 +19,12 @@ const Backend = class Backend {
      * @param  {string} [userOpts.mapName=itemsById] - the state attribute where the entity objects
      *                                                 are stored in a id to entity object
      *                                                 map.
-     * @param  {Boolean} [userOpts.withMutations=false] - a boolean indicating if the backend
-     *                                                    operations should be executed
-     *                                                    with or without mutations.
      */
     constructor(userOpts) {
         const defaultOpts = {
             idAttribute: 'id',
             arrName: 'items',
             mapName: 'itemsById',
-            withMutations: false,
         };
 
         Object.assign(this, defaultOpts, userOpts);
@@ -46,20 +45,6 @@ const Backend = class Backend {
 
     accessIdList(branch) {
         return branch[this.arrName];
-    }
-
-    getOps(tx) {
-        if (!tx) {
-            return globalOps;
-        }
-        if (!tx.meta.hasOwnProperty('ops')) {
-            tx.meta.ops = getImmutableOps();
-            tx.meta.ops.open();
-            tx.onClose(_tx => {
-                _tx.meta.ops.close();
-            });
-        }
-        return tx.meta.ops;
     }
 
     /**
@@ -84,6 +69,24 @@ const Backend = class Backend {
         });
     }
 
+    query(branch, predicates) {
+        return predicates.reduce((idArr, { type, payload }) => {
+            const entities = idArr.map(id => this.accessId(branch, id));
+            switch (type) {
+            case FILTER:
+                return filter(entities, payload).map(obj => obj[this.idAttribute]);
+            case EXCLUDE:
+                return reject(entities, payload).map(obj => obj[this.idAttribute]);
+            case ORDER_BY: {
+                const [iteratees, orders] = payload;
+                return orderBy(entities, iteratees, orders).map(obj => obj[this.idAttribute]);
+            }
+            default:
+                return idArr;
+            }
+        }, this.accessIdList(branch));
+    }
+
     /**
      * Returns the default state for the data structure.
      * @return {Object} The default state for this {@link Backend} instance's data structure
@@ -97,25 +100,25 @@ const Backend = class Backend {
 
     /**
      * Returns the data structure including a new object `entry`
-     * @param  {Object} session - the current Session instance
+     * @param  {Object} tx - transaction info
      * @param  {Object} branch - the data structure state
      * @param  {Object} entry - the object to insert
      * @return {Object} the data structure including `entry`.
      */
     insert(tx, branch, entry) {
-        const ops = this.getOps(tx);
+        const { batchToken, withMutations } = tx;
         const id = entry[this.idAttribute];
 
-        if (this.withMutations) {
+        if (withMutations) {
             ops.mutable.push(id, branch[this.arrName]);
             ops.mutable.set(id, entry, branch[this.mapName]);
             return branch;
         }
 
 
-        return ops.merge({
-            [this.arrName]: ops.push(id, branch[this.arrName]),
-            [this.mapName]: ops.merge({ [id]: entry }, branch[this.mapName]),
+        return ops.batch.merge(batchToken, {
+            [this.arrName]: ops.batch.push(batchToken, id, branch[this.arrName]),
+            [this.mapName]: ops.batch.merge(batchToken, { [id]: entry }, branch[this.mapName]),
         }, branch);
     }
 
@@ -123,7 +126,7 @@ const Backend = class Backend {
      * Returns the data structure with objects where id in `idArr`
      * are merged with `mergeObj`.
      *
-     * @param  {Object} session - the current Session instance
+     * @param  {Object} tx - transaction info
      * @param  {Object} branch - the data structure state
      * @param  {Array} idArr - the id's of the objects to update
      * @param  {Object} mergeObj - The object to merge with objects
@@ -131,40 +134,40 @@ const Backend = class Backend {
      * @return {Object} the data structure with objects with their id in `idArr` updated with `mergeObj`.
      */
     update(tx, branch, idArr, mergeObj) {
-        const ops = this.getOps(tx);
+        const { batchToken, withMutations } = tx;
 
         const {
             mapName,
         } = this;
 
         const mapFunction = entity => {
-            const merge = this.withMutations ? ops.mutable.merge : ops.merge;
+            const merge = withMutations ? ops.mutable.merge : ops.batch.merge(batchToken);
             return merge(mergeObj, entity);
         };
 
-        const set = this.withMutations ? ops.mutable.set : ops.set;
+        const set = withMutations ? ops.mutable.set : ops.batch.set(batchToken);
 
         const newMap = idArr.reduce((map, id) => {
             const result = mapFunction(branch[mapName][id]);
             return set(id, result, map);
         }, branch[mapName]);
-        return ops.set(mapName, newMap, branch);
+        return ops.batch.set(batchToken, mapName, newMap, branch);
     }
 
     /**
      * Returns the data structure without objects with their id included in `idsToDelete`.
-     * @param  {Object} session - the current Session instance
+     * @param  {Object} tx - transaction info
      * @param  {Object} branch - the data structure state
      * @param  {Array} idsToDelete - the ids to delete from the data structure
      * @return {Object} the data structure without ids in `idsToDelete`.
      */
     delete(tx, branch, idsToDelete) {
-        const ops = this.getOps(tx);
+        const { batchToken, withMutations } = tx;
 
         const { arrName, mapName } = this;
         const arr = branch[arrName];
 
-        if (this.withMutations) {
+        if (withMutations) {
             idsToDelete.forEach(id => {
                 const idx = arr.indexOf(id);
                 if (idx !== -1) {
@@ -175,9 +178,17 @@ const Backend = class Backend {
             return branch;
         }
 
-        return ops.merge({
-            [arrName]: ops.filter(id => !includes(idsToDelete, id), branch[arrName]),
-            [mapName]: ops.omit(idsToDelete, branch[mapName]),
+        return ops.batch.merge(batchToken, {
+            [arrName]: ops.batch.filter(
+                batchToken,
+                id => !includes(idsToDelete, id),
+                branch[arrName]
+            ),
+            [mapName]: ops.batch.omit(
+                batchToken,
+                idsToDelete,
+                branch[mapName]
+            ),
         }, branch);
     }
 };

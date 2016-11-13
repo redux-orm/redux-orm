@@ -1,4 +1,4 @@
-import Transaction from './Transaction';
+import { getBatchToken } from 'immutable-ops';
 import { ops } from './utils';
 
 /**
@@ -13,15 +13,18 @@ const Session = class Session {
      * @param  {Object} state - the database state
      * @param  {Object} [action] - the current action in the dispatch cycle.
      *                             Will be passed to the user defined reducers.
-     * @param  {Boolean} withMutations - whether the session should mutate data
+     * @param  {Boolean} [withMutations] - whether the session should mutate data
+     * @param  {Object} [batchToken] - used by the backend to identify objects that can be
+     *                                 mutated.
      */
-    constructor(schema, state, action, withMutations) {
+    constructor(schema, state, action, withMutations, batchToken) {
         this.schema = schema;
         this.state = state || schema.getDefaultState();
+        this.initialState = this.state;
+
         this.action = action;
         this.withMutations = !!withMutations;
-
-        this.currentTx = new Transaction();
+        this.batchToken = batchToken || getBatchToken();
 
         this._accessedModels = {};
         this.modelData = {};
@@ -58,7 +61,7 @@ const Session = class Session {
     }
 
     /**
-     * Records an update to the session.
+     * Applies update to a model state.
      *
      * @private
      * @param {Object} update - the update object. Must have keys
@@ -66,29 +69,20 @@ const Session = class Session {
      *                          must also include a `name` attribute
      *                          that contains the model name.
      */
-    addUpdate(update) {
-        if (this.withMutations) {
-            const modelName = update.meta.name;
-            const modelState = this.getState(modelName);
-
-            // The backend used in the updateReducer
-            // will mutate the model state.
-            this[modelName].updateReducer(null, modelState, update);
-        } else {
-            this.currentTx.addUpdate(update);
-        }
-    }
-
-    getUpdatesFor(modelName) {
-        return this.currentTx.getUpdatesFor(modelName);
-    }
-
-    get updates() {
-        return this.currentTx.updates.map(update => update.update);
+    applyUpdate(update) {
+        const modelName = update.meta.name;
+        const modelState = this.getState(modelName);
+        const newState = this[modelName].applyUpdate(
+            modelState,
+            update,
+            this.withMutations,
+            this.batchToken
+        );
+        this.updateState(modelName, newState);
     }
 
     /**
-     * Returns the current state for a model with name `modelName`.
+     * Gets the current state for the model with name `modelName`.
      *
      * @private
      * @param  {string} modelName - the name of the model to get state for.
@@ -96,6 +90,19 @@ const Session = class Session {
      */
     getState(modelName) {
         return this.state[modelName];
+    }
+
+    /**
+     * Updates the current state for the model with name `modelName`.
+     *
+     * @private
+     * @param  {string} modelName - the name of the model to get state for.
+     * @param  {*} newState - the new state for the model.
+     * @return {undefined}
+     */
+    updateState(modelName, newState) {
+        const newDBState = ops.batch.set(this.batchToken, modelName, newState, this.state);
+        this.state = newDBState;
     }
 
     /**
@@ -108,53 +115,17 @@ const Session = class Session {
      * @return {Object} The next state
      */
     getNextState(userOpts) {
-        if (this.withMutations) return this.state;
+        if (this.withMutations || !this.action) return this.state;
+        const { runReducers } = (userOpts || {});
 
-        const prevState = this.state;
-        const action = this.action;
-        const opts = userOpts || {};
-
-        // If the session does not have a specified action object,
-        // don't run the user-defined model reducers unless
-        // explicitly specified.
-        const runReducers = opts.hasOwnProperty('runReducers')
-            ? opts.runReducers
-            : !!action;
-
-        const tx = this.currentTx;
-        ops.open();
-
-        let nextState = prevState;
         if (runReducers) {
-            nextState = this.sessionBoundModels.reduce((_nextState, modelClass) => {
+            this.sessionBoundModels.forEach(modelClass => {
                 const modelState = this.getState(modelClass.modelName);
-
-                let returnValue = modelClass.reducer(modelState, action, modelClass, this);
-                if (typeof returnValue === 'undefined') {
-                    returnValue = modelClass.getNextState(tx);
-                }
-                return ops.set(modelClass.modelName, returnValue, _nextState);
-            }, nextState);
+                const nextState = modelClass.reducer(modelState, this.action, modelClass, this);
+                this.updateState(modelClass.modelName, nextState || modelClass.getNextState());
+            });
         }
-
-        // There might be some m2m updates left.
-        const unappliedUpdates = this.currentTx.getUnappliedUpdatesByModel();
-        if (unappliedUpdates) {
-            nextState = this.sessionBoundModels.reduce((_nextState, modelClass) => {
-                const modelName = modelClass.modelName;
-                if (!unappliedUpdates.hasOwnProperty(modelName)) {
-                    return _nextState;
-                }
-
-                return ops.set(modelName, modelClass.getNextState(tx), _nextState);
-            }, nextState);
-        }
-
-        ops.close();
-        tx.close();
-        this.currentTx = new Transaction();
-
-        return nextState;
+        return this.state;
     }
 
     /**

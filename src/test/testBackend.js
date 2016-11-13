@@ -3,7 +3,7 @@ import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
 const { expect } = chai;
 import Backend from '../Backend';
-import { ListIterator } from '../utils';
+import { ListIterator, getBatchToken } from '../utils';
 
 describe('Backend', () => {
     describe('prototype methods', () => {
@@ -24,7 +24,8 @@ describe('Backend', () => {
                 },
             },
         };
-        const mockTx = { meta: {}, onClose() {} };
+        const batchToken = getBatchToken();
+        const txInfo = { batchToken, withMutations: false };
         const backend = new Backend();
 
         it('correctly accesses an id', () => {
@@ -61,7 +62,7 @@ describe('Backend', () => {
 
         it('correctly inserts an entry', () => {
             const entry = { id: 3, data: 'newdata!' };
-            const newState = backend.insert(mockTx, state, entry);
+            const newState = backend.insert(txInfo, state, entry);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.deep.equal([0, 1, 2, 3]);
@@ -88,7 +89,7 @@ describe('Backend', () => {
         it('correctly updates entries with a merging object', () => {
             const toMergeObj = { data: 'modifiedData' };
             const idsToUpdate = [1, 2];
-            const newState = backend.update(mockTx, state, idsToUpdate, toMergeObj);
+            const newState = backend.update(txInfo, state, idsToUpdate, toMergeObj);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.equal(state.items);
@@ -110,7 +111,7 @@ describe('Backend', () => {
 
         it('correctly deletes entries', () => {
             const idsToDelete = [1, 2];
-            const newState = backend.delete(mockTx, state, idsToDelete);
+            const newState = backend.delete(txInfo, state, idsToDelete);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.deep.equal([0]);

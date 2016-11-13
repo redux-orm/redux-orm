@@ -105,21 +105,22 @@ function manyToManyDescriptor(
             }
 
             const throughQs = throughModel.filter(lookupObj);
-            const toIds = throughQs.withRefs.map(obj => obj[reverse ? fromFieldName : toFieldName]);
+            const toIds = throughQs.toRefArray().map(obj => obj[reverse ? fromFieldName : toFieldName]);
 
             const qsFromModel = reverse ? declaredFromModel : declaredToModel;
-            const qs = qsFromModel.getQuerySetFromIds(toIds);
+            const qs = qsFromModel.filter(attrs => {
+                return includes(toIds, attrs[qsFromModel.idAttribute]);
+            });
 
             qs.add = function add(...args) {
                 const idsToAdd = args.map(normalizeEntity);
 
                 const filterWithAttr = reverse ? fromFieldName : toFieldName;
 
-                const existingQs = throughQs.withRefs
-                    .filter(through => includes(idsToAdd, through[filterWithAttr]));
+                const existingQs = throughQs.filter(through => includes(idsToAdd, through[filterWithAttr]));
 
                 if (existingQs.exists()) {
-                    const existingIds = existingQs.withRefs.map(through => through[filterWithAttr]);
+                    const existingIds = existingQs.map(through => through[filterWithAttr]);
 
                     const toAddModel = reverse
                         ? declaredFromModel.modelName
@@ -148,12 +149,13 @@ function manyToManyDescriptor(
                 const idsToRemove = entities.map(normalizeEntity);
 
                 const attrInIdsToRemove = reverse ? fromFieldName : toFieldName;
-                const entitiesToDelete = throughQs.withRefs
-                    .filter(through => includes(idsToRemove, through[attrInIdsToRemove]));
+                const entitiesToDelete = throughQs.filter(
+                    through => includes(idsToRemove, through[attrInIdsToRemove])
+                );
 
                 if (entitiesToDelete.count() !== idsToRemove.length) {
                     // Tried deleting non-existing entities.
-                    const entitiesToDeleteIds = entitiesToDelete.withRefs.map(through => through[attrInIdsToRemove]);
+                    const entitiesToDeleteIds = entitiesToDelete.map(through => through[attrInIdsToRemove]);
                     const unexistingIds = difference(idsToRemove, entitiesToDeleteIds);
 
                     const toDeleteModel = reverse

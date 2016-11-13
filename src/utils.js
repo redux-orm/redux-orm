@@ -1,6 +1,6 @@
 import forOwn from 'lodash/forOwn';
 import includes from 'lodash/includes';
-import getImmutableOps from 'immutable-ops';
+import ops from 'immutable-ops';
 import intersection from 'lodash/intersection';
 import difference from 'lodash/difference';
 
@@ -241,8 +241,7 @@ function arrayDiffActions(sourceArr, targetArr) {
     return null;
 }
 
-// A global instance of immutable-ops for general use
-const ops = getImmutableOps();
+const { getBatchToken } = ops;
 
 export {
     match,
@@ -258,4 +257,5 @@ export {
     ops,
     includes,
     arrayDiffActions,
+    getBatchToken,
 };

@@ -1,12 +1,12 @@
-import reject from 'lodash/reject';
-import filter from 'lodash/filter';
 import mapValues from 'lodash/mapValues';
-import orderBy from 'lodash/orderBy';
 import { normalizeEntity } from './utils';
 
 import {
     UPDATE,
     DELETE,
+    FILTER,
+    EXCLUDE,
+    ORDER_BY,
 } from './constants.js';
 
 /**
@@ -21,72 +21,29 @@ const QuerySet = class QuerySet {
      * Creates a QuerySet.
      *
      * @param  {Model} modelClass - the model class of objects in this QuerySet.
-     * @param  {number[]} idArr - an array of the id's this QuerySet includes.
+     * @param  {any[]} clauses - query clauses needed to evaluate the set.
      * @param {Object} [opts] - additional options
      */
-    constructor(modelClass, idArr, opts) {
+    constructor(modelClass, clauses, opts) {
         Object.assign(this, {
             modelClass,
-            idArr,
+            clauses: clauses || [],
         });
 
         this._opts = opts;
-
-        // A flag that tells if the user wants
-        // the result in plain javascript objects
-        // or {@link Model} instances.
-        // Results are plain objects by default.
-        if (opts && opts.hasOwnProperty('withRefs')) {
-            this._withRefs = opts.withRefs;
-        } else {
-            this._withRefs = false;
-        }
     }
 
     static addSharedMethod(methodName) {
         this.sharedMethods = this.sharedMethods.concat(methodName);
     }
 
-    _new(ids, userOpts) {
+    _new(clauses, userOpts) {
         const opts = Object.assign({}, this._opts, userOpts);
-        return new this.constructor(this.modelClass, ids, opts);
-    }
-
-    /**
-     * Returns a new QuerySet representing the same entities
-     * with the `withRefs` flag on.
-     *
-     * @return {QuerySet}
-     */
-    get withRefs() {
-        if (!this._withRefs) {
-            return this._new(this.idArr, { withRefs: true });
-        }
-        return this;
-    }
-
-    /**
-     * Alias for withRefs
-     * @return {QuerySet}
-     */
-    get ref() {
-        return this.withRefs;
-    }
-
-    /**
-     * Returns a new QuerySet representing the same entities
-     * with the `withRefs` flag off.
-     *
-     * @return {QuerySet}
-     */
-    get withModels() {
-        if (this._withRefs) {
-            return this._new(this.idArr, { withRefs: false });
-        }
-        return this;
+        return new this.constructor(this.modelClass, clauses, opts);
     }
 
     toString() {
+        this._evaluate();
         const contents = this.idArr.map(id =>
             this.modelClass.withId(id).toString()
         ).join('\n    - ');
@@ -101,6 +58,7 @@ const QuerySet = class QuerySet {
      *                    the QuerySet
      */
     toRefArray() {
+        this._evaluate();
         return this.idArr.map(id => this.modelClass.accessId(id));
     }
 
@@ -109,6 +67,7 @@ const QuerySet = class QuerySet {
      * @return {Model[]} model instances represented by the QuerySet
      */
     toModelArray() {
+        this._evaluate();
         return this.idArr.map((_, idx) => this.at(idx));
     }
 
@@ -118,6 +77,7 @@ const QuerySet = class QuerySet {
      * @return {number} length of the QuerySet
      */
     count() {
+        this._evaluate();
         return this.idArr.length;
     }
 
@@ -140,9 +100,7 @@ const QuerySet = class QuerySet {
      *                        object at index `index` in the {@link QuerySet} instance
      */
     at(index) {
-        if (this._withRefs) {
-            return this.modelClass.accessId(this.idArr[index]);
-        }
+        this._evaluate();
         return this.modelClass.withId(this.idArr[index]);
     }
 
@@ -159,6 +117,7 @@ const QuerySet = class QuerySet {
      * @return {Model}
      */
     last() {
+        this._evaluate();
         return this.at(this.idArr.length - 1);
     }
 
@@ -167,7 +126,7 @@ const QuerySet = class QuerySet {
      * @return {QuerySet} a new QuerySet with the same entities.
      */
     all() {
-        return this._new(this.idArr);
+        return this._new(this.clauses);
     }
 
     /**
@@ -177,7 +136,11 @@ const QuerySet = class QuerySet {
      * @return {QuerySet} a new {@link QuerySet} instance with objects that passed the filter.
      */
     filter(lookupObj) {
-        return this._filterOrExclude(lookupObj, false);
+        const normalizedLookupObj = typeof lookupObj === 'object'
+            ? mapValues(lookupObj, normalizeEntity)
+            : lookupObj;
+        const filterDescriptor = { type: FILTER, payload: normalizedLookupObj };
+        return this._new(this.clauses.concat(filterDescriptor));
     }
 
     /**
@@ -187,41 +150,18 @@ const QuerySet = class QuerySet {
      * @return {QuerySet} a new {@link QuerySet} instance with objects that passed the filter.
      */
     exclude(lookupObj) {
-        return this._filterOrExclude(lookupObj, true);
+        const normalizedLookupObj = typeof lookupObj === 'object'
+            ? mapValues(lookupObj, normalizeEntity)
+            : lookupObj;
+        const excludeDescriptor = { type: EXCLUDE, payload: normalizedLookupObj };
+        return this._new(this.clauses.concat(excludeDescriptor));
     }
 
-    _filterOrExclude(_lookupObj, exclude) {
-        const func = exclude ? reject : filter;
-        let lookupObj = _lookupObj;
-        let operationWithRefs = true;
-        let entities;
-        if (typeof lookupObj === 'function') {
-            // For filtering with function,
-            // use whatever object type
-            // is flagged.
-            if (this._withRefs) {
-                entities = this.toRefArray();
-            } else {
-                entities = this.toModelArray();
-                operationWithRefs = false;
-            }
-        } else {
-            if (typeof lookupObj === 'object') {
-                lookupObj = mapValues(lookupObj, normalizeEntity);
-            }
-
-            // Lodash filtering doesn't work with
-            // Model instances.
-            entities = this.toRefArray();
+    _evaluate() {
+        if (!this._evaluated) {
+            this.idArr = this.modelClass.getBackend().query(this.modelClass.state, this.clauses);
+            this._evaluated = true;
         }
-        const filteredEntities = func(entities, lookupObj);
-        const getIdFunc = operationWithRefs
-            ? (obj) => obj[this.modelClass.idAttribute]
-            : (obj) => obj.getId();
-
-        const newIdArr = filteredEntities.map(getIdFunc);
-
-        return this._new(newIdArr, { withRefs: false });
     }
 
     /**
@@ -234,11 +174,8 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     forEach(func) {
-        const arr = this._withRefs
-            ? this.toRefArray()
-            : this.toModelArray();
-
-        arr.forEach(func);
+        this._evaluate();
+        this.toModelArray().forEach(func);
     }
 
     /**
@@ -250,7 +187,8 @@ const QuerySet = class QuerySet {
      * @return {Array}  the mapped array
      */
     map(func) {
-        return this.idArr.map((_, idx) => func(this.at(idx)));
+        this._evaluate();
+        return this.toModelArray().map(func);
     }
 
     /**
@@ -269,30 +207,8 @@ const QuerySet = class QuerySet {
      * @return {QuerySet} a new {@link QuerySet} with objects ordered by `iteratees`.
      */
     orderBy(iteratees, orders) {
-        const entities = this.toRefArray();
-        let iterateeArgs = iteratees;
-
-        // Lodash only works on plain javascript objects.
-        // If the argument is a function, and the `withRefs`
-        // flag is false, the argument function is wrapped
-        // to get the model instance and pass that as the argument
-        // to the user-supplied function.
-        if (!this._withRefs) {
-            iterateeArgs = iteratees.map(arg => {
-                if (typeof arg === 'function') {
-                    return entity => {
-                        const id = entity[this.modelClass.idAttribute];
-                        const instance = this.modelClass.withId(id);
-                        return arg(instance);
-                    };
-                }
-                return arg;
-            });
-        }
-        const sortedEntities = orderBy.call(null, entities, iterateeArgs, orders);
-        return this._new(
-            sortedEntities.map(entity => entity[this.modelClass.idAttribute]),
-            { withRefs: false });
+        const orderByDescriptor = { type: ORDER_BY, payload: [iteratees, orders] };
+        return this._new(this.clauses.concat(orderByDescriptor));
     }
 
     /**
@@ -304,6 +220,7 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     update(mergeObj) {
+        this._evaluate();
         this.modelClass.addUpdate({
             type: UPDATE,
             payload: {
@@ -311,6 +228,8 @@ const QuerySet = class QuerySet {
                 mergeObj,
             },
         });
+
+        this._evaluated = false;
     }
 
     /**
@@ -318,12 +237,15 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     delete() {
+        this._evaluate();
+        this.toModelArray().forEach(model => model._onDelete());
+
         this.modelClass.addUpdate({
             type: DELETE,
             payload: this.idArr,
         });
 
-        this.withModels.forEach(model => model._onDelete());
+        this._evaluated = false;
     }
 };
 
