@@ -5,6 +5,10 @@ import Model from './Model';
 import Schema from './Schema';
 import Session from './Session';
 import {
+    createReducer,
+    createSelector,
+} from './redux';
+import {
     ForeignKey,
     ManyToMany,
     OneToOne,
@@ -26,6 +30,8 @@ export {
     fk,
     many,
     oneToOne,
+    createReducer,
+    createSelector,
 };
 
 export default Model;

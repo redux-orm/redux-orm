@@ -66,7 +66,7 @@ export function memoize(func, equalityCheck = eqCheck, modelSchema) {
             return lastResult;
         }
 
-        const session = modelSchema.from(ormState);
+        const session = modelSchema.session(ormState);
         const newArgs = [session, ...otherArgs];
         const result = func(...newArgs);
 

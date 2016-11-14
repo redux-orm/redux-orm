@@ -14,7 +14,7 @@ export function defaultUpdater(session, action) {
 }
 
 
-export const makeReducer = (orm, updater = defaultUpdater) =>
+export const createReducer = (orm, updater = defaultUpdater) =>
     (state, action) => {
         const session = orm.session(state || orm.getDefaultState());
         updater(session, action);
@@ -66,7 +66,7 @@ const selectorCreator = createSelectorCreator(memoize, eqCheck, this);
  */
 export function createSelector(orm, ...args) {
     if (args.length === 1) {
-        return memoize(args[0], eqCheck, this);
+        return memoize(args[0], eqCheck, orm);
     }
     return selectorCreator(...args);
 }
