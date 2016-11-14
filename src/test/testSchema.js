@@ -135,7 +135,8 @@ describe('Schema', () => {
             );
             expect(publisherDescriptor).to.be.undefined;
 
-            schema._setupModelPrototypes();
+            schema._setupModelPrototypes(schema.registry);
+            schema._setupModelPrototypes(schema.implicitThroughModels);
 
             expect(Book.isSetUp).to.be.ok;
 
