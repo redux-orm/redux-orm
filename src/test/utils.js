@@ -146,21 +146,21 @@ export function createTestSchema(customModels) {
 
 export function createTestSession() {
     const schema = createTestSchema();
-    return schema.from(schema.getDefaultState());
+    return schema.session(schema.getDefaultState());
 }
 
 export function createTestSessionWithData(customSchema) {
     const schema = customSchema || createTestSchema();
     const state = schema.getDefaultState();
-    const mutatingSession = schema.withMutations(state);
+    const { Author, Cover, Genre, Book, Publisher } = schema.mutableSession(state);
 
-    AUTHORS_INITIAL.forEach(props => mutatingSession.Author.create(props));
-    COVERS_INITIAL.forEach(props => mutatingSession.Cover.create(props));
-    GENRES_INITIAL.forEach(props => mutatingSession.Genre.create(props));
-    BOOKS_INITIAL.forEach(props => mutatingSession.Book.create(props));
-    PUBLISHERS_INITIAL.forEach(props => mutatingSession.Publisher.create(props));
+    AUTHORS_INITIAL.forEach(props => Author.create(props));
+    COVERS_INITIAL.forEach(props => Cover.create(props));
+    GENRES_INITIAL.forEach(props => Genre.create(props));
+    BOOKS_INITIAL.forEach(props => Book.create(props));
+    PUBLISHERS_INITIAL.forEach(props => Publisher.create(props));
 
-    const normalSession = schema.from(state);
+    const normalSession = schema.session(state);
     return { session: normalSession, schema, state };
 }
 

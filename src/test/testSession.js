@@ -50,7 +50,7 @@ describe('Session', () => {
     });
 
     it('exposes models as getter properties', () => {
-        const session = schema.from(defaultState);
+        const session = schema.session(defaultState);
         expect(isSubclass(session.Book, Book)).to.be.true;
         expect(isSubclass(session.Author, Author)).to.be.true;
         expect(isSubclass(session.Cover, Cover)).to.be.true;
@@ -74,27 +74,22 @@ describe('Session', () => {
 
     describe('gets the next state', () => {
         it('without any updates, the same state is returned', () => {
-            const session = schema.from(defaultState);
-
-            const nextState = session.getNextState();
-            expect(nextState).to.equal(defaultState);
+            const session = schema.session(defaultState);
+            expect(session.state).to.equal(defaultState);
         });
 
         it('with updates, a new state is returned', () => {
-            const session = schema.from(defaultState);
+            const session = schema.session(defaultState);
 
-            session.applyUpdate({
+            session.applyUpdate(Author.modelName, {
                 type: CREATE,
-                meta: {
-                    name: Author.modelName,
-                },
                 payload: {
                     id: 0,
                     name: 'Caesar',
                 },
             });
 
-            const nextState = session.getNextState();
+            const nextState = session.state;
 
             expect(nextState).to.not.equal(defaultState);
 
@@ -106,59 +101,13 @@ describe('Session', () => {
             expect(nextState[Genre.modelName]).to.equal(defaultState[Genre.modelName]);
             expect(nextState[Publisher.modelName]).to.equal(defaultState[Publisher.modelName]);
         });
-
-        it('runs reducers if explicitly specified', () => {
-            const session = schema.from(defaultState);
-
-            const authorReducerSpy = sinon.spy(Author, 'reducer');
-            const bookReducerSpy = sinon.spy(Book, 'reducer');
-            const coverReducerSpy = sinon.spy(Cover, 'reducer');
-            const genreReducerSpy = sinon.spy(Genre, 'reducer');
-            const publisherReducerSpy = sinon.spy(Publisher, 'reducer');
-
-            session.getNextState({ runReducers: true });
-
-            expect(authorReducerSpy).to.be.calledOnce;
-            expect(bookReducerSpy).to.be.calledOnce;
-            expect(coverReducerSpy).to.be.calledOnce;
-            expect(genreReducerSpy).to.be.calledOnce;
-            expect(publisherReducerSpy).to.be.calledOnce;
-        });
-
-        it('doesn\'t run reducers if explicitly specified', () => {
-            const session = schema.from(defaultState);
-
-            const authorReducerSpy = sinon.spy(Author, 'reducer');
-            const bookReducerSpy = sinon.spy(Book, 'reducer');
-            const coverReducerSpy = sinon.spy(Cover, 'reducer');
-            const genreReducerSpy = sinon.spy(Genre, 'reducer');
-            const publisherReducerSpy = sinon.spy(Publisher, 'reducer');
-
-            session.getNextState({ runReducers: false });
-
-            expect(authorReducerSpy).not.to.be.called;
-            expect(bookReducerSpy).not.to.be.called;
-            expect(coverReducerSpy).not.to.be.called;
-            expect(genreReducerSpy).not.to.be.called;
-            expect(publisherReducerSpy).not.to.be.called;
-        });
-    });
-
-    it('reduce calls getNextState with correct arguments', () => {
-        const session = schema.from(defaultState);
-        const getNextStateSpy = sinon.spy(session, 'getNextState');
-
-        session.reduce();
-
-        expect(getNextStateSpy).to.be.calledOnce;
-        expect(getNextStateSpy).to.be.calledWithMatch({ runReducers: true });
     });
 
     it('two concurrent sessions', () => {
         const otherState = schema.getDefaultState();
 
-        const firstSession = schema.from(defaultState);
-        const secondSession = schema.from(otherState);
+        const firstSession = schema.session(defaultState);
+        const secondSession = schema.session(otherState);
 
         expect(firstSession.sessionBoundModels).to.have.lengthOf(6);
 

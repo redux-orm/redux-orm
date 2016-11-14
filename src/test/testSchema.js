@@ -15,7 +15,6 @@ const { expect } = chai;
 describe('Schema', () => {
     it('constructor works', () => {
         const schema = new Schema();
-        expect(schema.selectorCreator).to.be.a('function');
     });
 
     describe('throws on invalid model declarations', () => {
@@ -169,11 +168,6 @@ describe('Schema', () => {
             expect(publisherDescriptor.set).to.be.a('function');
         });
 
-        it('calling reducer with undefined state doesn\'t throw', () => {
-            schema.register(Book, Author, Cover, Genre, Publisher);
-            schema.reducer()(undefined, { type: '______init' });
-        });
-
         it('correctly gets the default state', () => {
             schema.register(Book, Author, Cover, Genre, Publisher);
             const defaultState = schema.getDefaultState();
@@ -182,86 +176,40 @@ describe('Schema', () => {
                 Book: {
                     items: [],
                     itemsById: {},
+                    meta: {},
                 },
                 BookGenres: {
                     items: [],
                     itemsById: {},
+                    meta: {},
                 },
                 Author: {
                     items: [],
                     itemsById: {},
+                    meta: {},
                 },
                 Cover: {
                     items: [],
                     itemsById: {},
+                    meta: {},
                 },
                 Genre: {
                     items: [],
                     itemsById: {},
+                    meta: {},
                 },
                 Publisher: {
                     items: [],
                     itemsById: {},
+                    meta: {},
                 },
             });
-        });
-
-        it('correctly creates a selector', () => {
-            schema.register(Book, Author, Cover, Genre, Publisher);
-            let selectorTimesRun = 0;
-            const selector = schema.createSelector(() => selectorTimesRun++);
-            expect(selector).to.be.a('function');
-
-            const state = schema.getDefaultState();
-            selector(state);
-            expect(selectorTimesRun).to.equal(1);
-            selector(state);
-            expect(selectorTimesRun).to.equal(1);
-            selector(schema.getDefaultState());
-            expect(selectorTimesRun).to.equal(1);
-        });
-
-        it('correctly creates a selector with input selectors', () => {
-            schema.register(Book, Author, Cover, Genre, Publisher);
-
-            const _selectorFunc = sinon.spy();
-
-            const selector = schema.createSelector(
-                state => state.orm,
-                state => state.selectedUser,
-                _selectorFunc
-            );
-
-            const _state = schema.getDefaultState();
-
-            const appState = {
-                orm: _state,
-                selectedUser: 5,
-            };
-
-            expect(selector).to.be.a('function');
-
-            selector(appState);
-            expect(_selectorFunc.callCount).to.equal(1);
-
-            expect(_selectorFunc.lastCall.args[0]).to.be.an.instanceOf(Session);
-            expect(_selectorFunc.lastCall.args[0].state).to.equal(_state);
-
-            expect(_selectorFunc.lastCall.args[1]).to.equal(5);
-
-            selector(appState);
-            expect(_selectorFunc.callCount).to.equal(1);
-
-            const otherUserState = Object.assign({}, appState, { selectedUser: 0 });
-
-            selector(otherUserState);
-            expect(_selectorFunc.callCount).to.equal(2);
         });
 
         it('correctly starts a mutating session', () => {
             schema.register(Book, Author, Cover, Genre, Publisher);
             const initialState = schema.getDefaultState();
-            const session = schema.withMutations(initialState);
+            const session = schema.mutableSession(initialState);
             expect(session).to.be.an.instanceOf(Session);
             expect(session.withMutations).to.be.true;
         });

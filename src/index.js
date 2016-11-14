@@ -1,5 +1,6 @@
 import QuerySet from './QuerySet';
-import Backend from './Backend';
+import Database from './db/Database';
+import Table from './db/Table';
 import Model from './Model';
 import Schema from './Schema';
 import Session from './Session';
@@ -14,7 +15,8 @@ import {
 
 export {
     QuerySet,
-    Backend,
+    Database,
+    Table,
     Model,
     Schema,
     Session,

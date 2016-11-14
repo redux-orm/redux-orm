@@ -1,10 +1,10 @@
-import { createSelectorCreator } from 'reselect';
 import forOwn from 'lodash/forOwn';
 import find from 'lodash/find';
 import findKey from 'lodash/findKey';
 
 import Session from './Session';
 import Model from './Model';
+import { Database } from './db';
 import {
     ForeignKey,
     ManyToMany,
@@ -17,7 +17,6 @@ import {
     backwardOneToOneDescriptor,
     manyToManyDescriptor,
 } from './descriptors';
-import { memoize, eqCheck } from './memoize';
 
 import {
     m2mName,
@@ -42,35 +41,6 @@ const Schema = class Schema {
     constructor() {
         this.registry = [];
         this.implicitThroughModels = [];
-        this.selectorCreator = createSelectorCreator(memoize, eqCheck, this);
-    }
-
-    /**
-     * Defines a {@link Model} class with the provided options and registers
-     * it to the schema instance.
-     *
-     * Note that you can also define {@link Model} classes by yourself
-     * with ES6 classes.
-     *
-     * @param  {string} modelName - the name of the {@link Model} class
-     * @param  {Object} [relatedFields] - a dictionary of `fieldName: fieldInstance`
-     * @param  {Function} [reducer] - the reducer function to use for this model
-     * @param  {Object} [backendOpts] - {@link Backend} options for this model.
-     * @return {Model} The defined model class.
-     */
-    define(modelName, relatedFields, reducer, backendOpts) {
-        class ShortcutDefinedModel extends Model {}
-        ShortcutDefinedModel.modelName = modelName;
-        ShortcutDefinedModel.backend = backendOpts;
-        ShortcutDefinedModel.fields = relatedFields;
-
-        if (typeof reducer === 'function') {
-            ShortcutDefinedModel.reducer = reducer;
-        }
-
-        this.register(ShortcutDefinedModel);
-
-        return ShortcutDefinedModel;
     }
 
     /**
@@ -345,106 +315,52 @@ const Schema = class Schema {
         });
     }
 
+    getDatabase() {
+        if (!this.db) {
+            const models = this.getModelClasses();
+            const schemaSpec = models.reduce((spec, modelClass) => {
+                const tableName = modelClass.modelName;
+                const tableSpec = modelClass._getTableOpts();
+                spec[tableName] = Object.assign({}, tableSpec, { fields: modelClass.fields });
+                return spec;
+            }, {});
+
+            this.db = new Database(schemaSpec);
+        }
+        return this.db;
+    }
+
     /**
      * Returns the default state.
      * @return {Object} the default state
      */
     getDefaultState() {
-        const models = this.getModelClasses();
-        const state = {};
-        models.forEach(modelClass => {
-            state[modelClass.modelName] = modelClass.getDefaultState();
-        });
-        return state;
+        return this.getDatabase().getDefaultState();
     }
 
     /**
      * Begins an immutable database session.
      *
      * @param  {Object} state  - the state the database manages
-     * @param  {Object} [action] - the dispatched action object
      * @return {Session} a new {@link Session} instance
      */
-    from(state, action) {
-        return new Session(this, state, action);
+    session(state) {
+        return new Session(this, this.getDatabase(), state);
+    }
+
+    // Alias for session.
+    from(state) {
+        return this.session(state);
     }
 
     /**
      * Begins a mutable database session.
      *
      * @param  {Object} state  - the state the database manages
-     * @param  {Object} [action] - the dispatched action object
      * @return {Session} a new {@link Session} instance
      */
-    withMutations(state, action) {
-        return new Session(this, state, action, true);
-    }
-
-    /**
-     * Returns a reducer function you can plug into your own
-     * reducer. One way to do that is to declare your root reducer:
-     *
-     * ```javascript
-     * function rootReducer(state, action) {
-     *     return {
-     *         entities: schema.reducer(),
-     *         // Any other reducers you use.
-     *     }
-     * }
-     * ```
-     *
-     * @return {Function} a reducer function that creates a new {@link Session} on
-     *                    each action dispatch.
-     */
-    reducer() {
-        return (state, action) =>
-            this.from(state, action).reduce();
-    }
-
-    /**
-     * Returns a memoized selector based on passed arguments.
-     * This is similar to `reselect`'s `createSelector`,
-     * except you can also pass a single function to be memoized.
-     *
-     * If you pass multiple functions, the format will be the
-     * same as in `reselect`. The last argument is the selector
-     * function and the previous are input selectors.
-     *
-     * When you use this method to create a selector, the returned selector
-     * expects the whole `redux-orm` state branch as input. In the selector
-     * function that you pass as the last argument, you will receive
-     * `session` argument (a `Session` instance) followed by any
-     * input arguments, like in `reselect`.
-     *
-     * This is an example selector:
-     *
-     * ```javascript
-     * const bookSelector = schema.createSelector(session => {
-     *     return session.Book.map(book => {
-     *         return Object.assign({}, book.ref, {
-     *             authors: book.authors.map(author => author.name),
-     *             genres: book.genres.map(genre => genre.name),
-     *         });
-     *     });
-     * });
-     * ```
-     *
-     * redux-orm uses a special memoization function to avoid recomputations.
-     * When a selector runs for the first time, it checks which Models' state
-     * branches were accessed. On subsequent runs, the selector first checks
-     * if those branches have changed -- if not, it just returns the previous
-     * result. This way you can use the `PureRenderMixin` in your React
-     * components for performance gains.
-     *
-     * @param  {...Function} args - zero or more input selectors
-     *                              and the selector function.
-     * @return {Function} memoized selector
-     */
-    createSelector(...args) {
-        if (args.length === 1) {
-            return memoize(args[0], eqCheck, this);
-        }
-        return this.selectorCreator(...args);
+    mutableSession(state) {
+        return new Session(this, this.getDatabase(), state, true);
     }
 };
 

@@ -228,8 +228,10 @@ describe('Integration', () => {
         });
 
         it('applying no updates returns the same state reference', () => {
-            const nextState = session.reduce();
-            expect(nextState).to.equal(state);
+            const book = session.Book.first();
+            book.name = book.name;
+
+            expect(session.state).to.equal(state);
         });
     });
 
@@ -243,7 +245,7 @@ describe('Integration', () => {
         });
 
         it('works', () => {
-            const mutating = schema.withMutations(state);
+            const mutating = schema.mutableSession(state);
             const {
                 Book,
                 Cover,
@@ -262,7 +264,7 @@ describe('Integration', () => {
 
             expect(book.name).to.equal(newName);
 
-            const nextState = mutating.reduce();
+            const nextState = mutating.state;
             expect(nextState).to.equal(state);
             expect(state.Book.itemsById[bookId]).to.equal(bookRef);
             expect(bookRef.name).to.equal(newName);
@@ -281,7 +283,7 @@ describe('Integration', () => {
 
         it('works', () => {
             const firstSession = session;
-            const secondSession = schema.from(state);
+            const secondSession = schema.session(state);
 
             expect(firstSession.Book.count()).to.equal(3);
             expect(secondSession.Book.count()).to.equal(3);
@@ -295,11 +297,8 @@ describe('Integration', () => {
 
             firstSession.Book.create(newBookProps);
 
-            const nextFirstSession = schema.from(firstSession.getNextState());
-            const nextSecondSession = schema.from(secondSession.getNextState());
-
-            expect(nextFirstSession.Book.count()).to.equal(4);
-            expect(nextSecondSession.Book.count()).to.equal(3);
+            expect(firstSession.Book.count()).to.equal(4);
+            expect(secondSession.Book.count()).to.equal(3);
         });
     });
 });
@@ -315,7 +314,7 @@ describe('Big Data Test', () => {
         schema.register(Item);
     });
 
-    it('adds a big amount of items in acceptable time', function () {
+    it('adds a big amount of items in acceptable time', function bigDataTest() {
         this.timeout(30000);
 
         const session = schema.from(schema.getDefaultState());
@@ -325,7 +324,6 @@ describe('Big Data Test', () => {
         for (let i = 0; i < amount; i++) {
             session.Item.create({ id: i, name: 'TestItem' });
         }
-        const nextState = session.getNextState();
         const end = new Date().getTime();
         const tookSeconds = (end - start) / 1000;
         console.log(`Creating ${amount} objects took ${tookSeconds}s`);

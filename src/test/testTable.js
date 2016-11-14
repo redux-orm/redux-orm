@@ -2,10 +2,10 @@ import chai from 'chai';
 import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
 const { expect } = chai;
-import Backend from '../Backend';
+import Table from '../db/Table';
 import { ListIterator, getBatchToken } from '../utils';
 
-describe('Backend', () => {
+describe('Table', () => {
     describe('prototype methods', () => {
         const state = {
             items: [0, 1, 2],
@@ -26,18 +26,18 @@ describe('Backend', () => {
         };
         const batchToken = getBatchToken();
         const txInfo = { batchToken, withMutations: false };
-        const backend = new Backend();
+        const table = new Table();
 
         it('correctly accesses an id', () => {
-            expect(backend.accessId(state, 1)).to.equal(state.itemsById[1]);
+            expect(table.accessId(state, 1)).to.equal(state.itemsById[1]);
         });
 
         it('correctly accesses id\'s', () => {
-            expect(backend.accessIdList(state)).to.equal(state.items);
+            expect(table.accessIdList(state)).to.equal(state.items);
         });
 
         it('correctly returns an iterator', () => {
-            const iterator = backend.iterator(state);
+            const iterator = table.iterator(state);
             expect(iterator).to.be.an.instanceOf(ListIterator);
 
             let iteratorIndex = 0;
@@ -54,15 +54,16 @@ describe('Backend', () => {
         });
 
         it('correctly returns a default state', () => {
-            expect(backend.getDefaultState()).to.deep.equal({
+            expect(table.getDefaultState()).to.deep.equal({
                 items: [],
                 itemsById: {},
+                meta: {},
             });
         });
 
         it('correctly inserts an entry', () => {
             const entry = { id: 3, data: 'newdata!' };
-            const newState = backend.insert(txInfo, state, entry);
+            const newState = table.insert(txInfo, state, entry);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.deep.equal([0, 1, 2, 3]);
@@ -89,7 +90,7 @@ describe('Backend', () => {
         it('correctly updates entries with a merging object', () => {
             const toMergeObj = { data: 'modifiedData' };
             const idsToUpdate = [1, 2];
-            const newState = backend.update(txInfo, state, idsToUpdate, toMergeObj);
+            const newState = table.update(txInfo, state, idsToUpdate, toMergeObj);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.equal(state.items);
@@ -111,7 +112,7 @@ describe('Backend', () => {
 
         it('correctly deletes entries', () => {
             const idsToDelete = [1, 2];
-            const newState = backend.delete(txInfo, state, idsToDelete);
+            const newState = table.delete(txInfo, state, idsToDelete);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.deep.equal([0]);
@@ -122,5 +123,36 @@ describe('Backend', () => {
                 },
             });
         });
+
+        // it('filter works correctly with object argument', () => {
+        //     const filterDescriptor = { type: FILTER, payload: { name: 'Clean Code' }};
+        //     const filtered = bookQs.withRefs.filter({ name: 'Clean Code' });
+        //     expect(filtered.count()).to.equal(1);
+        //     expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[1]);
+        // });
+
+        // it('filter works correctly with object argument, with model instance value', () => {
+        //     const filtered = bookQs.withRefs.filter({
+        //         author: session.Author.withId(0),
+        //     });
+        //     expect(filtered.count()).to.equal(1);
+        //     expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[0]);
+        // });
+
+        // it('orderBy works correctly with prop argument', () => {
+        //     const ordered = bookQs.orderBy(['releaseYear']);
+        //     expect(ordered.idArr).to.deep.equal([1, 2, 0]);
+        // });
+
+        // it('orderBy works correctly with function argument', () => {
+        //     const ordered = bookQs.orderBy([(book) => book.releaseYear]);
+        //     expect(ordered.idArr).to.deep.equal([1, 2, 0]);
+        // });
+
+        // it('exclude works correctly with object argument', () => {
+        //     const excluded = bookQs.exclude({ name: 'Clean Code' });
+        //     expect(excluded.count()).to.equal(2);
+        //     expect(excluded.idArr).to.deep.equal([0, 2]);
+        // });
     });
 });

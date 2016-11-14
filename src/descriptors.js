@@ -108,9 +108,9 @@ function manyToManyDescriptor(
             const toIds = throughQs.toRefArray().map(obj => obj[reverse ? fromFieldName : toFieldName]);
 
             const qsFromModel = reverse ? declaredFromModel : declaredToModel;
-            const qs = qsFromModel.filter(attrs => {
-                return includes(toIds, attrs[qsFromModel.idAttribute]);
-            });
+            const qs = qsFromModel.filter(attrs =>
+                includes(toIds, attrs[qsFromModel.idAttribute])
+            );
 
             qs.add = function add(...args) {
                 const idsToAdd = args.map(normalizeEntity);

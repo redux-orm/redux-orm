@@ -3,15 +3,15 @@ import filter from 'lodash/filter';
 import orderBy from 'lodash/orderBy';
 import ops from 'immutable-ops';
 
-import { FILTER, EXCLUDE, ORDER_BY } from './constants';
-import { ListIterator, includes } from './utils';
+import { FILTER, EXCLUDE, ORDER_BY } from '../constants';
+import { ListIterator, includes } from '../utils';
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
  */
-const Backend = class Backend {
+const Table = class Table {
     /**
-     * Creates a new {@link Backend} instance.
+     * Creates a new {@link Table} instance.
      * @param  {Object} userOpts - options to use.
      * @param  {string} [userOpts.idAttribute=id] - the id attribute of the entity.
      * @param  {string} [userOpts.arrName=items] - the state attribute where an array of
@@ -95,7 +95,21 @@ const Backend = class Backend {
         return {
             [this.arrName]: [],
             [this.mapName]: {},
+            meta: {},
         };
+    }
+
+    setMeta(tx, branch, key, value) {
+        const { batchToken, withMutations } = tx;
+        if (withMutations) {
+            return ops.mutable.setIn(['meta', key], value, branch);
+        }
+
+        return ops.batch.setIn(batchToken, ['meta', key], value, branch);
+    }
+
+    getMeta(branch, key) {
+        return branch.meta[key];
     }
 
     /**
@@ -193,4 +207,4 @@ const Backend = class Backend {
     }
 };
 
-export default Backend;
+export default Table;

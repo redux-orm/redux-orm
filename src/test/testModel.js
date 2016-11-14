@@ -4,19 +4,14 @@ import sinon from 'sinon';
 chai.use(sinonChai);
 const { expect } = chai;
 import BaseModel from '../Model';
+import Table from '../db/Table';
 import { UPDATE, DELETE } from '../constants';
 import { ManyToMany } from '../fields';
 
 describe('Model', () => {
     describe('static method', () => {
         let Model;
-        const sessionMock = {};
-        const stateMock = {};
-        const actionMock = {};
-
-        sessionMock.action = actionMock;
-
-        sessionMock.getState = () => stateMock;
+        const sessionMock = { db: { tables: { Model: new Table() } } };
 
         beforeEach(() => {
             // Get a fresh copy
@@ -39,18 +34,15 @@ describe('Model', () => {
             expect(Model.session).to.equal(sessionMock);
         });
 
-        it('getBackend works correctly', () => {
-            const BackendMockClass = sinon.stub();
-            Model.getBackendClass = () => BackendMockClass;
-
-            const instance = Model.getBackend();
-            expect(instance).to.be.an.instanceOf(BackendMockClass);
+        it('getTable works correctly', () => {
+            const table = Model.getTable();
+            expect(table).to.be.an.instanceOf(Table);
         });
     });
 
-    describe('static method delegates to Backend', () => {
+    describe('static method delegates to Database', () => {
         let Model;
-        let backendMock;
+        let tableMock;
         let sessionMock;
         let markAccessedSpy;
         const stateMock = {};
@@ -60,8 +52,8 @@ describe('Model', () => {
             Model.modelName = 'Model';
             markAccessedSpy = sinon.spy();
             sessionMock = { markAccessed: markAccessedSpy };
-            backendMock = {};
-            Model.getBackend = () => backendMock;
+            tableMock = {};
+            Model.getTable = () => tableMock;
             Model._session = sessionMock;
             Object.defineProperty(Model, 'state', {
                 get: () => stateMock,
@@ -70,7 +62,7 @@ describe('Model', () => {
 
         it('accessId correctly delegates', () => {
             const accessIdSpy = sinon.spy();
-            backendMock.accessId = accessIdSpy;
+            tableMock.accessId = accessIdSpy;
 
             const arg = 1;
             Model.accessId(arg);
@@ -82,7 +74,7 @@ describe('Model', () => {
 
         it('accessIds correctly delegates', () => {
             const accessIdsSpy = sinon.spy();
-            backendMock.accessIdList = accessIdsSpy;
+            tableMock.accessIdList = accessIdsSpy;
 
             Model.accessIds();
 
@@ -93,7 +85,7 @@ describe('Model', () => {
 
         it('accessList correctly delegates', () => {
             const accessIdsSpy = sinon.spy();
-            backendMock.accessIdList = accessIdsSpy;
+            tableMock.accessIdList = accessIdsSpy;
 
             Model.accessIds();
 
@@ -207,12 +199,12 @@ describe('Model', () => {
         });
 
         it('ref works correctly', () => {
-            const backendMock = {};
-            Model.getBackend = () => backendMock;
+            const tableMock = {};
+            Model.getTable = () => tableMock;
             const dbObj = {};
-            backendMock.accessId = () => dbObj;
+            tableMock.accessId = () => dbObj;
             Model._session = sessionMock;
-            sessionMock.backend = backendMock;
+            sessionMock.backend = tableMock;
 
             expect(instance.ref).to.equal(dbObj);
         });

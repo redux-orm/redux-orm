@@ -3,7 +3,6 @@ import isArray from 'lodash/isArray';
 import uniq from 'lodash/uniq';
 
 import Session from './Session';
-import Backend from './Backend';
 import QuerySet from './QuerySet';
 import {
     ManyToMany,
@@ -66,7 +65,7 @@ const Model = class Model {
      * @return {Object} The state for this {@link Model} in the current {@link Session}.
      */
     static get state() {
-        return this.session.getState(this.modelName);
+        return this.session.db.getTableState(this.session.state, this.modelName);
     }
 
     static toString() {
@@ -86,22 +85,11 @@ const Model = class Model {
         return {};
     }
 
-    static _getBackendOpts() {
+    static _getTableOpts() {
         if (typeof this.backend === 'function') {
             return this.backend();
         }
         return this.backend;
-    }
-
-    /**
-     * Returns the {@link Backend} class used to instantiate
-     * the {@link Backend} instance for this {@link Model}.
-     *
-     * Override this if you want to use a custom {@link Backend} class.
-     * @return {Backend} The {@link Backend} class or subclass to use for this {@link Model}.
-     */
-    static getBackendClass() {
-        return Backend;
     }
 
     static get _sessionData() {
@@ -115,23 +103,8 @@ const Model = class Model {
      * @private
      * @return {Backend} The {@link Backend} instance linked to this {@link Model}.
      */
-    static getBackend() {
-        if (!this._sessionData.backend) {
-            const BackendClass = this.getBackendClass();
-            const opts = { ...this._getBackendOpts() };
-
-            if (this.session && this.session.withMutations) {
-                opts.withMutations = true;
-            }
-
-            const backend = new BackendClass(opts);
-
-            if (!this.session) {
-                return backend;
-            }
-            this._sessionData.backend = backend;
-        }
-        return this._sessionData.backend;
+    static getTable() {
+        return this.session.db.tables[this.modelName];
     }
 
     /**
@@ -139,56 +112,10 @@ const Model = class Model {
      * updates.
      *
      * @private
-     * @param {Transction} tx - the current Transaction instance
      * @return {Object} The next state.
      */
     static getNextState() {
         return this.session.getState(this.modelName);
-    }
-
-    /**
-     * A reducer that takes the Model's state and an internal redux-orm
-     * action object and applies the update specified by the `action` object
-     * by delegating to this model's Backend instance.
-     * Applies an update to the state based on `action`, delegates to the model's
-     * Backend instance.
-     *
-     * @private
-     * @param  {Object} state - the Model's state
-     * @param  {Object} action - the internal redux-orm update action to apply
-     * @param  {Boolean} withMutations
-     * @param  {Object} batchToken - used by the backend to identify objects that can be mutated
-     *                               in the update.
-     * @return {Object} the state after applying the action
-     */
-    static applyUpdate(state, action, withMutations, batchToken) {
-        const backend = this.getBackend();
-        const tx = { batchToken, withMutations };
-
-        switch (action.type) {
-        case CREATE:
-            return backend.insert(tx, state, action.payload);
-        case UPDATE:
-            return backend.update(tx, state, action.payload.idArr, action.payload.mergeObj);
-        case DELETE:
-            return backend.delete(tx, state, action.payload);
-        default:
-            return state;
-        }
-    }
-
-    /**
-     * The default reducer implementation.
-     * If the user doesn't define a reducer, this is used.
-     *
-     * @param {Object} state - the current state
-     * @param {Object} action - the dispatched action
-     * @param {Model} model - the concrete model class being used
-     * @param {Session} session - the current {@link Session} instance
-     * @return {Object} the next state for the Model
-     */
-    static reducer(state, action, model, session) { // eslint-disable-line
-        return this.getNextState();
     }
 
     /**
@@ -199,7 +126,7 @@ const Model = class Model {
      * @return {Object} The default state.
      */
     static getDefaultState() {
-        return this.getBackend().getDefaultState();
+        return this.getTable().getDefaultState();
     }
 
     static markAccessed() {
@@ -213,7 +140,7 @@ const Model = class Model {
      * @return {string} The id attribute of this {@link Model}.
      */
     static get idAttribute() {
-        return this.getBackend().idAttribute;
+        return this.getTable().idAttribute;
     }
 
     /**
@@ -225,7 +152,7 @@ const Model = class Model {
      */
     static accessId(id) {
         this.markAccessed();
-        return this.getBackend().accessId(this.state, id);
+        return this.getTable().accessId(this.state, id);
     }
 
     /**
@@ -234,17 +161,17 @@ const Model = class Model {
      */
     static accessIds() {
         this.markAccessed();
-        return this.getBackend().accessIdList(this.state);
+        return this.getTable().accessIdList(this.state);
     }
 
     static accessList() {
         this.markAccessed();
-        return this.getBackend().accessList(this.state);
+        return this.getTable().accessList(this.state);
     }
 
     static iterator() {
         this.markAccessed();
-        return this.getBackend().iterator(this.state);
+        return this.getTable().iterator(this.state);
     }
 
     /**
@@ -278,8 +205,7 @@ const Model = class Model {
      * @param {Object} update - the update to add.
      */
     static addUpdate(update) {
-        update.meta = { name: this.modelName };
-        this.session.applyUpdate(update);
+        this.session.applyUpdate(this.modelName, update);
     }
 
     /**

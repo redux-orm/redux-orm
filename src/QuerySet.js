@@ -159,7 +159,9 @@ const QuerySet = class QuerySet {
 
     _evaluate() {
         if (!this._evaluated) {
-            this.idArr = this.modelClass.getBackend().query(this.modelClass.state, this.clauses);
+            const tableName = this.modelClass.modelName;
+            const session = this.modelClass.session;
+            this.idArr = this.modelClass.session.db.query(session.state, tableName, this.clauses);
             this._evaluated = true;
         }
     }
