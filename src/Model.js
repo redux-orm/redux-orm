@@ -306,8 +306,21 @@ const Model = class Model {
             } else {
                 this._sessionData.nextId = Math.max(...idArr) + 1;
             }
+            return this._sessionData.nextId;
         }
+        this._sessionData.nextId += 1;
         return this._sessionData.nextId;
+    }
+
+    /**
+     * Advances numeric id sequence to ensure the sequence integrity.
+     * You may override this to suit your needs.
+     * @param {*} id the id
+     */
+    static advanceNextId(id) {
+        if (typeof this._sessionData.nextId === 'undefined' || id > this._sessionData.nextId) {
+            this._sessionData.nextId = id;
+        }
     }
 
     static getQuerySet() {
@@ -351,14 +364,9 @@ const Model = class Model {
         const props = Object.assign({}, userProps);
 
         if (!props.hasOwnProperty(idAttribute)) {
-            const nextId = this.nextId();
-            props[idAttribute] = nextId;
-            this._sessionData.nextId++;
+            props[idAttribute] = this.nextId();
         } else {
-            const id = props[idAttribute];
-            if (id > this.nextId()) {
-                this._sessionData.nextId = id + 1;
-            }
+            this.advanceNextId(props[idAttribute]);
         }
 
         const m2mVals = {};
