@@ -4,7 +4,19 @@ import orderBy from 'lodash/orderBy';
 import ops from 'immutable-ops';
 
 import { FILTER, EXCLUDE, ORDER_BY } from '../constants';
-import { ListIterator, includes } from '../utils';
+import { includes } from '../utils';
+
+
+function isNumber(value) {
+    return !isNaN(parseFloat(value)) && isFinite(value);
+}
+
+
+const DEFAULT_OPTS = {
+    idAttribute: 'id',
+    arrName: 'items',
+    mapName: 'itemsById',
+};
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
@@ -21,13 +33,7 @@ const Table = class Table {
      *                                                 map.
      */
     constructor(userOpts) {
-        const defaultOpts = {
-            idAttribute: 'id',
-            arrName: 'items',
-            mapName: 'itemsById',
-        };
-
-        Object.assign(this, defaultOpts, userOpts);
+        Object.assign(this, DEFAULT_OPTS, userOpts);
     }
 
     /**
@@ -43,55 +49,62 @@ const Table = class Table {
         return branch[this.mapName][id];
     }
 
+    idExists(branch, id) {
+        return branch[this.mapName].hasOwnProperty(id);
+    }
+
     accessIdList(branch) {
         return branch[this.arrName];
     }
 
-    /**
-     * Returns a {@link ListIterator} instance for
-     * the list of objects in `branch`.
-     *
-     * @param  {Object} branch - the model's state branch
-     * @return {ListIterator} An iterator that loops through the objects in `branch`
-     */
-    iterator(branch) {
-        return new ListIterator(
-            branch[this.arrName],
-            0,
-            (list, idx) => branch[this.mapName][list[idx]]
-        );
-    }
-
     accessList(branch) {
-        return branch[this.arrName].map(id => {
-            const obj = this.accessId(branch, id);
-            return Object.assign({ [this.idAttribute]: id }, obj);
-        });
+        return branch[this.arrName].map(id => this.accessId(branch, id));
     }
 
-    query(branch, predicates) {
-        return predicates.reduce((idArr, { type, payload }) => {
-            const entities = idArr.map(id => this.accessId(branch, id));
+    getMaxId(branch) {
+        return this.getMeta(branch, 'maxId');
+    }
+
+    setMaxId(tx, branch, newMaxId) {
+        return this.setMeta(tx, branch, 'maxId', newMaxId);
+    }
+
+    nextId(id) {
+        return id + 1;
+    }
+
+    query(branch, clauses) {
+        return clauses.reduce((rows, { type, payload }) => {
             switch (type) {
-            case FILTER:
-                return filter(entities, payload).map(obj => obj[this.idAttribute]);
-            case EXCLUDE:
-                return reject(entities, payload).map(obj => obj[this.idAttribute]);
+            case FILTER: {
+                if (payload.hasOwnProperty(this.idAttribute) && payload[this.idAttribute]) {
+                    // Payload specified a primary key; Since that is unique, we can directly
+                    // return that.
+                    const id = payload[this.idAttribute];
+                    return this.idExists(branch, id)
+                        ? [this.accessId(branch, payload[this.idAttribute])]
+                        : [];
+                }
+                return filter(rows, payload);
+            }
+            case EXCLUDE: {
+                return reject(rows, payload);
+            }
             case ORDER_BY: {
                 const [iteratees, orders] = payload;
-                return orderBy(entities, iteratees, orders).map(obj => obj[this.idAttribute]);
+                return orderBy(rows, iteratees, orders);
             }
             default:
-                return idArr;
+                return rows;
             }
-        }, this.accessIdList(branch));
+        }, this.accessList(branch));
     }
 
     /**
      * Returns the default state for the data structure.
      * @return {Object} The default state for this {@link Backend} instance's data structure
      */
-    getDefaultState() {
+    getEmptyState() {
         return {
             [this.arrName]: [],
             [this.mapName]: {},
@@ -102,7 +115,8 @@ const Table = class Table {
     setMeta(tx, branch, key, value) {
         const { batchToken, withMutations } = tx;
         if (withMutations) {
-            return ops.mutable.setIn(['meta', key], value, branch);
+            const res = ops.mutable.setIn(['meta', key], value, branch);
+            return res;
         }
 
         return ops.batch.setIn(batchToken, ['meta', key], value, branch);
@@ -121,19 +135,46 @@ const Table = class Table {
      */
     insert(tx, branch, entry) {
         const { batchToken, withMutations } = tx;
-        const id = entry[this.idAttribute];
 
-        if (withMutations) {
-            ops.mutable.push(id, branch[this.arrName]);
-            ops.mutable.set(id, entry, branch[this.mapName]);
-            return branch;
+        const hasId = entry.hasOwnProperty(this.idAttribute);
+
+        let workingState = branch;
+
+        let id;
+        if (!hasId) {
+            const maxId = this.getMaxId(branch);
+            if (maxId === undefined) {
+                id = 0;
+            } else {
+                id = maxId + 1;
+            }
+            workingState = this.setMaxId(tx, branch, id);
+        } else {
+            id = entry[this.idAttribute];
         }
 
+        const finalEntry = hasId
+            ? entry
+            : ops.batch.set(batchToken, this.idAttribute, id, entry);
 
-        return ops.batch.merge(batchToken, {
-            [this.arrName]: ops.batch.push(batchToken, id, branch[this.arrName]),
-            [this.mapName]: ops.batch.merge(batchToken, { [id]: entry }, branch[this.mapName]),
-        }, branch);
+        if (withMutations) {
+            ops.mutable.push(id, workingState[this.arrName]);
+            ops.mutable.set(id, finalEntry, workingState[this.mapName]);
+            return {
+                state: workingState,
+                created: finalEntry,
+            };
+        }
+
+        const nextState = ops.batch.merge(batchToken, {
+            [this.arrName]: ops.batch.push(batchToken, id, workingState[this.arrName]),
+            [this.mapName]: ops.batch.merge(batchToken, { [id]: finalEntry }, workingState[this.mapName]),
+        }, workingState);
+
+        return {
+            state: nextState,
+            created: finalEntry,
+        };
     }
 
     /**
@@ -147,23 +188,23 @@ const Table = class Table {
      *                             where their id is in `idArr`.
      * @return {Object} the data structure with objects with their id in `idArr` updated with `mergeObj`.
      */
-    update(tx, branch, idArr, mergeObj) {
+    update(tx, branch, rows, mergeObj) {
         const { batchToken, withMutations } = tx;
 
         const {
             mapName,
         } = this;
 
-        const mapFunction = entity => {
+        const mapFunction = row => {
             const merge = withMutations ? ops.mutable.merge : ops.batch.merge(batchToken);
-            return merge(mergeObj, entity);
+            return merge(mergeObj, row);
         };
 
         const set = withMutations ? ops.mutable.set : ops.batch.set(batchToken);
 
-        const newMap = idArr.reduce((map, id) => {
-            const result = mapFunction(branch[mapName][id]);
-            return set(id, result, map);
+        const newMap = rows.reduce((map, row) => {
+            const result = mapFunction(row);
+            return set(result[this.idAttribute], result, map);
         }, branch[mapName]);
         return ops.batch.set(batchToken, mapName, newMap, branch);
     }
@@ -175,18 +216,20 @@ const Table = class Table {
      * @param  {Array} idsToDelete - the ids to delete from the data structure
      * @return {Object} the data structure without ids in `idsToDelete`.
      */
-    delete(tx, branch, idsToDelete) {
+    delete(tx, branch, rows) {
         const { batchToken, withMutations } = tx;
 
         const { arrName, mapName } = this;
         const arr = branch[arrName];
 
+        const idsToDelete = rows.map(row => row[this.idAttribute]);
         if (withMutations) {
             idsToDelete.forEach(id => {
                 const idx = arr.indexOf(id);
                 if (idx !== -1) {
                     ops.mutable.splice(idx, 1, [], arr);
                 }
+
                 ops.mutable.omit(id, branch[mapName]);
             });
             return branch;

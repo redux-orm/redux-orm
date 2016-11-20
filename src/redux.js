@@ -6,9 +6,8 @@ import { memoize, eqCheck } from './memoize';
 export function defaultUpdater(session, action) {
     session.sessionBoundModels.forEach(modelClass => {
         if (typeof modelClass.reducer === 'function') {
-            const modelState = session.db.getTableState(session.state, modelClass.modelName);
             // This calls this.applyUpdate to update this.state
-            modelClass.reducer(modelState, action, modelClass, session);
+            modelClass.reducer(action, modelClass, session);
         }
     });
 }
@@ -16,13 +15,11 @@ export function defaultUpdater(session, action) {
 
 export const createReducer = (orm, updater = defaultUpdater) =>
     (state, action) => {
-        const session = orm.session(state || orm.getDefaultState());
+        const session = orm.session(state || orm.getEmptyState());
         updater(session, action);
         return session.state;
     };
 
-
-const selectorCreator = createSelectorCreator(memoize, eqCheck, this);
 
 /**
  * Returns a memoized selector based on passed arguments.
@@ -68,5 +65,6 @@ export function createSelector(orm, ...args) {
     if (args.length === 1) {
         return memoize(args[0], eqCheck, orm);
     }
-    return selectorCreator(...args);
+
+    return createSelectorCreator(memoize, eqCheck, orm)(...args);
 }

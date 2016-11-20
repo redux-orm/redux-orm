@@ -1,8 +1,6 @@
 import QuerySet from './QuerySet';
-import Database from './db/Database';
-import Table from './db/Table';
 import Model from './Model';
-import Schema from './Schema';
+import ORM from './ORM';
 import Session from './Session';
 import {
     createReducer,
@@ -19,10 +17,8 @@ import {
 
 export {
     QuerySet,
-    Database,
-    Table,
     Model,
-    Schema,
+    ORM,
     Session,
     ForeignKey,
     ManyToMany,

@@ -1,5 +1,4 @@
 import difference from 'lodash/difference';
-import UPDATE from './constants';
 import {
     normalizeEntity,
     includes,
@@ -21,7 +20,7 @@ function forwardManyToOneDescriptor(fieldName, declaredToModelName) {
         set(value) {
             const currentSession = this.getClass().session;
             const declaredToModel = currentSession[declaredToModelName];
-            const thisId = this.getId();
+
             let toId;
             if (value instanceof declaredToModel) {
                 toId = value.getId();
@@ -29,15 +28,7 @@ function forwardManyToOneDescriptor(fieldName, declaredToModelName) {
                 toId = value;
             }
 
-            this.getClass().addUpdate({
-                type: UPDATE,
-                payload: {
-                    idArr: [thisId],
-                    updater: {
-                        [fieldName]: toId,
-                    },
-                },
-            });
+            this.update({ [fieldName]: toId });
         },
     };
 }
@@ -120,7 +111,9 @@ function manyToManyDescriptor(
                 const existingQs = throughQs.filter(through => includes(idsToAdd, through[filterWithAttr]));
 
                 if (existingQs.exists()) {
-                    const existingIds = existingQs.map(through => through[filterWithAttr]);
+                    const existingIds = existingQs
+                        .toRefArray()
+                        .map(through => through[filterWithAttr]);
 
                     const toAddModel = reverse
                         ? declaredFromModel.modelName
@@ -129,7 +122,6 @@ function manyToManyDescriptor(
                     const addFromModel = reverse
                         ? declaredToModel.modelName
                         : declaredFromModel.modelName;
-
                     throw new Error(`Tried to add already existing ${toAddModel} id(s) ${existingIds} to the ${addFromModel} instance with id ${thisId}`);
                 }
 
@@ -155,7 +147,10 @@ function manyToManyDescriptor(
 
                 if (entitiesToDelete.count() !== idsToRemove.length) {
                     // Tried deleting non-existing entities.
-                    const entitiesToDeleteIds = entitiesToDelete.map(through => through[attrInIdsToRemove]);
+                    const entitiesToDeleteIds = entitiesToDelete
+                        .toRefArray()
+                        .map(through => through[attrInIdsToRemove]);
+
                     const unexistingIds = difference(idsToRemove, entitiesToDeleteIds);
 
                     const toDeleteModel = reverse

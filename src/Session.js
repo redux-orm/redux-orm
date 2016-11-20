@@ -1,5 +1,8 @@
 import { getBatchToken } from 'immutable-ops';
 
+import { SUCCESS, FAILURE } from './constants';
+
+
 const Session = class Session {
     /**
      * Creates a new Session.
@@ -60,10 +63,23 @@ const Session = class Session {
      * @param {Object} update - the update object. Must have keys
      *                          `type`, `payload`.
      */
-    applyUpdate(modelName, update) {
+    applyUpdate(updateSpec) {
         const { batchToken, withMutations } = this;
         const tx = { batchToken, withMutations };
-        this.state = this.db.update(tx, this.state, modelName, update);
+        const result = this.db.update(updateSpec, tx, this.state);
+        const { status, state } = result;
+
+        if (status === SUCCESS) {
+            this.state = state;
+        } else {
+            throw new Error(`Applying update failed: ${result.toString()}`);
+        }
+
+        return result.payload;
+    }
+
+    query(querySpec) {
+        return this.db.query(querySpec, this.state);
     }
 };
 

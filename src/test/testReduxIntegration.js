@@ -2,7 +2,12 @@ import chai from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
-import Schema from '../Schema';
+import ORM from '../ORM';
+import {
+    createReducer,
+    createSelector,
+} from '../redux';
+
 import {
     createTestModels,
 } from './utils';
@@ -11,7 +16,7 @@ chai.use(sinonChai);
 const { expect } = chai;
 
 describe('Redux integration', () => {
-    let schema;
+    let orm;
     let Book;
     let Cover;
     let Genre;
@@ -26,74 +31,59 @@ describe('Redux integration', () => {
             Author,
             Publisher,
         } = createTestModels());
-        schema = new Schema();
-        schema.register(Book, Cover, Genre, Author, Publisher);
-        defaultState = schema.getDefaultState();
+        orm = new ORM();
+        orm.register(Book, Cover, Genre, Author, Publisher);
+        defaultState = orm.getEmptyState();
     });
 
-    // it('runs reducers if explicitly specified', () => {
-    //     const session = schema.from(defaultState);
+    it('runs reducers if explicitly specified', () => {
+        Author.reducer = sinon.spy();
+        Book.reducer = sinon.spy();
+        Cover.reducer = sinon.spy();
+        Genre.reducer = sinon.spy();
+        Publisher.reducer = sinon.spy();
 
-    //     const authorReducerSpy = sinon.spy(Author, 'reducer');
-    //     const bookReducerSpy = sinon.spy(Book, 'reducer');
-    //     const coverReducerSpy = sinon.spy(Cover, 'reducer');
-    //     const genreReducerSpy = sinon.spy(Genre, 'reducer');
-    //     const publisherReducerSpy = sinon.spy(Publisher, 'reducer');
+        const reducer = createReducer(orm);
+        const mockAction = {};
+        const nextState = reducer(defaultState, mockAction);
 
-    //     session.getNextState({ runReducers: true });
+        expect(nextState).to.not.be.a('undefined');
 
-    //     expect(authorReducerSpy).to.be.calledOnce;
-    //     expect(bookReducerSpy).to.be.calledOnce;
-    //     expect(coverReducerSpy).to.be.calledOnce;
-    //     expect(genreReducerSpy).to.be.calledOnce;
-    //     expect(publisherReducerSpy).to.be.calledOnce;
-    // });
+        expect(Author.reducer).to.be.calledOnce;
+        expect(Book.reducer).to.be.calledOnce;
+        expect(Cover.reducer).to.be.calledOnce;
+        expect(Genre.reducer).to.be.calledOnce;
+        expect(Publisher.reducer).to.be.calledOnce;
+    });
 
-    // it('doesn\'t run reducers if explicitly specified', () => {
-    //     const session = schema.from(defaultState);
+    it('correctly creates a selector', () => {
+        orm.register(Book, Author, Cover, Genre, Publisher);
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, () => selectorTimesRun++);
+        expect(selector).to.be.a('function');
 
-    //     const authorReducerSpy = sinon.spy(Author, 'reducer');
-    //     const bookReducerSpy = sinon.spy(Book, 'reducer');
-    //     const coverReducerSpy = sinon.spy(Cover, 'reducer');
-    //     const genreReducerSpy = sinon.spy(Genre, 'reducer');
-    //     const publisherReducerSpy = sinon.spy(Publisher, 'reducer');
+        const state = orm.getEmptyState();
 
-    //     session.getNextState({ runReducers: false });
-
-    //     expect(authorReducerSpy).not.to.be.called;
-    //     expect(bookReducerSpy).not.to.be.called;
-    //     expect(coverReducerSpy).not.to.be.called;
-    //     expect(genreReducerSpy).not.to.be.called;
-    //     expect(publisherReducerSpy).not.to.be.called;
-    // });
-
-    // it('correctly creates a selector', () => {
-    //     schema.register(Book, Author, Cover, Genre, Publisher);
-    //     let selectorTimesRun = 0;
-    //     const selector = schema.createSelector(() => selectorTimesRun++);
-    //     expect(selector).to.be.a('function');
-
-    //     const state = schema.getDefaultState();
-    //     selector(state);
-    //     expect(selectorTimesRun).to.equal(1);
-    //     selector(state);
-    //     expect(selectorTimesRun).to.equal(1);
-    //     selector(schema.getDefaultState());
-    //     expect(selectorTimesRun).to.equal(1);
-    // });
+        selector(state);
+        expect(selectorTimesRun).to.equal(1);
+        selector(state);
+        expect(selectorTimesRun).to.equal(1);
+        selector(orm.getEmptyState());
+        expect(selectorTimesRun).to.equal(1);
+    });
 
     // it('correctly creates a selector with input selectors', () => {
-    //     schema.register(Book, Author, Cover, Genre, Publisher);
+    //     orm.register(Book, Author, Cover, Genre, Publisher);
 
     //     const _selectorFunc = sinon.spy();
 
-    //     const selector = schema.createSelector(
+    //     const selector = orm.createSelector(
     //         state => state.orm,
     //         state => state.selectedUser,
     //         _selectorFunc
     //     );
 
-    //     const _state = schema.getDefaultState();
+    //     const _state = orm.getDefaultState();
 
     //     const appState = {
     //         orm: _state,
@@ -120,7 +110,7 @@ describe('Redux integration', () => {
     // });
 
     // it('calling reducer with undefined state doesn\'t throw', () => {
-    //     schema.register(Book, Author, Cover, Genre, Publisher);
-    //     schema.reducer()(undefined, { type: '______init' });
+    //     orm.register(Book, Author, Cover, Genre, Publisher);
+    //     orm.reducer()(undefined, { type: '______init' });
     // });
 });

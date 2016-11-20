@@ -2,7 +2,7 @@ import chai from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
-import Schema from '../Schema';
+import ORM from '../ORM';
 import {
     createTestModels,
     isSubclass,
@@ -13,7 +13,7 @@ chai.use(sinonChai);
 const { expect } = chai;
 
 describe('Session', () => {
-    let schema;
+    let orm;
     let Book;
     let Cover;
     let Genre;
@@ -28,9 +28,9 @@ describe('Session', () => {
             Author,
             Publisher,
         } = createTestModels());
-        schema = new Schema();
-        schema.register(Book, Cover, Genre, Author, Publisher);
-        defaultState = schema.getDefaultState();
+        orm = new ORM();
+        orm.register(Book, Cover, Genre, Author, Publisher);
+        defaultState = orm.getDefaultState();
     });
 
     it('connects models', () => {
@@ -40,7 +40,7 @@ describe('Session', () => {
         expect(Cover.session).to.be.undefined;
         expect(Publisher.session).to.be.undefined;
 
-        const session = schema.from(defaultState);
+        const session = orm.from(defaultState);
 
         expect(session.Book.session).to.equal(session);
         expect(session.Cover.session).to.equal(session);
@@ -50,7 +50,7 @@ describe('Session', () => {
     });
 
     it('exposes models as getter properties', () => {
-        const session = schema.session(defaultState);
+        const session = orm.session(defaultState);
         expect(isSubclass(session.Book, Book)).to.be.true;
         expect(isSubclass(session.Author, Author)).to.be.true;
         expect(isSubclass(session.Cover, Cover)).to.be.true;
@@ -59,7 +59,7 @@ describe('Session', () => {
     });
 
     it('marks accessed models', () => {
-        const session = schema.from(defaultState);
+        const session = orm.from(defaultState);
         expect(session.accessedModels).to.have.length(0);
 
         session.markAccessed(Book);
@@ -74,12 +74,12 @@ describe('Session', () => {
 
     describe('gets the next state', () => {
         it('without any updates, the same state is returned', () => {
-            const session = schema.session(defaultState);
+            const session = orm.session(defaultState);
             expect(session.state).to.equal(defaultState);
         });
 
         it('with updates, a new state is returned', () => {
-            const session = schema.session(defaultState);
+            const session = orm.session(defaultState);
 
             session.applyUpdate(Author.modelName, {
                 type: CREATE,
@@ -104,10 +104,10 @@ describe('Session', () => {
     });
 
     it('two concurrent sessions', () => {
-        const otherState = schema.getDefaultState();
+        const otherState = orm.getDefaultState();
 
-        const firstSession = schema.session(defaultState);
-        const secondSession = schema.session(otherState);
+        const firstSession = orm.session(defaultState);
+        const secondSession = orm.session(otherState);
 
         expect(firstSession.sessionBoundModels).to.have.lengthOf(6);
 

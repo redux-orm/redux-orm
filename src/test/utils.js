@@ -1,4 +1,4 @@
-import Schema from '../Schema';
+import ORM from '../ORM';
 import Model from '../Model';
 import { fk, many, oneToOne } from '../fields';
 
@@ -129,7 +129,7 @@ export function createTestModels() {
     };
 }
 
-export function createTestSchema(customModels) {
+export function createTestORM(customModels) {
     const models = customModels || createTestModels();
     const {
         Book,
@@ -139,20 +139,20 @@ export function createTestSchema(customModels) {
         Publisher,
     } = models;
 
-    const schema = new Schema();
-    schema.register(Book, Author, Cover, Genre, Publisher);
-    return schema;
+    const orm = new ORM();
+    orm.register(Book, Author, Cover, Genre, Publisher);
+    return orm;
 }
 
 export function createTestSession() {
-    const schema = createTestSchema();
-    return schema.session(schema.getDefaultState());
+    const orm = createTestORM();
+    return orm.session(orm.getEmptytate());
 }
 
-export function createTestSessionWithData(customSchema) {
-    const schema = customSchema || createTestSchema();
-    const state = schema.getDefaultState();
-    const { Author, Cover, Genre, Book, Publisher } = schema.mutableSession(state);
+export function createTestSessionWithData(customORM) {
+    const orm = customORM || createTestORM();
+    const state = orm.getEmptyState();
+    const { Author, Cover, Genre, Book, Publisher } = orm.mutableSession(state);
 
     AUTHORS_INITIAL.forEach(props => Author.create(props));
     COVERS_INITIAL.forEach(props => Cover.create(props));
@@ -160,8 +160,8 @@ export function createTestSessionWithData(customSchema) {
     BOOKS_INITIAL.forEach(props => Book.create(props));
     PUBLISHERS_INITIAL.forEach(props => Publisher.create(props));
 
-    const normalSession = schema.session(state);
-    return { session: normalSession, schema, state };
+    const normalSession = orm.session(state);
+    return { session: normalSession, orm, state };
 }
 
 export const isSubclass = (a, b) => a.prototype instanceof b;

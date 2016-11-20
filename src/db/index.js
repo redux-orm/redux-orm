@@ -1,7 +1,7 @@
-import Database from './Database';
-import Table from './Table';
+import createDatabase from './Database';
 
 export {
-    Database,
-    Table,
+    createDatabase,
 };
+
+export default createDatabase;

@@ -40,61 +40,6 @@ describe('Model', () => {
         });
     });
 
-    describe('static method delegates to Database', () => {
-        let Model;
-        let tableMock;
-        let sessionMock;
-        let markAccessedSpy;
-        const stateMock = {};
-
-        beforeEach(() => {
-            Model = Object.create(BaseModel);
-            Model.modelName = 'Model';
-            markAccessedSpy = sinon.spy();
-            sessionMock = { markAccessed: markAccessedSpy };
-            tableMock = {};
-            Model.getTable = () => tableMock;
-            Model._session = sessionMock;
-            Object.defineProperty(Model, 'state', {
-                get: () => stateMock,
-            });
-        });
-
-        it('accessId correctly delegates', () => {
-            const accessIdSpy = sinon.spy();
-            tableMock.accessId = accessIdSpy;
-
-            const arg = 1;
-            Model.accessId(arg);
-
-            expect(accessIdSpy).to.have.been.calledOnce;
-            expect(accessIdSpy).to.have.been.calledWithExactly(stateMock, arg);
-            expect(markAccessedSpy).to.have.been.calledOnce;
-        });
-
-        it('accessIds correctly delegates', () => {
-            const accessIdsSpy = sinon.spy();
-            tableMock.accessIdList = accessIdsSpy;
-
-            Model.accessIds();
-
-            expect(accessIdsSpy).to.have.been.calledOnce;
-            expect(accessIdsSpy).to.have.been.calledWithExactly(stateMock);
-            expect(markAccessedSpy).to.have.been.calledOnce;
-        });
-
-        it('accessList correctly delegates', () => {
-            const accessIdsSpy = sinon.spy();
-            tableMock.accessIdList = accessIdsSpy;
-
-            Model.accessIds();
-
-            expect(accessIdsSpy).to.have.been.calledOnce;
-            expect(accessIdsSpy).to.have.been.calledWithExactly(stateMock);
-            expect(markAccessedSpy).to.have.been.calledOnce;
-        });
-    });
-
     describe('Instance methods', () => {
         let Model;
         let Tag;

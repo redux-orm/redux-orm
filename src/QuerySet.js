@@ -44,7 +44,7 @@ const QuerySet = class QuerySet {
 
     toString() {
         this._evaluate();
-        const contents = this.idArr.map(id =>
+        const contents = this.rows.map(id =>
             this.modelClass.withId(id).toString()
         ).join('\n    - ');
         return `QuerySet contents: \n    - ${contents}`;
@@ -59,7 +59,7 @@ const QuerySet = class QuerySet {
      */
     toRefArray() {
         this._evaluate();
-        return this.idArr.map(id => this.modelClass.accessId(id));
+        return this.rows;
     }
 
     /**
@@ -68,7 +68,8 @@ const QuerySet = class QuerySet {
      */
     toModelArray() {
         this._evaluate();
-        return this.idArr.map((_, idx) => this.at(idx));
+        const ModelClass = this.modelClass;
+        return this.rows.map(props => new ModelClass(props));
     }
 
     /**
@@ -78,7 +79,7 @@ const QuerySet = class QuerySet {
      */
     count() {
         this._evaluate();
-        return this.idArr.length;
+        return this.rows.length;
     }
 
     /**
@@ -101,7 +102,8 @@ const QuerySet = class QuerySet {
      */
     at(index) {
         this._evaluate();
-        return this.modelClass.withId(this.idArr[index]);
+        const ModelClass = this.modelClass;
+        return new ModelClass(this.rows[index]);
     }
 
     /**
@@ -118,7 +120,7 @@ const QuerySet = class QuerySet {
      */
     last() {
         this._evaluate();
-        return this.at(this.idArr.length - 1);
+        return this.at(this.rows.length - 1);
     }
 
     /**
@@ -159,38 +161,15 @@ const QuerySet = class QuerySet {
 
     _evaluate() {
         if (!this._evaluated) {
-            const tableName = this.modelClass.modelName;
             const session = this.modelClass.session;
-            this.idArr = this.modelClass.session.db.query(session.state, tableName, this.clauses);
+            const querySpec = {
+                table: this.modelClass.modelName,
+                clauses: this.clauses,
+            };
+            const { rows } = session.db.query(querySpec, session.state);
+            this.rows = rows;
             this._evaluated = true;
         }
-    }
-
-    /**
-     * Calls `func` for each object in the {@link QuerySet} instance.
-     * The object is either a reference to the plain
-     * object in the database or a {@link Model} instance, depending
-     * on the flag.
-     *
-     * @param  {Function} func - the function to call with each object
-     * @return {undefined}
-     */
-    forEach(func) {
-        this._evaluate();
-        this.toModelArray().forEach(func);
-    }
-
-    /**
-     * Maps the {@link Model} instances in the {@link QuerySet} instance.
-     * @param  {Function} func - the mapping function that takes one argument, a
-     *                           {@link Model} instance or a reference to the plain
-     *                           JavaScript object in the store, depending on the
-     *                           QuerySet's `withRefs` flag.
-     * @return {Array}  the mapped array
-     */
-    map(func) {
-        this._evaluate();
-        return this.toModelArray().map(func);
     }
 
     /**
@@ -222,15 +201,14 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     update(mergeObj) {
-        this._evaluate();
-        this.modelClass.addUpdate({
-            type: UPDATE,
-            payload: {
-                idArr: this.idArr,
-                mergeObj,
+        this.modelClass.session.applyUpdate({
+            action: UPDATE,
+            query: {
+                table: this.modelClass.modelName,
+                clauses: this.clauses,
             },
+            payload: mergeObj,
         });
-
         this._evaluated = false;
     }
 
@@ -239,12 +217,14 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     delete() {
-        this._evaluate();
         this.toModelArray().forEach(model => model._onDelete());
 
-        this.modelClass.addUpdate({
-            type: DELETE,
-            payload: this.idArr,
+        this.modelClass.session.applyUpdate({
+            action: DELETE,
+            query: {
+                table: this.modelClass.modelName,
+                clauses: this.clauses,
+            },
         });
 
         this._evaluated = false;
@@ -257,17 +237,12 @@ QuerySet.sharedMethods = [
     'all',
     'last',
     'first',
-    'forEach',
     'exists',
     'filter',
-    'map',
     'exclude',
     'orderBy',
     'update',
     'delete',
-    'ref',
-    'withRefs',
-    'withModels',
 ];
 
 export default QuerySet;

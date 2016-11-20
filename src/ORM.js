@@ -3,7 +3,7 @@ import find from 'lodash/find';
 
 import Session from './Session';
 import Model from './Model';
-import { Database } from './db';
+import { createDatabase as defaultCreateDatabase } from './db';
 import {
     ForeignKey,
     ManyToMany,
@@ -16,6 +16,10 @@ import {
     m2mFromFieldName,
 } from './utils';
 
+const ORM_DEFAULTS = {
+    createDatabase: defaultCreateDatabase,
+};
+
 /**
  * Schema's responsibility is tracking the set of {@link Model} classes used in the database.
  * To include your model in that set, Schema offers {@link Schema#register} and a
@@ -23,11 +27,13 @@ import {
  *
  * Schema also handles starting a Session with {@link Schema#from}.
  */
-const Schema = class Schema {
+const ORM = class ORM {
     /**
      * Creates a new Schema.
      */
-    constructor() {
+    constructor(opts) {
+        const { createDatabase } = Object.assign({}, ORM_DEFAULTS, (opts || {}));
+        this.createDatabase = createDatabase;
         this.registry = [];
         this.implicitThroughModels = [];
         this.installedFields = {};
@@ -43,8 +49,7 @@ const Schema = class Schema {
      * @param  {...Model} model - a {@link Model} class to register
      * @return {undefined}
      */
-    register() {
-        const models = Array.prototype.slice.call(arguments);
+    register(...models) {
         models.forEach(model => {
             model.invalidateClassCache();
 
@@ -142,17 +147,20 @@ const Schema = class Schema {
         });
     }
 
+    generateSchemaSpec() {
+        const models = this.getModelClasses();
+        const tables = models.reduce((spec, modelClass) => {
+            const tableName = modelClass.modelName;
+            const tableSpec = modelClass._getTableOpts();
+            spec[tableName] = Object.assign({}, tableSpec, { fields: modelClass.fields });
+            return spec;
+        }, {});
+        return { tables };
+    }
+
     getDatabase() {
         if (!this.db) {
-            const models = this.getModelClasses();
-            const schemaSpec = models.reduce((spec, modelClass) => {
-                const tableName = modelClass.modelName;
-                const tableSpec = modelClass._getTableOpts();
-                spec[tableName] = Object.assign({}, tableSpec, { fields: modelClass.fields });
-                return spec;
-            }, {});
-
-            this.db = new Database(schemaSpec);
+            this.db = this.createDatabase(this.generateSchemaSpec());
         }
         return this.db;
     }
@@ -161,8 +169,8 @@ const Schema = class Schema {
      * Returns the default state.
      * @return {Object} the default state
      */
-    getDefaultState() {
-        return this.getDatabase().getDefaultState();
+    getEmptyState() {
+        return this.getDatabase().getEmptyState();
     }
 
     /**
@@ -191,4 +199,4 @@ const Schema = class Schema {
     }
 };
 
-export default Schema;
+export default ORM;

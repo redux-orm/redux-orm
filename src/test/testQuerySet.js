@@ -5,12 +5,8 @@ chai.use(sinonChai);
 const { expect } = chai;
 
 import Model from '../Model';
-import Schema from '../Schema';
+import ORM from '../ORM';
 import QuerySet from '../QuerySet';
-import {
-    UPDATE,
-    DELETE,
-} from '../constants';
 import {
     createTestModels,
     createTestSessionWithData,
@@ -123,9 +119,9 @@ describe('QuerySet tests', () => {
 
         Book.querySetClass = CustomQuerySet;
 
-        const schema = new Schema();
-        schema.register(Book, Genre, Cover, Author, Publisher);
-        const { session: sess } = createTestSessionWithData(schema);
+        const orm = new ORM();
+        orm.register(Book, Genre, Cover, Author, Publisher);
+        const { session: sess } = createTestSessionWithData(orm);
 
         const customQs = sess.Book.getQuerySet();
 

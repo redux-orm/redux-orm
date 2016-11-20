@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import Model from '../Model';
 import QuerySet from '../QuerySet';
-import Schema from '../Schema';
+import ORM from '../ORM';
 import {
     createTestSessionWithData,
 } from './utils';
@@ -9,7 +9,7 @@ import deepFreeze from 'deep-freeze';
 
 describe('Integration', () => {
     let session;
-    let schema;
+    let orm;
     let state;
 
     describe('Immutable session', () => {
@@ -19,7 +19,7 @@ describe('Integration', () => {
 
             ({
                 session,
-                schema,
+                orm,
                 state,
             } = createTestSessionWithData());
 
@@ -204,7 +204,7 @@ describe('Integration', () => {
             const relatedBooks = author.books;
             expect(relatedBooks).to.be.an.instanceOf(QuerySet);
             relatedBooks._evaluate();
-            expect(relatedBooks.idArr).to.include(book.getId());
+            expect(relatedBooks.rows).to.include(book.ref);
             expect(relatedBooks.modelClass).to.equal(Book);
         });
 
@@ -239,13 +239,13 @@ describe('Integration', () => {
         beforeEach(() => {
             ({
                 session,
-                schema,
+                orm,
                 state,
             } = createTestSessionWithData());
         });
 
         it('works', () => {
-            const mutating = schema.mutableSession(state);
+            const mutating = orm.mutableSession(state);
             const {
                 Book,
                 Cover,
@@ -276,14 +276,14 @@ describe('Integration', () => {
         beforeEach(() => {
             ({
                 session,
-                schema,
+                orm,
                 state,
             } = createTestSessionWithData());
         });
 
         it('works', () => {
             const firstSession = session;
-            const secondSession = schema.session(state);
+            const secondSession = orm.session(state);
 
             expect(firstSession.Book.count()).to.equal(3);
             expect(secondSession.Book.count()).to.equal(3);
@@ -305,19 +305,19 @@ describe('Integration', () => {
 
 describe('Big Data Test', () => {
     let Item;
-    let schema;
+    let orm;
 
     beforeEach(() => {
         Item = class extends Model {};
         Item.modelName = 'Item';
-        schema = new Schema();
-        schema.register(Item);
+        orm = new ORM();
+        orm.register(Item);
     });
 
     it('adds a big amount of items in acceptable time', function bigDataTest() {
         this.timeout(30000);
 
-        const session = schema.from(schema.getDefaultState());
+        const session = orm.from(orm.getEmptyState());
         const start = new Date().getTime();
 
         const amount = 10000;

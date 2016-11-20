@@ -3,7 +3,7 @@ import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
 const { expect } = chai;
 import Table from '../db/Table';
-import { ListIterator, getBatchToken } from '../utils';
+import { getBatchToken } from '../utils';
 
 describe('Table', () => {
     describe('prototype methods', () => {
@@ -36,25 +36,8 @@ describe('Table', () => {
             expect(table.accessIdList(state)).to.equal(state.items);
         });
 
-        it('correctly returns an iterator', () => {
-            const iterator = table.iterator(state);
-            expect(iterator).to.be.an.instanceOf(ListIterator);
-
-            let iteratorIndex = 0;
-            const times = state.items.length;
-            let done = false;
-            while (iteratorIndex < times) {
-                if (iteratorIndex === times - 1) done = true;
-                expect(iterator.next()).to.deep.equal({
-                    value: state.itemsById[iteratorIndex],
-                    done,
-                });
-                iteratorIndex++;
-            }
-        });
-
         it('correctly returns a default state', () => {
-            expect(table.getDefaultState()).to.deep.equal({
+            expect(table.getEmptyState()).to.deep.equal({
                 items: [],
                 itemsById: {},
                 meta: {},
