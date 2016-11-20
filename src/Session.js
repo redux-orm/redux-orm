@@ -38,8 +38,8 @@ const Session = class Session {
         });
     }
 
-    markAccessed(model) {
-        this.getDataForModel(model.modelName).accessed = true;
+    markAccessed(modelName) {
+        this.getDataForModel(modelName).accessed = true;
     }
 
     get accessedModels() {
@@ -79,6 +79,8 @@ const Session = class Session {
     }
 
     query(querySpec) {
+        const { table } = querySpec;
+        this.markAccessed(table);
         return this.db.query(querySpec, this.state);
     }
 };

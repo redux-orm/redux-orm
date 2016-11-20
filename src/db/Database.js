@@ -75,7 +75,7 @@ export function createDatabase(schemaSpec) {
         getEmptyState: () => emptyState,
         query: query.bind(null, tables),
         update: update.bind(null, tables),
-        tables,
+        describe: tableName => tables[tableName],
     };
 }
 

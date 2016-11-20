@@ -119,7 +119,7 @@ const Model = class Model {
      * @return {string} The id attribute of this {@link Model}.
      */
     static get idAttribute() {
-        return this.session.db.tables[this.modelName].idAttribute;
+        return this.session.db.describe(this.modelName).idAttribute;
     }
 
     /**
@@ -157,10 +157,7 @@ const Model = class Model {
     }
 
     static get query() {
-        if (!this._sessionData.queryset) {
-            this._sessionData.queryset = this.getQuerySet();
-        }
-        return this._sessionData.queryset;
+        return this.getQuerySet();
     }
 
     /**
@@ -361,7 +358,6 @@ const Model = class Model {
      * @return {undefined}
      */
     update(userMergeObj) {
-        console.log('updating with', userMergeObj);
         const ThisModel = this.getClass();
         const relFields = ThisModel.fields;
         const mergeObj = Object.assign({}, userMergeObj);

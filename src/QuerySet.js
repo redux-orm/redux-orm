@@ -166,7 +166,7 @@ const QuerySet = class QuerySet {
                 table: this.modelClass.modelName,
                 clauses: this.clauses,
             };
-            const { rows } = session.db.query(querySpec, session.state);
+            const { rows } = session.query(querySpec);
             this.rows = rows;
             this._evaluated = true;
         }

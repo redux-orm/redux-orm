@@ -37,7 +37,7 @@ describe('QuerySet tests', () => {
 
     it('at works correctly', () => {
         expect(bookQs.at(0)).to.be.an.instanceOf(Model);
-        expect(bookQs.toRefArray()[0]).to.equal(session.Book.state.itemsById[0]);
+        expect(bookQs.toRefArray()[0]).to.equal(session.Book.withId(0).ref);
     });
 
     it('first works correctly', () => {
@@ -52,14 +52,22 @@ describe('QuerySet tests', () => {
     it('all works correctly', () => {
         const all = bookQs.all();
 
+        // Force evaluation of QuerySets
+        bookQs.toRefArray();
+        all.toRefArray();
+
         expect(all).not.to.equal(bookQs);
-        expect(all.idArr).to.deep.equal(bookQs.idArr);
+        expect(all.rows.length).to.equal(bookQs.rows.length);
+
+        for (let i = 0; i < all.rows.length; i++) {
+            expect(all.rows[i]).to.equal(bookQs.rows[i]);
+        }
     });
 
     it('filter works correctly with object argument', () => {
         const filtered = bookQs.filter({ name: 'Clean Code' });
         expect(filtered.count()).to.equal(1);
-        expect(filtered.first().ref).to.equal(session.Book.state.itemsById[1]);
+        expect(filtered.first().ref).to.equal(session.Book.withId(1).ref);
     });
 
     it('filter works correctly with object argument, with model instance value', () => {
@@ -67,32 +75,34 @@ describe('QuerySet tests', () => {
             author: session.Author.withId(0),
         });
         expect(filtered.count()).to.equal(1);
-        expect(filtered.first().ref).to.equal(session.Book.state.itemsById[0]);
+        expect(filtered.first().ref).to.equal(session.Book.withId(0).ref);
     });
 
     it('orderBy works correctly with prop argument', () => {
         const ordered = bookQs.orderBy(['releaseYear']);
-        ordered._evaluate();
-        expect(ordered.idArr).to.deep.equal([1, 2, 0]);
+        const idArr = ordered.toRefArray().map(row => row.id);
+        expect(idArr).to.deep.equal([1, 2, 0]);
     });
 
     it('orderBy works correctly with function argument', () => {
         const ordered = bookQs.orderBy([(book) => book.releaseYear]);
-        ordered._evaluate();
-        expect(ordered.idArr).to.deep.equal([1, 2, 0]);
+        const idArr = ordered.toRefArray().map(row => row.id);
+        expect(idArr).to.deep.equal([1, 2, 0]);
     });
 
     it('exclude works correctly with object argument', () => {
         const excluded = bookQs.exclude({ name: 'Clean Code' });
         expect(excluded.count()).to.equal(2);
-        expect(excluded.idArr).to.deep.equal([0, 2]);
+
+        const idArr = excluded.toRefArray().map(row => row.id);
+        expect(idArr).to.deep.equal([0, 2]);
     });
 
     it('update records a update', () => {
         const mergeObj = { name: 'Updated Book Name' };
         bookQs.update(mergeObj);
 
-        bookQs.forEach(instance => expect(instance.name).to.equal('Updated Book Name'));
+        bookQs.toRefArray().forEach(row => expect(row.name).to.equal('Updated Book Name'));
     });
 
     it('delete records a update', () => {

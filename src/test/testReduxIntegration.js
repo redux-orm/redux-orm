@@ -3,6 +3,7 @@ import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
 import ORM from '../ORM';
+import Session from '../Session';
 import {
     createReducer,
     createSelector,
@@ -57,7 +58,6 @@ describe('Redux integration', () => {
     });
 
     it('correctly creates a selector', () => {
-        orm.register(Book, Author, Cover, Genre, Publisher);
         let selectorTimesRun = 0;
         const selector = createSelector(orm, () => selectorTimesRun++);
         expect(selector).to.be.a('function');
@@ -72,45 +72,44 @@ describe('Redux integration', () => {
         expect(selectorTimesRun).to.equal(1);
     });
 
-    // it('correctly creates a selector with input selectors', () => {
-    //     orm.register(Book, Author, Cover, Genre, Publisher);
+    it('correctly creates a selector with input selectors', () => {
+        const _selectorFunc = sinon.spy();
 
-    //     const _selectorFunc = sinon.spy();
+        const selector = createSelector(
+            orm,
+            state => state.orm,
+            state => state.selectedUser,
+            _selectorFunc
+        );
 
-    //     const selector = orm.createSelector(
-    //         state => state.orm,
-    //         state => state.selectedUser,
-    //         _selectorFunc
-    //     );
+        const _state = orm.getEmptyState();
 
-    //     const _state = orm.getDefaultState();
+        const appState = {
+            orm: _state,
+            selectedUser: 5,
+        };
 
-    //     const appState = {
-    //         orm: _state,
-    //         selectedUser: 5,
-    //     };
+        expect(selector).to.be.a('function');
 
-    //     expect(selector).to.be.a('function');
+        selector(appState);
+        expect(_selectorFunc.callCount).to.equal(1);
 
-    //     selector(appState);
-    //     expect(_selectorFunc.callCount).to.equal(1);
+        expect(_selectorFunc.lastCall.args[0]).to.be.an.instanceOf(Session);
+        expect(_selectorFunc.lastCall.args[0].state).to.equal(_state);
 
-    //     expect(_selectorFunc.lastCall.args[0]).to.be.an.instanceOf(Session);
-    //     expect(_selectorFunc.lastCall.args[0].state).to.equal(_state);
+        expect(_selectorFunc.lastCall.args[1]).to.equal(5);
 
-    //     expect(_selectorFunc.lastCall.args[1]).to.equal(5);
+        selector(appState);
+        expect(_selectorFunc.callCount).to.equal(1);
 
-    //     selector(appState);
-    //     expect(_selectorFunc.callCount).to.equal(1);
+        const otherUserState = Object.assign({}, appState, { selectedUser: 0 });
 
-    //     const otherUserState = Object.assign({}, appState, { selectedUser: 0 });
+        selector(otherUserState);
+        expect(_selectorFunc.callCount).to.equal(2);
+    });
 
-    //     selector(otherUserState);
-    //     expect(_selectorFunc.callCount).to.equal(2);
-    // });
-
-    // it('calling reducer with undefined state doesn\'t throw', () => {
-    //     orm.register(Book, Author, Cover, Genre, Publisher);
-    //     orm.reducer()(undefined, { type: '______init' });
-    // });
+    it('calling reducer with undefined state doesn\'t throw', () => {
+        const reducer = createReducer(orm);
+        reducer(undefined, { type: '______init' });
+    });
 });
