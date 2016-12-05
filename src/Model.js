@@ -38,12 +38,17 @@ function getByIdQuery(modelInstance) {
 
 /**
  * The heart of an ORM, the data model.
- * The static class methods manages the updates
- * passed to this. The class itself is connected to a session,
- * and because of this you can only have a single session at a time
- * for a {@link Model} class.
  *
- * An instance of {@link Model} represents an object in the database.
+ * The fields you specify to the Model will be used to generate
+ * a schema to the database, related property accessors, and
+ * possibly through models.
+ *
+ * In each {@link Session} you instantiate from an {@link ORM} instance,
+ * you will receive a session-specific subclass of this Model. The methods
+ * you define here will be available to you in sessions.
+ *
+ * An instance of {@link Model} represents a record in the database, though
+ * it is possible to generate multiple instances from the same record in the database.
  *
  * To create data models in your schema, subclass {@link Model}. To define
  * information about the data model, override static class methods. Define instance
@@ -51,7 +56,8 @@ function getByIdQuery(modelInstance) {
  */
 const Model = class Model {
     /**
-     * Creates a Model instance.
+     * Creates a Model instance from it's properties.
+     * Don't use this to create a new record; Use the static method {@link Model#create}.
      * @param  {Object} props - the properties to instantiate with
      */
     constructor(props) {
@@ -84,13 +90,16 @@ const Model = class Model {
     }
 
     /**
-     * Returns the options object passed to the {@link Backend} class constructor.
-     * By default, returns an empty object (which means the {@link Backend} instance
-     * will use default options). You can either override this function to return the options
-     * you want to use, or assign the options object as a static property to the
+     * Returns the options object passed to the database for the table that represents
+     * this Model class.
+     *
+     * Returns an empty object by default, which means the database
+     * will use default options. You can either override this function to return the options
+     * you want to use, or assign the options object as a static property of the same name to the
      * Model class.
      *
-     * @return {Object} the options object used to instantiate a {@link Backend} class.
+     * @return {Object} the options object passed to the database for the table
+     *                  representing this Model class.
      */
     static options() {
         return {};
@@ -114,7 +123,6 @@ const Model = class Model {
 
     /**
      * Returns the id attribute of this {@link Model}.
-     * Delegates to the related {@link Backend} instance.
      *
      * @return {string} The id attribute of this {@link Model}.
      */
@@ -169,7 +177,10 @@ const Model = class Model {
     }
 
     /**
-     * Records the addition of a new {@link Model} instance and returns it.
+     * Creates a new record in the database, instantiates a {@link Model} and returns it.
+     *
+     * If you pass values for many-to-many fields, instances are created on the through
+     * model as well.
      *
      * @param  {props} props - the new {@link Model}'s properties.
      * @return {Model} a new {@link Model} instance.
@@ -217,6 +228,8 @@ const Model = class Model {
 
     /**
      * Returns a {@link Model} instance for the object with id `id`.
+     * This throws if the `id` doesn't exist. Use {@link Model#hasId}
+     * to check for existence first if you're not certain.
      *
      * @param  {*} id - the `id` of the object to get
      * @throws If object with id `id` doesn't exist
@@ -339,8 +352,8 @@ const Model = class Model {
     }
 
     /**
-     * Records a update to the {@link Model} instance for a single
-     * field value assignment.
+     * Updates a property name to given value for this {@link Model} instance.
+     * The values are immediately committed to the database.
      *
      * @param {string} propertyName - name of the property to set
      * @param {*} value - value assigned to the property
@@ -351,8 +364,8 @@ const Model = class Model {
     }
 
     /**
-     * Records an update to the {@link Model} instance for multiple field value assignments.
-     * If the session is with mutations, updates the instance to reflect the new values.
+     * Assigns multiple fields and corresponding values to this {@link Model} instance.
+     * The updates are immediately committed to the database.
      *
      * @param  {Object} userMergeObj - an object that will be merged with this instance.
      * @return {undefined}
@@ -403,7 +416,7 @@ const Model = class Model {
 
     /**
      * Updates {@link Model} instance attributes to reflect the
-     * session state.
+     * database state in the current session.
      * @return {undefined}
      */
     refreshFromState() {
@@ -411,7 +424,9 @@ const Model = class Model {
     }
 
     /**
-     * Records the {@link Model} to be deleted.
+     * Deletes the record for this {@link Model} instance.
+     * You'll still be able to access fields and values on the instance.
+     *
      * @return {undefined}
      */
     delete() {
