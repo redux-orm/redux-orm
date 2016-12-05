@@ -21,15 +21,21 @@ const ORM_DEFAULTS = {
 };
 
 /**
- * Schema's responsibility is tracking the set of {@link Model} classes used in the database.
- * To include your model in that set, Schema offers {@link Schema#register} and a
- * shortcut {@link Schema#define} methods.
+ * ORM - the Object Relational Mapper.
  *
- * Schema also handles starting a Session with {@link Schema#from}.
+ * Use instances of this class to:
+ *
+ * - Register your {@link Model} classes using {@link ORM#register}
+ * - Get the empty state for the underlying database with {@link ORM#getEmptyState}
+ * - Start an immutable database session with {@link ORM#session}
+ * - Start a mutating database session with {@link ORM#mutableSession}
+ *
+ * Internally, this class handles generating a schema specification from models
+ * to the database.
  */
 const ORM = class ORM {
     /**
-     * Creates a new Schema.
+     * Creates a new ORM instance.
      */
     constructor(opts) {
         const { createDatabase } = Object.assign({}, ORM_DEFAULTS, (opts || {}));
@@ -40,11 +46,11 @@ const ORM = class ORM {
     }
 
     /**
-     * Registers a {@link Model} class to the schema.
+     * Registers a {@link Model} class to the ORM.
      *
      * If the model has declared any ManyToMany fields, their
      * through models will be generated and registered with
-     * this call.
+     * this call, unless a custom through model has been specified.
      *
      * @param  {...Model} model - a {@link Model} class to register
      * @return {undefined}
@@ -166,8 +172,8 @@ const ORM = class ORM {
     }
 
     /**
-     * Returns the default state.
-     * @return {Object} the default state
+     * Returns the empty database state.
+     * @return {Object} the empty state
      */
     getEmptyState() {
         return this.getDatabase().getEmptyState();
