@@ -39,7 +39,8 @@ export const createReducer = (orm, updater = defaultUpdater) =>
  * This is an example selector:
  *
  * ```javascript
- * const bookSelector = schema.createSelector(session => {
+ * // orm is an instance of ORM
+ * const bookSelector = createSelector(orm, session => {
  *     return session.Book.map(book => {
  *         return Object.assign({}, book.ref, {
  *             authors: book.authors.map(author => author.name),
@@ -56,7 +57,7 @@ export const createReducer = (orm, updater = defaultUpdater) =>
  * result. This way you can use the `PureRenderMixin` in your React
  * components for performance gains.
  *
- * @param {Schema} orm - the Schema instance
+ * @param {ORM} orm - the ORM instance
  * @param  {...Function} args - zero or more input selectors
  *                              and the selector function.
  * @return {Function} memoized selector
