@@ -10,15 +10,30 @@ import {
 } from './constants.js';
 
 /**
- * A chainable class that keeps track of a list of objects and
+ * This class is used to build and make queries to the database
+ * and operating the resulting set (such as updating attributes
+ * or deleting the records).
  *
- * - returns a subset clone of itself with [filter]{@link QuerySet#filter} and [exclude]{@link QuerySet#exclude}
- * - records updates to objects with [update]{@link QuerySet#update} and [delete]{@link QuerySet#delete}
+ * The queries are built lazily. For example:
  *
+ * ```javascript
+ * const qs = Book.all()
+ *     .filter(book => book.releaseYear > 1999)
+ *     .orderBy('name');
+ * ```
+ *
+ * Doesn't execute a query. The query is executed only when
+ * you need information from the query result, such as {@link QuerySet#count},
+ * {@link QuerySet#toRefArray}. After the query is executed, the resulting
+ * set is cached in the QuerySet instance.
+ *
+ * QuerySet instances also return copies, so chaining filters doesn't
+ * mutate the previous instances.
  */
 const QuerySet = class QuerySet {
     /**
-     * Creates a QuerySet.
+     * Creates a QuerySet. The constructor is mainly for internal use;
+     * You should access QuerySet instances from {@link Model}.
      *
      * @param  {Model} modelClass - the model class of objects in this QuerySet.
      * @param  {any[]} clauses - query clauses needed to evaluate the set.
@@ -63,7 +78,7 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns an array of Model instances represented by the QuerySet.
+     * Returns an array of {@link Model} instances represented by the QuerySet.
      * @return {Model[]} model instances represented by the QuerySet
      */
     toModelArray() {
@@ -73,7 +88,7 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns the number of model instances represented by the QuerySet.
+     * Returns the number of {@link Model} instances represented by the QuerySet.
      *
      * @return {number} length of the QuerySet
      */
@@ -83,7 +98,8 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Checks if the {@link QuerySet} instance has any entities.
+     * Checks if the {@link QuerySet} instance has any records matching the query
+     * in the database.
      *
      * @return {Boolean} `true` if the {@link QuerySet} instance contains entities, else `false`.
      */
@@ -146,7 +162,8 @@ const QuerySet = class QuerySet {
     }
 
     /**
-     * Returns a new {@link QuerySet} instance with entities that do not match properties in `lookupObj`.
+     * Returns a new {@link QuerySet} instance with entities that do not match
+     * properties in `lookupObj`.
      *
      * @param  {Object} lookupObj - the properties to unmatch objects with.
      * @return {QuerySet} a new {@link QuerySet} instance with objects that passed the filter.
