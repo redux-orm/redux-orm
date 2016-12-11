@@ -1,32 +1,41 @@
 import chai from 'chai';
 import sinonChai from 'sinon-chai';
+import deepFreeze from 'deep-freeze';
 chai.use(sinonChai);
 const { expect } = chai;
 import Table from '../db/Table';
 import { getBatchToken } from '../utils';
+import { FILTER, EXCLUDE, ORDER_BY } from '../constants';
 
 describe('Table', () => {
     describe('prototype methods', () => {
-        const state = {
-            items: [0, 1, 2],
-            itemsById: {
-                0: {
-                    id: 0,
-                    data: 'cooldata',
+        let state;
+        let batchToken;
+        let txInfo;
+        let table;
+
+        beforeEach(() => {
+            state = deepFreeze({
+                items: [0, 1, 2],
+                itemsById: {
+                    0: {
+                        id: 0,
+                        data: 'cooldata',
+                    },
+                    1: {
+                        id: 1,
+                        data: 'verycooldata!',
+                    },
+                    2: {
+                        id: 2,
+                        data: 'awesomedata',
+                    },
                 },
-                1: {
-                    id: 1,
-                    data: 'verycooldata!',
-                },
-                2: {
-                    id: 2,
-                    data: 'awesomedata',
-                },
-            },
-        };
-        const batchToken = getBatchToken();
-        const txInfo = { batchToken, withMutations: false };
-        const table = new Table();
+            });
+            batchToken = getBatchToken();
+            txInfo = { batchToken, withMutations: false };
+            table = new Table();
+        });
 
         it('correctly accesses an id', () => {
             expect(table.accessId(state, 1)).to.equal(state.itemsById[1]);
@@ -46,7 +55,9 @@ describe('Table', () => {
 
         it('correctly inserts an entry', () => {
             const entry = { id: 3, data: 'newdata!' };
-            const newState = table.insert(txInfo, state, entry);
+            const { state: newState, created } = table.insert(txInfo, state, entry);
+
+            expect(created).to.equal(entry);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.deep.equal([0, 1, 2, 3]);
@@ -72,8 +83,8 @@ describe('Table', () => {
 
         it('correctly updates entries with a merging object', () => {
             const toMergeObj = { data: 'modifiedData' };
-            const idsToUpdate = [1, 2];
-            const newState = table.update(txInfo, state, idsToUpdate, toMergeObj);
+            const rowsToUpdate = [state.itemsById[1], state.itemsById[2]];
+            const newState = table.update(txInfo, state, rowsToUpdate, toMergeObj);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.equal(state.items);
@@ -94,8 +105,8 @@ describe('Table', () => {
         });
 
         it('correctly deletes entries', () => {
-            const idsToDelete = [1, 2];
-            const newState = table.delete(txInfo, state, idsToDelete);
+            const rowsToDelete = [state.itemsById[1], state.itemsById[2]];
+            const newState = table.delete(txInfo, state, rowsToDelete);
 
             expect(newState).to.not.equal(state);
             expect(newState.items).to.deep.equal([0]);
@@ -107,35 +118,45 @@ describe('Table', () => {
             });
         });
 
-        // it('filter works correctly with object argument', () => {
-        //     const filterDescriptor = { type: FILTER, payload: { name: 'Clean Code' }};
-        //     const filtered = bookQs.withRefs.filter({ name: 'Clean Code' });
-        //     expect(filtered.count()).to.equal(1);
-        //     expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[1]);
-        // });
+        it('filter works correctly with object argument', () => {
+            const clauses = [{ type: FILTER, payload: { data: 'verycooldata!' } }];
+            const result = table.query(state, clauses);
+            expect(result.length).to.equal(1);
+            expect(result[0]).to.equal(state.itemsById[1]);
+        });
 
-        // it('filter works correctly with object argument, with model instance value', () => {
-        //     const filtered = bookQs.withRefs.filter({
-        //         author: session.Author.withId(0),
-        //     });
-        //     expect(filtered.count()).to.equal(1);
-        //     expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[0]);
-        // });
+        it('orderBy works correctly with prop argument', () => {
+            const clauses = [{ type: ORDER_BY, payload: [['data'], ['inc']] }];
+            const result = table.query(state, clauses);
+            expect(result.map(row => row.data)).to.deep.equal(
+                ['awesomedata', 'cooldata', 'verycooldata!']
+            );
+        });
 
-        // it('orderBy works correctly with prop argument', () => {
-        //     const ordered = bookQs.orderBy(['releaseYear']);
-        //     expect(ordered.idArr).to.deep.equal([1, 2, 0]);
-        // });
+        it('orderBy works correctly with function argument', () => {
+            const clauses = [{ type: ORDER_BY, payload: [row => row.data, undefined] }];
+            const result = table.query(state, clauses);
+            expect(result.map(row => row.data)).to.deep.equal(
+                ['awesomedata', 'cooldata', 'verycooldata!']
+            );
+        });
 
-        // it('orderBy works correctly with function argument', () => {
-        //     const ordered = bookQs.orderBy([(book) => book.releaseYear]);
-        //     expect(ordered.idArr).to.deep.equal([1, 2, 0]);
-        // });
+        it('exclude works correctly with object argument', () => {
+            const clauses = [{ type: EXCLUDE, payload: { data: 'verycooldata!' } }];
+            const result = table.query(state, clauses);
+            expect(result.length).to.equal(2);
+            expect(result.map(row => row.id)).to.deep.equal([0, 2]);
+        });
 
-        // it('exclude works correctly with object argument', () => {
-        //     const excluded = bookQs.exclude({ name: 'Clean Code' });
-        //     expect(excluded.count()).to.equal(2);
-        //     expect(excluded.idArr).to.deep.equal([0, 2]);
-        // });
+        it('query works with multiple clauses', () => {
+            const clauses = [
+                { type: FILTER, payload: row => row.id > 0 },
+                { type: ORDER_BY, payload: [['data'], ['inc']] },
+            ];
+            const result = table.query(state, clauses);
+            expect(result.map(row => row.data)).to.deep.equal(
+                ['awesomedata', 'verycooldata!']
+            );
+        });
     });
 });

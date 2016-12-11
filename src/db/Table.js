@@ -131,7 +131,9 @@ const Table = class Table {
      * @param  {Object} tx - transaction info
      * @param  {Object} branch - the data structure state
      * @param  {Object} entry - the object to insert
-     * @return {Object} the data structure including `entry`.
+     * @return {Object} an object with two keys: `state` and `created`.
+     *                  `state` is the new table state and `created` is the
+     *                  row that was created.
      */
     insert(tx, branch, entry) {
         const { batchToken, withMutations } = tx;
@@ -178,15 +180,14 @@ const Table = class Table {
     }
 
     /**
-     * Returns the data structure with objects where id in `idArr`
+     * Returns the data structure with objects where `rows`
      * are merged with `mergeObj`.
      *
      * @param  {Object} tx - transaction info
      * @param  {Object} branch - the data structure state
-     * @param  {Array} idArr - the id's of the objects to update
-     * @param  {Object} mergeObj - The object to merge with objects
-     *                             where their id is in `idArr`.
-     * @return {Object} the data structure with objects with their id in `idArr` updated with `mergeObj`.
+     * @param  {Object[]} rows - rows to update
+     * @param  {Object} mergeObj - The object to merge with each row.
+     * @return {Object}
      */
     update(tx, branch, rows, mergeObj) {
         const { batchToken, withMutations } = tx;
@@ -210,10 +211,10 @@ const Table = class Table {
     }
 
     /**
-     * Returns the data structure without objects with their id included in `idsToDelete`.
+     * Returns the data structure without rows `rows`.
      * @param  {Object} tx - transaction info
      * @param  {Object} branch - the data structure state
-     * @param  {Array} idsToDelete - the ids to delete from the data structure
+     * @param  {Object[]} rows - rows to update
      * @return {Object} the data structure without ids in `idsToDelete`.
      */
     delete(tx, branch, rows) {
