@@ -18,7 +18,20 @@ import {
  * @module fields
  */
 
-const Field = class Field {
+
+export const Attribute = class Attribute {
+    constructor(opts) {
+        this.opts = (opts || {});
+
+        if (this.opts.hasOwnProperty('getDefault')) {
+            this.getDefault = this.opts.getDefault;
+        }
+    }
+
+    install() {}
+};
+
+const RelationalField = class RelationalField {
     constructor(...args) {
         if (args.length === 1 && typeof args[0] === 'object') {
             const opts = args[0];
@@ -36,7 +49,7 @@ const Field = class Field {
     }
 };
 
-export const ForeignKey = class ForeignKey extends Field {
+export const ForeignKey = class ForeignKey extends RelationalField {
     install(model, fieldName, orm) {
         const toModelName = this.toModelName;
         const toModel = toModelName === 'this' ? model : orm.get(toModelName);
@@ -74,7 +87,9 @@ export const ForeignKey = class ForeignKey extends Field {
         toModel.virtualFields[backwardsFieldName] = new ThisField(model.modelName, fieldName);
     }
 };
-export const ManyToMany = class ManyToMany extends Field {
+
+
+export const ManyToMany = class ManyToMany extends RelationalField {
     install(model, fieldName, orm) {
         const toModelName = this.toModelName;
         const toModel = toModelName === 'this' ? model : orm.get(toModelName);
@@ -173,8 +188,14 @@ export const ManyToMany = class ManyToMany extends Field {
             through: throughModelName,
         });
     }
+
+    getDefault() {
+        return [];
+    }
 };
-export const OneToOne = class OneToOne extends Field {
+
+
+export const OneToOne = class OneToOne extends RelationalField {
     install(model, fieldName, orm) {
         const toModelName = this.toModelName;
         const toModel = toModelName === 'this' ? model : orm.get(toModelName);
@@ -211,6 +232,33 @@ export const OneToOne = class OneToOne extends Field {
         toModel.virtualFields[backwardsFieldName] = new OneToOne(model.modelName, fieldName);
     }
 };
+
+/**
+ * Defines a value attribute on the model.
+ * You need to define this for each non-foreign key you wish to use.
+ * You can use the optional `getDefault` parameter to fill in unpassed values
+ * to {@link Model#create}, such as for generating ID's with UUID:
+ *
+ * ```javascript
+ * import getUUID from 'your-uuid-package-of-choice';
+ *
+ * fields = {
+ *   id: attr({ getDefault: () => getUUID() }),
+ *   title: attr(),
+ * }
+ * ```
+ *
+ * @param  {Object} [opts]
+ * @param {Function} [opts.getDefault] - if you give a function here, it's return
+ *                                       value from calling with zero arguments will
+ *                                       be used as the value when creating a new Model
+ *                                       instance with {@link Model#create} if the field
+ *                                       value is not passed.
+ * @return {Attribute}
+ */
+export function attr(opts) {
+    return new Attribute(opts);
+}
 
 /**
  * Defines a foreign key on a model, which points

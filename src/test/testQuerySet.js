@@ -4,9 +4,11 @@ import sinon from 'sinon';
 chai.use(sinonChai);
 const { expect } = chai;
 
-import Model from '../Model';
-import ORM from '../ORM';
-import QuerySet from '../QuerySet';
+import {
+    Model,
+    ORM,
+    QuerySet,
+} from '../';
 import {
     createTestModels,
     createTestSessionWithData,

@@ -31,6 +31,7 @@ describe('Table', () => {
                         data: 'awesomedata',
                     },
                 },
+                meta: {},
             });
             batchToken = getBatchToken();
             txInfo = { batchToken, withMutations: false };

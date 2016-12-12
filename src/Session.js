@@ -52,7 +52,6 @@ const Session = class Session {
         if (!this.modelData[modelName]) {
             this.modelData[modelName] = {};
         }
-
         return this.modelData[modelName];
     }
 

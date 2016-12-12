@@ -70,11 +70,12 @@ export function createDatabase(schemaSpec) {
     const { tables: tablesSpec } = schemaSpec;
     const tables = mapValues(tablesSpec, tableSpec => new Table(tableSpec));
 
-    const emptyState = mapValues(tables, table => table.getEmptyState());
+    const getEmptyState = () => mapValues(tables, table => table.getEmptyState());
     return {
-        getEmptyState: () => emptyState,
+        getEmptyState,
         query: query.bind(null, tables),
         update: update.bind(null, tables),
+        // Used to inspect the schema.
         describe: tableName => tables[tableName],
     };
 }

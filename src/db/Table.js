@@ -7,16 +7,41 @@ import { FILTER, EXCLUDE, ORDER_BY } from '../constants';
 import { includes } from '../utils';
 
 
-function isNumber(value) {
-    return !isNaN(parseFloat(value)) && isFinite(value);
-}
-
-
 const DEFAULT_OPTS = {
     idAttribute: 'id',
     arrName: 'items',
     mapName: 'itemsById',
 };
+
+// Input is the current max id and the new id passed to the create action.
+// Both may be undefined. The current max id in the case that this is the first Model
+// being created, and the new id if the id was not explicitly passed to the
+// database.
+//
+// Return value is the new max id and the id to use to create the new row.
+// If the id's are strings, the id must be passed explicitly every time.
+// In this case, the current max id will remain `NaN` due to `Math.max`, but that's fine.
+function idSequencer(_currMax, userPassedId) {
+    let currMax = _currMax;
+    let newMax;
+    let newId;
+
+    if (currMax === undefined) {
+        currMax = -1;
+    }
+
+    if (userPassedId === undefined) {
+        newMax = newId = currMax + 1;
+    } else {
+        newMax = Math.max(currMax + 1, userPassedId);
+        newId = userPassedId;
+    }
+
+    return [
+        newMax, // new max id
+        newId, // id to use for row creation
+    ];
+}
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
@@ -142,18 +167,9 @@ const Table = class Table {
 
         let workingState = branch;
 
-        let id;
-        if (!hasId) {
-            const maxId = this.getMaxId(branch);
-            if (maxId === undefined) {
-                id = 0;
-            } else {
-                id = maxId + 1;
-            }
-            workingState = this.setMaxId(tx, branch, id);
-        } else {
-            id = entry[this.idAttribute];
-        }
+        // This will not affect string id's.
+        const [newMaxId, id] = idSequencer(this.getMaxId(branch), entry[this.idAttribute]);
+        workingState = this.setMaxId(tx, branch, newMaxId);
 
         const finalEntry = hasId
             ? entry

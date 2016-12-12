@@ -8,6 +8,7 @@ import {
     ManyToMany,
     ForeignKey,
     OneToOne,
+    attr,
 } from './fields';
 import { CREATE, UPDATE, DELETE, FILTER } from './constants';
 import {
@@ -67,17 +68,25 @@ const Model = class Model {
     _initFields(props) {
         const ModelClass = this.getClass();
 
-        this._fieldNames = [];
+        const fieldsDef = this.getClass().fields;
         this._fields = Object.assign({}, props);
 
         forOwn(props, (fieldValue, fieldName) => {
+            if (!fieldsDef.hasOwnProperty(fieldName)) {
+                throw new Error(
+                    `Unexpected field given to ${ModelClass.modelName} constructor: ${fieldName}. ` +
+                    `If ${ModelClass.modelName} should accept this field, ` +
+                    'add an attr() field to it.'
+                );
+            }
+
             this._fields[fieldName] = fieldValue;
-            this._fieldNames.push(fieldName);
+
             // If the field has not already been defined on the
             // prototype for a relation.
             if (!ModelClass.definedProperties[fieldName]) {
                 Object.defineProperty(this, fieldName, {
-                    get: () => fieldValue,
+                    get: () => this._fields[fieldName],
                     set: (value) => this.set(fieldName, value),
                     configurable: true,
                 });
@@ -190,15 +199,29 @@ const Model = class Model {
 
         const m2mVals = {};
 
-        forOwn(userProps, (value, key) => {
-            props[key] = normalizeEntity(value);
+        const allowedFieldNames = Object.keys(this.fields);
 
-            // If a value is supplied for a ManyToMany field,
-            // discard them from props and save for later processing.
-            if (isArray(value)) {
-                if (this.fields.hasOwnProperty(key) && this.fields[key] instanceof ManyToMany) {
-                    m2mVals[key] = value;
-                    delete props[key];
+        // We don't check for extra field values passed here;
+        // the constructor will throw in that case. So we
+        // only go through the defined fields.
+        allowedFieldNames.forEach(key => {
+            const field = this.fields[key];
+            const valuePassed = userProps.hasOwnProperty(key);
+            if (!valuePassed && !(field instanceof ManyToMany)) {
+                if (field.getDefault) {
+                    props[key] = field.getDefault();
+                }
+            } else {
+                const value = userProps[key];
+                props[key] = normalizeEntity(value);
+
+                // If a value is supplied for a ManyToMany field,
+                // discard them from props and save for later processing.
+                if (isArray(value)) {
+                    if (this.fields.hasOwnProperty(key) && this.fields[key] instanceof ManyToMany) {
+                        m2mVals[key] = value;
+                        delete props[key];
+                    }
                 }
             }
         });
@@ -332,8 +355,17 @@ const Model = class Model {
      * @return {string} A string representation of this {@link Model} instance.
      */
     toString() {
-        const className = this.getClass().modelName;
-        const fields = this._fieldNames.map(fieldName => {
+        const ThisModel = this.getClass();
+        const className = ThisModel.modelName;
+        const fieldNames = Object.keys(ThisModel.fields);
+        const fields = fieldNames.map(fieldName => {
+            const field = ThisModel.fields[fieldName];
+            if (field instanceof ManyToMany) {
+                const ids = this[fieldName].toModelArray().map(
+                    model => model.getId()
+                );
+                return `${fieldName}: [${ids.join(', ')}]`;
+            }
             const val = this._fields[fieldName];
             return `${fieldName}: ${val}`;
         }).join(', ');
@@ -382,9 +414,9 @@ const Model = class Model {
             if (relFields.hasOwnProperty(mergeKey)) {
                 const field = relFields[mergeKey];
                 if (field instanceof ManyToMany) {
-                    const currentIds = this[mergeKey].idArr;
+                    const currentIds = this[mergeKey].toRefArray()
+                        .map(row => row[ThisModel.idAttribute]);
 
-                    // TODO: It could be better to check this stuff in Backend.
                     const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
                     const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
                     if (diffActions) {
@@ -460,7 +492,9 @@ const Model = class Model {
     }
 };
 
-Model.fields = {};
+Model.fields = {
+    id: attr(),
+};
 Model.definedProperties = {};
 Model.virtualFields = {};
 Model.querySetClass = QuerySet;

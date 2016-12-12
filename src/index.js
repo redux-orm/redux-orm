@@ -13,18 +13,24 @@ import {
     fk,
     many,
     oneToOne,
+    attr,
 } from './fields';
+
+// For backwards-compatibility.
+const Schema = ORM;
 
 export {
     QuerySet,
     Model,
     ORM,
+    Schema,
     Session,
     ForeignKey,
     ManyToMany,
     OneToOne,
     fk,
     many,
+    attr,
     oneToOne,
     createReducer,
     createSelector,

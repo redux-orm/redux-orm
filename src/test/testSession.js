@@ -2,7 +2,9 @@ import chai from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
-import ORM from '../ORM';
+import {
+    ORM,
+} from '../';
 import {
     createTestModels,
     isSubclass,
@@ -19,7 +21,7 @@ describe('Session', () => {
     let Genre;
     let Author;
     let Publisher;
-    let defaultState;
+    let emptyState;
     beforeEach(() => {
         ({
             Book,
@@ -30,7 +32,7 @@ describe('Session', () => {
         } = createTestModels());
         orm = new ORM();
         orm.register(Book, Cover, Genre, Author, Publisher);
-        defaultState = orm.getDefaultState();
+        emptyState = orm.getEmptyState();
     });
 
     it('connects models', () => {
@@ -40,7 +42,7 @@ describe('Session', () => {
         expect(Cover.session).to.be.undefined;
         expect(Publisher.session).to.be.undefined;
 
-        const session = orm.from(defaultState);
+        const session = orm.from(emptyState);
 
         expect(session.Book.session).to.equal(session);
         expect(session.Cover.session).to.equal(session);
@@ -50,7 +52,7 @@ describe('Session', () => {
     });
 
     it('exposes models as getter properties', () => {
-        const session = orm.session(defaultState);
+        const session = orm.session(emptyState);
         expect(isSubclass(session.Book, Book)).to.be.true;
         expect(isSubclass(session.Author, Author)).to.be.true;
         expect(isSubclass(session.Cover, Cover)).to.be.true;
@@ -59,30 +61,30 @@ describe('Session', () => {
     });
 
     it('marks accessed models', () => {
-        const session = orm.from(defaultState);
+        const session = orm.from(emptyState);
         expect(session.accessedModels).to.have.length(0);
 
-        session.markAccessed(Book);
-
+        session.markAccessed(Book.modelName);
         expect(session.accessedModels).to.have.length(1);
         expect(session.accessedModels[0]).to.equal('Book');
 
-        session.markAccessed(Book);
+        session.markAccessed(Book.modelName);
 
         expect(session.accessedModels[0]).to.equal('Book');
     });
 
     describe('gets the next state', () => {
         it('without any updates, the same state is returned', () => {
-            const session = orm.session(defaultState);
-            expect(session.state).to.equal(defaultState);
+            const session = orm.session(emptyState);
+            expect(session.state).to.equal(emptyState);
         });
 
         it('with updates, a new state is returned', () => {
-            const session = orm.session(defaultState);
+            const session = orm.session(emptyState);
 
-            session.applyUpdate(Author.modelName, {
-                type: CREATE,
+            session.applyUpdate({
+                table: Author.modelName,
+                action: CREATE,
                 payload: {
                     id: 0,
                     name: 'Caesar',
@@ -91,22 +93,22 @@ describe('Session', () => {
 
             const nextState = session.state;
 
-            expect(nextState).to.not.equal(defaultState);
+            expect(nextState).to.not.equal(emptyState);
 
-            expect(nextState[Author.modelName]).to.not.equal(defaultState[Author.modelName]);
+            expect(nextState[Author.modelName]).to.not.equal(emptyState[Author.modelName]);
 
             // All other model states should stay equal.
-            expect(nextState[Book.modelName]).to.equal(defaultState[Book.modelName]);
-            expect(nextState[Cover.modelName]).to.equal(defaultState[Cover.modelName]);
-            expect(nextState[Genre.modelName]).to.equal(defaultState[Genre.modelName]);
-            expect(nextState[Publisher.modelName]).to.equal(defaultState[Publisher.modelName]);
+            expect(nextState[Book.modelName]).to.equal(emptyState[Book.modelName]);
+            expect(nextState[Cover.modelName]).to.equal(emptyState[Cover.modelName]);
+            expect(nextState[Genre.modelName]).to.equal(emptyState[Genre.modelName]);
+            expect(nextState[Publisher.modelName]).to.equal(emptyState[Publisher.modelName]);
         });
     });
 
     it('two concurrent sessions', () => {
-        const otherState = orm.getDefaultState();
+        const otherState = orm.getEmptyState();
 
-        const firstSession = orm.session(defaultState);
+        const firstSession = orm.session(emptyState);
         const secondSession = orm.session(otherState);
 
         expect(firstSession.sessionBoundModels).to.have.lengthOf(6);

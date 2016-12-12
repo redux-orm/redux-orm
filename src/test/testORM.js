@@ -2,10 +2,14 @@ import chai from 'chai';
 import sinonChai from 'sinon-chai';
 import sinon from 'sinon';
 
-import ORM from '../ORM';
-import Session from '../Session';
-import Model from '../Model';
-import { oneToOne, fk, many } from '../fields';
+import {
+    ORM,
+    Session,
+    Model,
+    oneToOne,
+    fk,
+    many,
+} from '../';
 
 import { createTestModels } from './utils';
 
@@ -171,7 +175,7 @@ describe('ORM', () => {
 
         it('correctly gets the default state', () => {
             orm.register(Book, Author, Cover, Genre, Publisher);
-            const defaultState = orm.getDefaultState();
+            const defaultState = orm.getEmptyState();
 
             expect(defaultState).to.deep.equal({
                 Book: {
@@ -209,7 +213,7 @@ describe('ORM', () => {
 
         it('correctly starts a mutating session', () => {
             orm.register(Book, Author, Cover, Genre, Publisher);
-            const initialState = orm.getDefaultState();
+            const initialState = orm.getEmptyState();
             const session = orm.mutableSession(initialState);
             expect(session).to.be.an.instanceOf(Session);
             expect(session.withMutations).to.be.true;

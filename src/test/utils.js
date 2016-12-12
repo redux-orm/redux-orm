@@ -1,6 +1,6 @@
 import ORM from '../ORM';
 import Model from '../Model';
-import { fk, many, oneToOne } from '../fields';
+import { fk, many, oneToOne, attr } from '../fields';
 
 /**
  * These utils create a database schema for testing.
@@ -88,6 +88,9 @@ export function createTestModels() {
     const Book = class BookModel extends Model {
         static get fields() {
             return {
+                id: attr(),
+                name: attr(),
+                releaseYear: attr(),
                 author: fk('Author', 'books'),
                 cover: oneToOne('Cover'),
                 genres: many('Genre', 'books'),
@@ -101,6 +104,8 @@ export function createTestModels() {
     const Author = class AuthorModel extends Model {
         static get fields() {
             return {
+                id: attr(),
+                name: attr(),
                 publishers: many({
                     to: 'Publisher',
                     through: 'Book',
@@ -113,12 +118,24 @@ export function createTestModels() {
 
     const Cover = class CoverModel extends Model {};
     Cover.modelName = 'Cover';
+    Cover.fields = {
+        id: attr(),
+        src: attr(),
+    };
 
     const Genre = class GenreModel extends Model {};
     Genre.modelName = 'Genre';
+    Genre.fields = {
+        id: attr(),
+        name: attr(),
+    };
 
     const Publisher = class PublisherModel extends Model {};
     Publisher.modelName = 'Publisher';
+    Publisher.fields = {
+        id: attr(),
+        name: attr(),
+    };
 
     return {
         Book,

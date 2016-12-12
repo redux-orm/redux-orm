@@ -7,6 +7,7 @@ import { createDatabase as defaultCreateDatabase } from './db';
 import {
     ForeignKey,
     ManyToMany,
+    attr,
 } from './fields';
 
 import {
@@ -85,6 +86,7 @@ const ORM = class ORM {
                 Through.modelName = m2mName(thisModelName, fieldName);
 
                 Through.fields = {
+                    id: attr(),
                     [fromFieldName]: new ForeignKey(thisModelName),
                     [toFieldName]: new ForeignKey(toModelName),
                 };
@@ -158,7 +160,7 @@ const ORM = class ORM {
         const tables = models.reduce((spec, modelClass) => {
             const tableName = modelClass.modelName;
             const tableSpec = modelClass._getTableOpts();
-            spec[tableName] = Object.assign({}, tableSpec, { fields: modelClass.fields });
+            spec[tableName] = Object.assign({}, { fields: modelClass.fields }, tableSpec);
             return spec;
         }, {});
         return { tables };

@@ -1,7 +1,10 @@
 import { expect } from 'chai';
-import Model from '../Model';
-import QuerySet from '../QuerySet';
-import ORM from '../ORM';
+import {
+    Model,
+    QuerySet,
+    ORM,
+    attr,
+} from '../';
 import {
     createTestSessionWithData,
 } from './utils';
@@ -68,6 +71,12 @@ describe('Integration', () => {
             expect(session.Book.last().ref).to.equal(book.ref);
         });
 
+        it('Model.getId works', () => {
+            const { Book } = session;
+            expect(Book.withId(0).getId()).to.equal(0);
+            expect(Book.withId(1).getId()).to.equal(1);
+        });
+
         it('Model.create throws if passing duplicate ids to many-to-many field', () => {
             const { Book } = session;
 
@@ -96,6 +105,16 @@ describe('Integration', () => {
             const newName = 'New Name';
             book.name = newName;
             expect(session.Book.first().name).to.equal(newName);
+        });
+
+        it('Model.toString works', () => {
+            const { Book } = session;
+            const book = Book.first();
+            expect(book.toString())
+                .to.equal(
+                    'Book: {id: 0, name: Tommi Kaikkonen - an Autobiography, ' +
+                    'releaseYear: 2050, author: 0, cover: 0, genres: [0, 1], publisher: 1}'
+                );
         });
 
         it('withId throws if model instance not found', () => {
@@ -159,6 +178,24 @@ describe('Integration', () => {
 
             const existingId = 1;
             expect(() => book.genres.add(existingId)).to.throw(existingId.toString());
+        });
+
+        it('updating related many-to-many entities works', () => {
+            const { Book, Genre, Author } = session;
+            const tommi = Author.get({ name: 'Tommi Kaikkonen' });
+            const book = tommi.books.first();
+            expect(book.genres.toRefArray().map(row => row.id))
+                .to.deep.equal([0, 1]);
+
+            const deleteGenre = Genre.withId(0);
+            const keepGenre = Genre.withId(1);
+            const addGenre = Genre.withId(2);
+
+            book.update({ genres: [addGenre, keepGenre] });
+            expect(book.genres.toRefArray().map(row => row.id))
+                .to.deep.equal([1, 2]);
+
+            expect(deleteGenre.books.filter({ id: book.id }).exists()).to.be.false;
         });
 
         it('removing related many-to-many entities works', () => {
@@ -232,6 +269,28 @@ describe('Integration', () => {
             book.name = book.name;
 
             expect(session.state).to.equal(state);
+        });
+
+        it('Model works with default value', () => {
+            let returnId = 1;
+
+            class DefaultFieldModel extends Model {}
+            DefaultFieldModel.fields = {
+                id: attr({ getDefault: () => returnId }),
+            };
+            DefaultFieldModel.modelName = 'DefaultFieldModel';
+
+            const _orm = new ORM();
+            _orm.register(DefaultFieldModel);
+
+            const sess = _orm.session(_orm.getEmptyState());
+            sess.DefaultFieldModel.create({});
+
+            expect(sess.DefaultFieldModel.hasId(1)).to.be.true;
+
+            returnId = 999;
+            sess.DefaultFieldModel.create({});
+            expect(sess.DefaultFieldModel.hasId(999)).to.be.true;
         });
     });
 
@@ -310,6 +369,10 @@ describe('Big Data Test', () => {
     beforeEach(() => {
         Item = class extends Model {};
         Item.modelName = 'Item';
+        Item.fields = {
+            id: attr(),
+            name: attr(),
+        };
         orm = new ORM();
         orm.register(Item);
     });
@@ -317,7 +380,7 @@ describe('Big Data Test', () => {
     it('adds a big amount of items in acceptable time', function bigDataTest() {
         this.timeout(30000);
 
-        const session = orm.from(orm.getEmptyState());
+        const session = orm.session(orm.getEmptyState());
         const start = new Date().getTime();
 
         const amount = 10000;
