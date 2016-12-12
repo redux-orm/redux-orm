@@ -1,5 +1,8 @@
 import mapValues from 'lodash/mapValues';
-import { normalizeEntity } from './utils';
+import {
+    normalizeEntity,
+    warnDeprecated,
+} from './utils';
 
 import {
     UPDATE,
@@ -245,6 +248,37 @@ const QuerySet = class QuerySet {
         });
 
         this._evaluated = false;
+    }
+
+    // DEPRECATED AND REMOVED METHODS
+
+    get withModels() {
+        throw new Error(
+            'QuerySet.prototype.withModels is removed. ' +
+            'Use .toModelArray() or predicate functions that ' +
+            'instantiate Models from refs, e.g. new Model(ref).'
+        );
+    }
+
+    get withRefs() {
+        warnDeprecated(
+            'QuerySet.prototype.withRefs is deprecated. ' +
+            'Query building operates on refs only now.'
+        );
+    }
+
+    map() {
+        throw new Error(
+            'QuerySet.prototype.map is removed. ' +
+            'Call .toModelArray() or .toRefArray() first to map.'
+        );
+    }
+
+    forEach() {
+        throw new Error(
+            'QuerySet.prototype.forEach is removed. ' +
+            'Call .toModelArray() or .toRefArray() first to iterate.'
+        );
     }
 };
 

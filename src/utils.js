@@ -4,6 +4,14 @@ import ops from 'immutable-ops';
 import intersection from 'lodash/intersection';
 import difference from 'lodash/difference';
 
+
+function warnDeprecated(msg) {
+    const logger = typeof console.warn === 'function'
+        ? console.warn.bind(console)
+        : console.log.bind(console);
+    return logger(msg);
+}
+
 /**
  * @module utils
  */
@@ -181,4 +189,5 @@ export {
     includes,
     arrayDiffActions,
     getBatchToken,
+    warnDeprecated,
 };

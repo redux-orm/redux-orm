@@ -1,6 +1,7 @@
 import { getBatchToken } from 'immutable-ops';
 
 import { SUCCESS, FAILURE } from './constants';
+import { warnDeprecated } from './utils';
 
 
 const Session = class Session {
@@ -16,7 +17,7 @@ const Session = class Session {
     constructor(schema, db, state, withMutations, batchToken) {
         this.schema = schema;
         this.db = db;
-        this.state = state || db.getDefaultState();
+        this.state = state || db.getEmptyState();
         this.initialState = this.state;
 
         this.withMutations = !!withMutations;
@@ -81,6 +82,24 @@ const Session = class Session {
         const { table } = querySpec;
         this.markAccessed(table);
         return this.db.query(querySpec, this.state);
+    }
+
+    // DEPRECATED AND REMOVED METHODS
+
+    getNextState() {
+        warnDeprecated(
+            'Session.prototype.getNextState function is deprecated. Access ' +
+            'the Session.prototype.state property instead.'
+        );
+        return this.state;
+    }
+
+    reduce() {
+        throw new Error(
+            'Session.prototype.reduce is removed. The Redux integration API ' +
+            'is now decoupled from ORM and Session - see the 0.9 migration guide ' +
+            'in the GitHub repo.'
+        );
     }
 };
 

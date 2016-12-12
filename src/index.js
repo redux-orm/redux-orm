@@ -1,6 +1,6 @@
 import QuerySet from './QuerySet';
 import Model from './Model';
-import ORM from './ORM';
+import { DeprecatedSchema, ORM } from './ORM';
 import Session from './Session';
 import {
     createReducer,
@@ -16,14 +16,22 @@ import {
     attr,
 } from './fields';
 
-// For backwards-compatibility.
-const Schema = ORM;
+const Schema = DeprecatedSchema;
+
+const Backend = function RemovedBackend() {
+    throw new Error(
+        'Having a custom Backend instance is now unsupported. ' +
+        'Documentation for database customization is upcoming, for now ' +
+        'please look at the db folder in the source.'
+    );
+};
 
 export {
     QuerySet,
     Model,
     ORM,
     Schema,
+    Backend,
     Session,
     ForeignKey,
     ManyToMany,

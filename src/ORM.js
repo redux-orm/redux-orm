@@ -11,10 +11,16 @@ import {
 } from './fields';
 
 import {
+    createReducer,
+    createSelector,
+} from './redux';
+
+import {
     m2mName,
     attachQuerySetMethods,
     m2mToFieldName,
     m2mFromFieldName,
+    warnDeprecated,
 } from './utils';
 
 const ORM_DEFAULTS = {
@@ -34,7 +40,7 @@ const ORM_DEFAULTS = {
  * Internally, this class handles generating a schema specification from models
  * to the database.
  */
-const ORM = class ORM {
+export const ORM = class ORM {
     /**
      * Creates a new ORM instance.
      */
@@ -191,11 +197,6 @@ const ORM = class ORM {
         return new Session(this, this.getDatabase(), state);
     }
 
-    // Alias for session.
-    from(state) {
-        return this.session(state);
-    }
-
     /**
      * Begins a mutable database session.
      *
@@ -205,6 +206,62 @@ const ORM = class ORM {
     mutableSession(state) {
         return new Session(this, this.getDatabase(), state, true);
     }
+
+    // DEPRECATED AND REMOVED METHODS
+
+    withMutations(state) {
+        warnDeprecated(
+            'ORM.prototype.withMutations is deprecated. ' +
+            'Use ORM.prototype.mutableSession instead.'
+        );
+
+        return this.mutableSession(state);
+    }
+
+    from(state) {
+        warnDeprecated(
+            'ORM.prototype.from function is deprecated. ' +
+            'Use ORM.prototype.session instead.'
+        );
+        return this.session(state);
+    }
+
+    reducer() {
+        warnDeprecated(
+            'ORM.prototype.reducer is deprecated. Access ' +
+            'the Session.prototype.state property instead.'
+        );
+        return createReducer(this);
+    }
+
+    createSelector(...args) {
+        warnDeprecated(
+            'ORM.prototype.createSelector is deprecated. ' +
+            'Import `createSelector` from Redux-ORM instead.'
+        );
+        return createSelector(this, ...args);
+    }
+
+    getDefaultState() {
+        warnDeprecated(
+            'ORM.prototype.getDefaultState is deprecated. Use ' +
+            'the ORM.prototype.getEmptyState instead.'
+        );
+        return this.getEmptyState();
+    }
+
+    define() {
+        throw new Error(
+            'ORM.prototype.define is removed. Please define a Model class.'
+        );
+    }
 };
+
+export function DeprecatedSchema() {
+    throw new Error(
+        'Schema has been renamed to ORM. Please import ORM instead of Schema ' +
+        'from Redux-ORM.'
+    );
+}
 
 export default ORM;
