@@ -3,9 +3,11 @@ redux-orm
 
 A small, simple and immutable ORM to manage relational data in your Redux store.
 
-See a [a guide to creating a simple app with Redux-ORM](https://github.com/tommikaikkonen/redux-orm-primer) (includes the source).
+See a [a guide to creating a simple app with Redux-ORM](https://github.com/tommikaikkonen/redux-orm-primer) (includes the source). Its README is not updated for 0.9 yet but the [code has a branch for it](https://github.com/tommikaikkonen/redux-orm-primer/tree/migrate_to_0_9).
 
-**The 0.9 release brings big breaking changes to the API. Please look at the [migration guide](#) if you're migrating from earlier versions.**
+**The 0.9 which is in the release candidate stage, brings big breaking changes to the API. Please look at the [migration guide](https://github.com/tommikaikkonen/redux-orm/wiki/0.9-Migration-Guide) if you're migrating from earlier versions.**
+
+Looking for the 0.8 docs? Read the [old README.md in the repo](https://github.com/tommikaikkonen/redux-orm/tree/3c36fa804d2810b2aaaad89ff1d99534b847ea35). For the API reference, clone the repo, `npm install`, `make build` and open up `index.html` in your browser. Sorry for the inconvenience.
 
 API can be unstable until 1.0.0. Minor version bumps before 1.0.0 can and will introduce breaking changes. They will be noted in the [changelog](https://github.com/tommikaikkonen/redux-orm#changelog).
 
@@ -30,7 +32,7 @@ You can declare your models with the ES6 class syntax, extending from `Model`. Y
 
 ```javascript
 // models.js
-import {fk, many, attribute, Model} from 'redux-orm';
+import {fk, many, attr, Model} from 'redux-orm';
 
 class Book extends Model {
     toString() {
@@ -42,8 +44,8 @@ Book.modelName = 'Book';
 
 // Declare your related fields.
 Book.fields = {
-    id: attribute(), // non-relational field for any value
-    name: attribute(),
+    id: attr(), // non-relational field for any value
+    name: attr(),
     authors: many('Author', 'books'),
     publisher: fk('Publisher', 'books'),
 };
@@ -419,16 +421,16 @@ For the related fields declarations, either set the `fields` property on the cla
 class Book extends Model {
     static get fields() {
         return {
-            id: attribte(),
-            name: attribute(),
+            id: attr(),
+            name: attr(),
             author: fk('Author'),
         };
     }
 }
 // alternative:
 Book.fields = {
-    id: attribte(),
-    name: attribute(),
+    id: attr(),
+    name: attr(),
     author: fk('Author'),
 }
 ```
@@ -500,7 +502,7 @@ Minor changes before 1.0.0 can include breaking changes.
 
 ### 0.9.0
 
-TODO
+A lot. See [the migration guide](https://github.com/tommikaikkonen/redux-orm/wiki/0.9-Migration-Guide).
 
 ### 0.8.3
 
