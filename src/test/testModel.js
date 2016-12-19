@@ -24,6 +24,17 @@ describe('Model', () => {
             Model.modelName = 'Model';
         });
 
+        it('make sure intsance methods are enumerable', () => {
+            // See #29.
+
+            const enumerableProps = {};
+            for (const propName in Model) { // eslint-disable-line
+                enumerableProps[propName] = true;
+            }
+
+            expect(enumerableProps.create).to.be.true;
+        });
+
         it('session getter works correctly', () => {
             expect(Model.session).to.be.undefined;
             Model._session = sessionMock;
