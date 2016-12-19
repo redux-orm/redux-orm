@@ -28,7 +28,7 @@ npm install redux-orm --save
 
 ### Declare Your Models
 
-You can declare your models with the ES6 class syntax, extending from `Model`. You should declare all fields you want to persist for a model, including non-relational fields. `redux-orm` supports one-to-one and many-to-many relations in addition to foreign keys (`oneToOne`, `many` and `fk` imports respectively). Non-related properties can be accessed like in normal JavaScript objects.
+You can declare your models with the ES6 class syntax, extending from `Model`. You need to declare all your non-relational fields on the Model, and declaring all data fields is recommended as the library doesn't have to redefine getters and setters when instantiating Models. `redux-orm` supports one-to-one and many-to-many relations in addition to foreign keys (`oneToOne`, `many` and `fk` imports respectively). Non-related properties can be accessed like in normal JavaScript objects.
 
 ```javascript
 // models.js
@@ -44,7 +44,7 @@ Book.modelName = 'Book';
 
 // Declare your related fields.
 Book.fields = {
-    id: attr(), // non-relational field for any value
+    id: attr(), // non-relational field for any value; optional but highly recommended
     name: attr(),
     authors: many('Author', 'books'),
     publisher: fk('Publisher', 'books'),
