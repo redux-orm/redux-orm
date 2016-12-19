@@ -253,7 +253,9 @@ export const OneToOne = class OneToOne extends RelationalField {
 
 /**
  * Defines a value attribute on the model.
- * You need to define this for each non-foreign key you wish to use.
+ * Though not required, it is recommended to define this for each non-foreign key you wish to use.
+ * Getters and setters need to be defined on each Model
+ * instantiation for undeclared data fields, which is slower.
  * You can use the optional `getDefault` parameter to fill in unpassed values
  * to {@link Model#create}, such as for generating ID's with UUID:
  *
