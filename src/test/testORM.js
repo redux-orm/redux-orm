@@ -103,7 +103,7 @@ describe('ORM', () => {
 
         it('correctly starts session', () => {
             const initialState = {};
-            const session = orm.from(initialState);
+            const session = orm.session(initialState);
             expect(session).to.be.instanceOf(Session);
         });
 

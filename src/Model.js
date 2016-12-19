@@ -66,29 +66,22 @@ const Model = class Model {
     }
 
     _initFields(props) {
-        const ModelClass = this.getClass();
-
-        const fieldsDef = this.getClass().fields;
         this._fields = Object.assign({}, props);
 
+        const ThisModel = this.getClass();
+
         forOwn(props, (fieldValue, fieldName) => {
-            if (!fieldsDef.hasOwnProperty(fieldName)) {
-                throw new Error(
-                    `Unexpected field given to ${ModelClass.modelName} constructor: ${fieldName}. ` +
-                    `If ${ModelClass.modelName} should accept this field, ` +
-                    'add an attr() field to it.'
-                );
-            }
-
-            this._fields[fieldName] = fieldValue;
-
-            // If the field has not already been defined on the
-            // prototype for a relation.
-            if (!ModelClass.definedProperties[fieldName]) {
+            // In this case, we got a prop that wasn't defined as a field.
+            // Assuming it's an arbitrary data field, making an instance-specific
+            // descriptor for it.
+            // Using the in operator as the property could be defined anywhere
+            // on the prototype chain.
+            if (!(fieldName in this)) {
                 Object.defineProperty(this, fieldName, {
                     get: () => this._fields[fieldName],
-                    set: (value) => this.set(fieldName, value),
+                    set: value => this.set(fieldName, value),
                     configurable: true,
+                    enumerable: true,
                 });
             }
         });
@@ -169,7 +162,6 @@ const Model = class Model {
 
     static invalidateClassCache() {
         this.isSetUp = undefined;
-        this.definedProperties = {};
         this.virtualFields = {};
     }
 
@@ -199,12 +191,9 @@ const Model = class Model {
 
         const m2mVals = {};
 
-        const allowedFieldNames = Object.keys(this.fields);
+        const declaredFieldNames = Object.keys(this.fields);
 
-        // We don't check for extra field values passed here;
-        // the constructor will throw in that case. So we
-        // only go through the defined fields.
-        allowedFieldNames.forEach(key => {
+        declaredFieldNames.forEach(key => {
             const field = this.fields[key];
             const valuePassed = userProps.hasOwnProperty(key);
             if (!valuePassed && !(field instanceof ManyToMany)) {
@@ -413,25 +402,27 @@ const Model = class Model {
         for (const mergeKey in mergeObj) { // eslint-disable-line no-restricted-syntax
             if (relFields.hasOwnProperty(mergeKey)) {
                 const field = relFields[mergeKey];
-                if (field instanceof ManyToMany) {
-                    const currentIds = this[mergeKey].toRefArray()
-                        .map(row => row[ThisModel.idAttribute]);
+                if (field) {
+                    if (field instanceof ManyToMany) {
+                        const currentIds = this[mergeKey].toRefArray()
+                            .map(row => row[ThisModel.idAttribute]);
 
-                    const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
-                    const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
-                    if (diffActions) {
-                        const idsToDelete = diffActions.delete;
-                        const idsToAdd = diffActions.add;
-                        if (idsToDelete.length > 0) {
-                            this[mergeKey].remove(...idsToDelete);
+                        const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
+                        const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
+                        if (diffActions) {
+                            const idsToDelete = diffActions.delete;
+                            const idsToAdd = diffActions.add;
+                            if (idsToDelete.length > 0) {
+                                this[mergeKey].remove(...idsToDelete);
+                            }
+                            if (idsToAdd.length > 0) {
+                                this[mergeKey].add(...idsToAdd);
+                            }
                         }
-                        if (idsToAdd.length > 0) {
-                            this[mergeKey].add(...idsToAdd);
-                        }
+                        delete mergeObj[mergeKey];
+                    } else if (field instanceof ForeignKey || field instanceof OneToOne) {
+                        mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
                     }
-                    delete mergeObj[mergeKey];
-                } else if (field instanceof ForeignKey || field instanceof OneToOne) {
-                    mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
                 }
             }
         }
@@ -490,12 +481,20 @@ const Model = class Model {
             }
         }
     }
+
+    // DEPRECATED AND REMOVED METHODS
+
+    getNextState() {
+        throw new Error(
+            'Model.prototype.getNextState is removed. See the 0.9 ' +
+            'migration guide on the GitHub repo.'
+        );
+    }
 };
 
 Model.fields = {
     id: attr(),
 };
-Model.definedProperties = {};
 Model.virtualFields = {};
 Model.querySetClass = QuerySet;
 

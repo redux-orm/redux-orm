@@ -42,7 +42,7 @@ describe('Session', () => {
         expect(Cover.session).to.be.undefined;
         expect(Publisher.session).to.be.undefined;
 
-        const session = orm.from(emptyState);
+        const session = orm.session(emptyState);
 
         expect(session.Book.session).to.equal(session);
         expect(session.Cover.session).to.equal(session);
@@ -61,7 +61,7 @@ describe('Session', () => {
     });
 
     it('marks accessed models', () => {
-        const session = orm.from(emptyState);
+        const session = orm.session(emptyState);
         expect(session.accessedModels).to.have.length(0);
 
         session.markAccessed(Book.modelName);

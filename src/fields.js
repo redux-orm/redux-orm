@@ -1,6 +1,7 @@
 import findKey from 'lodash/findKey';
 
 import {
+    attrDescriptor,
     forwardManyToOneDescriptor,
     backwardManyToOneDescriptor,
     forwardOneToOneDescriptor,
@@ -28,7 +29,13 @@ export const Attribute = class Attribute {
         }
     }
 
-    install() {}
+    install(model, fieldName, orm) {
+        Object.defineProperty(
+            model.prototype,
+            fieldName,
+            attrDescriptor(fieldName)
+        );
+    }
 };
 
 const RelationalField = class RelationalField {
@@ -60,14 +67,18 @@ export const ForeignKey = class ForeignKey extends RelationalField {
             fieldName,
             forwardManyToOneDescriptor(fieldName, toModel.modelName)
         );
-        model.definedProperties[fieldName] = true;
 
         // Backwards.
         const backwardsFieldName = this.relatedName
             ? this.relatedName
             : reverseFieldName(model.modelName);
 
-        if (toModel.definedProperties[backwardsFieldName]) {
+        const backwardsDescriptor = Object.getOwnPropertyDescriptor(
+            toModel.prototype,
+            backwardsFieldName
+        );
+
+        if (backwardsDescriptor) {
             const errorMsg = reverseFieldErrorMessage(
                 model.modelName,
                 fieldName,
@@ -82,7 +93,7 @@ export const ForeignKey = class ForeignKey extends RelationalField {
             backwardsFieldName,
             backwardManyToOneDescriptor(fieldName, model.modelName)
         );
-        toModel.definedProperties[backwardsFieldName] = true;
+
         const ThisField = this.getClass();
         toModel.virtualFields[backwardsFieldName] = new ThisField(model.modelName, fieldName);
     }
@@ -147,7 +158,7 @@ export const ManyToMany = class ManyToMany extends RelationalField {
                 false
             )
         );
-        model.definedProperties[fieldName] = true;
+
         model.virtualFields[fieldName] = new ManyToMany({
             to: toModel.modelName,
             relatedName: fieldName,
@@ -159,7 +170,12 @@ export const ManyToMany = class ManyToMany extends RelationalField {
             ? this.relatedName
             : reverseFieldName(model.modelName);
 
-        if (toModel.definedProperties[backwardsFieldName]) {
+        const backwardsDescriptor = Object.getOwnPropertyDescriptor(
+            toModel.prototype,
+            backwardsFieldName
+        );
+
+        if (backwardsDescriptor) {
             // Backwards field was already defined on toModel.
             const errorMsg = reverseFieldErrorMessage(
                 model.modelName,
@@ -181,7 +197,6 @@ export const ManyToMany = class ManyToMany extends RelationalField {
                 true
             )
         );
-        toModel.definedProperties[backwardsFieldName] = true;
         toModel.virtualFields[backwardsFieldName] = new ManyToMany({
             to: model.modelName,
             relatedName: fieldName,
@@ -206,14 +221,18 @@ export const OneToOne = class OneToOne extends RelationalField {
             fieldName,
             forwardOneToOneDescriptor(fieldName, toModel.modelName)
         );
-        model.definedProperties[fieldName] = true;
 
         // Backwards.
         const backwardsFieldName = this.relatedName
             ? this.relatedName
             : model.modelName.toLowerCase();
 
-        if (toModel.definedProperties[backwardsFieldName]) {
+        const backwardsDescriptor = Object.getOwnPropertyDescriptor(
+            toModel.prototype,
+            backwardsFieldName
+        );
+
+        if (backwardsDescriptor) {
             const errorMsg = reverseFieldErrorMessage(
                 model.modelName,
                 fieldName,
@@ -228,7 +247,6 @@ export const OneToOne = class OneToOne extends RelationalField {
             backwardsFieldName,
             backwardOneToOneDescriptor(fieldName, model.modelName)
         );
-        toModel.definedProperties[backwardsFieldName] = true;
         toModel.virtualFields[backwardsFieldName] = new OneToOne(model.modelName, fieldName);
     }
 };
