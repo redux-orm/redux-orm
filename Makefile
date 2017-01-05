@@ -11,6 +11,7 @@ build: clean
 	$(BIN)/webpack
 	$(BIN)/webpack --mode=build
 	$(BIN)/jsdoc src -d docs -c ./jsdoc.conf.json --verbose
+	cp ./src/index.d.ts ./dist/redux-orm.d.ts
 
 test: lint
 	NODE_ENV=test $(BIN)/mocha $(MOCHA_ARGS) $(MOCHA_TARGET)
