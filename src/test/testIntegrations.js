@@ -1,7 +1,10 @@
 import { expect } from 'chai';
-import Model from '../Model';
-import QuerySet from '../QuerySet';
-import Schema from '../Schema';
+import {
+    Model,
+    QuerySet,
+    ORM,
+    attr,
+} from '../';
 import {
     createTestSessionWithData,
 } from './utils';
@@ -9,27 +12,26 @@ import deepFreeze from 'deep-freeze';
 
 describe('Integration', () => {
     let session;
-    let schema;
+    let orm;
     let state;
-
-    beforeEach(() => {
-        ({
-            session,
-            schema,
-            state,
-        } = createTestSessionWithData());
-    });
 
     describe('Immutable session', () => {
         beforeEach(() => {
             // Deep freeze state. This will raise an error if we
             // mutate the state.
+
+            ({
+                session,
+                orm,
+                state,
+            } = createTestSessionWithData());
+
             deepFreeze(state);
         });
 
         it('Initial data bootstrapping results in a correct state', () => {
             expect(state).to.have.all.keys(
-                'Book', 'Cover', 'Genre', 'Author', 'BookGenres');
+                'Book', 'Cover', 'Genre', 'Author', 'BookGenres', 'Publisher');
 
             expect(state.Book.items).to.have.length(3);
             expect(Object.keys(state.Book.itemsById)).to.have.length(3);
@@ -45,6 +47,9 @@ describe('Integration', () => {
 
             expect(state.Author.items).to.have.length(3);
             expect(Object.keys(state.Author.itemsById)).to.have.length(3);
+
+            expect(state.Publisher.items).to.have.length(2);
+            expect(Object.keys(state.Publisher.itemsById)).to.have.length(2);
         });
 
         it('Models correctly indicate if id exists', () => {
@@ -56,17 +61,20 @@ describe('Integration', () => {
 
         it('Models correctly create new instances', () => {
             const { Book } = session;
-            expect(session.updates).to.have.length(0);
             const book = Book.create({
                 name: 'New Book',
                 author: 0,
                 releaseYear: 2015,
+                publisher: 0,
             });
-            expect(session.updates).to.have.length(1);
+            expect(session.Book.count()).to.equal(4);
+            expect(session.Book.last().ref).to.equal(book.ref);
+        });
 
-            const nextState = session.reduce();
-            const nextSession = schema.from(nextState);
-            expect(nextSession.Book.count()).to.equal(4);
+        it('Model.getId works', () => {
+            const { Book } = session;
+            expect(Book.withId(0).getId()).to.equal(0);
+            expect(Book.withId(1).getId()).to.equal(1);
         });
 
         it('Model.create throws if passing duplicate ids to many-to-many field', () => {
@@ -77,6 +85,7 @@ describe('Integration', () => {
                 author: 0,
                 releaseYear: 2015,
                 genres: [0, 0],
+                publisher: 0,
             };
 
             expect(() => Book.create(newProps)).to.throw('Book.genres');
@@ -86,23 +95,26 @@ describe('Integration', () => {
             const { Book } = session;
             expect(Book.count()).to.equal(3);
             Book.withId(0).delete();
-
-            const nextState = session.reduce();
-            const nextSession = schema.from(nextState);
-            expect(nextSession.Book.count()).to.equal(2);
+            expect(session.Book.count()).to.equal(2);
+            expect(session.Book.hasId(0)).to.be.false;
         });
 
         it('Models correctly update when setting properties', () => {
             const { Book } = session;
             const book = Book.first();
             const newName = 'New Name';
-            expect(session.updates).to.have.length(0);
             book.name = newName;
-            expect(session.updates).to.have.length(1);
+            expect(session.Book.first().name).to.equal(newName);
+        });
 
-            const nextState = session.reduce();
-            const nextSession = schema.from(nextState);
-            expect(nextSession.Book.first().name).to.equal(newName);
+        it('Model.toString works', () => {
+            const { Book } = session;
+            const book = Book.first();
+            expect(book.toString())
+                .to.equal(
+                    'Book: {id: 0, name: Tommi Kaikkonen - an Autobiography, ' +
+                    'releaseYear: 2050, author: 0, cover: 0, genres: [0, 1], publisher: 1}'
+                );
         });
 
         it('withId throws if model instance not found', () => {
@@ -130,16 +142,34 @@ describe('Integration', () => {
             expect(relatedBooks.modelClass).to.equal(Book);
         });
 
+        it('many-to-many relationship descriptors work with a custom through model', () => {
+            const {
+                Author,
+                Publisher,
+            } = session;
+
+            // Forward (from many-to-many field declaration)
+            const author = Author.get({ name: 'Tommi Kaikkonen' });
+            const relatedPublishers = author.publishers;
+            expect(relatedPublishers).to.be.an.instanceOf(QuerySet);
+            expect(relatedPublishers.modelClass).to.equal(Publisher);
+            expect(relatedPublishers.count()).to.equal(1);
+
+            // Backward
+            const publisher = Publisher.get({ name: 'Technical Publishing' });
+            const relatedAuthors = publisher.authors;
+            expect(relatedAuthors).to.be.an.instanceOf(QuerySet);
+            expect(relatedAuthors.modelClass).to.equal(Author);
+            expect(relatedAuthors.count()).to.equal(2);
+        });
+
         it('adding related many-to-many entities works', () => {
             const { Book, Genre } = session;
             const book = Book.withId(0);
             expect(book.genres.count()).to.equal(2);
             book.genres.add(Genre.withId(2));
 
-            const nextState = session.reduce();
-            const nextSession = schema.from(nextState);
-
-            expect(nextSession.Book.withId(0).genres.count()).to.equal(3);
+            expect(session.Book.withId(0).genres.count()).to.equal(3);
         });
 
         it('trying to add existing related many-to-many entities throws', () => {
@@ -150,16 +180,31 @@ describe('Integration', () => {
             expect(() => book.genres.add(existingId)).to.throw(existingId.toString());
         });
 
+        it('updating related many-to-many entities works', () => {
+            const { Book, Genre, Author } = session;
+            const tommi = Author.get({ name: 'Tommi Kaikkonen' });
+            const book = tommi.books.first();
+            expect(book.genres.toRefArray().map(row => row.id))
+                .to.deep.equal([0, 1]);
+
+            const deleteGenre = Genre.withId(0);
+            const keepGenre = Genre.withId(1);
+            const addGenre = Genre.withId(2);
+
+            book.update({ genres: [addGenre, keepGenre] });
+            expect(book.genres.toRefArray().map(row => row.id))
+                .to.deep.equal([1, 2]);
+
+            expect(deleteGenre.books.filter({ id: book.id }).exists()).to.be.false;
+        });
+
         it('removing related many-to-many entities works', () => {
             const { Book, Genre } = session;
             const book = Book.withId(0);
             expect(book.genres.count()).to.equal(2);
             book.genres.remove(Genre.withId(0));
 
-            const nextState = session.reduce();
-            const nextSession = schema.from(nextState);
-
-            expect(nextSession.Book.withId(0).genres.count()).to.equal(1);
+            expect(session.Book.withId(0).genres.count()).to.equal(1);
         });
 
         it('trying to remove unexisting related many-to-many entities throws', () => {
@@ -176,10 +221,7 @@ describe('Integration', () => {
             expect(book.genres.count()).to.equal(2);
             book.genres.clear();
 
-            const nextState = session.reduce();
-            const nextSession = schema.from(nextState);
-
-            expect(nextSession.Book.withId(0).genres.count()).to.equal(0);
+            expect(session.Book.withId(0).genres.count()).to.equal(0);
         });
 
         it('foreign key relationship descriptors work', () => {
@@ -198,7 +240,8 @@ describe('Integration', () => {
             // Backward
             const relatedBooks = author.books;
             expect(relatedBooks).to.be.an.instanceOf(QuerySet);
-            expect(relatedBooks.idArr).to.include(book.getId());
+            relatedBooks._evaluate();
+            expect(relatedBooks.rows).to.include(book.ref);
             expect(relatedBooks.modelClass).to.equal(Book);
         });
 
@@ -222,14 +265,46 @@ describe('Integration', () => {
         });
 
         it('applying no updates returns the same state reference', () => {
-            const nextState = session.reduce();
-            expect(nextState).to.equal(state);
+            const book = session.Book.first();
+            book.name = book.name;
+
+            expect(session.state).to.equal(state);
+        });
+
+        it('Model works with default value', () => {
+            let returnId = 1;
+
+            class DefaultFieldModel extends Model {}
+            DefaultFieldModel.fields = {
+                id: attr({ getDefault: () => returnId }),
+            };
+            DefaultFieldModel.modelName = 'DefaultFieldModel';
+
+            const _orm = new ORM();
+            _orm.register(DefaultFieldModel);
+
+            const sess = _orm.session(_orm.getEmptyState());
+            sess.DefaultFieldModel.create({});
+
+            expect(sess.DefaultFieldModel.hasId(1)).to.be.true;
+
+            returnId = 999;
+            sess.DefaultFieldModel.create({});
+            expect(sess.DefaultFieldModel.hasId(999)).to.be.true;
         });
     });
 
     describe('Mutating session', () => {
+        beforeEach(() => {
+            ({
+                session,
+                orm,
+                state,
+            } = createTestSessionWithData());
+        });
+
         it('works', () => {
-            const mutating = schema.withMutations(state);
+            const mutating = orm.mutableSession(state);
             const {
                 Book,
                 Cover,
@@ -248,7 +323,7 @@ describe('Integration', () => {
 
             expect(book.name).to.equal(newName);
 
-            const nextState = mutating.reduce();
+            const nextState = mutating.state;
             expect(nextState).to.equal(state);
             expect(state.Book.itemsById[bookId]).to.equal(bookRef);
             expect(bookRef.name).to.equal(newName);
@@ -257,9 +332,17 @@ describe('Integration', () => {
     });
 
     describe('Multiple concurrent sessions', () => {
+        beforeEach(() => {
+            ({
+                session,
+                orm,
+                state,
+            } = createTestSessionWithData());
+        });
+
         it('works', () => {
             const firstSession = session;
-            const secondSession = schema.from(state);
+            const secondSession = orm.session(state);
 
             expect(firstSession.Book.count()).to.equal(3);
             expect(secondSession.Book.count()).to.equal(3);
@@ -273,37 +356,37 @@ describe('Integration', () => {
 
             firstSession.Book.create(newBookProps);
 
-            const nextFirstSession = schema.from(firstSession.getNextState());
-            const nextSecondSession = schema.from(secondSession.getNextState());
-
-            expect(nextFirstSession.Book.count()).to.equal(4);
-            expect(nextSecondSession.Book.count()).to.equal(3);
+            expect(firstSession.Book.count()).to.equal(4);
+            expect(secondSession.Book.count()).to.equal(3);
         });
     });
 });
 
 describe('Big Data Test', () => {
     let Item;
-    let schema;
+    let orm;
 
     beforeEach(() => {
         Item = class extends Model {};
         Item.modelName = 'Item';
-        schema = new Schema();
-        schema.register(Item);
+        Item.fields = {
+            id: attr(),
+            name: attr(),
+        };
+        orm = new ORM();
+        orm.register(Item);
     });
 
-    it('adds a big amount of items in acceptable time', function () {
+    it('adds a big amount of items in acceptable time', function bigDataTest() {
         this.timeout(30000);
 
-        const session = schema.from(schema.getDefaultState());
+        const session = orm.session(orm.getEmptyState());
         const start = new Date().getTime();
 
         const amount = 10000;
         for (let i = 0; i < amount; i++) {
             session.Item.create({ id: i, name: 'TestItem' });
         }
-        const nextState = session.getNextState();
         const end = new Date().getTime();
         const tookSeconds = (end - start) / 1000;
         console.log(`Creating ${amount} objects took ${tookSeconds}s`);

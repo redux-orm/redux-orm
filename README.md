@@ -3,7 +3,11 @@ redux-orm
 
 A small, simple and immutable ORM to manage relational data in your Redux store.
 
-See a [a guide to creating a simple app with Redux-ORM](https://github.com/tommikaikkonen/redux-orm-primer) (includes the source).
+See a [a guide to creating a simple app with Redux-ORM](https://github.com/tommikaikkonen/redux-orm-primer) (includes the source). Its README is not updated for 0.9 yet but the [code has a branch for it](https://github.com/tommikaikkonen/redux-orm-primer/tree/migrate_to_0_9).
+
+**The 0.9 which is in the release candidate stage, brings big breaking changes to the API. Please look at the [migration guide](https://github.com/tommikaikkonen/redux-orm/wiki/0.9-Migration-Guide) if you're migrating from earlier versions.**
+
+Looking for the 0.8 docs? Read the [old README.md in the repo](https://github.com/tommikaikkonen/redux-orm/tree/3c36fa804d2810b2aaaad89ff1d99534b847ea35). For the API reference, clone the repo, `npm install`, `make build` and open up `index.html` in your browser. Sorry for the inconvenience.
 
 API can be unstable until 1.0.0. Minor version bumps before 1.0.0 can and will introduce breaking changes. They will be noted in the [changelog](https://github.com/tommikaikkonen/redux-orm#changelog).
 
@@ -24,11 +28,11 @@ npm install redux-orm --save
 
 ### Declare Your Models
 
-You can declare your models with the ES6 class syntax, extending from `Model`. You are not required to declare normal fields, only fields that relate to another model. `redux-orm` supports one-to-one and many-to-many relations in addition to foreign keys (`oneToOne`, `many` and `fk` imports respectively). Non-related properties can be accessed like in normal JavaScript objects.
+You can declare your models with the ES6 class syntax, extending from `Model`. You need to declare all your non-relational fields on the Model, and declaring all data fields is recommended as the library doesn't have to redefine getters and setters when instantiating Models. `redux-orm` supports one-to-one and many-to-many relations in addition to foreign keys (`oneToOne`, `many` and `fk` imports respectively). Non-related properties can be accessed like in normal JavaScript objects.
 
 ```javascript
 // models.js
-import {fk, many, Model} from 'redux-orm';
+import {fk, many, attr, Model} from 'redux-orm';
 
 class Book extends Model {
     toString() {
@@ -40,19 +44,118 @@ Book.modelName = 'Book';
 
 // Declare your related fields.
 Book.fields = {
+    id: attr(), // non-relational field for any value; optional but highly recommended
+    name: attr(),
     authors: many('Author', 'books'),
     publisher: fk('Publisher', 'books'),
 };
 ```
 
-### Write Your Model-Specific Reducers
+### Register Models and Generate an Empty Database State
 
-Every `Model` has it's own reducer. It'll be called every time Redux dispatches an action and by default it returns the previous state. You can declare your own reducers inside your models as `static reducer()`, or write your reducer elsewhere and connect it to `redux-orm` later. The reducer receives the following arguments: the previous state, the current action, the model class connected to the state, and finally the `Session` instance. Here's our extended Book model declaration with a reducer:
+Defining fields on a Model specifies the table structure in the database for that Model. In order to generate a description of the whole database's structure, we need a central place register all Models we want to use.
+
+An instance of the ORM class registers Models and handles generating a full schema from all the models and passing that information to the database. Often you'll want to have a file where you can import a single ORM instance across the app, like this:
 
 ```javascript
-// models.js
+// orm.js
+import { ORM } from 'redux-orm';
+import { Book, Author, Publisher } from './models';
+
+const orm = new ORM();
+orm.register(Book, Author, Publisher);
+
+export default orm;
+```
+
+You could also define *and* register the models to an ORM instance in the same file, and export them all.
+
+Now that we've registered Models, we can generate an empty database state. Currently that's a plain, nested JavaScript object that is structured similarly to relational databases.
+
+```javascript
+// index.js
+
+import orm from './orm';
+
+const emptyDBState = orm.getEmptyState();
+```
+
+### Applying Updates to the Database
+
+When we have a database state, we can start an ORM session on that to apply updates. The ORM instance provides a `session` method that accepts a database state as it's sole argument, and returns a Session instance.
+
+```javascript
+const session = orm.session(emptyDBState);
+```
+
+Session-specific classes of registered Models are available as properties of the session object.
+
+```javascript
+const Book = session.Book;
+```
+
+Models provide an interface to query and update the database state.
+
+```javascript
+Book.withId(1).update({ name: 'Clean Code' });
+Book.all().filter(book => book.name === 'Clean Code').delete();
+Book.hasId(1)
+// false
+```
+
+The initial database state is not mutated. A new database state with the updates applied can be found on the `state` property of the Session instance.
+
+```javascript
+const updatedDBState = session.state;
+```
+
+
+## Redux Integration
+
+To integrate Redux-ORM with Redux at the most basic level, you can define a reducer that instantiates a session from the database state held in the Redux atom, then when you've applied all of your updates, you can return the next state from the session.
+
+```javascript
+import { orm } from './models';
+function ormReducer(dbState, action) {
+    const sess = orm.session(dbState);
+
+    // Session-specific Models are available
+    // as properties on the Session instance.
+    const { Book } = sess;
+
+    switch (action.type) {
+    case 'CREATE_BOOK':
+        Book.create(action.payload);
+        break;
+    case 'UPDATE_BOOK':
+        Book.withId(action.payload.id).update(action.payload);
+        break;
+    case 'REMOVE_BOOK':
+        Book.withId(action.payload.id).delete();
+        break;
+    case 'ADD_AUTHOR_TO_BOOK':
+        Book.withId(action.payload.bookId).authors.add(action.payload.author);
+        break;
+    case 'REMOVE_AUTHOR_FROM_BOOK':
+        Book.withId(action.payload.bookId).authors.remove(action.payload.authorId);
+        break;
+    case 'ASSIGN_PUBLISHER':
+        Book.withId(action.payload.bookId).publisher = action.payload.publisherId;
+        break;
+    }
+
+    // the state property of Session always points to the current database.
+    // Updates don't mutate the original state, so this reference is not
+    // equal to `dbState` that was an argument to this reducer.
+    return sess.state;
+}
+```
+
+Previously Redux-ORM advocated for reducers specific to Models by attaching a static `reducer` function on the Model class. If you want to define your update logic on the Model classes, you can specify a `reducer` static method on your model which accepts the action as the first argument, the session-specific Model as the second, and the whole session as the third.
+
+```javascript
 class Book extends Model {
-    static reducer(state, action, Book) {
+    static reducer(action, Book, session) {
         switch (action.type) {
         case 'CREATE_BOOK':
             Book.create(action.payload);
@@ -74,44 +177,46 @@ class Book extends Model {
             Book.withId(action.payload.bookId).publisher = action.payload.publisherId;
             break;
         }
-
-        return Book.getNextState();
+        // Return value is ignored.
+        return undefined;
     }
 
     toString() {
         return `Book: ${this.name}`;
     }
 }
-
-// Below we would declare Author and Publisher models
 ```
 
-### Connect to Redux
-
-To create our data schema, we create a Schema instance and register our models.
+To get a reducer for Redux that calls these `reducer` methods:
 
 ```javascript
-// schema.js
-import {Schema} from 'redux-orm';
-import {Book, Author, Publisher} from './models';
+import { createReducer } from 'redux-orm';
+import { orm } from './models';
 
-const schema = new Schema();
-schema.register(Book, Author, Publisher);
-
-export default schema;
+const reducer = createReducer(orm);
 ```
 
-`Schema` instances expose a `reducer` method that returns a reducer you can use to plug into Redux. Preferably in your root reducer, plug the reducer under a namespace of your choice:
+`createReducer` is really simple, so I'll just paste the source here.
 
 ```javascript
-// main.js
-import schema from './schema';
-import {combineReducers} from 'redux';
+function createReducer(orm, updater = defaultUpdater) {
+    return (state, action) => {
+        const session = orm.session(state || orm.getEmptyState());
+        updater(session, action);
+        return session.state;
+    };
+}
 
-const rootReducer = combineReducers({
-    orm: schema.reducer()
-});
+function defaultUpdater(session, action) {
+    session.sessionBoundModels.forEach(modelClass => {
+        if (typeof modelClass.reducer === 'function') {
+            modelClass.reducer(action, modelClass, session);
+        }
+    });
+}
 ```
+
+As you can see, it just instantiates a new Session, loops through all the Models in the session, and calls the `reducer` method if it exists. Then it returns the new database state that has all the updates applied.
 
 ### Use with React
 
@@ -149,15 +254,15 @@ const authorSelector = schema.createSelector(session => {
 // ]
 ```
 
-Selectors created with `schema.createSelector` can be used as input to any additional `reselect` selectors you want to use. They are also great to use with `redux-thunk`: get the whole state with `getState()`, pass the ORM branch to the selector, and get your results. A good use case is serializing data to a custom format for a 3rd party API call.
+Selectors created with `createSelector` can be used as input to any additional `reselect` selectors you want to use. They are also great to use with `redux-thunk`: get the whole state with `getState()`, pass the ORM branch to the selector, and get your results. A good use case is serializing data to a custom format for a 3rd party API call.
 
 Because selectors are memoized, you can use pure rendering in React for performance gains.
 
 ```jsx
 // components.js
 import PureComponent from 'react-pure-render/component';
-import {authorSelector} from './selectors';
-import {connect} from 'react-redux';
+import { authorSelector } from './selectors';
+import { connect } from 'react-redux';
 
 class App extends PureComponent {
     render() {
@@ -196,44 +301,63 @@ Well, yeah. `redux-orm` deals with related data, structured similar to a relatio
 
 For simple apps, writing reducers by hand is alright, but when the number of object types you have increases and you need to maintain relations between them, things get hairy. ImmutableJS goes a long way to reduce complexity in your reducers, but `redux-orm` is specialized for relational data.
 
-### Reducers and Immutability
+### Immutability
 
-Say we're inside a reducer and want to update the name of a book.
+Say we start a session from an initial database state situated in the Redux atom, update the name of a certain book.
+
+First, a new session:
 
 ```javascript
-const book = Book.withId(action.payload.id)
+import { orm } from './models';
+
+const dbState = getState().db; // getState() returns the redux state.
+const sess = orm.session(dbState);
+```
+
+The session maintains a reference to a database state. We haven't
+updated the database state, therefore it is still equal to the original
+state.
+
+```javascript
+sess.state === dbState
+// true
+```
+
+Let's apply an update.
+
+```javascript
+const book = sess.Book.withId(1)
+
 book.name // 'Refactoring'
 book.name = 'Clean Code'
-book.name // 'Refactoring'
+book.name // 'Clean Code'
+
+sess.state === dbState
+// false.
 ```
 
-Assigning a new value has no effect on the current state. Behind the scenes, an update to the data was recorded. When you call
+The update was applied, and because the session does not mutate the original state, it created a new one and swapped `sess.state` to point to the new one.
+
+Let's update the database state again through the ORM.
 
 ```javascript
-Book.getNextState()
-// the item we edited will have now values {... name: 'Clean Code'}
+
+// Save this reference so we can compare.
+const updatedState = sess.state;
+
+book.name = 'Patterns of Enterprise Application Architecture'
+
+sess.state === updatedState
+// true. If possible, future updates are applied with mutations. If you want
+// to avoid making mutations to a session state, take the session state
+// and start a new session with that state.
 ```
 
-the update will be reflected in the new state. The same principle holds true when you're creating new instances and deleting them.
-
-### How Updates Work Internally
-
-By default, each Model has the following JavaScript object representation:
-
-```javascript
-{
-    items: [],
-    itemsById: {},
-}
-```
-
-This representation maintains an array of object ID's and an index of id's for quick access. (A single object array representation is also provided for use. It is possible to subclass `Backend` to use any structure you want).
-
-`redux-orm` runs a mini-redux inside it. It queues any updates the library user records with action-like objects, and when `getNextState` is called, it applies those actions with its internal reducers. Updates within each `getNextState` are implemented with batched mutations, so even a big number of updates should be pretty performant.
+If possible, future updates are applied with mutations. In this case, the database was already mutated, so the pointer doesn't need to change. If you want to avoid making mutations to a session state, take the session state and start a new session with that state.
 
 ### Customizability
 
-Just like you can extend `Model`, you can do the same for `QuerySet` (customize methods on Model instance collections) and `Backend` (customize store access and updates).
+Just like you can extend `Model`, you can do the same for `QuerySet` (customize methods on Model instance collections). You can also specify the whole database implementation yourself (documentation pending).
 
 ### Caveats
 
@@ -241,23 +365,25 @@ The ORM abstraction will never be as performant compared to writing reducers by 
 
 ## API
 
-### Schema
+### ORM
 
-See the full documentation for Schema [here](http://tommikaikkonen.github.io/redux-orm/Schema.html)
+See the full documentation for ORM [here](http://tommikaikkonen.github.io/redux-orm/ORM.html)
 
 Instantiation
 
 ```javascript
-const schema = new Schema(); // no arguments needed.
+const orm = new ORM(); // no arguments needed.
 ```
 
 Instance methods:
 
-- `register(model1, model2, ...modelN)`: registers Model classes to the `Schema` instance.
-- `define(name, [relatedFields], [backendOpts])`: shortcut to define and register simple models.
-- `from(state, [action])`: begins a new `Session` with `state`. If `action` is omitted, the session can be used to query the state data.
-- `reducer()`: returns a reducer function that can be plugged into Redux. The reducer will return the next state of the database given the provided action. You need to register your models before calling this.
-- `createSelector([...inputSelectors], selectorFunc)`: returns a memoized selector function for `selectorFunc`. `selectorFunc` receives `session` as the first argument, followed by any inputs from `inputSelectors`. Read the full documentation for details.
+- `register(...models: Array<Model>)`: registers Model classes to the `ORM` instance.
+- `session(state: any)`: begins a new `Session` with `state`.
+
+### Redux Integration
+
+- `createReducer(orm: ORM)`: returns a reducer function that can be plugged into Redux. The reducer will return the next state of the database given the provided action. You need to register your models before calling this.
+- `createSelector(orm: ORM, [...inputSelectors], selectorFunc)`: returns a memoized selector function for `selectorFunc`. `selectorFunc` receives `session` as the first argument, followed by any inputs from `inputSelectors`. Read the full documentation for details.
 
 ### Model
 
@@ -270,7 +396,7 @@ See the full documentation for `Model` [here](http://tommikaikkonen.github.io/re
 - `hasId(id)`: returns a boolean indicating if entity with id `id` exists in the state.
 - `withId(id)`: gets the Model instance with id `id`.
 - `get(matchObj)`: to get a Model instance based on matching properties in `matchObj`,
-- `create(props)`: to create a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`. You can override the `nextId` class method on your model.
+- `create(props)`: to create a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`.
 
 You will also have access to almost all [QuerySet instance methods](http://tommikaikkonen.github.io/redux-orm/QuerySet.html) from the class object for convenience.
 
@@ -280,9 +406,9 @@ You will also have access to almost all [QuerySet instance methods](http://tommi
 **Instance methods**:
 
 - `equals(otherModel)`: returns a boolean indicating equality with `otherModel`. Equality is determined by shallow comparison of both model's attributes.
-- `set(propertyName, value)`: marks a supplied `propertyName` to be updated to `value` at `Model.getNextState`. Returns `undefined`. Is equivalent to normal assignment.
-- `update(mergeObj)`: marks a supplied object of property names and values (`mergeObj`) to be merged with the Model instance at `Model.getNextState()`. Returns `undefined`.
-- `delete()`: marks the Model instance to be deleted at `Model.getNextState()`. Returns `undefined`.
+- `set(propertyName, value)`: updates `propertyName` to `value`. Returns `undefined`. Is equivalent to normal assignment.
+- `update(mergeObj)`: merges `mergeObj` with the Model instance properties. Returns `undefined`.
+- `delete()`: deletes the record for this Model instance in the database. Returns `undefined`.
 
 **Subclassing**:
 
@@ -295,13 +421,17 @@ For the related fields declarations, either set the `fields` property on the cla
 class Book extends Model {
     static get fields() {
         return {
-            author: fk('Author')
+            id: attr(),
+            name: attr(),
+            author: fk('Author'),
         };
     }
 }
 // alternative:
 Book.fields = {
-    author: fk('Author')
+    id: attr(),
+    name: attr(),
+    author: fk('Author'),
 }
 ```
 
@@ -338,81 +468,41 @@ You can access all of these methods straight from a `Model` class, as if they we
 - `toModelArray()`: returns the objects represented by the `QuerySet` as an array of `Model` instances objects.
 - `count()`: returns the number of `Model` instances in the `QuerySet`.
 - `exists()`: return `true` if number of entities is more than 0, else `false`.
-- `filter(filterArg)`: returns a new `QuerySet` with the entities that pass the filter. For `filterArg`, you can either pass an object that `redux-orm` tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not. The function receives a model instance as its sole argument.
-- `exclude` returns a new `QuerySet` with the entities that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function. The function receives a model instance as its sole argument.
-- `map(func)` map the entities in `QuerySet`, returning a JavaScript array.
+- `filter(filterArg)`: returns a new `QuerySet` representing the records from the parent QuerySet that pass the filter. For `filterArg`, you can either pass an object that `redux-orm` tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not. The function receives a model instance as its sole argument.
+- `exclude` returns a new `QuerySet` represeting entities in the parent QuerySet that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function. The function receives a model instance as its sole argument.
 - `all()` returns a new `QuerySet` with the same entities.
 - `at(index)` returns an `Model` instance at the supplied `index` in the `QuerySet`.
 - `first()` returns an `Model` instance at the `0` index.
 - `last()` returns an `Model` instance at the `querySet.count() - 1` index.
-- `delete()` marks all the `QuerySet` entities for deletion on `Model.getNextState`.
-- `update(mergeObj)` marks all the `QuerySet` entities for an update based on the supplied object. The object will be merged with each entity.
-
-**withRefs/withModels flagging**
-
-When you want to iterate through all entities with `filter`, `exclude`, `forEach`, `map`, or get an item with `first`, `last` or `at`, you don't always need access to the full Model instance - a reference to the plain JavaScript object in the database could do. QuerySets maintain a flag indicating whether these methods operate on plain JavaScript objects (a direct reference from the store) or a Model instances that are instantiated during the operations.
-
-```javascript
-const queryset = Book.withRefs.filter(book => book.author === 'Tommi Kaikkonen')
-// `book` is a plain javascript object, `queryset` is a QuerySet
-// 
-const queryset2 = Book.filter(book => book.name === 'Tommi Kaikkonen - An Autobiography')
-// `book` is a Model instance. `queryset2` is a QuerySet equivalent to `queryset`.
-```
-
-The flag persists after setting the flag. If you use `filter`, `exclude` or `orderBy`, the returned `QuerySet` will have the flag set to operate on Model instances either way. The default is to operate on Model instances. You can get a copy of the current `QuerySet` with the flag set to operate on references from the `withRefs` attribute. Likewise a `QuerySet` copy with the flag set to operate on model instances can be gotten by accessing the `withModels` attribute.
-
-```javascript
-queryset.filter(book => book.isReleasedAfterYear(2014))
-// The `withRefs` flag was reverted back to using models after the `filter` operation,
-// so `book` here is a model instance.
-// You rarely need to use `withModels`, unless you're unsure which way the flag is.
-
-queryset2.withRefs.filter(book => book.release_year > 2014)
-// `book` is once again a plain JavaScript object, a direct reference from the store.
-```
+- `delete()` deleted all entities represented by the `QuerySet`.
+- `update(mergeObj)` updates all entities represented by the `QuerySet` based on the supplied object. The object will be merged with each entity.
 
 ### Session
 
 See the full documentation for Session [here](http://tommikaikkonen.github.io/redux-orm/Session.html)
 
-**Instantiation**: you don't need to do this yourself. Use `schema.from`.
+**Instantiation**: you don't need to do this yourself. Use `orm.session`.
 
 **Instance properties**:
 
-- `getNextState(opts)`: applies all the recorded updates in the session and returns the next state. You may pass options with the `opts` object.
-- `reduce()`: calls model-specific reducers and returns the next state.
+- `state`: the current database state in the session.
 
 Additionally, you can access all the registered Models in the schema for querying and updates as properties of this instance. For example, given a schema with `Book` and `Author` models,
 
 ```javascript
-const session = schema.from(state, action);
+const session = orm.session(state);
 session.Book // Model class: Book
 session.Author // Model class: Author
 session.Book.create({id: 5, name: 'Refactoring', release_year: 1999});
 ```
 
-
-### Backend
-
-Backend implements the logic and holds the information for Models' underlying data structure. If you want to change how that works, subclass `Backend` or implement your own with the same interface, and override your models' `getBackendClass` classmethod.
-
-See the full documentation for `Backend` [here](http://tommikaikkonen.github.io/redux-orm/Backend.html)
-
-**Instantiation**: will be done for you. If you want to specify custom options, you can override the `YourModelClass.backend` property with the custom options that will be merged with the defaults. For most cases, the default options work well. They are:
-
-```javascript
-{
-    idAttribute: 'id',
-    arrName: 'items',
-    mapName: 'itemsById',
-};
-```
-
-
 ## Changelog
 
 Minor changes before 1.0.0 can include breaking changes.
+
+### 0.9.0
+
+A lot. See [the migration guide](https://github.com/tommikaikkonen/redux-orm/wiki/0.9-Migration-Guide).
 
 ### 0.8.3
 

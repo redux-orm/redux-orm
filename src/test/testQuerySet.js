@@ -4,13 +4,11 @@ import sinon from 'sinon';
 chai.use(sinonChai);
 const { expect } = chai;
 
-import Model from '../Model';
-import Schema from '../Schema';
-import QuerySet from '../QuerySet';
 import {
-    UPDATE,
-    DELETE,
-} from '../constants';
+    Model,
+    ORM,
+    QuerySet,
+} from '../';
 import {
     createTestModels,
     createTestSessionWithData,
@@ -34,13 +32,20 @@ describe('QuerySet tests', () => {
     it('exists works correctly', () => {
         expect(bookQs.exists()).to.be.true;
 
-        const emptyQs = new QuerySet(session.Book, []);
+        const emptyQs = (new QuerySet(session.Book, [])).filter(() => false);
+
         expect(emptyQs.exists()).to.be.false;
     });
 
     it('at works correctly', () => {
         expect(bookQs.at(0)).to.be.an.instanceOf(Model);
-        expect(bookQs.ref.at(0)).to.equal(session.Book.state.itemsById[0]);
+        expect(bookQs.toRefArray()[0]).to.equal(session.Book.withId(0).ref);
+    });
+
+    it('at doesn\'t return a Model instance if index is out of bounds', () => {
+        expect(bookQs.at(-1)).to.be.undefined;
+        const len = bookQs.count();
+        expect(bookQs.at(len)).to.be.undefined;
     });
 
     it('first works correctly', () => {
@@ -55,70 +60,62 @@ describe('QuerySet tests', () => {
     it('all works correctly', () => {
         const all = bookQs.all();
 
+        // Force evaluation of QuerySets
+        bookQs.toRefArray();
+        all.toRefArray();
+
         expect(all).not.to.equal(bookQs);
-        expect(all.idArr).to.deep.equal(bookQs.idArr);
+        expect(all.rows.length).to.equal(bookQs.rows.length);
+
+        for (let i = 0; i < all.rows.length; i++) {
+            expect(all.rows[i]).to.equal(bookQs.rows[i]);
+        }
     });
 
     it('filter works correctly with object argument', () => {
-        const filtered = bookQs.withRefs.filter({ name: 'Clean Code' });
+        const filtered = bookQs.filter({ name: 'Clean Code' });
         expect(filtered.count()).to.equal(1);
-        expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[1]);
+        expect(filtered.first().ref).to.equal(session.Book.withId(1).ref);
     });
 
     it('filter works correctly with object argument, with model instance value', () => {
-        const filtered = bookQs.withRefs.filter({
+        const filtered = bookQs.filter({
             author: session.Author.withId(0),
         });
         expect(filtered.count()).to.equal(1);
-        expect(filtered.ref.first()).to.equal(session.Book.state.itemsById[0]);
+        expect(filtered.first().ref).to.equal(session.Book.withId(0).ref);
     });
 
     it('orderBy works correctly with prop argument', () => {
         const ordered = bookQs.orderBy(['releaseYear']);
-        expect(ordered.idArr).to.deep.equal([1, 2, 0]);
+        const idArr = ordered.toRefArray().map(row => row.id);
+        expect(idArr).to.deep.equal([1, 2, 0]);
     });
 
     it('orderBy works correctly with function argument', () => {
         const ordered = bookQs.orderBy([(book) => book.releaseYear]);
-        expect(ordered.idArr).to.deep.equal([1, 2, 0]);
+        const idArr = ordered.toRefArray().map(row => row.id);
+        expect(idArr).to.deep.equal([1, 2, 0]);
     });
 
     it('exclude works correctly with object argument', () => {
         const excluded = bookQs.exclude({ name: 'Clean Code' });
         expect(excluded.count()).to.equal(2);
-        expect(excluded.idArr).to.deep.equal([0, 2]);
+
+        const idArr = excluded.toRefArray().map(row => row.id);
+        expect(idArr).to.deep.equal([0, 2]);
     });
 
     it('update records a update', () => {
         const mergeObj = { name: 'Updated Book Name' };
-        expect(session.updates).to.have.length(0);
         bookQs.update(mergeObj);
-        expect(session.updates).to.have.length(1);
 
-        expect(session.updates[0]).to.deep.equal({
-            type: UPDATE,
-            payload: {
-                idArr: bookQs.idArr,
-                mergeObj,
-            },
-            meta: {
-                name: 'Book',
-            },
-        });
+        bookQs.toRefArray().forEach(row => expect(row.name).to.equal('Updated Book Name'));
     });
 
     it('delete records a update', () => {
-        expect(session.updates).to.have.length(0);
         bookQs.delete();
-        expect(session.updates).to.have.length.of.at.least(1);
-
-        expect(session.updates[0]).to.deep.equal({
-            type: DELETE,
-            payload: bookQs.idArr,
-            meta: {
-                name: 'Book',
-            },
-        });
+        expect(bookQs.count()).to.equal(0);
     });
 
     it('custom methods works', () => {
@@ -127,21 +124,22 @@ describe('QuerySet tests', () => {
             Genre,
             Cover,
             Author,
+            Publisher,
         } = createTestModels();
 
         const currentYear = 2015;
         class CustomQuerySet extends QuerySet {
             unreleased() {
-                return this.withRefs.filter(book => book.releaseYear > currentYear);
+                return this.filter(book => book.releaseYear > currentYear);
             }
         }
         CustomQuerySet.addSharedMethod('unreleased');
 
         Book.querySetClass = CustomQuerySet;
 
-        const schema = new Schema();
-        schema.register(Book, Genre, Cover, Author);
-        const { session: sess } = createTestSessionWithData(schema);
+        const orm = new ORM();
+        orm.register(Book, Genre, Cover, Author, Publisher);
+        const { session: sess } = createTestSessionWithData(orm);
 
         const customQs = sess.Book.getQuerySet();
 
@@ -156,8 +154,9 @@ describe('QuerySet tests', () => {
             author: 0,
             cover: 0,
             releaseYear: 2050,
+            publisher: 1,
         });
         expect(sess.Book.unreleased().count()).to.equal(1);
-        expect(sess.Book.withRefs.filter({ name: 'Clean Code' }).count()).to.equal(1);
+        expect(sess.Book.filter({ name: 'Clean Code' }).count()).to.equal(1);
     });
 });

@@ -43,30 +43,30 @@ function shouldRun(invalidatorMap, state) {
  * @param  {Function} func - function to memoize
  * @param  {Function} equalityCheck - equality check function to use with normal
  *                                  selector args
- * @param  {Schema} modelSchema - a redux-orm Schema instance
+ * @param  {ORM} orm - a redux-orm ORM instance
  * @return {Function} `func` memoized.
  */
-export function memoize(func, equalityCheck = eqCheck, modelSchema) {
+export function memoize(func, equalityCheck = eqCheck, orm) {
     let lastOrmState = null;
     let lastResult = null;
     let lastArgs = null;
     const modelNameToInvalidatorMap = {};
 
     return (...args) => {
-        const [ormState, ...otherArgs] = args;
+        const [dbState, ...otherArgs] = args;
 
-        const ormIsEqual = lastOrmState === ormState ||
-                           !shouldRun(modelNameToInvalidatorMap, ormState);
+        const dbIsEqual = lastOrmState === dbState ||
+                           !shouldRun(modelNameToInvalidatorMap, dbState);
 
         const argsAreEqual = lastArgs && otherArgs.every(
             (value, index) => equalityCheck(value, lastArgs[index])
         );
 
-        if (ormIsEqual && argsAreEqual) {
+        if (dbIsEqual && argsAreEqual) {
             return lastResult;
         }
 
-        const session = modelSchema.from(ormState);
+        const session = orm.session(dbState);
         const newArgs = [session, ...otherArgs];
         const result = func(...newArgs);
 
@@ -82,7 +82,7 @@ export function memoize(func, equalityCheck = eqCheck, modelSchema) {
         });
 
         lastResult = result;
-        lastOrmState = ormState;
+        lastOrmState = dbState;
         lastArgs = otherArgs;
 
         return lastResult;
