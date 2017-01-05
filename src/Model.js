@@ -15,6 +15,7 @@ import {
     normalizeEntity,
     arrayDiffActions,
     objectShallowEquals,
+    warnDeprecated,
 } from './utils';
 
 
@@ -108,7 +109,13 @@ const Model = class Model {
     }
 
     static _getTableOpts() {
-        if (typeof this.options === 'function') {
+        if (typeof this.backend === 'function') {
+            warnDeprecated('Model.backend is deprecated. Please rename to .options');
+            return this.backend();
+        } else if (this.backend) {
+            warnDeprecated('Model.backend is deprecated. Please rename to .options');
+            return this.backend;
+        } else if (typeof this.options === 'function') {
             return this.options();
         }
         return this.options;
