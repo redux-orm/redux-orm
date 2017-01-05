@@ -42,6 +42,12 @@ describe('QuerySet tests', () => {
         expect(bookQs.toRefArray()[0]).to.equal(session.Book.withId(0).ref);
     });
 
+    it('at doesn\'t return a Model instance if index is out of bounds', () => {
+        expect(bookQs.at(-1)).to.be.undefined;
+        const len = bookQs.count();
+        expect(bookQs.at(len)).to.be.undefined;
+    });
+
     it('first works correctly', () => {
         expect(bookQs.first()).to.deep.equal(bookQs.at(0));
     });

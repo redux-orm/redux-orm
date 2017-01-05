@@ -116,13 +116,18 @@ const QuerySet = class QuerySet {
      * object in the model state if `true`.
      *
      * @param  {number} index - index of the model instance to get
-     * @return {Model|Object} a {@link Model} instance or a plain JavaScript
-     *                        object at index `index` in the {@link QuerySet} instance
+     * @return {Model|undefined} a {@link Model} instance at index
+     *                           `index` in the {@link QuerySet} instance,
+     *                           or undefined if the index is out of bounds.
      */
     at(index) {
         this._evaluate();
-        const ModelClass = this.modelClass;
-        return new ModelClass(this.rows[index]);
+        if (index >= 0 && index < this.rows.length) {
+            const ModelClass = this.modelClass;
+            return new ModelClass(this.rows[index]);
+        }
+
+        return undefined;
     }
 
     /**
