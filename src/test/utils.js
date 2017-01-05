@@ -1,6 +1,6 @@
-import Schema from '../Schema';
+import ORM from '../ORM';
 import Model from '../Model';
-import { fk, many, oneToOne } from '../fields';
+import { fk, many, oneToOne, attr } from '../fields';
 
 /**
  * These utils create a database schema for testing.
@@ -55,6 +55,7 @@ const BOOKS_INITIAL = [
         cover: 0,
         genres: [0, 1],
         releaseYear: 2050,
+        publisher: 1,
     },
     {
         name: 'Clean Code',
@@ -62,6 +63,7 @@ const BOOKS_INITIAL = [
         cover: 1,
         genres: [2],
         releaseYear: 2008,
+        publisher: 0,
     },
     {
         name: 'Getting Started with Redux',
@@ -69,71 +71,114 @@ const BOOKS_INITIAL = [
         cover: 2,
         genres: [2, 3],
         releaseYear: 2015,
+        publisher: 0,
     },
 ];
 
+const PUBLISHERS_INITIAL = [
+    {
+        name: 'Technical Publishing',
+    },
+    {
+        name: 'Autobiographies Inc',
+    },
+];
 
 export function createTestModels() {
     const Book = class BookModel extends Model {
         static get fields() {
             return {
+                id: attr(),
+                name: attr(),
+                releaseYear: attr(),
                 author: fk('Author', 'books'),
                 cover: oneToOne('Cover'),
                 genres: many('Genre', 'books'),
+                publisher: fk('Publisher', 'books'),
             };
         }
     };
 
     Book.modelName = 'Book';
 
-    const Author = class AuthorModel extends Model {};
+    const Author = class AuthorModel extends Model {
+        static get fields() {
+            return {
+                id: attr(),
+                name: attr(),
+                publishers: many({
+                    to: 'Publisher',
+                    through: 'Book',
+                    relatedName: 'authors',
+                }),
+            };
+        }
+    };
     Author.modelName = 'Author';
 
     const Cover = class CoverModel extends Model {};
     Cover.modelName = 'Cover';
+    Cover.fields = {
+        id: attr(),
+        src: attr(),
+    };
 
     const Genre = class GenreModel extends Model {};
     Genre.modelName = 'Genre';
+    Genre.fields = {
+        id: attr(),
+        name: attr(),
+    };
+
+    const Publisher = class PublisherModel extends Model {};
+    Publisher.modelName = 'Publisher';
+    Publisher.fields = {
+        id: attr(),
+        name: attr(),
+    };
 
     return {
         Book,
         Author,
         Cover,
         Genre,
+        Publisher,
     };
 }
 
-export function createTestSchema(customModels) {
+export function createTestORM(customModels) {
     const models = customModels || createTestModels();
     const {
         Book,
         Author,
         Cover,
         Genre,
+        Publisher,
     } = models;
 
-    const schema = new Schema();
-    schema.register(Book, Author, Cover, Genre);
-    return schema;
+    const orm = new ORM();
+    orm.register(Book, Author, Cover, Genre, Publisher);
+    return orm;
 }
 
 export function createTestSession() {
-    const schema = createTestSchema();
-    return schema.from(schema.getDefaultState());
+    const orm = createTestORM();
+    return orm.session(orm.getEmptytate());
 }
 
-export function createTestSessionWithData(customSchema) {
-    const schema = customSchema || createTestSchema();
-    const state = schema.getDefaultState();
-    const mutatingSession = schema.withMutations(state);
+export function createTestSessionWithData(customORM) {
+    const orm = customORM || createTestORM();
+    const state = orm.getEmptyState();
+    const { Author, Cover, Genre, Book, Publisher } = orm.mutableSession(state);
 
-    AUTHORS_INITIAL.forEach(props => mutatingSession.Author.create(props));
-    COVERS_INITIAL.forEach(props => mutatingSession.Cover.create(props));
-    GENRES_INITIAL.forEach(props => mutatingSession.Genre.create(props));
-    BOOKS_INITIAL.forEach(props => mutatingSession.Book.create(props));
+    AUTHORS_INITIAL.forEach(props => Author.create(props));
+    COVERS_INITIAL.forEach(props => Cover.create(props));
+    GENRES_INITIAL.forEach(props => Genre.create(props));
+    BOOKS_INITIAL.forEach(props => Book.create(props));
+    PUBLISHERS_INITIAL.forEach(props => Publisher.create(props));
 
-    const normalSession = schema.from(state);
-    return { session: normalSession, schema, state };
+    const normalSession = orm.session(state);
+    return { session: normalSession, orm, state };
 }
 
 export const isSubclass = (a, b) => a.prototype instanceof b;

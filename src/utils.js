@@ -1,87 +1,20 @@
 import forOwn from 'lodash/forOwn';
 import includes from 'lodash/includes';
-import getImmutableOps from 'immutable-ops';
+import ops from 'immutable-ops';
 import intersection from 'lodash/intersection';
 import difference from 'lodash/difference';
+
+
+function warnDeprecated(msg) {
+    const logger = typeof console.warn === 'function'
+        ? console.warn.bind(console)
+        : console.log.bind(console);
+    return logger(msg);
+}
 
 /**
  * @module utils
  */
-
-/**
- * A simple ListIterator implementation.
- */
-class ListIterator {
-    /**
-     * Creates a new ListIterator instance.
-     * @param  {Array} list - list to iterate over
-     * @param  {Number} [idx=0] - starting index. Defaults to `0`
-     * @param  {Function} [getValue] a function that receives the current `idx`
-     *                               and `list` and should return the value that
-     *                               `next` should return. Defaults to `(idx, list) => list[idx]`
-     */
-    constructor(list, idx, getValue) {
-        this.list = list;
-        this.idx = idx || 0;
-
-        if (typeof getValue === 'function') {
-            this.getValue = getValue;
-        }
-    }
-
-    /**
-     * The default implementation for the `getValue` function.
-     *
-     * @param  {Number} idx - the current iterator index
-     * @param  {Array} list - the list being iterated
-     * @return {*} - the value at index `idx` in `list`.
-     */
-    getValue(idx, list) {
-        return list[idx];
-    }
-
-    /**
-     * Returns the next element from the iterator instance.
-     * Always returns an Object with keys `value` and `done`.
-     * If the returned element is the last element being iterated,
-     * `done` will equal `true`, otherwise `false`. `value` holds
-     * the value returned by `getValue`.
-     *
-     * @return {Object|undefined} Object with keys `value` and `done`, or
-     *                            `undefined` if the list index is out of bounds.
-     */
-    next() {
-        if (this.idx < this.list.length - 1) {
-            return {
-                value: this.getValue(this.list, this.idx++),
-                done: false,
-            };
-        } else if (this.idx < this.list.length) {
-            return {
-                value: this.getValue(this.list, this.idx++),
-                done: true,
-            };
-        }
-
-        return undefined;
-    }
-}
-
-/**
- * Checks if the properties in `lookupObj` match
- * the corresponding properties in `entity`.
- *
- * @private
- * @param  {Object} lookupObj - properties to match against
- * @param  {Object} entity - object to match
- * @return {Boolean} Returns `true` if the property names in
- *                   `lookupObj` have the same values in `lookupObj`
- *                   and `entity`, `false` if not.
- */
-function match(lookupObj, entity) {
-    const keys = Object.keys(lookupObj);
-    return keys.every(key => lookupObj[key] === entity[key]);
-}
 
 function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
@@ -241,21 +174,20 @@ function arrayDiffActions(sourceArr, targetArr) {
     return null;
 }
 
-// A global instance of immutable-ops for general use
-const ops = getImmutableOps();
+const { getBatchToken } = ops;
 
 export {
-    match,
     attachQuerySetMethods,
     m2mName,
     m2mFromFieldName,
     m2mToFieldName,
     reverseFieldName,
-    ListIterator,
     normalizeEntity,
     reverseFieldErrorMessage,
     objectShallowEquals,
     ops,
     includes,
     arrayDiffActions,
+    getBatchToken,
+    warnDeprecated,
 };

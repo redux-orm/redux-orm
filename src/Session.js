@@ -1,27 +1,27 @@
-import Transaction from './Transaction';
-import { ops } from './utils';
+import { getBatchToken } from 'immutable-ops';
 
-/**
- * Session handles a single
- * action dispatch.
- */
+import { SUCCESS, FAILURE } from './constants';
+import { warnDeprecated } from './utils';
+
+
 const Session = class Session {
     /**
      * Creates a new Session.
      *
-     * @param  {Schema} schema - a {@link Schema} instance
+     * @param  {Database} db - a {@link Database} instance
      * @param  {Object} state - the database state
-     * @param  {Object} [action] - the current action in the dispatch cycle.
-     *                             Will be passed to the user defined reducers.
-     * @param  {Boolean} withMutations - whether the session should mutate data
+     * @param  {Boolean} [withMutations] - whether the session should mutate data
+     * @param  {Object} [batchToken] - used by the backend to identify objects that can be
+     *                                 mutated.
      */
-    constructor(schema, state, action, withMutations) {
+    constructor(schema, db, state, withMutations, batchToken) {
         this.schema = schema;
-        this.state = state || schema.getDefaultState();
-        this.action = action;
-        this.withMutations = !!withMutations;
+        this.db = db;
+        this.state = state || db.getEmptyState();
+        this.initialState = this.state;
 
-        this.currentTx = new Transaction();
+        this.withMutations = !!withMutations;
+        this.batchToken = batchToken || getBatchToken();
 
         this._accessedModels = {};
         this.modelData = {};
@@ -39,8 +39,8 @@ const Session = class Session {
         });
     }
 
-    markAccessed(model) {
-        this.getDataForModel(model.modelName).accessed = true;
+    markAccessed(modelName) {
+        this.getDataForModel(modelName).accessed = true;
     }
 
     get accessedModels() {
@@ -53,119 +53,53 @@ const Session = class Session {
         if (!this.modelData[modelName]) {
             this.modelData[modelName] = {};
         }
-
         return this.modelData[modelName];
     }
 
     /**
-     * Records an update to the session.
+     * Applies update to a model state.
      *
      * @private
      * @param {Object} update - the update object. Must have keys
-     *                          `type`, `payload` and `meta`. `meta`
-     *                          must also include a `name` attribute
-     *                          that contains the model name.
+     *                          `type`, `payload`.
      */
-    addUpdate(update) {
-        if (this.withMutations) {
-            const modelName = update.meta.name;
-            const modelState = this.getState(modelName);
+    applyUpdate(updateSpec) {
+        const { batchToken, withMutations } = this;
+        const tx = { batchToken, withMutations };
+        const result = this.db.update(updateSpec, tx, this.state);
+        const { status, state } = result;
 
-            // The backend used in the updateReducer
-            // will mutate the model state.
-            this[modelName].updateReducer(null, modelState, update);
+        if (status === SUCCESS) {
+            this.state = state;
         } else {
-            this.currentTx.addUpdate(update);
-        }
-    }
-
-    getUpdatesFor(modelName) {
-        return this.currentTx.getUpdatesFor(modelName);
-    }
-
-    get updates() {
-        return this.currentTx.updates.map(update => update.update);
-    }
-
-    /**
-     * Returns the current state for a model with name `modelName`.
-     *
-     * @private
-     * @param  {string} modelName - the name of the model to get state for.
-     * @return {*} The state for model with name `modelName`.
-     */
-    getState(modelName) {
-        return this.state[modelName];
-    }
-
-    /**
-     * Applies recorded updates and returns the next state.
-     * @param  {Object} [opts] - Options object
-     * @param  {Boolean} [opts.runReducers] - A boolean indicating if the user-defined
-     *                                        model reducers should be run. If not specified,
-     *                                        is set to `true` if an action object was specified
-     *                                        on session instantiation, otherwise `false`.
-     * @return {Object} The next state
-     */
-    getNextState(userOpts) {
-        if (this.withMutations) return this.state;
-
-        const prevState = this.state;
-        const action = this.action;
-        const opts = userOpts || {};
-
-        // If the session does not have a specified action object,
-        // don't run the user-defined model reducers unless
-        // explicitly specified.
-        const runReducers = opts.hasOwnProperty('runReducers')
-            ? opts.runReducers
-            : !!action;
-
-        const tx = this.currentTx;
-        ops.open();
-
-        let nextState = prevState;
-        if (runReducers) {
-            nextState = this.sessionBoundModels.reduce((_nextState, modelClass) => {
-                const modelState = this.getState(modelClass.modelName);
-
-                let returnValue = modelClass.reducer(modelState, action, modelClass, this);
-                if (typeof returnValue === 'undefined') {
-                    returnValue = modelClass.getNextState(tx);
-                }
-                return ops.set(modelClass.modelName, returnValue, _nextState);
-            }, nextState);
+            throw new Error(`Applying update failed: ${result.toString()}`);
         }
 
-        // There might be some m2m updates left.
-        const unappliedUpdates = this.currentTx.getUnappliedUpdatesByModel();
-        if (unappliedUpdates) {
-            nextState = this.sessionBoundModels.reduce((_nextState, modelClass) => {
-                const modelName = modelClass.modelName;
-                if (!unappliedUpdates.hasOwnProperty(modelName)) {
-                    return _nextState;
-                }
-
-                return ops.set(modelName, modelClass.getNextState(tx), _nextState);
-            }, nextState);
-        }
-
-        ops.close();
-        tx.close();
-        this.currentTx = new Transaction();
-
-        return nextState;
+        return result.payload;
     }
 
-    /**
-     * Calls the user-defined reducers and returns the next state.
-     * If the session uses mutations, just returns the state.
-     * Delegates to {@link Session#getNextState}
-     *
-     * @return {Object} the next state
-     */
+    query(querySpec) {
+        const { table } = querySpec;
+        this.markAccessed(table);
+        return this.db.query(querySpec, this.state);
+    }
+
+    // DEPRECATED AND REMOVED METHODS
+
+    getNextState() {
+        warnDeprecated(
+            'Session.prototype.getNextState function is deprecated. Access ' +
+            'the Session.prototype.state property instead.'
+        );
+        return this.state;
+    }
+
     reduce() {
-        return this.getNextState({ runReducers: true });
+        throw new Error(
+            'Session.prototype.reduce is removed. The Redux integration API ' +
+            'is now decoupled from ORM and Session - see the 0.9 migration guide ' +
+            'in the GitHub repo.'
+        );
     }
 };
 

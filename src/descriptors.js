@@ -1,11 +1,24 @@
 import difference from 'lodash/difference';
-import UPDATE from './constants';
 import {
-    m2mFromFieldName,
-    m2mToFieldName,
     normalizeEntity,
     includes,
 } from './utils';
+
+
+function attrDescriptor(fieldName) {
+    return {
+        get() {
+            return this._fields[fieldName];
+        },
+
+        set(value) {
+            return this.set(fieldName, value);
+        },
+
+        enumerable: true,
+        configurable: true,
+    };
+}
 
 // Forwards side a Foreign Key: returns one object.
 // Also works as forwardsOneToOneDescriptor.
@@ -23,7 +36,7 @@ function forwardManyToOneDescriptor(fieldName, declaredToModelName) {
         set(value) {
             const currentSession = this.getClass().session;
             const declaredToModel = currentSession[declaredToModelName];
-            const thisId = this.getId();
+
             let toId;
             if (value instanceof declaredToModel) {
                 toId = value.getId();
@@ -31,15 +44,7 @@ function forwardManyToOneDescriptor(fieldName, declaredToModelName) {
                 toId = value;
             }
 
-            this.getClass().addUpdate({
-                type: UPDATE,
-                payload: {
-                    idArr: [thisId],
-                    updater: {
-                        [fieldName]: toId,
-                    },
-                },
-            });
+            this.update({ [fieldName]: toId });
         },
     };
 }
@@ -82,7 +87,12 @@ function backwardManyToOneDescriptor(declaredFieldName, declaredFromModelName) {
 }
 
 // Both sides of Many to Many, use the reverse flag.
-function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throughModelName, reverse) {
+function manyToManyDescriptor(
+    declaredFromModelName,
+    declaredToModelName,
+    throughModelName,
+    throughFields,
+    reverse) {
     return {
         get() {
             const currentSession = this.getClass().session;
@@ -91,8 +101,8 @@ function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throug
             const throughModel = currentSession[throughModelName];
             const thisId = this.getId();
 
-            const fromFieldName = m2mFromFieldName(declaredFromModel.modelName);
-            const toFieldName = m2mToFieldName(declaredToModel.modelName);
+            const fromFieldName = throughFields.from;
+            const toFieldName = throughFields.to;
 
             const lookupObj = {};
             if (!reverse) {
@@ -100,22 +110,26 @@ function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throug
             } else {
                 lookupObj[toFieldName] = thisId;
             }
+
             const throughQs = throughModel.filter(lookupObj);
-            const toIds = throughQs.withRefs.map(obj => obj[reverse ? fromFieldName : toFieldName]);
+            const toIds = throughQs.toRefArray().map(obj => obj[reverse ? fromFieldName : toFieldName]);
 
             const qsFromModel = reverse ? declaredFromModel : declaredToModel;
-            const qs = qsFromModel.getQuerySetFromIds(toIds);
+            const qs = qsFromModel.filter(attrs =>
+                includes(toIds, attrs[qsFromModel.idAttribute])
+            );
 
             qs.add = function add(...args) {
                 const idsToAdd = args.map(normalizeEntity);
 
                 const filterWithAttr = reverse ? fromFieldName : toFieldName;
 
-                const existingQs = throughQs.withRefs
-                    .filter(through => includes(idsToAdd, through[filterWithAttr]));
+                const existingQs = throughQs.filter(through => includes(idsToAdd, through[filterWithAttr]));
 
                 if (existingQs.exists()) {
-                    const existingIds = existingQs.withRefs.map(through => through[filterWithAttr]);
+                    const existingIds = existingQs
+                        .toRefArray()
+                        .map(through => through[filterWithAttr]);
 
                     const toAddModel = reverse
                         ? declaredFromModel.modelName
@@ -124,7 +138,6 @@ function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throug
                     const addFromModel = reverse
                         ? declaredToModel.modelName
                         : declaredFromModel.modelName;
-
                     throw new Error(`Tried to add already existing ${toAddModel} id(s) ${existingIds} to the ${addFromModel} instance with id ${thisId}`);
                 }
 
@@ -144,12 +157,16 @@ function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throug
                 const idsToRemove = entities.map(normalizeEntity);
 
                 const attrInIdsToRemove = reverse ? fromFieldName : toFieldName;
-                const entitiesToDelete = throughQs.withRefs
-                    .filter(through => includes(idsToRemove, through[attrInIdsToRemove]));
+                const entitiesToDelete = throughQs.filter(
+                    through => includes(idsToRemove, through[attrInIdsToRemove])
+                );
 
                 if (entitiesToDelete.count() !== idsToRemove.length) {
                     // Tried deleting non-existing entities.
-                    const entitiesToDeleteIds = entitiesToDelete.withRefs.map(through => through[attrInIdsToRemove]);
+                    const entitiesToDeleteIds = entitiesToDelete
+                        .toRefArray()
+                        .map(through => through[attrInIdsToRemove]);
+
                     const unexistingIds = difference(idsToRemove, entitiesToDeleteIds);
 
                     const toDeleteModel = reverse
@@ -176,6 +193,7 @@ function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throug
 }
 
 export {
+    attrDescriptor,
     forwardManyToOneDescriptor,
     forwardOneToOneDescriptor,
     backwardOneToOneDescriptor,
