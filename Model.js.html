@@ -31,29 +31,54 @@ import isArray from 'lodash/isArray';
 import uniq from 'lodash/uniq';
 
 import Session from './Session';
-import Backend from './Backend';
 import QuerySet from './QuerySet';
 import {
     ManyToMany,
     ForeignKey,
     OneToOne,
+    attr,
 } from './fields';
-import { CREATE, UPDATE, DELETE } from './constants';
+import { CREATE, UPDATE, DELETE, FILTER } from './constants';
 import {
-    match,
     normalizeEntity,
     arrayDiffActions,
     objectShallowEquals,
+    warnDeprecated,
 } from './utils';
+
+
+// Generates a query specification
+// to get a single row from a table identified
+// by a primary key.
+function getByIdQuery(modelInstance) {
+    const modelClass = modelInstance.getClass();
+    return {
+        table: modelClass.modelName,
+        clauses: [
+            {
+                type: FILTER,
+                payload: {
+                    [modelClass.idAttribute]: modelInstance.getId(),
+                },
+            },
+        ],
+    };
+}
+
 
 /**
  * The heart of an ORM, the data model.
- * The static class methods manages the updates
- * passed to this. The class itself is connected to a session,
- * and because of this you can only have a single session at a time
- * for a {@link Model} class.
  *
- * An instance of {@link Model} represents an object in the database.
+ * The fields you specify to the Model will be used to generate
+ * a schema to the database, related property accessors, and
+ * possibly through models.
+ *
+ * In each {@link Session} you instantiate from an {@link ORM} instance,
+ * you will receive a session-specific subclass of this Model. The methods
+ * you define here will be available to you in sessions.
+ *
+ * An instance of {@link Model} represents a record in the database, though
+ * it is possible to generate multiple instances from the same record in the database.
  *
  * To create data models in your schema, subclass {@link Model}. To define
  * information about the data model, override static class methods. Define instance
@@ -61,7 +86,8 @@ import {
  */
 const Model = class Model {
     /**
-     * Creates a Model instance.
+     * Creates a Model instance from it's properties.
+     * Don't use this to create a new record; Use the static method {@link Model#create}.
      * @param  {Object} props - the properties to instantiate with
      */
     constructor(props) {
@@ -69,32 +95,25 @@ const Model = class Model {
     }
 
     _initFields(props) {
-        const ModelClass = this.getClass();
-
-        this._fieldNames = [];
         this._fields = Object.assign({}, props);
 
+        const ThisModel = this.getClass();
+
         forOwn(props, (fieldValue, fieldName) => {
-            this._fields[fieldName] = fieldValue;
-            this._fieldNames.push(fieldName);
-            // If the field has not already been defined on the
-            // prototype for a relation.
-            if (!ModelClass.definedProperties[fieldName]) {
+            // In this case, we got a prop that wasn't defined as a field.
+            // Assuming it's an arbitrary data field, making an instance-specific
+            // descriptor for it.
+            // Using the in operator as the property could be defined anywhere
+            // on the prototype chain.
+            if (!(fieldName in this)) {
                 Object.defineProperty(this, fieldName, {
-                    get: () => fieldValue,
-                    set: (value) => this.set(fieldName, value),
+                    get: () => this._fields[fieldName],
+                    set: value => this.set(fieldName, value),
                     configurable: true,
+                    enumerable: true,
                 });
             }
         });
-    }
-
-    /**
-     * Returns the raw state for this {@link Model} in the current {@link Session}.
-     * @return {Object} The state for this {@link Model} in the current {@link Session}.
-     */
-    static get state() {
-        return this.session.getState(this.modelName);
     }
 
     static toString() {
@@ -102,143 +121,37 @@ const Model = class Model {
     }
 
     /**
-     * Returns the options object passed to the {@link Backend} class constructor.
-     * By default, returns an empty object (which means the {@link Backend} instance
-     * will use default options). You can either override this function to return the options
-     * you want to use, or assign the options object as a static property to the
+     * Returns the options object passed to the database for the table that represents
+     * this Model class.
+     *
+     * Returns an empty object by default, which means the database
+     * will use default options. You can either override this function to return the options
+     * you want to use, or assign the options object as a static property of the same name to the
      * Model class.
      *
-     * @return {Object} the options object used to instantiate a {@link Backend} class.
+     * @return {Object} the options object passed to the database for the table
+     *                  representing this Model class.
      */
-    static backend() {
+    static options() {
         return {};
     }
 
-    static _getBackendOpts() {
+    static _getTableOpts() {
         if (typeof this.backend === 'function') {
+            warnDeprecated('Model.backend is deprecated. Please rename to .options');
             return this.backend();
+        } else if (this.backend) {
+            warnDeprecated('Model.backend is deprecated. Please rename to .options');
+            return this.backend;
+        } else if (typeof this.options === 'function') {
+            return this.options();
         }
-        return this.backend;
-    }
-
-    /**
-     * Returns the {@link Backend} class used to instantiate
-     * the {@link Backend} instance for this {@link Model}.
-     *
-     * Override this if you want to use a custom {@link Backend} class.
-     * @return {Backend} The {@link Backend} class or subclass to use for this {@link Model}.
-     */
-    static getBackendClass() {
-        return Backend;
+        return this.options;
     }
 
     static get _sessionData() {
         if (!this.session) return {};
         return this.session.getDataForModel(this.modelName);
-    }
-
-    /**
-     * Gets the {@link Backend} instance linked to this {@link Model}.
-     *
-     * @private
-     * @return {Backend} The {@link Backend} instance linked to this {@link Model}.
-     */
-    static getBackend() {
-        if (!this._sessionData.backend) {
-            const BackendClass = this.getBackendClass();
-            const opts = { ...this._getBackendOpts() };
-
-            if (this.session &amp;&amp; this.session.withMutations) {
-                opts.withMutations = true;
-            }
-
-            const backend = new BackendClass(opts);
-
-            if (!this.session) {
-                return backend;
-            }
-            this._sessionData.backend = backend;
-        }
-        return this._sessionData.backend;
-    }
-
-    /**
-     * Gets the Model's next state by applying the recorded
-     * updates.
-     *
-     * @private
-     * @param {Transction} tx - the current Transaction instance
-     * @return {Object} The next state.
-     */
-    static getNextState(_tx) {
-        const tx = _tx || this.session.currentTx;
-
-        let state;
-        if (this._sessionData.hasOwnProperty('nextState')) {
-            state = this._sessionData.nextState;
-        } else {
-            state = this.state;
-        }
-
-        const updates = tx.getUpdatesFor(this);
-
-        if (updates.length > 0) {
-            const nextState = updates.reduce(this.updateReducer.bind(this, tx), state);
-            this._sessionData.nextState = nextState;
-            tx.markApplied(this);
-            return nextState;
-        }
-
-        return state;
-    }
-
-    /**
-     * A reducer that takes the Model's state and an internal redux-orm
-     * action object and applies the update specified by the `action` object
-     * by delegating to this model's Backend instance.
-     *
-     * @private
-     * @param  {Object} state - the Model's state
-     * @param  {Object} action - the internal redux-orm update action to apply
-     * @return {Object} the state after applying the action
-     */
-    static updateReducer(tx, state, action) {
-        const backend = this.getBackend();
-        switch (action.type) {
-        case CREATE:
-            return backend.insert(tx, state, action.payload);
-        case UPDATE:
-            return backend.update(tx, state, action.payload.idArr, action.payload.mergeObj);
-        case DELETE:
-            return backend.delete(tx, state, action.payload);
-        default:
-            return state;
-        }
-    }
-
-    /**
-     * The default reducer implementation.
-     * If the user doesn't define a reducer, this is used.
-     *
-     * @param {Object} state - the current state
-     * @param {Object} action - the dispatched action
-     * @param {Model} model - the concrete model class being used
-     * @param {Session} session - the current {@link Session} instance
-     * @return {Object} the next state for the Model
-     */
-    static reducer(state, action, model, session) { // eslint-disable-line
-        return this.getNextState();
-    }
-
-    /**
-     * Gets the default, empty state of the branch.
-     * Delegates to a {@link Backend} instance.
-     *
-     * @private
-     * @return {Object} The default state.
-     */
-    static getDefaultState() {
-        return this.getBackend().getDefaultState();
     }
 
     static markAccessed() {
@@ -247,43 +160,11 @@ const Model = class Model {
 
     /**
      * Returns the id attribute of this {@link Model}.
-     * Delegates to the related {@link Backend} instance.
      *
      * @return {string} The id attribute of this {@link Model}.
      */
     static get idAttribute() {
-        return this.getBackend().idAttribute;
-    }
-
-    /**
-     * A convenience method to call {@link Backend#accessId} from
-     * the {@link Model} class.
-     *
-     * @param  {Number} id - the object id to access
-     * @return {Object} a reference to the object in the database.
-     */
-    static accessId(id) {
-        this.markAccessed();
-        return this.getBackend().accessId(this.state, id);
-    }
-
-    /**
-     * A convenience method to call {@link Backend#accessIdList} from
-     * the {@link Model} class with the current state.
-     */
-    static accessIds() {
-        this.markAccessed();
-        return this.getBackend().accessIdList(this.state);
-    }
-
-    static accessList() {
-        this.markAccessed();
-        return this.getBackend().accessList(this.state);
-    }
-
-    static iterator() {
-        this.markAccessed();
-        return this.getBackend().iterator(this.state);
+        return this.session.db.describe(this.modelName).idAttribute;
     }
 
     /**
@@ -309,55 +190,18 @@ const Model = class Model {
         return this._session;
     }
 
-    /**
-     * A convenience method that delegates to the current {@link Session} instane.
-     * Adds the required backenddata about this {@link Model} to the update object.
-     *
-     * @private
-     * @param {Object} update - the update to add.
-     */
-    static addUpdate(update) {
-        update.meta = { name: this.modelName };
-        this.session.addUpdate(update);
-    }
-
-    /**
-     * Returns the id to be assigned to a new entity.
-     * You may override this to suit your needs.
-     * @return {*} the id value for a new entity.
-     */
-    static nextId() {
-        if (typeof this._sessionData.nextId === 'undefined') {
-            const idArr = this.accessIds();
-            if (idArr.length === 0) {
-                this._sessionData.nextId = 0;
-            } else {
-                this._sessionData.nextId = Math.max(...idArr) + 1;
-            }
-        }
-        return this._sessionData.nextId;
-    }
-
     static getQuerySet() {
-        return this.getQuerySetFromIds(this.accessIds());
-    }
-
-    static getQuerySetFromIds(ids) {
         const QuerySetClass = this.querySetClass;
-        return new QuerySetClass(this, ids);
+        return new QuerySetClass(this);
     }
 
     static invalidateClassCache() {
         this.isSetUp = undefined;
-        this.definedProperties = {};
         this.virtualFields = {};
     }
 
     static get query() {
-        if (!this._sessionData.queryset) {
-            this._sessionData.queryset = this.getQuerySet();
-        }
-        return this._sessionData.queryset;
+        return this.getQuerySet();
     }
 
     /**
@@ -369,47 +213,51 @@ const Model = class Model {
     }
 
     /**
-     * Records the addition of a new {@link Model} instance and returns it.
+     * Creates a new record in the database, instantiates a {@link Model} and returns it.
+     *
+     * If you pass values for many-to-many fields, instances are created on the through
+     * model as well.
      *
      * @param  {props} props - the new {@link Model}'s properties.
      * @return {Model} a new {@link Model} instance.
      */
     static create(userProps) {
-        const idAttribute = this.idAttribute;
         const props = Object.assign({}, userProps);
-
-        if (!props.hasOwnProperty(idAttribute)) {
-            const nextId = this.nextId();
-            props[idAttribute] = nextId;
-            this._sessionData.nextId++;
-        } else {
-            const id = props[idAttribute];
-            if (id > this.nextId()) {
-                this._sessionData.nextId = id + 1;
-            }
-        }
 
         const m2mVals = {};
 
-        forOwn(userProps, (value, key) => {
-            props[key] = normalizeEntity(value);
+        const declaredFieldNames = Object.keys(this.fields);
 
-            // If a value is supplied for a ManyToMany field,
-            // discard them from props and save for later processing.
-            if (isArray(value)) {
-                if (this.fields.hasOwnProperty(key) &amp;&amp; this.fields[key] instanceof ManyToMany) {
-                    m2mVals[key] = value;
-                    delete props[key];
+        declaredFieldNames.forEach(key => {
+            const field = this.fields[key];
+            const valuePassed = userProps.hasOwnProperty(key);
+            if (!valuePassed &amp;&amp; !(field instanceof ManyToMany)) {
+                if (field.getDefault) {
+                    props[key] = field.getDefault();
+                }
+            } else {
+                const value = userProps[key];
+                props[key] = normalizeEntity(value);
+
+                // If a value is supplied for a ManyToMany field,
+                // discard them from props and save for later processing.
+                if (isArray(value)) {
+                    if (this.fields.hasOwnProperty(key) &amp;&amp; this.fields[key] instanceof ManyToMany) {
+                        m2mVals[key] = value;
+                        delete props[key];
+                    }
                 }
             }
         });
 
-        this.addUpdate({
-            type: CREATE,
+        const newEntry = this.session.applyUpdate({
+            action: CREATE,
+            table: this.modelName,
             payload: props,
         });
+
         const ModelClass = this;
-        const instance = new ModelClass(props);
+        const instance = new ModelClass(newEntry);
 
         forOwn(m2mVals, (value, key) => {
             const ids = value.map(normalizeEntity);
@@ -427,6 +275,8 @@ const Model = class Model {
 
     /**
      * Returns a {@link Model} instance for the object with id `id`.
+     * This throws if the `id` doesn't exist. Use {@link Model#hasId}
+     * to check for existence first if you're not certain.
      *
      * @param  {*} id - the `id` of the object to get
      * @throws If object with id `id` doesn't exist
@@ -434,14 +284,12 @@ const Model = class Model {
      */
     static withId(id) {
         const ModelClass = this;
-
-        if (!this.hasId(id)) {
-            throw new Error(`${this.modelName} instance with id ${id} not found`);
+        const rows = this._findDatabaseRows({ [ModelClass.idAttribute]: id });
+        if (rows.length === 0) {
+            throw new Error(`${ModelClass.modelName} instance with id ${id} not found`);
         }
 
-        const ref = this.accessId(id);
-
-        return new ModelClass(ref);
+        return new ModelClass(rows[0]);
     }
 
     /**
@@ -452,49 +300,45 @@ const Model = class Model {
      * @return {Boolean} a boolean indicating if entity with `id` exists in the state
      */
     static hasId(id) {
-        const ref = this.accessId(id);
+        const rows = this._findDatabaseRows({ [this.idAttribute]: id });
+        return rows.length === 1;
+    }
 
-        if (typeof ref === 'undefined') return false;
-
-        return true;
+    static _findDatabaseRows(lookupObj) {
+        const ModelClass = this;
+        return ModelClass
+            .session
+            .query({
+                table: ModelClass.modelName,
+                clauses: [
+                    {
+                        type: FILTER,
+                        payload: lookupObj,
+                    },
+                ],
+            }).rows;
     }
 
     /**
      * Gets the {@link Model} instance that matches properties in `lookupObj`.
-     * Throws an error if {@link Model} is not found.
+     * Throws an error if {@link Model} is not found, or multiple records match
+     * the properties.
      *
      * @param  {Object} lookupObj - the properties used to match a single entity.
      * @return {Model} a {@link Model} instance that matches `lookupObj` properties.
      */
     static get(lookupObj) {
-        if (!this.accessIds().length) {
-            throw new Error(`No entities found for model ${this.modelName}`);
-        }
         const ModelClass = this;
 
-        // We treat `idAttribute` as unique, so if it's
-        // in `lookupObj` we search with that attribute only.
-        if (lookupObj.hasOwnProperty(this.idAttribute)) {
-            const props = this.accessId(lookupObj[this.idAttribute]);
-            if (typeof props !== 'undefined') {
-                return new ModelClass(props);
-            }
+        const rows = this._findDatabaseRows(lookupObj);
 
+        if (rows.length === 0) {
             throw new Error('Model instance not found when calling get method');
+        } else if (rows.length > 1) {
+            throw new Error(`Expected to find a single row in Model.get. Found ${rows.length}.`);
         }
 
-        const iterator = this.iterator();
-
-        let done = false;
-        while (!done) {
-            const curr = iterator.next();
-            if (match(lookupObj, curr.value)) {
-                return new ModelClass(curr.value);
-            }
-            done = curr.done;
-        }
-
-        throw new Error('Model instance not found when calling get method');
+        return new ModelClass(rows[0]);
     }
 
     /**
@@ -523,7 +367,10 @@ const Model = class Model {
      * @return {Object} a reference to the plain JS object in the store
      */
     get ref() {
-        return this.getClass().accessId(this.getId());
+        const ModelClass = this.getClass();
+        return ModelClass._findDatabaseRows({
+            [ModelClass.idAttribute]: this.getId(),
+        })[0];
     }
 
     /**
@@ -532,8 +379,17 @@ const Model = class Model {
      * @return {string} A string representation of this {@link Model} instance.
      */
     toString() {
-        const className = this.getClass().modelName;
-        const fields = this._fieldNames.map(fieldName => {
+        const ThisModel = this.getClass();
+        const className = ThisModel.modelName;
+        const fieldNames = Object.keys(ThisModel.fields);
+        const fields = fieldNames.map(fieldName => {
+            const field = ThisModel.fields[fieldName];
+            if (field instanceof ManyToMany) {
+                const ids = this[fieldName].toModelArray().map(
+                    model => model.getId()
+                );
+                return `${fieldName}: [${ids.join(', ')}]`;
+            }
             const val = this._fields[fieldName];
             return `${fieldName}: ${val}`;
         }).join(', ');
@@ -552,8 +408,8 @@ const Model = class Model {
     }
 
     /**
-     * Records a update to the {@link Model} instance for a single
-     * field value assignment.
+     * Updates a property name to given value for this {@link Model} instance.
+     * The values are immediately committed to the database.
      *
      * @param {string} propertyName - name of the property to set
      * @param {*} value - value assigned to the property
@@ -564,14 +420,15 @@ const Model = class Model {
     }
 
     /**
-     * Records an update to the {@link Model} instance for multiple field value assignments.
-     * If the session is with mutations, updates the instance to reflect the new values.
+     * Assigns multiple fields and corresponding values to this {@link Model} instance.
+     * The updates are immediately committed to the database.
      *
      * @param  {Object} userMergeObj - an object that will be merged with this instance.
      * @return {undefined}
      */
     update(userMergeObj) {
-        const relFields = this.getClass().fields;
+        const ThisModel = this.getClass();
+        const relFields = ThisModel.fields;
         const mergeObj = Object.assign({}, userMergeObj);
 
         // If an array of entities or id's is supplied for a
@@ -580,53 +437,62 @@ const Model = class Model {
         for (const mergeKey in mergeObj) { // eslint-disable-line no-restricted-syntax
             if (relFields.hasOwnProperty(mergeKey)) {
                 const field = relFields[mergeKey];
-                if (field instanceof ManyToMany) {
-                    const currentIds = this[mergeKey].idArr;
+                if (field) {
+                    if (field instanceof ManyToMany) {
+                        const currentIds = this[mergeKey].toRefArray()
+                            .map(row => row[ThisModel.idAttribute]);
 
-                    // TODO: It could be better to check this stuff in Backend.
-                    const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
-                    const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
-                    if (diffActions) {
-                        const idsToDelete = diffActions.delete;
-                        const idsToAdd = diffActions.add;
-                        if (idsToDelete.length > 0) {
-                            this[mergeKey].remove(...idsToDelete);
+                        const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
+                        const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
+                        if (diffActions) {
+                            const idsToDelete = diffActions.delete;
+                            const idsToAdd = diffActions.add;
+                            if (idsToDelete.length > 0) {
+                                this[mergeKey].remove(...idsToDelete);
+                            }
+                            if (idsToAdd.length > 0) {
+                                this[mergeKey].add(...idsToAdd);
+                            }
                         }
-                        if (idsToAdd.length > 0) {
-                            this[mergeKey].add(...idsToAdd);
-                        }
+                        delete mergeObj[mergeKey];
+                    } else if (field instanceof ForeignKey || field instanceof OneToOne) {
+                        mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
                     }
-                    delete mergeObj[mergeKey];
-                } else if (field instanceof ForeignKey || field instanceof OneToOne) {
-                    mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
                 }
             }
         }
 
-        const session = this.getClass().session;
-        if (session &amp;&amp; session.withMutations) {
-            this._initFields(Object.assign({}, this._fields, mergeObj));
-        }
+        this._initFields(Object.assign({}, this._fields, mergeObj));
 
-        this.getClass().addUpdate({
-            type: UPDATE,
-            payload: {
-                idArr: [this.getId()],
-                mergeObj,
-            },
+        ThisModel.session.applyUpdate({
+            action: UPDATE,
+            query: getByIdQuery(this),
+            payload: mergeObj,
         });
     }
 
+
     /**
-     * Records the {@link Model} to be deleted.
+     * Updates {@link Model} instance attributes to reflect the
+     * database state in the current session.
+     * @return {undefined}
+     */
+    refreshFromState() {
+        this._initFields(this.ref);
+    }
+
+    /**
+     * Deletes the record for this {@link Model} instance.
+     * You'll still be able to access fields and values on the instance.
+     *
      * @return {undefined}
      */
     delete() {
-        this.getClass().addUpdate({
-            type: DELETE,
-            payload: [this.getId()],
-        });
         this._onDelete();
+        this.getClass().session.applyUpdate({
+            action: DELETE,
+            query: getByIdQuery(this),
+        });
     }
 
     _onDelete() {
@@ -650,10 +516,20 @@ const Model = class Model {
             }
         }
     }
+
+    // DEPRECATED AND REMOVED METHODS
+
+    getNextState() {
+        throw new Error(
+            'Model.prototype.getNextState is removed. See the 0.9 ' +
+            'migration guide on the GitHub repo.'
+        );
+    }
 };
 
-Model.fields = {};
-Model.definedProperties = {};
+Model.fields = {
+    id: attr(),
+};
 Model.virtualFields = {};
 Model.querySetClass = QuerySet;
 
@@ -668,13 +544,13 @@ export default Model;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li><li><a href="Transaction.html">Transaction</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-fields.html">fields</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="global.html#ORM">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#createSelector">createSelector</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.1</a> on Tue Sep 20 2016 00:00:05 GMT-0700 (PDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Sun Jan 08 2017 15:18:49 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>

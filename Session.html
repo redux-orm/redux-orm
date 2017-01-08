@@ -30,9 +30,6 @@
     
         <h2>Session</h2>
         
-            <div class="class-description"><p>Session handles a single
-action dispatch.</p></div>
-        
     
 </header>
 
@@ -42,10 +39,8 @@ action dispatch.</p></div>
         
 
     
-    <h2>Constructor</h2>
-    
 
-    <h4 class="name" id="Session"><span class="type-signature"></span>new Session<span class="signature">(schema, state, action<span class="signature-attributes">opt</span>, withMutations)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="Session"><span class="type-signature"></span>new Session<span class="signature">(db, state, withMutations<span class="signature-attributes">opt</span>, batchToken<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -90,13 +85,13 @@ action dispatch.</p></div>
 
         <tr>
             
-                <td class="name"><code>schema</code></td>
+                <td class="name"><code>db</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="Schema.html">Schema</a></span>
+<span class="param-type">Database</span>
 
 
             
@@ -114,7 +109,7 @@ action dispatch.</p></div>
 
             
 
-            <td class="description last"><p>a <a href="Schema.html"><code>Schema</code></a> instance</p></td>
+            <td class="description last"><p>a <code>Database</code> instance</p></td>
         </tr>
 
     
@@ -152,7 +147,40 @@ action dispatch.</p></div>
 
         <tr>
             
-                <td class="name"><code>action</code></td>
+                <td class="name"><code>withMutations</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>whether the session should mutate data</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>batchToken</code></td>
             
 
             <td class="type">
@@ -178,39 +206,8 @@ action dispatch.</p></div>
 
             
 
-            <td class="description last"><p>the current action in the dispatch cycle.
-                            Will be passed to the user defined reducers.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>withMutations</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Boolean</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>whether the session should mutate data</p></td>
+            <td class="description last"><p>used by the backend to identify objects that can be
+                                mutated.</p></td>
         </tr>
 
     
@@ -251,7 +248,7 @@ action dispatch.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Session.js.html">Session.js</a>, <a href="Session.js.html#line8">line 8</a>
+        <a href="Session.js.html">Session.js</a>, <a href="Session.js.html#line17">line 17</a>
     </li></ul></dd>
     
 
@@ -293,345 +290,6 @@ action dispatch.</p></div>
     
 
     
-        <h3 class="subsection-title">Methods</h3>
-
-        
-            
-
-    
-
-    <h4 class="name" id="getNextState"><span class="type-signature"></span>getNextState<span class="signature">(opts<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Object}</span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Applies recorded updates and returns the next state.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>opts</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Object</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>Options object</p>
-                <h6>Properties</h6>
-                
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>runReducers</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">Boolean</span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>A boolean indicating if the user-defined
-                                       model reducers should be run. If not specified,
-                                       is set to <code>true</code> if an action object was specified
-                                       on session instantiation, otherwise <code>false</code>.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Session.js.html">Session.js</a>, <a href="Session.js.html#line110">line 110</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>The next state</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Object</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="reduce"><span class="type-signature"></span>reduce<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Calls the user-defined reducers and returns the next state.
-If the session uses mutations, just returns the state.
-Delegates to <a href="Session.html#getNextState"><code>Session#getNextState</code></a></p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Session.js.html">Session.js</a>, <a href="Session.js.html#line167">line 167</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>the next state</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Object</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-    
 
     
 
@@ -646,13 +304,13 @@ Delegates to <a href="Session.html#getNextState"><code>Session#getNextState</cod
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li><li><a href="Transaction.html">Transaction</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-fields.html">fields</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="global.html#ORM">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#createSelector">createSelector</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.1</a> on Tue Sep 20 2016 00:00:05 GMT-0700 (PDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Sun Jan 08 2017 15:18:50 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>

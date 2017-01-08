@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Module: fields</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Module: fields</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id=".attr"><span class="type-signature">(static) </span>attr<span class="signature">(opts<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Attribute}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Defines a value attribute on the model.
+Though not required, it is recommended to define this for each non-foreign key you wish to use.
+Getters and setters need to be defined on each Model
+instantiation for undeclared data fields, which is slower.
+You can use the optional <code>getDefault</code> parameter to fill in unpassed values
+to <code>Model#create</code>, such as for generating ID's with UUID:</p>
+<pre class="prettyprint source lang-javascript"><code>import getUUID from 'your-uuid-package-of-choice';
+
+fields = {
+  id: attr({ getDefault: () => getUUID() }),
+  title: attr(),
+}</code></pre>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>opts</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last">
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>getDefault</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>if you give a function here, it's return
+                                      value from calling with zero arguments will
+                                      be used as the value when creating a new Model
+                                      instance with <code>Model#create</code> if the field
+                                      value is not passed.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="fields.js.html">fields.js</a>, <a href="fields.js.html#line279">line 279</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Attribute</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".fk"><span class="type-signature">(static) </span>fk<span class="signature">(toModelNameOrObj, relatedName<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {ForeignKey}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Defines a foreign key on a model, which points
+to a single entity on another model.</p>
+<p>You can pass arguments as either a single object,
+or two arguments.</p>
+<p>If you pass two arguments, the first one is the name
+of the Model the foreign key is pointing to, and
+the second one is an optional related name, which will
+be used to access the Model the foreign key
+is being defined from, from the target Model.</p>
+<p>If the related name is not passed, it will be set as
+<code>${toModelName}Set</code>.</p>
+<p>If you pass an object to <code>fk</code>, it has to be in the form</p>
+<pre class="prettyprint source lang-javascript"><code>fields = {
+  author: fk({ to: 'Author', relatedName: 'books' })
+}</code></pre><p>Which is equal to</p>
+<pre class="prettyprint source lang-javascript"><code>fields = {
+  author: fk('Author', 'books'),
+}</code></pre>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>toModelNameOrObj</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>the <code>modelName</code> property of
+                                          the Model that is the target of the
+                                          foreign key, or an object with properties
+                                          <code>to</code> and optionally <code>relatedName</code>.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>relatedName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>if you didn't pass an object as the first argument,
+                                this is the property name that will be used to
+                                access a QuerySet the foreign key is defined from,
+                                from the target model.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="fields.js.html">fields.js</a>, <a href="fields.js.html#line325">line 325</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ForeignKey</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".many"><span class="type-signature">(static) </span>many<span class="signature">(options)</span><span class="type-signature"> &rarr; {ManyToMany}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Defines a many-to-many relationship between
+this (source) and another (target) model.</p>
+<p>The relationship is modeled with an extra model called the through model.
+The through model has foreign keys to both the source and target models.</p>
+<p>You can define your own through model if you want to associate more information
+to the relationship. A custom through model must have at least two foreign keys,
+one pointing to the source Model, and one pointing to the target Model.</p>
+<p>If you have more than one foreign key pointing to a source or target Model in the
+through Model, you must pass the option <code>throughFields</code>, which is an array of two
+strings, where the strings are the field names that identify the foreign keys to
+be used for the many-to-many relationship. Redux-ORM will figure out which field name
+points to which model by checking the through Model definition.</p>
+<p>Unlike <code>fk</code>, this function accepts only an object argument.</p>
+<pre class="prettyprint source lang-javascript"><code>class Authorship extends Model {}
+Authorship.modelName = 'Authorship';
+Authorship.fields = {
+  author: fk('Author', 'authorships'),
+  book: fk('Book', 'authorships'),
+};
+
+class Author extends Model {}
+Author.modelName = 'Author';
+Author.fields = {
+  books: many({
+    to: 'Book',
+    relatedName: 'authors',
+    through: 'Authorship',
+
+    // this is optional, since Redux-ORM can figure
+    // out the through fields itself as there aren't
+    // multiple foreign keys pointing to the same models.
+    throughFields: ['author', 'book'],
+  })
+};
+
+class Book extends Model {}
+Book.modelName = 'Book';</code></pre><p>You should only define the many-to-many relationship on one side. In the
+above case of Authors to Books through Authorships, the relationship is
+defined only on the Author model.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>options</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>options</p>
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>to</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>the <code>modelName</code> attribute of the target Model.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>through</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>the <code>modelName</code> attribute of the through Model which
+                                   must declare at least one foreign key to both source and
+                                   target Models. If not supplied, Redux-Orm will autogenerate
+                                   one.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>throughFields</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Array.&lt;string></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>this must be supplied only when a custom through
+                                           Model has more than one foreign key pointing to
+                                           either the source or target mode. In this case
+                                           Redux-ORM can't figure out the correct fields for
+                                           you, you must provide them. The supplied array should
+                                           have two elements that are the field names for the
+                                           through fields you want to declare the many-to-many
+                                           relationship with. The order doesn't matter;
+                                           Redux-ORM will figure out which field points to
+                                           the source Model and which to the target Model.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>relatedName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>the attribute used to access a QuerySet
+                                         of source Models from target Model.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="fields.js.html">fields.js</a>, <a href="fields.js.html#line399">line 399</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">ManyToMany</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".oneToOne"><span class="type-signature">(static) </span>oneToOne<span class="signature">(toModelNameOrObj, relatedName<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {OneToOne}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Defines a one-to-one relationship. In database terms, this is a foreign key with the
+added restriction that only one entity can point to single target entity.</p>
+<p>The arguments are the same as with <code>fk</code>. If <code>relatedName</code> is not supplied,
+the source model name in lowercase will be used. Note that with the one-to-one
+relationship, the <code>relatedName</code> should be in singular, not plural.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>toModelNameOrObj</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+|
+
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>the <code>modelName</code> property of
+                                          the Model that is the target of the
+                                          foreign key, or an object with properties
+                                          <code>to</code> and optionally <code>relatedName</code>.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>relatedName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+                    &lt;optional><br>
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>if you didn't pass an object as the first argument,
+                                this is the property name that will be used to
+                                access a Model the foreign key is defined from,
+                                from the target Model.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="fields.js.html">fields.js</a>, <a href="fields.js.html#line420">line 420</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">OneToOne</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-fields.html">fields</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="global.html#ORM">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#createSelector">createSelector</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Sun Jan 08 2017 15:18:50 GMT-0800 (PST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

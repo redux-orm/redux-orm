@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Global</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Global</h1>
+
+    
+
+
+
+
+<section>
+
+<header>
+    
+        <h2></h2>
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+
+        
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+        
+    
+    </div>
+
+    
+
+    
+
+    
+
+     
+
+    
+
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id="ORM"><span class="type-signature">(constant) </span>ORM<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>ORM - the Object Relational Mapper.</p>
+<p>Use instances of this class to:</p>
+<ul>
+<li>Register your <a href="Model.html"><code>Model</code></a> classes using <a href="global.html#ORM#register"><code>ORM#register</code></a></li>
+<li>Get the empty state for the underlying database with <a href="global.html#ORM#getEmptyState"><code>ORM#getEmptyState</code></a></li>
+<li>Start an immutable database session with <a href="global.html#ORM#session"><code>ORM#session</code></a></li>
+<li>Start a mutating database session with <a href="global.html#ORM#mutableSession"><code>ORM#mutableSession</code></a></li>
+</ul>
+<p>Internally, this class handles generating a schema specification from models
+to the database.</p>
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="ORM.js.html">ORM.js</a>, <a href="ORM.js.html#line43">line 43</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id="createSelector"><span class="type-signature"></span>createSelector<span class="signature">(orm, &hellip;args)</span><span class="type-signature"> &rarr; {function}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Returns a memoized selector based on passed arguments.
+This is similar to <code>reselect</code>'s <code>createSelector</code>,
+except you can also pass a single function to be memoized.</p>
+<p>If you pass multiple functions, the format will be the
+same as in <code>reselect</code>. The last argument is the selector
+function and the previous are input selectors.</p>
+<p>When you use this method to create a selector, the returned selector
+expects the whole <code>redux-orm</code> state branch as input. In the selector
+function that you pass as the last argument, you will receive
+<code>session</code> argument (a <code>Session</code> instance) followed by any
+input arguments, like in <code>reselect</code>.</p>
+<p>This is an example selector:</p>
+<pre class="prettyprint source lang-javascript"><code>// orm is an instance of ORM
+const bookSelector = createSelector(orm, session => {
+    return session.Book.map(book => {
+        return Object.assign({}, book.ref, {
+            authors: book.authors.map(author => author.name),
+            genres: book.genres.map(genre => genre.name),
+        });
+    });
+});</code></pre><p>redux-orm uses a special memoization function to avoid recomputations.
+When a selector runs for the first time, it checks which Models' state
+branches were accessed. On subsequent runs, the selector first checks
+if those branches have changed -- if not, it just returns the previous
+result. This way you can use the <code>PureRenderMixin</code> in your React
+components for performance gains.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+        <th>Attributes</th>
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>orm</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="global.html#ORM">ORM</a></span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>the ORM instance</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                    &lt;repeatable><br>
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>zero or more input selectors
+                             and the selector function.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="redux.js.html">redux.js</a>, <a href="redux.js.html#line65">line 65</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>memoized selector</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">function</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-fields.html">fields</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="global.html#ORM">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#createSelector">createSelector</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Sun Jan 08 2017 15:18:49 GMT-0800 (PST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

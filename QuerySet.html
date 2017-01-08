@@ -30,11 +30,18 @@
     
         <h2>QuerySet</h2>
         
-            <div class="class-description"><p>A chainable class that keeps track of a list of objects and</p>
-<ul>
-<li>returns a subset clone of itself with <a href="QuerySet.html#filter"><code>filter</code></a> and <a href="QuerySet.html#exclude"><code>exclude</code></a></li>
-<li>records updates to objects with <a href="QuerySet.html#update"><code>update</code></a> and <a href="QuerySet.html#delete"><code>delete</code></a></li>
-</ul></div>
+            <div class="class-description"><p>This class is used to build and make queries to the database
+and operating the resulting set (such as updating attributes
+or deleting the records).</p>
+<p>The queries are built lazily. For example:</p>
+<pre class="prettyprint source lang-javascript"><code>const qs = Book.all()
+    .filter(book => book.releaseYear > 1999)
+    .orderBy('name');</code></pre><p>Doesn't execute a query. The query is executed only when
+you need information from the query result, such as <a href="QuerySet.html#count"><code>QuerySet#count</code></a>,
+<a href="QuerySet.html#toRefArray"><code>QuerySet#toRefArray</code></a>. After the query is executed, the resulting
+set is cached in the QuerySet instance.</p>
+<p>QuerySet instances also return copies, so chaining filters doesn't
+mutate the previous instances.</p></div>
         
     
 </header>
@@ -48,14 +55,15 @@
     <h2>Constructor</h2>
     
 
-    <h4 class="name" id="QuerySet"><span class="type-signature"></span>new QuerySet<span class="signature">(modelClass, idArr, opts<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="QuerySet"><span class="type-signature"></span>new QuerySet<span class="signature">(modelClass, clauses, opts<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
 
     
 
 
 
 <div class="description">
-    <p>Creates a QuerySet.</p>
+    <p>Creates a QuerySet. The constructor is mainly for internal use;
+You should access QuerySet instances from <a href="Model.html"><code>Model</code></a>.</p>
 </div>
 
 
@@ -124,13 +132,13 @@
 
         <tr>
             
-                <td class="name"><code>idArr</code></td>
+                <td class="name"><code>clauses</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">Array.&lt;number></span>
+<span class="param-type">Array.&lt;any></span>
 
 
             
@@ -148,7 +156,7 @@
 
             
 
-            <td class="description last"><p>an array of the id's this QuerySet includes.</p></td>
+            <td class="description last"><p>query clauses needed to evaluate the set.</p></td>
         </tr>
 
     
@@ -222,7 +230,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line19">line 19</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line36">line 36</a>
     </li></ul></dd>
     
 
@@ -261,198 +269,6 @@
 
     
 
-    
-        <h3 class="subsection-title">Members</h3>
-
-        
-            
-<h4 class="name" id="ref"><span class="type-signature"></span>ref<span class="type-signature"></span></h4>
-
-
-
-
-<div class="description">
-    <p>Alias for withRefs</p>
-</div>
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line72">line 72</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="withModels"><span class="type-signature"></span>withModels<span class="type-signature"></span></h4>
-
-
-
-
-<div class="description">
-    <p>Returns a new QuerySet representing the same entities
-with the <code>withRefs</code> flag off.</p>
-</div>
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line82">line 82</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="withRefs"><span class="type-signature"></span>withRefs<span class="type-signature"></span></h4>
-
-
-
-
-<div class="description">
-    <p>Returns a new QuerySet representing the same entities
-with the <code>withRefs</code> flag on.</p>
-</div>
-
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line61">line 61</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
     
 
     
@@ -514,7 +330,7 @@ with the <code>withRefs</code> flag on.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line169">line 169</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line154">line 154</a>
     </li></ul></dd>
     
 
@@ -567,7 +383,7 @@ with the <code>withRefs</code> flag on.</p>
 
     
 
-    <h4 class="name" id="at"><span class="type-signature"></span>at<span class="signature">(index)</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>|Object}</span></h4>
+    <h4 class="name" id="at"><span class="type-signature"></span>at<span class="signature">(index)</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>|undefined}</span></h4>
 
     
 
@@ -669,7 +485,7 @@ object in the model state if <code>true</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line142">line 142</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line123">line 123</a>
     </li></ul></dd>
     
 
@@ -696,8 +512,9 @@ object in the model state if <code>true</code>.</p>
 
         
 <div class="param-desc">
-    <p>a <a href="Model.html"><code>Model</code></a> instance or a plain JavaScript
-                       object at index <code>index</code> in the <a href="QuerySet.html"><code>QuerySet</code></a> instance</p>
+    <p>a <a href="Model.html"><code>Model</code></a> instance at index
+                          <code>index</code> in the <a href="QuerySet.html"><code>QuerySet</code></a> instance,
+                          or undefined if the index is out of bounds.</p>
 </div>
 
 
@@ -711,7 +528,7 @@ object in the model state if <code>true</code>.</p>
 <span class="param-type"><a href="Model.html">Model</a></span>
 |
 
-<span class="param-type">Object</span>
+<span class="param-type">undefined</span>
 
 
     </dd>
@@ -733,7 +550,7 @@ object in the model state if <code>true</code>.</p>
 
 
 <div class="description">
-    <p>Returns the number of model instances represented by the QuerySet.</p>
+    <p>Returns the number of <a href="Model.html"><code>Model</code></a> instances represented by the QuerySet.</p>
 </div>
 
 
@@ -777,7 +594,7 @@ object in the model state if <code>true</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line120">line 120</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line98">line 98</a>
     </li></ul></dd>
     
 
@@ -881,7 +698,7 @@ object in the model state if <code>true</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line320">line 320</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line244">line 244</a>
     </li></ul></dd>
     
 
@@ -937,7 +754,8 @@ object in the model state if <code>true</code>.</p>
 
 
 <div class="description">
-    <p>Returns a new <a href="QuerySet.html"><code>QuerySet</code></a> instance with entities that do not match properties in <code>lookupObj</code>.</p>
+    <p>Returns a new <a href="QuerySet.html"><code>QuerySet</code></a> instance with entities that do not match
+properties in <code>lookupObj</code>.</p>
 </div>
 
 
@@ -1030,7 +848,7 @@ object in the model state if <code>true</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line189">line 189</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line179">line 179</a>
     </li></ul></dd>
     
 
@@ -1090,7 +908,8 @@ object in the model state if <code>true</code>.</p>
 
 
 <div class="description">
-    <p>Checks if the <a href="QuerySet.html"><code>QuerySet</code></a> instance has any entities.</p>
+    <p>Checks if the <a href="QuerySet.html"><code>QuerySet</code></a> instance has any records matching the query
+in the database.</p>
 </div>
 
 
@@ -1134,7 +953,7 @@ object in the model state if <code>true</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line129">line 129</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line109">line 109</a>
     </li></ul></dd>
     
 
@@ -1287,7 +1106,7 @@ object in the model state if <code>true</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line179">line 179</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line164">line 164</a>
     </li></ul></dd>
     
 
@@ -1391,7 +1210,7 @@ object in the model state if <code>true</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line153">line 153</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line137">line 137</a>
     </li></ul></dd>
     
 
@@ -1426,158 +1245,6 @@ object in the model state if <code>true</code>.</p>
     <dd>
         
 <span class="param-type"><a href="Model.html">Model</a></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="forEach"><span class="type-signature"></span>forEach<span class="signature">(func)</span><span class="type-signature"> &rarr; {undefined}</span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Calls <code>func</code> for each object in the <a href="QuerySet.html"><code>QuerySet</code></a> instance.
-The object is either a reference to the plain
-object in the database or a <a href="Model.html"><code>Model</code></a> instance, depending
-on the flag.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>func</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the function to call with each object</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line236">line 236</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">undefined</span>
 
 
     </dd>
@@ -1643,7 +1310,7 @@ on the flag.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line161">line 161</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line145">line 145</a>
     </li></ul></dd>
     
 
@@ -1678,162 +1345,6 @@ on the flag.</p>
     <dd>
         
 <span class="param-type"><a href="Model.html">Model</a></span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="map"><span class="type-signature"></span>map<span class="signature">(func)</span><span class="type-signature"> &rarr; {Array}</span></h4>
-
-    
-
-
-
-<div class="description">
-    <p>Maps the <a href="Model.html"><code>Model</code></a> instances in the <a href="QuerySet.html"><code>QuerySet</code></a> instance.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>func</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">function</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the mapping function that takes one argument, a
-                          <a href="Model.html"><code>Model</code></a> instance or a reference to the plain
-                          JavaScript object in the store, depending on the
-                          QuerySet's <code>withRefs</code> flag.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line252">line 252</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>the mapped array</p>
-</div>
-
-
-
-<dl>
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Array</span>
 
 
     </dd>
@@ -2002,7 +1513,7 @@ order, unless otherwise specified. Delegates to <code>lodash.orderBy</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line271">line 271</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line215">line 215</a>
     </li></ul></dd>
     
 
@@ -2062,7 +1573,7 @@ order, unless otherwise specified. Delegates to <code>lodash.orderBy</code>.</p>
 
 
 <div class="description">
-    <p>Returns an array of Model instances represented by the QuerySet.</p>
+    <p>Returns an array of <a href="Model.html"><code>Model</code></a> instances represented by the QuerySet.</p>
 </div>
 
 
@@ -2106,7 +1617,7 @@ order, unless otherwise specified. Delegates to <code>lodash.orderBy</code>.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line111">line 111</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line87">line 87</a>
     </li></ul></dd>
     
 
@@ -2211,7 +1722,7 @@ The plain objects are direct references to the store.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line103">line 103</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line78">line 78</a>
     </li></ul></dd>
     
 
@@ -2367,7 +1878,7 @@ in the <a href="QuerySet.html"><code>QuerySet</code></a> instance.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line306">line 306</a>
+        <a href="QuerySet.js.html">QuerySet.js</a>, <a href="QuerySet.js.html#line228">line 228</a>
     </li></ul></dd>
     
 
@@ -2427,13 +1938,13 @@ in the <a href="QuerySet.html"><code>QuerySet</code></a> instance.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Backend.html">Backend</a></li><li><a href="Model.html">Model</a></li><li><a href="module-utils-ListIterator.html">ListIterator</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Schema.html">Schema</a></li><li><a href="Session.html">Session</a></li><li><a href="Transaction.html">Transaction</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-fields.html">fields</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="global.html#ORM">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#createSelector">createSelector</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.1</a> on Tue Sep 20 2016 00:00:05 GMT-0700 (PDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Sun Jan 08 2017 15:18:50 GMT-0800 (PST)
 </footer>
 
 <script> prettyPrint(); </script>

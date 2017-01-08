@@ -59,43 +59,49 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	exports.oneToOne = exports.many = exports.fk = exports.OneToOne = exports.ManyToMany = exports.ForeignKey = exports.Session = exports.Schema = exports.Model = exports.Backend = exports.QuerySet = undefined;
+	exports.createSelector = exports.createReducer = exports.oneToOne = exports.attr = exports.many = exports.fk = exports.OneToOne = exports.ManyToMany = exports.ForeignKey = exports.Session = exports.Backend = exports.Schema = exports.ORM = exports.Model = exports.QuerySet = undefined;
 	
 	var _QuerySet = __webpack_require__(1);
 	
 	var _QuerySet2 = _interopRequireDefault(_QuerySet);
 	
-	var _Backend = __webpack_require__(244);
-	
-	var _Backend2 = _interopRequireDefault(_Backend);
-	
-	var _Model = __webpack_require__(246);
+	var _Model = __webpack_require__(253);
 	
 	var _Model2 = _interopRequireDefault(_Model);
 	
-	var _Schema = __webpack_require__(278);
-	
-	var _Schema2 = _interopRequireDefault(_Schema);
+	var _ORM = __webpack_require__(283);
 	
 	var _Session = __webpack_require__(262);
 	
 	var _Session2 = _interopRequireDefault(_Session);
 	
-	var _fields = __webpack_require__(277);
+	var _redux = __webpack_require__(303);
+	
+	var _fields = __webpack_require__(272);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	var Schema = _ORM.DeprecatedSchema;
+	
+	var Backend = function RemovedBackend() {
+	    throw new Error('Having a custom Backend instance is now unsupported. ' + 'Documentation for database customization is upcoming, for now ' + 'please look at the db folder in the source.');
+	};
+	
 	exports.QuerySet = _QuerySet2.default;
-	exports.Backend = _Backend2.default;
 	exports.Model = _Model2.default;
-	exports.Schema = _Schema2.default;
+	exports.ORM = _ORM.ORM;
+	exports.Schema = Schema;
+	exports.Backend = Backend;
 	exports.Session = _Session2.default;
 	exports.ForeignKey = _fields.ForeignKey;
 	exports.ManyToMany = _fields.ManyToMany;
 	exports.OneToOne = _fields.OneToOne;
 	exports.fk = _fields.fk;
 	exports.many = _fields.many;
+	exports.attr = _fields.attr;
 	exports.oneToOne = _fields.oneToOne;
+	exports.createReducer = _redux.createReducer;
+	exports.createSelector = _redux.createSelector;
 	exports.default = _Model2.default;
 
 /***/ },
@@ -124,431 +130,317 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass3 = _interopRequireDefault(_createClass2);
 	
-	var _reject = __webpack_require__(79);
-	
-	var _reject2 = _interopRequireDefault(_reject);
-	
-	var _filter = __webpack_require__(190);
-	
-	var _filter2 = _interopRequireDefault(_filter);
-	
-	var _mapValues = __webpack_require__(191);
+	var _mapValues = __webpack_require__(79);
 	
 	var _mapValues2 = _interopRequireDefault(_mapValues);
 	
-	var _orderBy2 = __webpack_require__(192);
+	var _utils = __webpack_require__(194);
 	
-	var _orderBy3 = _interopRequireDefault(_orderBy2);
-	
-	var _utils = __webpack_require__(199);
-	
-	var _constants = __webpack_require__(243);
+	var _constants = __webpack_require__(252);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	/**
-	 * A chainable class that keeps track of a list of objects and
+	 * This class is used to build and make queries to the database
+	 * and operating the resulting set (such as updating attributes
+	 * or deleting the records).
 	 *
-	 * - returns a subset clone of itself with [filter]{@link QuerySet#filter} and [exclude]{@link QuerySet#exclude}
-	 * - records updates to objects with [update]{@link QuerySet#update} and [delete]{@link QuerySet#delete}
+	 * The queries are built lazily. For example:
 	 *
+	 * ```javascript
+	 * const qs = Book.all()
+	 *     .filter(book => book.releaseYear > 1999)
+	 *     .orderBy('name');
+	 * ```
+	 *
+	 * Doesn't execute a query. The query is executed only when
+	 * you need information from the query result, such as {@link QuerySet#count},
+	 * {@link QuerySet#toRefArray}. After the query is executed, the resulting
+	 * set is cached in the QuerySet instance.
+	 *
+	 * QuerySet instances also return copies, so chaining filters doesn't
+	 * mutate the previous instances.
 	 */
 	var QuerySet = function () {
 	    /**
-	     * Creates a QuerySet.
+	     * Creates a QuerySet. The constructor is mainly for internal use;
+	     * You should access QuerySet instances from {@link Model}.
 	     *
 	     * @param  {Model} modelClass - the model class of objects in this QuerySet.
-	     * @param  {number[]} idArr - an array of the id's this QuerySet includes.
+	     * @param  {any[]} clauses - query clauses needed to evaluate the set.
 	     * @param {Object} [opts] - additional options
 	     */
-	
-	    function QuerySet(modelClass, idArr, opts) {
+	    function QuerySet(modelClass, clauses, opts) {
 	        (0, _classCallCheck3.default)(this, QuerySet);
 	
 	        (0, _assign2.default)(this, {
 	            modelClass: modelClass,
-	            idArr: idArr
+	            clauses: clauses || []
 	        });
 	
 	        this._opts = opts;
-	
-	        // A flag that tells if the user wants
-	        // the result in plain javascript objects
-	        // or {@link Model} instances.
-	        // Results are plain objects by default.
-	        if (opts && opts.hasOwnProperty('withRefs')) {
-	            this._withRefs = opts.withRefs;
-	        } else {
-	            this._withRefs = false;
-	        }
 	    }
 	
-	    (0, _createClass3.default)(QuerySet, [{
-	        key: '_new',
-	        value: function _new(ids, userOpts) {
-	            var opts = (0, _assign2.default)({}, this._opts, userOpts);
-	            return new this.constructor(this.modelClass, ids, opts);
+	    QuerySet.addSharedMethod = function addSharedMethod(methodName) {
+	        this.sharedMethods = this.sharedMethods.concat(methodName);
+	    };
+	
+	    QuerySet.prototype._new = function _new(clauses, userOpts) {
+	        var opts = (0, _assign2.default)({}, this._opts, userOpts);
+	        return new this.constructor(this.modelClass, clauses, opts);
+	    };
+	
+	    QuerySet.prototype.toString = function toString() {
+	        var _this = this;
+	
+	        this._evaluate();
+	        var contents = this.rows.map(function (id) {
+	            return _this.modelClass.withId(id).toString();
+	        }).join('\n    - ');
+	        return 'QuerySet contents: \n    - ' + contents;
+	    };
+	
+	    /**
+	     * Returns an array of the plain objects represented by the QuerySet.
+	     * The plain objects are direct references to the store.
+	     *
+	     * @return {Object[]} references to the plain JS objects represented by
+	     *                    the QuerySet
+	     */
+	
+	
+	    QuerySet.prototype.toRefArray = function toRefArray() {
+	        this._evaluate();
+	        return this.rows;
+	    };
+	
+	    /**
+	     * Returns an array of {@link Model} instances represented by the QuerySet.
+	     * @return {Model[]} model instances represented by the QuerySet
+	     */
+	
+	
+	    QuerySet.prototype.toModelArray = function toModelArray() {
+	        this._evaluate();
+	        var ModelClass = this.modelClass;
+	        return this.rows.map(function (props) {
+	            return new ModelClass(props);
+	        });
+	    };
+	
+	    /**
+	     * Returns the number of {@link Model} instances represented by the QuerySet.
+	     *
+	     * @return {number} length of the QuerySet
+	     */
+	
+	
+	    QuerySet.prototype.count = function count() {
+	        this._evaluate();
+	        return this.rows.length;
+	    };
+	
+	    /**
+	     * Checks if the {@link QuerySet} instance has any records matching the query
+	     * in the database.
+	     *
+	     * @return {Boolean} `true` if the {@link QuerySet} instance contains entities, else `false`.
+	     */
+	
+	
+	    QuerySet.prototype.exists = function exists() {
+	        return Boolean(this.count());
+	    };
+	
+	    /**
+	     * Returns the {@link Model} instance at index `index` in the {@link QuerySet} instance if
+	     * `withRefs` flag is set to `false`, or a reference to the plain JavaScript
+	     * object in the model state if `true`.
+	     *
+	     * @param  {number} index - index of the model instance to get
+	     * @return {Model|undefined} a {@link Model} instance at index
+	     *                           `index` in the {@link QuerySet} instance,
+	     *                           or undefined if the index is out of bounds.
+	     */
+	
+	
+	    QuerySet.prototype.at = function at(index) {
+	        this._evaluate();
+	        if (index >= 0 && index < this.rows.length) {
+	            var ModelClass = this.modelClass;
+	            return new ModelClass(this.rows[index]);
 	        }
 	
-	        /**
-	         * Returns a new QuerySet representing the same entities
-	         * with the `withRefs` flag on.
-	         *
-	         * @return {QuerySet}
-	         */
+	        return undefined;
+	    };
 	
-	    }, {
-	        key: 'toString',
-	        value: function toString() {
-	            var _this = this;
+	    /**
+	     * Returns the {@link Model} instance at index 0 in the {@link QuerySet} instance.
+	     * @return {Model}
+	     */
 	
-	            var contents = this.idArr.map(function (id) {
-	                return _this.modelClass.withId(id).toString();
-	            }).join('\n    - ');
-	            return 'QuerySet contents: \n    - ' + contents;
-	        }
 	
-	        /**
-	         * Returns an array of the plain objects represented by the QuerySet.
-	         * The plain objects are direct references to the store.
-	         *
-	         * @return {Object[]} references to the plain JS objects represented by
-	         *                    the QuerySet
-	         */
+	    QuerySet.prototype.first = function first() {
+	        return this.at(0);
+	    };
 	
-	    }, {
-	        key: 'toRefArray',
-	        value: function toRefArray() {
-	            var _this2 = this;
+	    /**
+	     * Returns the {@link Model} instance at index `QuerySet.count() - 1`
+	     * @return {Model}
+	     */
 	
-	            return this.idArr.map(function (id) {
-	                return _this2.modelClass.accessId(id);
-	            });
-	        }
 	
-	        /**
-	         * Returns an array of Model instances represented by the QuerySet.
-	         * @return {Model[]} model instances represented by the QuerySet
-	         */
+	    QuerySet.prototype.last = function last() {
+	        this._evaluate();
+	        return this.at(this.rows.length - 1);
+	    };
 	
-	    }, {
-	        key: 'toModelArray',
-	        value: function toModelArray() {
-	            var _this3 = this;
+	    /**
+	     * Returns a new {@link QuerySet} instance with the same entities.
+	     * @return {QuerySet} a new QuerySet with the same entities.
+	     */
 	
-	            return this.idArr.map(function (_, idx) {
-	                return _this3.at(idx);
-	            });
-	        }
 	
-	        /**
-	         * Returns the number of model instances represented by the QuerySet.
-	         *
-	         * @return {number} length of the QuerySet
-	         */
+	    QuerySet.prototype.all = function all() {
+	        return this._new(this.clauses);
+	    };
 	
-	    }, {
-	        key: 'count',
-	        value: function count() {
-	            return this.idArr.length;
-	        }
+	    /**
+	     * Returns a new {@link QuerySet} instance with entities that match properties in `lookupObj`.
+	     *
+	     * @param  {Object} lookupObj - the properties to match objects with.
+	     * @return {QuerySet} a new {@link QuerySet} instance with objects that passed the filter.
+	     */
 	
-	        /**
-	         * Checks if the {@link QuerySet} instance has any entities.
-	         *
-	         * @return {Boolean} `true` if the {@link QuerySet} instance contains entities, else `false`.
-	         */
 	
-	    }, {
-	        key: 'exists',
-	        value: function exists() {
-	            return Boolean(this.count());
-	        }
+	    QuerySet.prototype.filter = function filter(lookupObj) {
+	        var normalizedLookupObj = (typeof lookupObj === 'undefined' ? 'undefined' : (0, _typeof3.default)(lookupObj)) === 'object' ? (0, _mapValues2.default)(lookupObj, _utils.normalizeEntity) : lookupObj;
+	        var filterDescriptor = { type: _constants.FILTER, payload: normalizedLookupObj };
+	        return this._new(this.clauses.concat(filterDescriptor));
+	    };
 	
-	        /**
-	         * Returns the {@link Model} instance at index `index` in the {@link QuerySet} instance if
-	         * `withRefs` flag is set to `false`, or a reference to the plain JavaScript
-	         * object in the model state if `true`.
-	         *
-	         * @param  {number} index - index of the model instance to get
-	         * @return {Model|Object} a {@link Model} instance or a plain JavaScript
-	         *                        object at index `index` in the {@link QuerySet} instance
-	         */
+	    /**
+	     * Returns a new {@link QuerySet} instance with entities that do not match
+	     * properties in `lookupObj`.
+	     *
+	     * @param  {Object} lookupObj - the properties to unmatch objects with.
+	     * @return {QuerySet} a new {@link QuerySet} instance with objects that passed the filter.
+	     */
 	
-	    }, {
-	        key: 'at',
-	        value: function at(index) {
-	            if (this._withRefs) {
-	                return this.modelClass.accessId(this.idArr[index]);
-	            }
-	            return this.modelClass.withId(this.idArr[index]);
-	        }
 	
-	        /**
-	         * Returns the {@link Model} instance at index 0 in the {@link QuerySet} instance.
-	         * @return {Model}
-	         */
+	    QuerySet.prototype.exclude = function exclude(lookupObj) {
+	        var normalizedLookupObj = (typeof lookupObj === 'undefined' ? 'undefined' : (0, _typeof3.default)(lookupObj)) === 'object' ? (0, _mapValues2.default)(lookupObj, _utils.normalizeEntity) : lookupObj;
+	        var excludeDescriptor = { type: _constants.EXCLUDE, payload: normalizedLookupObj };
+	        return this._new(this.clauses.concat(excludeDescriptor));
+	    };
 	
-	    }, {
-	        key: 'first',
-	        value: function first() {
-	            return this.at(0);
-	        }
-	
-	        /**
-	         * Returns the {@link Model} instance at index `QuerySet.count() - 1`
-	         * @return {Model}
-	         */
-	
-	    }, {
-	        key: 'last',
-	        value: function last() {
-	            return this.at(this.idArr.length - 1);
-	        }
-	
-	        /**
-	         * Returns a new {@link QuerySet} instance with the same entities.
-	         * @return {QuerySet} a new QuerySet with the same entities.
-	         */
-	
-	    }, {
-	        key: 'all',
-	        value: function all() {
-	            return this._new(this.idArr);
-	        }
-	
-	        /**
-	         * Returns a new {@link QuerySet} instance with entities that match properties in `lookupObj`.
-	         *
-	         * @param  {Object} lookupObj - the properties to match objects with.
-	         * @return {QuerySet} a new {@link QuerySet} instance with objects that passed the filter.
-	         */
-	
-	    }, {
-	        key: 'filter',
-	        value: function filter(lookupObj) {
-	            return this._filterOrExclude(lookupObj, false);
-	        }
-	
-	        /**
-	         * Returns a new {@link QuerySet} instance with entities that do not match properties in `lookupObj`.
-	         *
-	         * @param  {Object} lookupObj - the properties to unmatch objects with.
-	         * @return {QuerySet} a new {@link QuerySet} instance with objects that passed the filter.
-	         */
-	
-	    }, {
-	        key: 'exclude',
-	        value: function exclude(lookupObj) {
-	            return this._filterOrExclude(lookupObj, true);
-	        }
-	    }, {
-	        key: '_filterOrExclude',
-	        value: function _filterOrExclude(_lookupObj, exclude) {
-	            var _this4 = this;
-	
-	            var func = exclude ? _reject2.default : _filter2.default;
-	            var lookupObj = _lookupObj;
-	            var operationWithRefs = true;
-	            var entities = void 0;
-	            if (typeof lookupObj === 'function') {
-	                // For filtering with function,
-	                // use whatever object type
-	                // is flagged.
-	                if (this._withRefs) {
-	                    entities = this.toRefArray();
-	                } else {
-	                    entities = this.toModelArray();
-	                    operationWithRefs = false;
-	                }
-	            } else {
-	                if ((typeof lookupObj === 'undefined' ? 'undefined' : (0, _typeof3.default)(lookupObj)) === 'object') {
-	                    lookupObj = (0, _mapValues2.default)(lookupObj, _utils.normalizeEntity);
-	                }
-	
-	                // Lodash filtering doesn't work with
-	                // Model instances.
-	                entities = this.toRefArray();
-	            }
-	            var filteredEntities = func(entities, lookupObj);
-	            var getIdFunc = operationWithRefs ? function (obj) {
-	                return obj[_this4.modelClass.idAttribute];
-	            } : function (obj) {
-	                return obj.getId();
+	    QuerySet.prototype._evaluate = function _evaluate() {
+	        if (!this._evaluated) {
+	            var session = this.modelClass.session;
+	            var querySpec = {
+	                table: this.modelClass.modelName,
+	                clauses: this.clauses
 	            };
 	
-	            var newIdArr = filteredEntities.map(getIdFunc);
+	            var _session$query = session.query(querySpec),
+	                rows = _session$query.rows;
 	
-	            return this._new(newIdArr, { withRefs: false });
+	            this.rows = rows;
+	            this._evaluated = true;
 	        }
+	    };
 	
-	        /**
-	         * Calls `func` for each object in the {@link QuerySet} instance.
-	         * The object is either a reference to the plain
-	         * object in the database or a {@link Model} instance, depending
-	         * on the flag.
-	         *
-	         * @param  {Function} func - the function to call with each object
-	         * @return {undefined}
-	         */
+	    /**
+	     * Returns a new {@link QuerySet} instance with entities ordered by `iteratees` in ascending
+	     * order, unless otherwise specified. Delegates to `lodash.orderBy`.
+	     *
+	     * @param  {string[]|Function[]} iteratees - an array where each item can be a string or a
+	     *                                           function. If a string is supplied, it should
+	     *                                           correspond to property on the entity that will
+	     *                                           determine the order. If a function is supplied,
+	     *                                           it should return the value to order by.
+	     * @param {Boolean[]} [orders] - the sort orders of `iteratees`. If unspecified, all iteratees
+	     *                               will be sorted in ascending order. `true` and `'asc'`
+	     *                               correspond to ascending order, and `false` and `'desc`
+	     *                               to descending order.
+	     * @return {QuerySet} a new {@link QuerySet} with objects ordered by `iteratees`.
+	     */
 	
-	    }, {
-	        key: 'forEach',
-	        value: function forEach(func) {
-	            var arr = this._withRefs ? this.toRefArray() : this.toModelArray();
 	
-	            arr.forEach(func);
-	        }
+	    QuerySet.prototype.orderBy = function orderBy(iteratees, orders) {
+	        var orderByDescriptor = { type: _constants.ORDER_BY, payload: [iteratees, orders] };
+	        return this._new(this.clauses.concat(orderByDescriptor));
+	    };
 	
-	        /**
-	         * Maps the {@link Model} instances in the {@link QuerySet} instance.
-	         * @param  {Function} func - the mapping function that takes one argument, a
-	         *                           {@link Model} instance or a reference to the plain
-	         *                           JavaScript object in the store, depending on the
-	         *                           QuerySet's `withRefs` flag.
-	         * @return {Array}  the mapped array
-	         */
+	    /**
+	     * Records an update specified with `mergeObj` to all the objects
+	     * in the {@link QuerySet} instance.
+	     *
+	     * @param  {Object} mergeObj - an object to merge with all the objects in this
+	     *                             queryset.
+	     * @return {undefined}
+	     */
 	
-	    }, {
-	        key: 'map',
-	        value: function map(func) {
-	            var _this5 = this;
 	
-	            return this.idArr.map(function (_, idx) {
-	                return func(_this5.at(idx));
-	            });
-	        }
+	    QuerySet.prototype.update = function update(mergeObj) {
+	        this.modelClass.session.applyUpdate({
+	            action: _constants.UPDATE,
+	            query: {
+	                table: this.modelClass.modelName,
+	                clauses: this.clauses
+	            },
+	            payload: mergeObj
+	        });
+	        this._evaluated = false;
+	    };
 	
-	        /**
-	         * Returns a new {@link QuerySet} instance with entities ordered by `iteratees` in ascending
-	         * order, unless otherwise specified. Delegates to `lodash.orderBy`.
-	         *
-	         * @param  {string[]|Function[]} iteratees - an array where each item can be a string or a
-	         *                                           function. If a string is supplied, it should
-	         *                                           correspond to property on the entity that will
-	         *                                           determine the order. If a function is supplied,
-	         *                                           it should return the value to order by.
-	         * @param {Boolean[]} [orders] - the sort orders of `iteratees`. If unspecified, all iteratees
-	         *                               will be sorted in ascending order. `true` and `'asc'`
-	         *                               correspond to ascending order, and `false` and `'desc`
-	         *                               to descending order.
-	         * @return {QuerySet} a new {@link QuerySet} with objects ordered by `iteratees`.
-	         */
+	    /**
+	     * Records a deletion of all the objects in this {@link QuerySet} instance.
+	     * @return {undefined}
+	     */
 	
-	    }, {
-	        key: 'orderBy',
-	        value: function orderBy(iteratees, orders) {
-	            var _this6 = this;
 	
-	            var entities = this.toRefArray();
-	            var iterateeArgs = iteratees;
+	    QuerySet.prototype.delete = function _delete() {
+	        this.toModelArray().forEach(function (model) {
+	            return model._onDelete();
+	        });
 	
-	            // Lodash only works on plain javascript objects.
-	            // If the argument is a function, and the `withRefs`
-	            // flag is false, the argument function is wrapped
-	            // to get the model instance and pass that as the argument
-	            // to the user-supplied function.
-	            if (!this._withRefs) {
-	                iterateeArgs = iteratees.map(function (arg) {
-	                    if (typeof arg === 'function') {
-	                        return function (entity) {
-	                            var id = entity[_this6.modelClass.idAttribute];
-	                            var instance = _this6.modelClass.withId(id);
-	                            return arg(instance);
-	                        };
-	                    }
-	                    return arg;
-	                });
+	        this.modelClass.session.applyUpdate({
+	            action: _constants.DELETE,
+	            query: {
+	                table: this.modelClass.modelName,
+	                clauses: this.clauses
 	            }
-	            var sortedEntities = _orderBy3.default.call(null, entities, iterateeArgs, orders);
-	            return this._new(sortedEntities.map(function (entity) {
-	                return entity[_this6.modelClass.idAttribute];
-	            }), { withRefs: false });
-	        }
+	        });
 	
-	        /**
-	         * Records an update specified with `mergeObj` to all the objects
-	         * in the {@link QuerySet} instance.
-	         *
-	         * @param  {Object} mergeObj - an object to merge with all the objects in this
-	         *                             queryset.
-	         * @return {undefined}
-	         */
+	        this._evaluated = false;
+	    };
 	
-	    }, {
-	        key: 'update',
-	        value: function update(mergeObj) {
-	            this.modelClass.addUpdate({
-	                type: _constants.UPDATE,
-	                payload: {
-	                    idArr: this.idArr,
-	                    mergeObj: mergeObj
-	                }
-	            });
-	        }
+	    // DEPRECATED AND REMOVED METHODS
 	
-	        /**
-	         * Records a deletion of all the objects in this {@link QuerySet} instance.
-	         * @return {undefined}
-	         */
+	    QuerySet.prototype.map = function map() {
+	        throw new Error('QuerySet.prototype.map is removed. ' + 'Call .toModelArray() or .toRefArray() first to map.');
+	    };
 	
-	    }, {
-	        key: 'delete',
-	        value: function _delete() {
-	            this.modelClass.addUpdate({
-	                type: _constants.DELETE,
-	                payload: this.idArr
-	            });
+	    QuerySet.prototype.forEach = function forEach() {
+	        throw new Error('QuerySet.prototype.forEach is removed. ' + 'Call .toModelArray() or .toRefArray() first to iterate.');
+	    };
 	
-	            this.withModels.forEach(function (model) {
-	                return model._onDelete();
-	            });
+	    (0, _createClass3.default)(QuerySet, [{
+	        key: 'withModels',
+	        get: function get() {
+	            throw new Error('QuerySet.prototype.withModels is removed. ' + 'Use .toModelArray() or predicate functions that ' + 'instantiate Models from refs, e.g. new Model(ref).');
 	        }
 	    }, {
 	        key: 'withRefs',
 	        get: function get() {
-	            if (!this._withRefs) {
-	                return this._new(this.idArr, { withRefs: true });
-	            }
-	            return this;
-	        }
-	
-	        /**
-	         * Alias for withRefs
-	         * @return {QuerySet}
-	         */
-	
-	    }, {
-	        key: 'ref',
-	        get: function get() {
-	            return this.withRefs;
-	        }
-	
-	        /**
-	         * Returns a new QuerySet representing the same entities
-	         * with the `withRefs` flag off.
-	         *
-	         * @return {QuerySet}
-	         */
-	
-	    }, {
-	        key: 'withModels',
-	        get: function get() {
-	            if (this._withRefs) {
-	                return this._new(this.idArr, { withRefs: false });
-	            }
-	            return this;
-	        }
-	    }], [{
-	        key: 'addSharedMethod',
-	        value: function addSharedMethod(methodName) {
-	            this.sharedMethods = this.sharedMethods.concat(methodName);
+	            (0, _utils.warnDeprecated)('QuerySet.prototype.withRefs is deprecated. ' + 'Query building operates on refs only now.');
 	        }
 	    }]);
 	    return QuerySet;
 	}();
 	
-	QuerySet.sharedMethods = ['count', 'at', 'all', 'last', 'first', 'forEach', 'exists', 'filter', 'map', 'exclude', 'orderBy', 'update', 'delete', 'ref', 'withRefs', 'withModels'];
+	QuerySet.sharedMethods = ['count', 'at', 'all', 'last', 'first', 'exists', 'filter', 'exclude', 'orderBy', 'update', 'delete'];
 	
 	exports.default = QuerySet;
 
@@ -568,14 +460,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _symbol2 = _interopRequireDefault(_symbol);
 	
-	var _typeof = typeof _symbol2.default === "function" && typeof _iterator2.default === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof _symbol2.default === "function" && obj.constructor === _symbol2.default ? "symbol" : typeof obj; };
+	var _typeof = typeof _symbol2.default === "function" && typeof _iterator2.default === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof _symbol2.default === "function" && obj.constructor === _symbol2.default && obj !== _symbol2.default.prototype ? "symbol" : typeof obj; };
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	exports.default = typeof _symbol2.default === "function" && _typeof(_iterator2.default) === "symbol" ? function (obj) {
 	  return typeof obj === "undefined" ? "undefined" : _typeof(obj);
 	} : function (obj) {
-	  return obj && typeof _symbol2.default === "function" && obj.constructor === _symbol2.default ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof(obj);
+	  return obj && typeof _symbol2.default === "function" && obj.constructor === _symbol2.default && obj !== _symbol2.default.prototype ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof(obj);
 	};
 
 /***/ },
@@ -1033,6 +925,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // Thrash, waste and sodomy: IE GC bug
 	  var iframe = __webpack_require__(23)('iframe')
 	    , i      = enumBugKeys.length
+	    , lt     = '<'
 	    , gt     = '>'
 	    , iframeDocument;
 	  iframe.style.display = 'none';
@@ -1042,7 +935,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  // html.removeChild(iframe);
 	  iframeDocument = iframe.contentWindow.document;
 	  iframeDocument.open();
-	  iframeDocument.write('<script>document.F=Object</script' + gt);
+	  iframeDocument.write(lt + 'script' + gt + 'document.F=Object' + lt + '/script' + gt);
 	  iframeDocument.close();
 	  createDict = iframeDocument.F;
 	  while(i--)delete createDict[PROTOTYPE][enumBugKeys[i]];
@@ -1060,6 +953,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  } else result = createDict();
 	  return Properties === undefined ? result : dPs(result, Properties);
 	};
+
 
 /***/ },
 /* 31 */
@@ -1967,141 +1861,503 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var arrayFilter = __webpack_require__(80),
-	    baseFilter = __webpack_require__(81),
-	    baseIteratee = __webpack_require__(106),
-	    isArray = __webpack_require__(101);
+	var baseAssignValue = __webpack_require__(80),
+	    baseForOwn = __webpack_require__(96),
+	    baseIteratee = __webpack_require__(120);
 	
 	/**
-	 * The opposite of `_.filter`; this method returns the elements of `collection`
-	 * that `predicate` does **not** return truthy for.
+	 * Creates an object with the same keys as `object` and values generated
+	 * by running each own enumerable string keyed property of `object` thru
+	 * `iteratee`. The iteratee is invoked with three arguments:
+	 * (value, key, object).
 	 *
 	 * @static
 	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Collection
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Array|Function|Object|string} [predicate=_.identity]
-	 *  The function invoked per iteration.
-	 * @returns {Array} Returns the new filtered array.
-	 * @see _.filter
+	 * @since 2.4.0
+	 * @category Object
+	 * @param {Object} object The object to iterate over.
+	 * @param {Function} [iteratee=_.identity] The function invoked per iteration.
+	 * @returns {Object} Returns the new mapped object.
+	 * @see _.mapKeys
 	 * @example
 	 *
-	 * var users = [
-	 *   { 'user': 'barney', 'age': 36, 'active': false },
-	 *   { 'user': 'fred',   'age': 40, 'active': true }
-	 * ];
+	 * var users = {
+	 *   'fred':    { 'user': 'fred',    'age': 40 },
+	 *   'pebbles': { 'user': 'pebbles', 'age': 1 }
+	 * };
 	 *
-	 * _.reject(users, function(o) { return !o.active; });
-	 * // => objects for ['fred']
-	 *
-	 * // The `_.matches` iteratee shorthand.
-	 * _.reject(users, { 'age': 40, 'active': true });
-	 * // => objects for ['barney']
-	 *
-	 * // The `_.matchesProperty` iteratee shorthand.
-	 * _.reject(users, ['active', false]);
-	 * // => objects for ['fred']
+	 * _.mapValues(users, function(o) { return o.age; });
+	 * // => { 'fred': 40, 'pebbles': 1 } (iteration order is not guaranteed)
 	 *
 	 * // The `_.property` iteratee shorthand.
-	 * _.reject(users, 'active');
-	 * // => objects for ['barney']
+	 * _.mapValues(users, 'age');
+	 * // => { 'fred': 40, 'pebbles': 1 } (iteration order is not guaranteed)
 	 */
-	function reject(collection, predicate) {
-	  var func = isArray(collection) ? arrayFilter : baseFilter;
-	  predicate = baseIteratee(predicate, 3);
-	  return func(collection, function(value, index, collection) {
-	    return !predicate(value, index, collection);
+	function mapValues(object, iteratee) {
+	  var result = {};
+	  iteratee = baseIteratee(iteratee, 3);
+	
+	  baseForOwn(object, function(value, key, object) {
+	    baseAssignValue(result, key, iteratee(value, key, object));
 	  });
+	  return result;
 	}
 	
-	module.exports = reject;
+	module.exports = mapValues;
 
 
 /***/ },
 /* 80 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
+	var defineProperty = __webpack_require__(81);
+	
 	/**
-	 * A specialized version of `_.filter` for arrays without support for
-	 * iteratee shorthands.
+	 * The base implementation of `assignValue` and `assignMergeValue` without
+	 * value checks.
 	 *
 	 * @private
-	 * @param {Array} array The array to iterate over.
-	 * @param {Function} predicate The function invoked per iteration.
-	 * @returns {Array} Returns the new filtered array.
+	 * @param {Object} object The object to modify.
+	 * @param {string} key The key of the property to assign.
+	 * @param {*} value The value to assign.
 	 */
-	function arrayFilter(array, predicate) {
-	  var index = -1,
-	      length = array.length,
-	      resIndex = 0,
-	      result = [];
-	
-	  while (++index < length) {
-	    var value = array[index];
-	    if (predicate(value, index, array)) {
-	      result[resIndex++] = value;
-	    }
+	function baseAssignValue(object, key, value) {
+	  if (key == '__proto__' && defineProperty) {
+	    defineProperty(object, key, {
+	      'configurable': true,
+	      'enumerable': true,
+	      'value': value,
+	      'writable': true
+	    });
+	  } else {
+	    object[key] = value;
 	  }
-	  return result;
 	}
 	
-	module.exports = arrayFilter;
+	module.exports = baseAssignValue;
 
 
 /***/ },
 /* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseEach = __webpack_require__(82);
+	var getNative = __webpack_require__(82);
 	
-	/**
-	 * The base implementation of `_.filter` without support for iteratee shorthands.
-	 *
-	 * @private
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Function} predicate The function invoked per iteration.
-	 * @returns {Array} Returns the new filtered array.
-	 */
-	function baseFilter(collection, predicate) {
-	  var result = [];
-	  baseEach(collection, function(value, index, collection) {
-	    if (predicate(value, index, collection)) {
-	      result.push(value);
-	    }
-	  });
-	  return result;
-	}
+	var defineProperty = (function() {
+	  try {
+	    var func = getNative(Object, 'defineProperty');
+	    func({}, '', {});
+	    return func;
+	  } catch (e) {}
+	}());
 	
-	module.exports = baseFilter;
+	module.exports = defineProperty;
 
 
 /***/ },
 /* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseForOwn = __webpack_require__(83),
-	    createBaseEach = __webpack_require__(105);
+	var baseIsNative = __webpack_require__(83),
+	    getValue = __webpack_require__(95);
 	
 	/**
-	 * The base implementation of `_.forEach` without support for iteratee shorthands.
+	 * Gets the native function at `key` of `object`.
 	 *
 	 * @private
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Function} iteratee The function invoked per iteration.
-	 * @returns {Array|Object} Returns `collection`.
+	 * @param {Object} object The object to query.
+	 * @param {string} key The key of the method to get.
+	 * @returns {*} Returns the function if it's native, else `undefined`.
 	 */
-	var baseEach = createBaseEach(baseForOwn);
+	function getNative(object, key) {
+	  var value = getValue(object, key);
+	  return baseIsNative(value) ? value : undefined;
+	}
 	
-	module.exports = baseEach;
+	module.exports = getNative;
 
 
 /***/ },
 /* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseFor = __webpack_require__(84),
-	    keys = __webpack_require__(86);
+	var isFunction = __webpack_require__(84),
+	    isMasked = __webpack_require__(92),
+	    isObject = __webpack_require__(91),
+	    toSource = __webpack_require__(94);
+	
+	/**
+	 * Used to match `RegExp`
+	 * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+	 */
+	var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+	
+	/** Used to detect host constructors (Safari). */
+	var reIsHostCtor = /^\[object .+?Constructor\]$/;
+	
+	/** Used for built-in method references. */
+	var funcProto = Function.prototype,
+	    objectProto = Object.prototype;
+	
+	/** Used to resolve the decompiled source of functions. */
+	var funcToString = funcProto.toString;
+	
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+	
+	/** Used to detect if a method is native. */
+	var reIsNative = RegExp('^' +
+	  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+	  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+	);
+	
+	/**
+	 * The base implementation of `_.isNative` without bad shim checks.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a native function,
+	 *  else `false`.
+	 */
+	function baseIsNative(value) {
+	  if (!isObject(value) || isMasked(value)) {
+	    return false;
+	  }
+	  var pattern = isFunction(value) ? reIsNative : reIsHostCtor;
+	  return pattern.test(toSource(value));
+	}
+	
+	module.exports = baseIsNative;
+
+
+/***/ },
+/* 84 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseGetTag = __webpack_require__(85),
+	    isObject = __webpack_require__(91);
+	
+	/** `Object#toString` result references. */
+	var asyncTag = '[object AsyncFunction]',
+	    funcTag = '[object Function]',
+	    genTag = '[object GeneratorFunction]',
+	    proxyTag = '[object Proxy]';
+	
+	/**
+	 * Checks if `value` is classified as a `Function` object.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+	 * @example
+	 *
+	 * _.isFunction(_);
+	 * // => true
+	 *
+	 * _.isFunction(/abc/);
+	 * // => false
+	 */
+	function isFunction(value) {
+	  if (!isObject(value)) {
+	    return false;
+	  }
+	  // The use of `Object#toString` avoids issues with the `typeof` operator
+	  // in Safari 9 which returns 'object' for typed arrays and other constructors.
+	  var tag = baseGetTag(value);
+	  return tag == funcTag || tag == genTag || tag == asyncTag || tag == proxyTag;
+	}
+	
+	module.exports = isFunction;
+
+
+/***/ },
+/* 85 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Symbol = __webpack_require__(86),
+	    getRawTag = __webpack_require__(89),
+	    objectToString = __webpack_require__(90);
+	
+	/** `Object#toString` result references. */
+	var nullTag = '[object Null]',
+	    undefinedTag = '[object Undefined]';
+	
+	/** Built-in value references. */
+	var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+	
+	/**
+	 * The base implementation of `getTag` without fallbacks for buggy environments.
+	 *
+	 * @private
+	 * @param {*} value The value to query.
+	 * @returns {string} Returns the `toStringTag`.
+	 */
+	function baseGetTag(value) {
+	  if (value == null) {
+	    return value === undefined ? undefinedTag : nullTag;
+	  }
+	  value = Object(value);
+	  return (symToStringTag && symToStringTag in value)
+	    ? getRawTag(value)
+	    : objectToString(value);
+	}
+	
+	module.exports = baseGetTag;
+
+
+/***/ },
+/* 86 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var root = __webpack_require__(87);
+	
+	/** Built-in value references. */
+	var Symbol = root.Symbol;
+	
+	module.exports = Symbol;
+
+
+/***/ },
+/* 87 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var freeGlobal = __webpack_require__(88);
+	
+	/** Detect free variable `self`. */
+	var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+	
+	/** Used as a reference to the global object. */
+	var root = freeGlobal || freeSelf || Function('return this')();
+	
+	module.exports = root;
+
+
+/***/ },
+/* 88 */
+/***/ function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {/** Detect free variable `global` from Node.js. */
+	var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+	
+	module.exports = freeGlobal;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 89 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var Symbol = __webpack_require__(86);
+	
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+	
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+	
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var nativeObjectToString = objectProto.toString;
+	
+	/** Built-in value references. */
+	var symToStringTag = Symbol ? Symbol.toStringTag : undefined;
+	
+	/**
+	 * A specialized version of `baseGetTag` which ignores `Symbol.toStringTag` values.
+	 *
+	 * @private
+	 * @param {*} value The value to query.
+	 * @returns {string} Returns the raw `toStringTag`.
+	 */
+	function getRawTag(value) {
+	  var isOwn = hasOwnProperty.call(value, symToStringTag),
+	      tag = value[symToStringTag];
+	
+	  try {
+	    value[symToStringTag] = undefined;
+	    var unmasked = true;
+	  } catch (e) {}
+	
+	  var result = nativeObjectToString.call(value);
+	  if (unmasked) {
+	    if (isOwn) {
+	      value[symToStringTag] = tag;
+	    } else {
+	      delete value[symToStringTag];
+	    }
+	  }
+	  return result;
+	}
+	
+	module.exports = getRawTag;
+
+
+/***/ },
+/* 90 */
+/***/ function(module, exports) {
+
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+	
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var nativeObjectToString = objectProto.toString;
+	
+	/**
+	 * Converts `value` to a string using `Object.prototype.toString`.
+	 *
+	 * @private
+	 * @param {*} value The value to convert.
+	 * @returns {string} Returns the converted string.
+	 */
+	function objectToString(value) {
+	  return nativeObjectToString.call(value);
+	}
+	
+	module.exports = objectToString;
+
+
+/***/ },
+/* 91 */
+/***/ function(module, exports) {
+
+	/**
+	 * Checks if `value` is the
+	 * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+	 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+	 * @example
+	 *
+	 * _.isObject({});
+	 * // => true
+	 *
+	 * _.isObject([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObject(_.noop);
+	 * // => true
+	 *
+	 * _.isObject(null);
+	 * // => false
+	 */
+	function isObject(value) {
+	  var type = typeof value;
+	  return value != null && (type == 'object' || type == 'function');
+	}
+	
+	module.exports = isObject;
+
+
+/***/ },
+/* 92 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var coreJsData = __webpack_require__(93);
+	
+	/** Used to detect methods masquerading as native. */
+	var maskSrcKey = (function() {
+	  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+	  return uid ? ('Symbol(src)_1.' + uid) : '';
+	}());
+	
+	/**
+	 * Checks if `func` has its source masked.
+	 *
+	 * @private
+	 * @param {Function} func The function to check.
+	 * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+	 */
+	function isMasked(func) {
+	  return !!maskSrcKey && (maskSrcKey in func);
+	}
+	
+	module.exports = isMasked;
+
+
+/***/ },
+/* 93 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var root = __webpack_require__(87);
+	
+	/** Used to detect overreaching core-js shims. */
+	var coreJsData = root['__core-js_shared__'];
+	
+	module.exports = coreJsData;
+
+
+/***/ },
+/* 94 */
+/***/ function(module, exports) {
+
+	/** Used for built-in method references. */
+	var funcProto = Function.prototype;
+	
+	/** Used to resolve the decompiled source of functions. */
+	var funcToString = funcProto.toString;
+	
+	/**
+	 * Converts `func` to its source code.
+	 *
+	 * @private
+	 * @param {Function} func The function to convert.
+	 * @returns {string} Returns the source code.
+	 */
+	function toSource(func) {
+	  if (func != null) {
+	    try {
+	      return funcToString.call(func);
+	    } catch (e) {}
+	    try {
+	      return (func + '');
+	    } catch (e) {}
+	  }
+	  return '';
+	}
+	
+	module.exports = toSource;
+
+
+/***/ },
+/* 95 */
+/***/ function(module, exports) {
+
+	/**
+	 * Gets the value at `key` of `object`.
+	 *
+	 * @private
+	 * @param {Object} [object] The object to query.
+	 * @param {string} key The key of the property to get.
+	 * @returns {*} Returns the property value.
+	 */
+	function getValue(object, key) {
+	  return object == null ? undefined : object[key];
+	}
+	
+	module.exports = getValue;
+
+
+/***/ },
+/* 96 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseFor = __webpack_require__(97),
+	    keys = __webpack_require__(99);
 	
 	/**
 	 * The base implementation of `_.forOwn` without support for iteratee shorthands.
@@ -2119,10 +2375,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 84 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var createBaseFor = __webpack_require__(85);
+	var createBaseFor = __webpack_require__(98);
 	
 	/**
 	 * The base implementation of `baseForOwn` which iterates over `object`
@@ -2141,7 +2397,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 85 */
+/* 98 */
 /***/ function(module, exports) {
 
 	/**
@@ -2172,21 +2428,18 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 86 */
+/* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseHas = __webpack_require__(87),
-	    baseKeys = __webpack_require__(89),
-	    indexKeys = __webpack_require__(90),
-	    isArrayLike = __webpack_require__(94),
-	    isIndex = __webpack_require__(103),
-	    isPrototype = __webpack_require__(104);
+	var arrayLikeKeys = __webpack_require__(100),
+	    baseKeys = __webpack_require__(115),
+	    isArrayLike = __webpack_require__(119);
 	
 	/**
 	 * Creates an array of the own enumerable property names of `object`.
 	 *
 	 * **Note:** Non-object values are coerced to objects. See the
-	 * [ES spec](http://ecma-international.org/ecma-262/6.0/#sec-object.keys)
+	 * [ES spec](http://ecma-international.org/ecma-262/7.0/#sec-object.keys)
 	 * for more details.
 	 *
 	 * @static
@@ -2211,33 +2464,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * // => ['0', '1']
 	 */
 	function keys(object) {
-	  var isProto = isPrototype(object);
-	  if (!(isProto || isArrayLike(object))) {
-	    return baseKeys(object);
-	  }
-	  var indexes = indexKeys(object),
-	      skipIndexes = !!indexes,
-	      result = indexes || [],
-	      length = result.length;
-	
-	  for (var key in object) {
-	    if (baseHas(object, key) &&
-	        !(skipIndexes && (key == 'length' || isIndex(key, length))) &&
-	        !(isProto && key == 'constructor')) {
-	      result.push(key);
-	    }
-	  }
-	  return result;
+	  return isArrayLike(object) ? arrayLikeKeys(object) : baseKeys(object);
 	}
 	
 	module.exports = keys;
 
 
 /***/ },
-/* 87 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getPrototype = __webpack_require__(88);
+	var baseTimes = __webpack_require__(101),
+	    isArguments = __webpack_require__(102),
+	    isArray = __webpack_require__(105),
+	    isBuffer = __webpack_require__(106),
+	    isIndex = __webpack_require__(109),
+	    isTypedArray = __webpack_require__(110);
 	
 	/** Used for built-in method references. */
 	var objectProto = Object.prototype;
@@ -2246,99 +2488,45 @@ return /******/ (function(modules) { // webpackBootstrap
 	var hasOwnProperty = objectProto.hasOwnProperty;
 	
 	/**
-	 * The base implementation of `_.has` without support for deep paths.
-	 *
-	 * @private
-	 * @param {Object} object The object to query.
-	 * @param {Array|string} key The key to check.
-	 * @returns {boolean} Returns `true` if `key` exists, else `false`.
-	 */
-	function baseHas(object, key) {
-	  // Avoid a bug in IE 10-11 where objects with a [[Prototype]] of `null`,
-	  // that are composed entirely of index properties, return `false` for
-	  // `hasOwnProperty` checks of them.
-	  return hasOwnProperty.call(object, key) ||
-	    (typeof object == 'object' && key in object && getPrototype(object) === null);
-	}
-	
-	module.exports = baseHas;
-
-
-/***/ },
-/* 88 */
-/***/ function(module, exports) {
-
-	/* Built-in method references for those with the same name as other `lodash` methods. */
-	var nativeGetPrototype = Object.getPrototypeOf;
-	
-	/**
-	 * Gets the `[[Prototype]]` of `value`.
+	 * Creates an array of the enumerable property names of the array-like `value`.
 	 *
 	 * @private
 	 * @param {*} value The value to query.
-	 * @returns {null|Object} Returns the `[[Prototype]]`.
-	 */
-	function getPrototype(value) {
-	  return nativeGetPrototype(Object(value));
-	}
-	
-	module.exports = getPrototype;
-
-
-/***/ },
-/* 89 */
-/***/ function(module, exports) {
-
-	/* Built-in method references for those with the same name as other `lodash` methods. */
-	var nativeKeys = Object.keys;
-	
-	/**
-	 * The base implementation of `_.keys` which doesn't skip the constructor
-	 * property of prototypes or treat sparse arrays as dense.
-	 *
-	 * @private
-	 * @param {Object} object The object to query.
+	 * @param {boolean} inherited Specify returning inherited property names.
 	 * @returns {Array} Returns the array of property names.
 	 */
-	function baseKeys(object) {
-	  return nativeKeys(Object(object));
-	}
+	function arrayLikeKeys(value, inherited) {
+	  var isArr = isArray(value),
+	      isArg = !isArr && isArguments(value),
+	      isBuff = !isArr && !isArg && isBuffer(value),
+	      isType = !isArr && !isArg && !isBuff && isTypedArray(value),
+	      skipIndexes = isArr || isArg || isBuff || isType,
+	      result = skipIndexes ? baseTimes(value.length, String) : [],
+	      length = result.length;
 	
-	module.exports = baseKeys;
-
-
-/***/ },
-/* 90 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseTimes = __webpack_require__(91),
-	    isArguments = __webpack_require__(92),
-	    isArray = __webpack_require__(101),
-	    isLength = __webpack_require__(99),
-	    isString = __webpack_require__(102);
-	
-	/**
-	 * Creates an array of index keys for `object` values of arrays,
-	 * `arguments` objects, and strings, otherwise `null` is returned.
-	 *
-	 * @private
-	 * @param {Object} object The object to query.
-	 * @returns {Array|null} Returns index keys, else `null`.
-	 */
-	function indexKeys(object) {
-	  var length = object ? object.length : undefined;
-	  if (isLength(length) &&
-	      (isArray(object) || isString(object) || isArguments(object))) {
-	    return baseTimes(length, String);
+	  for (var key in value) {
+	    if ((inherited || hasOwnProperty.call(value, key)) &&
+	        !(skipIndexes && (
+	           // Safari 9 has enumerable `arguments.length` in strict mode.
+	           key == 'length' ||
+	           // Node.js 0.10 has enumerable non-index properties on buffers.
+	           (isBuff && (key == 'offset' || key == 'parent')) ||
+	           // PhantomJS 2 has enumerable non-index properties on typed arrays.
+	           (isType && (key == 'buffer' || key == 'byteLength' || key == 'byteOffset')) ||
+	           // Skip index properties.
+	           isIndex(key, length)
+	        ))) {
+	      result.push(key);
+	    }
 	  }
-	  return null;
+	  return result;
 	}
 	
-	module.exports = indexKeys;
+	module.exports = arrayLikeKeys;
 
 
 /***/ },
-/* 91 */
+/* 101 */
 /***/ function(module, exports) {
 
 	/**
@@ -2364,26 +2552,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 92 */
+/* 102 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArrayLikeObject = __webpack_require__(93);
-	
-	/** `Object#toString` result references. */
-	var argsTag = '[object Arguments]';
+	var baseIsArguments = __webpack_require__(103),
+	    isObjectLike = __webpack_require__(104);
 	
 	/** Used for built-in method references. */
 	var objectProto = Object.prototype;
 	
 	/** Used to check objects for own properties. */
 	var hasOwnProperty = objectProto.hasOwnProperty;
-	
-	/**
-	 * Used to resolve the
-	 * [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
-	 * of values.
-	 */
-	var objectToString = objectProto.toString;
 	
 	/** Built-in value references. */
 	var propertyIsEnumerable = objectProto.propertyIsEnumerable;
@@ -2396,7 +2575,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @since 0.1.0
 	 * @category Lang
 	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is correctly classified,
+	 * @returns {boolean} Returns `true` if `value` is an `arguments` object,
 	 *  else `false`.
 	 * @example
 	 *
@@ -2406,266 +2585,40 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * _.isArguments([1, 2, 3]);
 	 * // => false
 	 */
-	function isArguments(value) {
-	  // Safari 8.1 incorrectly makes `arguments.callee` enumerable in strict mode.
-	  return isArrayLikeObject(value) && hasOwnProperty.call(value, 'callee') &&
-	    (!propertyIsEnumerable.call(value, 'callee') || objectToString.call(value) == argsTag);
-	}
+	var isArguments = baseIsArguments(function() { return arguments; }()) ? baseIsArguments : function(value) {
+	  return isObjectLike(value) && hasOwnProperty.call(value, 'callee') &&
+	    !propertyIsEnumerable.call(value, 'callee');
+	};
 	
 	module.exports = isArguments;
 
 
 /***/ },
-/* 93 */
+/* 103 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArrayLike = __webpack_require__(94),
-	    isObjectLike = __webpack_require__(100);
-	
-	/**
-	 * This method is like `_.isArrayLike` except that it also checks if `value`
-	 * is an object.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is an array-like object,
-	 *  else `false`.
-	 * @example
-	 *
-	 * _.isArrayLikeObject([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isArrayLikeObject(document.body.children);
-	 * // => true
-	 *
-	 * _.isArrayLikeObject('abc');
-	 * // => false
-	 *
-	 * _.isArrayLikeObject(_.noop);
-	 * // => false
-	 */
-	function isArrayLikeObject(value) {
-	  return isObjectLike(value) && isArrayLike(value);
-	}
-	
-	module.exports = isArrayLikeObject;
-
-
-/***/ },
-/* 94 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var getLength = __webpack_require__(95),
-	    isFunction = __webpack_require__(97),
-	    isLength = __webpack_require__(99);
-	
-	/**
-	 * Checks if `value` is array-like. A value is considered array-like if it's
-	 * not a function and has a `value.length` that's an integer greater than or
-	 * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
-	 * @example
-	 *
-	 * _.isArrayLike([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isArrayLike(document.body.children);
-	 * // => true
-	 *
-	 * _.isArrayLike('abc');
-	 * // => true
-	 *
-	 * _.isArrayLike(_.noop);
-	 * // => false
-	 */
-	function isArrayLike(value) {
-	  return value != null && isLength(getLength(value)) && !isFunction(value);
-	}
-	
-	module.exports = isArrayLike;
-
-
-/***/ },
-/* 95 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseProperty = __webpack_require__(96);
-	
-	/**
-	 * Gets the "length" property value of `object`.
-	 *
-	 * **Note:** This function is used to avoid a
-	 * [JIT bug](https://bugs.webkit.org/show_bug.cgi?id=142792) that affects
-	 * Safari on at least iOS 8.1-8.3 ARM64.
-	 *
-	 * @private
-	 * @param {Object} object The object to query.
-	 * @returns {*} Returns the "length" value.
-	 */
-	var getLength = baseProperty('length');
-	
-	module.exports = getLength;
-
-
-/***/ },
-/* 96 */
-/***/ function(module, exports) {
-
-	/**
-	 * The base implementation of `_.property` without support for deep paths.
-	 *
-	 * @private
-	 * @param {string} key The key of the property to get.
-	 * @returns {Function} Returns the new accessor function.
-	 */
-	function baseProperty(key) {
-	  return function(object) {
-	    return object == null ? undefined : object[key];
-	  };
-	}
-	
-	module.exports = baseProperty;
-
-
-/***/ },
-/* 97 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var isObject = __webpack_require__(98);
+	var baseGetTag = __webpack_require__(85),
+	    isObjectLike = __webpack_require__(104);
 	
 	/** `Object#toString` result references. */
-	var funcTag = '[object Function]',
-	    genTag = '[object GeneratorFunction]';
-	
-	/** Used for built-in method references. */
-	var objectProto = Object.prototype;
+	var argsTag = '[object Arguments]';
 	
 	/**
-	 * Used to resolve the
-	 * [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
-	 * of values.
-	 */
-	var objectToString = objectProto.toString;
-	
-	/**
-	 * Checks if `value` is classified as a `Function` object.
+	 * The base implementation of `_.isArguments`.
 	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Lang
+	 * @private
 	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is correctly classified,
-	 *  else `false`.
-	 * @example
-	 *
-	 * _.isFunction(_);
-	 * // => true
-	 *
-	 * _.isFunction(/abc/);
-	 * // => false
+	 * @returns {boolean} Returns `true` if `value` is an `arguments` object,
 	 */
-	function isFunction(value) {
-	  // The use of `Object#toString` avoids issues with the `typeof` operator
-	  // in Safari 8 which returns 'object' for typed array and weak map constructors,
-	  // and PhantomJS 1.9 which returns 'function' for `NodeList` instances.
-	  var tag = isObject(value) ? objectToString.call(value) : '';
-	  return tag == funcTag || tag == genTag;
+	function baseIsArguments(value) {
+	  return isObjectLike(value) && baseGetTag(value) == argsTag;
 	}
 	
-	module.exports = isFunction;
+	module.exports = baseIsArguments;
 
 
 /***/ },
-/* 98 */
-/***/ function(module, exports) {
-
-	/**
-	 * Checks if `value` is the
-	 * [language type](http://www.ecma-international.org/ecma-262/6.0/#sec-ecmascript-language-types)
-	 * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is an object, else `false`.
-	 * @example
-	 *
-	 * _.isObject({});
-	 * // => true
-	 *
-	 * _.isObject([1, 2, 3]);
-	 * // => true
-	 *
-	 * _.isObject(_.noop);
-	 * // => true
-	 *
-	 * _.isObject(null);
-	 * // => false
-	 */
-	function isObject(value) {
-	  var type = typeof value;
-	  return !!value && (type == 'object' || type == 'function');
-	}
-	
-	module.exports = isObject;
-
-
-/***/ },
-/* 99 */
-/***/ function(module, exports) {
-
-	/** Used as references for various `Number` constants. */
-	var MAX_SAFE_INTEGER = 9007199254740991;
-	
-	/**
-	 * Checks if `value` is a valid array-like length.
-	 *
-	 * **Note:** This function is loosely based on
-	 * [`ToLength`](http://ecma-international.org/ecma-262/6.0/#sec-tolength).
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a valid length,
-	 *  else `false`.
-	 * @example
-	 *
-	 * _.isLength(3);
-	 * // => true
-	 *
-	 * _.isLength(Number.MIN_VALUE);
-	 * // => false
-	 *
-	 * _.isLength(Infinity);
-	 * // => false
-	 *
-	 * _.isLength('3');
-	 * // => false
-	 */
-	function isLength(value) {
-	  return typeof value == 'number' &&
-	    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
-	}
-	
-	module.exports = isLength;
-
-
-/***/ },
-/* 100 */
+/* 104 */
 /***/ function(module, exports) {
 
 	/**
@@ -2693,14 +2646,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * // => false
 	 */
 	function isObjectLike(value) {
-	  return !!value && typeof value == 'object';
+	  return value != null && typeof value == 'object';
 	}
 	
 	module.exports = isObjectLike;
 
 
 /***/ },
-/* 101 */
+/* 105 */
 /***/ function(module, exports) {
 
 	/**
@@ -2709,11 +2662,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @static
 	 * @memberOf _
 	 * @since 0.1.0
-	 * @type {Function}
 	 * @category Lang
 	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is correctly classified,
-	 *  else `false`.
+	 * @returns {boolean} Returns `true` if `value` is an array, else `false`.
 	 * @example
 	 *
 	 * _.isArray([1, 2, 3]);
@@ -2734,53 +2685,92 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 102 */
+/* 106 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArray = __webpack_require__(101),
-	    isObjectLike = __webpack_require__(100);
+	/* WEBPACK VAR INJECTION */(function(module) {var root = __webpack_require__(87),
+	    stubFalse = __webpack_require__(108);
 	
-	/** `Object#toString` result references. */
-	var stringTag = '[object String]';
+	/** Detect free variable `exports`. */
+	var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
 	
-	/** Used for built-in method references. */
-	var objectProto = Object.prototype;
+	/** Detect free variable `module`. */
+	var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
+	
+	/** Detect the popular CommonJS extension `module.exports`. */
+	var moduleExports = freeModule && freeModule.exports === freeExports;
+	
+	/** Built-in value references. */
+	var Buffer = moduleExports ? root.Buffer : undefined;
+	
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+	var nativeIsBuffer = Buffer ? Buffer.isBuffer : undefined;
 	
 	/**
-	 * Used to resolve the
-	 * [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
-	 * of values.
-	 */
-	var objectToString = objectProto.toString;
-	
-	/**
-	 * Checks if `value` is classified as a `String` primitive or object.
+	 * Checks if `value` is a buffer.
 	 *
 	 * @static
-	 * @since 0.1.0
 	 * @memberOf _
+	 * @since 4.3.0
 	 * @category Lang
 	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is correctly classified,
-	 *  else `false`.
+	 * @returns {boolean} Returns `true` if `value` is a buffer, else `false`.
 	 * @example
 	 *
-	 * _.isString('abc');
+	 * _.isBuffer(new Buffer(2));
 	 * // => true
 	 *
-	 * _.isString(1);
+	 * _.isBuffer(new Uint8Array(2));
 	 * // => false
 	 */
-	function isString(value) {
-	  return typeof value == 'string' ||
-	    (!isArray(value) && isObjectLike(value) && objectToString.call(value) == stringTag);
-	}
+	var isBuffer = nativeIsBuffer || stubFalse;
 	
-	module.exports = isString;
+	module.exports = isBuffer;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(107)(module)))
+
+/***/ },
+/* 107 */
+/***/ function(module, exports) {
+
+	module.exports = function(module) {
+		if(!module.webpackPolyfill) {
+			module.deprecate = function() {};
+			module.paths = [];
+			// module.parent = undefined by default
+			module.children = [];
+			module.webpackPolyfill = 1;
+		}
+		return module;
+	}
 
 
 /***/ },
-/* 103 */
+/* 108 */
+/***/ function(module, exports) {
+
+	/**
+	 * This method returns `false`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.13.0
+	 * @category Util
+	 * @returns {boolean} Returns `false`.
+	 * @example
+	 *
+	 * _.times(2, _.stubFalse);
+	 * // => [false, false]
+	 */
+	function stubFalse() {
+	  return false;
+	}
+	
+	module.exports = stubFalse;
+
+
+/***/ },
+/* 109 */
 /***/ function(module, exports) {
 
 	/** Used as references for various `Number` constants. */
@@ -2808,7 +2798,232 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 104 */
+/* 110 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseIsTypedArray = __webpack_require__(111),
+	    baseUnary = __webpack_require__(113),
+	    nodeUtil = __webpack_require__(114);
+	
+	/* Node.js helper references. */
+	var nodeIsTypedArray = nodeUtil && nodeUtil.isTypedArray;
+	
+	/**
+	 * Checks if `value` is classified as a typed array.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 3.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+	 * @example
+	 *
+	 * _.isTypedArray(new Uint8Array);
+	 * // => true
+	 *
+	 * _.isTypedArray([]);
+	 * // => false
+	 */
+	var isTypedArray = nodeIsTypedArray ? baseUnary(nodeIsTypedArray) : baseIsTypedArray;
+	
+	module.exports = isTypedArray;
+
+
+/***/ },
+/* 111 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseGetTag = __webpack_require__(85),
+	    isLength = __webpack_require__(112),
+	    isObjectLike = __webpack_require__(104);
+	
+	/** `Object#toString` result references. */
+	var argsTag = '[object Arguments]',
+	    arrayTag = '[object Array]',
+	    boolTag = '[object Boolean]',
+	    dateTag = '[object Date]',
+	    errorTag = '[object Error]',
+	    funcTag = '[object Function]',
+	    mapTag = '[object Map]',
+	    numberTag = '[object Number]',
+	    objectTag = '[object Object]',
+	    regexpTag = '[object RegExp]',
+	    setTag = '[object Set]',
+	    stringTag = '[object String]',
+	    weakMapTag = '[object WeakMap]';
+	
+	var arrayBufferTag = '[object ArrayBuffer]',
+	    dataViewTag = '[object DataView]',
+	    float32Tag = '[object Float32Array]',
+	    float64Tag = '[object Float64Array]',
+	    int8Tag = '[object Int8Array]',
+	    int16Tag = '[object Int16Array]',
+	    int32Tag = '[object Int32Array]',
+	    uint8Tag = '[object Uint8Array]',
+	    uint8ClampedTag = '[object Uint8ClampedArray]',
+	    uint16Tag = '[object Uint16Array]',
+	    uint32Tag = '[object Uint32Array]';
+	
+	/** Used to identify `toStringTag` values of typed arrays. */
+	var typedArrayTags = {};
+	typedArrayTags[float32Tag] = typedArrayTags[float64Tag] =
+	typedArrayTags[int8Tag] = typedArrayTags[int16Tag] =
+	typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] =
+	typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
+	typedArrayTags[uint32Tag] = true;
+	typedArrayTags[argsTag] = typedArrayTags[arrayTag] =
+	typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
+	typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
+	typedArrayTags[errorTag] = typedArrayTags[funcTag] =
+	typedArrayTags[mapTag] = typedArrayTags[numberTag] =
+	typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
+	typedArrayTags[setTag] = typedArrayTags[stringTag] =
+	typedArrayTags[weakMapTag] = false;
+	
+	/**
+	 * The base implementation of `_.isTypedArray` without Node.js optimizations.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a typed array, else `false`.
+	 */
+	function baseIsTypedArray(value) {
+	  return isObjectLike(value) &&
+	    isLength(value.length) && !!typedArrayTags[baseGetTag(value)];
+	}
+	
+	module.exports = baseIsTypedArray;
+
+
+/***/ },
+/* 112 */
+/***/ function(module, exports) {
+
+	/** Used as references for various `Number` constants. */
+	var MAX_SAFE_INTEGER = 9007199254740991;
+	
+	/**
+	 * Checks if `value` is a valid array-like length.
+	 *
+	 * **Note:** This method is loosely based on
+	 * [`ToLength`](http://ecma-international.org/ecma-262/7.0/#sec-tolength).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a valid length, else `false`.
+	 * @example
+	 *
+	 * _.isLength(3);
+	 * // => true
+	 *
+	 * _.isLength(Number.MIN_VALUE);
+	 * // => false
+	 *
+	 * _.isLength(Infinity);
+	 * // => false
+	 *
+	 * _.isLength('3');
+	 * // => false
+	 */
+	function isLength(value) {
+	  return typeof value == 'number' &&
+	    value > -1 && value % 1 == 0 && value <= MAX_SAFE_INTEGER;
+	}
+	
+	module.exports = isLength;
+
+
+/***/ },
+/* 113 */
+/***/ function(module, exports) {
+
+	/**
+	 * The base implementation of `_.unary` without support for storing metadata.
+	 *
+	 * @private
+	 * @param {Function} func The function to cap arguments for.
+	 * @returns {Function} Returns the new capped function.
+	 */
+	function baseUnary(func) {
+	  return function(value) {
+	    return func(value);
+	  };
+	}
+	
+	module.exports = baseUnary;
+
+
+/***/ },
+/* 114 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(module) {var freeGlobal = __webpack_require__(88);
+	
+	/** Detect free variable `exports`. */
+	var freeExports = typeof exports == 'object' && exports && !exports.nodeType && exports;
+	
+	/** Detect free variable `module`. */
+	var freeModule = freeExports && typeof module == 'object' && module && !module.nodeType && module;
+	
+	/** Detect the popular CommonJS extension `module.exports`. */
+	var moduleExports = freeModule && freeModule.exports === freeExports;
+	
+	/** Detect free variable `process` from Node.js. */
+	var freeProcess = moduleExports && freeGlobal.process;
+	
+	/** Used to access faster Node.js helpers. */
+	var nodeUtil = (function() {
+	  try {
+	    return freeProcess && freeProcess.binding('util');
+	  } catch (e) {}
+	}());
+	
+	module.exports = nodeUtil;
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(107)(module)))
+
+/***/ },
+/* 115 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isPrototype = __webpack_require__(116),
+	    nativeKeys = __webpack_require__(117);
+	
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+	
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+	
+	/**
+	 * The base implementation of `_.keys` which doesn't treat sparse arrays as dense.
+	 *
+	 * @private
+	 * @param {Object} object The object to query.
+	 * @returns {Array} Returns the array of property names.
+	 */
+	function baseKeys(object) {
+	  if (!isPrototype(object)) {
+	    return nativeKeys(object);
+	  }
+	  var result = [];
+	  for (var key in Object(object)) {
+	    if (hasOwnProperty.call(object, key) && key != 'constructor') {
+	      result.push(key);
+	    }
+	  }
+	  return result;
+	}
+	
+	module.exports = baseKeys;
+
+
+/***/ },
+/* 116 */
 /***/ function(module, exports) {
 
 	/** Used for built-in method references. */
@@ -2832,52 +3047,86 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 105 */
+/* 117 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArrayLike = __webpack_require__(94);
+	var overArg = __webpack_require__(118);
 	
-	/**
-	 * Creates a `baseEach` or `baseEachRight` function.
-	 *
-	 * @private
-	 * @param {Function} eachFunc The function to iterate over a collection.
-	 * @param {boolean} [fromRight] Specify iterating from right to left.
-	 * @returns {Function} Returns the new base function.
-	 */
-	function createBaseEach(eachFunc, fromRight) {
-	  return function(collection, iteratee) {
-	    if (collection == null) {
-	      return collection;
-	    }
-	    if (!isArrayLike(collection)) {
-	      return eachFunc(collection, iteratee);
-	    }
-	    var length = collection.length,
-	        index = fromRight ? length : -1,
-	        iterable = Object(collection);
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+	var nativeKeys = overArg(Object.keys, Object);
 	
-	    while ((fromRight ? index-- : ++index < length)) {
-	      if (iteratee(iterable[index], index, iterable) === false) {
-	        break;
-	      }
-	    }
-	    return collection;
-	  };
-	}
-	
-	module.exports = createBaseEach;
+	module.exports = nativeKeys;
 
 
 /***/ },
-/* 106 */
+/* 118 */
+/***/ function(module, exports) {
+
+	/**
+	 * Creates a unary function that invokes `func` with its argument transformed.
+	 *
+	 * @private
+	 * @param {Function} func The function to wrap.
+	 * @param {Function} transform The argument transform.
+	 * @returns {Function} Returns the new function.
+	 */
+	function overArg(func, transform) {
+	  return function(arg) {
+	    return func(transform(arg));
+	  };
+	}
+	
+	module.exports = overArg;
+
+
+/***/ },
+/* 119 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseMatches = __webpack_require__(107),
-	    baseMatchesProperty = __webpack_require__(173),
-	    identity = __webpack_require__(187),
-	    isArray = __webpack_require__(101),
-	    property = __webpack_require__(188);
+	var isFunction = __webpack_require__(84),
+	    isLength = __webpack_require__(112);
+	
+	/**
+	 * Checks if `value` is array-like. A value is considered array-like if it's
+	 * not a function and has a `value.length` that's an integer greater than or
+	 * equal to `0` and less than or equal to `Number.MAX_SAFE_INTEGER`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is array-like, else `false`.
+	 * @example
+	 *
+	 * _.isArrayLike([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isArrayLike(document.body.children);
+	 * // => true
+	 *
+	 * _.isArrayLike('abc');
+	 * // => true
+	 *
+	 * _.isArrayLike(_.noop);
+	 * // => false
+	 */
+	function isArrayLike(value) {
+	  return value != null && isLength(value.length) && !isFunction(value);
+	}
+	
+	module.exports = isArrayLike;
+
+
+/***/ },
+/* 120 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseMatches = __webpack_require__(121),
+	    baseMatchesProperty = __webpack_require__(174),
+	    identity = __webpack_require__(190),
+	    isArray = __webpack_require__(105),
+	    property = __webpack_require__(191);
 	
 	/**
 	 * The base implementation of `_.iteratee`.
@@ -2907,12 +3156,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 107 */
+/* 121 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseIsMatch = __webpack_require__(108),
-	    getMatchData = __webpack_require__(165),
-	    matchesStrictComparable = __webpack_require__(172);
+	var baseIsMatch = __webpack_require__(122),
+	    getMatchData = __webpack_require__(171),
+	    matchesStrictComparable = __webpack_require__(173);
 	
 	/**
 	 * The base implementation of `_.matches` which doesn't clone `source`.
@@ -2935,11 +3184,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 108 */
+/* 122 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Stack = __webpack_require__(109),
-	    baseIsEqual = __webpack_require__(146);
+	var Stack = __webpack_require__(123),
+	    baseIsEqual = __webpack_require__(153);
 	
 	/** Used to compose bitmasks for comparison styles. */
 	var UNORDERED_COMPARE_FLAG = 1,
@@ -3003,15 +3252,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 109 */
+/* 123 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ListCache = __webpack_require__(110),
-	    stackClear = __webpack_require__(118),
-	    stackDelete = __webpack_require__(119),
-	    stackGet = __webpack_require__(120),
-	    stackHas = __webpack_require__(121),
-	    stackSet = __webpack_require__(122);
+	var ListCache = __webpack_require__(124),
+	    stackClear = __webpack_require__(132),
+	    stackDelete = __webpack_require__(133),
+	    stackGet = __webpack_require__(134),
+	    stackHas = __webpack_require__(135),
+	    stackSet = __webpack_require__(136);
 	
 	/**
 	 * Creates a stack cache object to store key-value pairs.
@@ -3021,7 +3270,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param {Array} [entries] The key-value pairs to cache.
 	 */
 	function Stack(entries) {
-	  this.__data__ = new ListCache(entries);
+	  var data = this.__data__ = new ListCache(entries);
+	  this.size = data.size;
 	}
 	
 	// Add methods to `Stack`.
@@ -3035,14 +3285,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 110 */
+/* 124 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var listCacheClear = __webpack_require__(111),
-	    listCacheDelete = __webpack_require__(112),
-	    listCacheGet = __webpack_require__(115),
-	    listCacheHas = __webpack_require__(116),
-	    listCacheSet = __webpack_require__(117);
+	var listCacheClear = __webpack_require__(125),
+	    listCacheDelete = __webpack_require__(126),
+	    listCacheGet = __webpack_require__(129),
+	    listCacheHas = __webpack_require__(130),
+	    listCacheSet = __webpack_require__(131);
 	
 	/**
 	 * Creates an list cache object.
@@ -3053,7 +3303,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	function ListCache(entries) {
 	  var index = -1,
-	      length = entries ? entries.length : 0;
+	      length = entries == null ? 0 : entries.length;
 	
 	  this.clear();
 	  while (++index < length) {
@@ -3073,7 +3323,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 111 */
+/* 125 */
 /***/ function(module, exports) {
 
 	/**
@@ -3085,16 +3335,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	function listCacheClear() {
 	  this.__data__ = [];
+	  this.size = 0;
 	}
 	
 	module.exports = listCacheClear;
 
 
 /***/ },
-/* 112 */
+/* 126 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var assocIndexOf = __webpack_require__(113);
+	var assocIndexOf = __webpack_require__(127);
 	
 	/** Used for built-in method references. */
 	var arrayProto = Array.prototype;
@@ -3124,6 +3375,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  } else {
 	    splice.call(data, index, 1);
 	  }
+	  --this.size;
 	  return true;
 	}
 	
@@ -3131,16 +3383,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 113 */
+/* 127 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var eq = __webpack_require__(114);
+	var eq = __webpack_require__(128);
 	
 	/**
 	 * Gets the index at which the `key` is found in `array` of key-value pairs.
 	 *
 	 * @private
-	 * @param {Array} array The array to search.
+	 * @param {Array} array The array to inspect.
 	 * @param {*} key The key to search for.
 	 * @returns {number} Returns the index of the matched value, else `-1`.
 	 */
@@ -3158,12 +3410,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 114 */
+/* 128 */
 /***/ function(module, exports) {
 
 	/**
 	 * Performs a
-	 * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
+	 * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
 	 * comparison between two values to determine if they are equivalent.
 	 *
 	 * @static
@@ -3175,8 +3427,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
 	 * @example
 	 *
-	 * var object = { 'user': 'fred' };
-	 * var other = { 'user': 'fred' };
+	 * var object = { 'a': 1 };
+	 * var other = { 'a': 1 };
 	 *
 	 * _.eq(object, object);
 	 * // => true
@@ -3201,10 +3453,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 115 */
+/* 129 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var assocIndexOf = __webpack_require__(113);
+	var assocIndexOf = __webpack_require__(127);
 	
 	/**
 	 * Gets the list cache value for `key`.
@@ -3226,10 +3478,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 116 */
+/* 130 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var assocIndexOf = __webpack_require__(113);
+	var assocIndexOf = __webpack_require__(127);
 	
 	/**
 	 * Checks if a list cache value for `key` exists.
@@ -3248,10 +3500,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 117 */
+/* 131 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var assocIndexOf = __webpack_require__(113);
+	var assocIndexOf = __webpack_require__(127);
 	
 	/**
 	 * Sets the list cache `key` to `value`.
@@ -3268,6 +3520,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      index = assocIndexOf(data, key);
 	
 	  if (index < 0) {
+	    ++this.size;
 	    data.push([key, value]);
 	  } else {
 	    data[index][1] = value;
@@ -3279,10 +3532,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 118 */
+/* 132 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ListCache = __webpack_require__(110);
+	var ListCache = __webpack_require__(124);
 	
 	/**
 	 * Removes all key-value entries from the stack.
@@ -3293,13 +3546,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	function stackClear() {
 	  this.__data__ = new ListCache;
+	  this.size = 0;
 	}
 	
 	module.exports = stackClear;
 
 
 /***/ },
-/* 119 */
+/* 133 */
 /***/ function(module, exports) {
 
 	/**
@@ -3312,14 +3566,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
 	 */
 	function stackDelete(key) {
-	  return this.__data__['delete'](key);
+	  var data = this.__data__,
+	      result = data['delete'](key);
+	
+	  this.size = data.size;
+	  return result;
 	}
 	
 	module.exports = stackDelete;
 
 
 /***/ },
-/* 120 */
+/* 134 */
 /***/ function(module, exports) {
 
 	/**
@@ -3339,7 +3597,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 121 */
+/* 135 */
 /***/ function(module, exports) {
 
 	/**
@@ -3359,11 +3617,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 122 */
+/* 136 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var ListCache = __webpack_require__(110),
-	    MapCache = __webpack_require__(123);
+	var ListCache = __webpack_require__(124),
+	    Map = __webpack_require__(137),
+	    MapCache = __webpack_require__(138);
 	
 	/** Used as the size to enable large array optimizations. */
 	var LARGE_ARRAY_SIZE = 200;
@@ -3379,11 +3638,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {Object} Returns the stack cache instance.
 	 */
 	function stackSet(key, value) {
-	  var cache = this.__data__;
-	  if (cache instanceof ListCache && cache.__data__.length == LARGE_ARRAY_SIZE) {
-	    cache = this.__data__ = new MapCache(cache.__data__);
+	  var data = this.__data__;
+	  if (data instanceof ListCache) {
+	    var pairs = data.__data__;
+	    if (!Map || (pairs.length < LARGE_ARRAY_SIZE - 1)) {
+	      pairs.push([key, value]);
+	      this.size = ++data.size;
+	      return this;
+	    }
+	    data = this.__data__ = new MapCache(pairs);
 	  }
-	  cache.set(key, value);
+	  data.set(key, value);
+	  this.size = data.size;
 	  return this;
 	}
 	
@@ -3391,14 +3657,27 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 123 */
+/* 137 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var mapCacheClear = __webpack_require__(124),
-	    mapCacheDelete = __webpack_require__(140),
-	    mapCacheGet = __webpack_require__(143),
-	    mapCacheHas = __webpack_require__(144),
-	    mapCacheSet = __webpack_require__(145);
+	var getNative = __webpack_require__(82),
+	    root = __webpack_require__(87);
+	
+	/* Built-in method references that are verified to be native. */
+	var Map = getNative(root, 'Map');
+	
+	module.exports = Map;
+
+
+/***/ },
+/* 138 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var mapCacheClear = __webpack_require__(139),
+	    mapCacheDelete = __webpack_require__(147),
+	    mapCacheGet = __webpack_require__(150),
+	    mapCacheHas = __webpack_require__(151),
+	    mapCacheSet = __webpack_require__(152);
 	
 	/**
 	 * Creates a map cache object to store key-value pairs.
@@ -3409,7 +3688,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	function MapCache(entries) {
 	  var index = -1,
-	      length = entries ? entries.length : 0;
+	      length = entries == null ? 0 : entries.length;
 	
 	  this.clear();
 	  while (++index < length) {
@@ -3429,12 +3708,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 124 */
+/* 139 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Hash = __webpack_require__(125),
-	    ListCache = __webpack_require__(110),
-	    Map = __webpack_require__(136);
+	var Hash = __webpack_require__(140),
+	    ListCache = __webpack_require__(124),
+	    Map = __webpack_require__(137);
 	
 	/**
 	 * Removes all key-value entries from the map.
@@ -3444,6 +3723,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @memberOf MapCache
 	 */
 	function mapCacheClear() {
+	  this.size = 0;
 	  this.__data__ = {
 	    'hash': new Hash,
 	    'map': new (Map || ListCache),
@@ -3455,14 +3735,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 125 */
+/* 140 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var hashClear = __webpack_require__(126),
-	    hashDelete = __webpack_require__(132),
-	    hashGet = __webpack_require__(133),
-	    hashHas = __webpack_require__(134),
-	    hashSet = __webpack_require__(135);
+	var hashClear = __webpack_require__(141),
+	    hashDelete = __webpack_require__(143),
+	    hashGet = __webpack_require__(144),
+	    hashHas = __webpack_require__(145),
+	    hashSet = __webpack_require__(146);
 	
 	/**
 	 * Creates a hash object.
@@ -3473,7 +3753,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	function Hash(entries) {
 	  var index = -1,
-	      length = entries ? entries.length : 0;
+	      length = entries == null ? 0 : entries.length;
 	
 	  this.clear();
 	  while (++index < length) {
@@ -3493,10 +3773,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 126 */
+/* 141 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var nativeCreate = __webpack_require__(127);
+	var nativeCreate = __webpack_require__(142);
 	
 	/**
 	 * Removes all key-value entries from the hash.
@@ -3507,16 +3787,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	function hashClear() {
 	  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+	  this.size = 0;
 	}
 	
 	module.exports = hashClear;
 
 
 /***/ },
-/* 127 */
+/* 142 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getNative = __webpack_require__(128);
+	var getNative = __webpack_require__(82);
 	
 	/* Built-in method references that are verified to be native. */
 	var nativeCreate = getNative(Object, 'create');
@@ -3525,146 +3806,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 128 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var isNative = __webpack_require__(129);
-	
-	/**
-	 * Gets the native function at `key` of `object`.
-	 *
-	 * @private
-	 * @param {Object} object The object to query.
-	 * @param {string} key The key of the method to get.
-	 * @returns {*} Returns the function if it's native, else `undefined`.
-	 */
-	function getNative(object, key) {
-	  var value = object[key];
-	  return isNative(value) ? value : undefined;
-	}
-	
-	module.exports = getNative;
-
-
-/***/ },
-/* 129 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var isFunction = __webpack_require__(97),
-	    isHostObject = __webpack_require__(130),
-	    isObject = __webpack_require__(98),
-	    toSource = __webpack_require__(131);
-	
-	/**
-	 * Used to match `RegExp`
-	 * [syntax characters](http://ecma-international.org/ecma-262/6.0/#sec-patterns).
-	 */
-	var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
-	
-	/** Used to detect host constructors (Safari). */
-	var reIsHostCtor = /^\[object .+?Constructor\]$/;
-	
-	/** Used for built-in method references. */
-	var objectProto = Object.prototype;
-	
-	/** Used to resolve the decompiled source of functions. */
-	var funcToString = Function.prototype.toString;
-	
-	/** Used to check objects for own properties. */
-	var hasOwnProperty = objectProto.hasOwnProperty;
-	
-	/** Used to detect if a method is native. */
-	var reIsNative = RegExp('^' +
-	  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
-	  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
-	);
-	
-	/**
-	 * Checks if `value` is a native function.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 3.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a native function,
-	 *  else `false`.
-	 * @example
-	 *
-	 * _.isNative(Array.prototype.push);
-	 * // => true
-	 *
-	 * _.isNative(_);
-	 * // => false
-	 */
-	function isNative(value) {
-	  if (!isObject(value)) {
-	    return false;
-	  }
-	  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
-	  return pattern.test(toSource(value));
-	}
-	
-	module.exports = isNative;
-
-
-/***/ },
-/* 130 */
-/***/ function(module, exports) {
-
-	/**
-	 * Checks if `value` is a host object in IE < 9.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
-	 */
-	function isHostObject(value) {
-	  // Many host objects are `Object` objects that can coerce to strings
-	  // despite having improperly defined `toString` methods.
-	  var result = false;
-	  if (value != null && typeof value.toString != 'function') {
-	    try {
-	      result = !!(value + '');
-	    } catch (e) {}
-	  }
-	  return result;
-	}
-	
-	module.exports = isHostObject;
-
-
-/***/ },
-/* 131 */
-/***/ function(module, exports) {
-
-	/** Used to resolve the decompiled source of functions. */
-	var funcToString = Function.prototype.toString;
-	
-	/**
-	 * Converts `func` to its source code.
-	 *
-	 * @private
-	 * @param {Function} func The function to process.
-	 * @returns {string} Returns the source code.
-	 */
-	function toSource(func) {
-	  if (func != null) {
-	    try {
-	      return funcToString.call(func);
-	    } catch (e) {}
-	    try {
-	      return (func + '');
-	    } catch (e) {}
-	  }
-	  return '';
-	}
-	
-	module.exports = toSource;
-
-
-/***/ },
-/* 132 */
+/* 143 */
 /***/ function(module, exports) {
 
 	/**
@@ -3678,17 +3820,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
 	 */
 	function hashDelete(key) {
-	  return this.has(key) && delete this.__data__[key];
+	  var result = this.has(key) && delete this.__data__[key];
+	  this.size -= result ? 1 : 0;
+	  return result;
 	}
 	
 	module.exports = hashDelete;
 
 
 /***/ },
-/* 133 */
+/* 144 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var nativeCreate = __webpack_require__(127);
+	var nativeCreate = __webpack_require__(142);
 	
 	/** Used to stand-in for `undefined` hash values. */
 	var HASH_UNDEFINED = '__lodash_hash_undefined__';
@@ -3721,10 +3865,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 134 */
+/* 145 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var nativeCreate = __webpack_require__(127);
+	var nativeCreate = __webpack_require__(142);
 	
 	/** Used for built-in method references. */
 	var objectProto = Object.prototype;
@@ -3750,10 +3894,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 135 */
+/* 146 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var nativeCreate = __webpack_require__(127);
+	var nativeCreate = __webpack_require__(142);
 	
 	/** Used to stand-in for `undefined` hash values. */
 	var HASH_UNDEFINED = '__lodash_hash_undefined__';
@@ -3770,6 +3914,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	function hashSet(key, value) {
 	  var data = this.__data__;
+	  this.size += this.has(key) ? 0 : 1;
 	  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
 	  return this;
 	}
@@ -3778,105 +3923,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 136 */
+/* 147 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getNative = __webpack_require__(128),
-	    root = __webpack_require__(137);
-	
-	/* Built-in method references that are verified to be native. */
-	var Map = getNative(root, 'Map');
-	
-	module.exports = Map;
-
-
-/***/ },
-/* 137 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/* WEBPACK VAR INJECTION */(function(module, global) {var checkGlobal = __webpack_require__(139);
-	
-	/** Used to determine if values are of the language type `Object`. */
-	var objectTypes = {
-	  'function': true,
-	  'object': true
-	};
-	
-	/** Detect free variable `exports`. */
-	var freeExports = (objectTypes[typeof exports] && exports && !exports.nodeType)
-	  ? exports
-	  : undefined;
-	
-	/** Detect free variable `module`. */
-	var freeModule = (objectTypes[typeof module] && module && !module.nodeType)
-	  ? module
-	  : undefined;
-	
-	/** Detect free variable `global` from Node.js. */
-	var freeGlobal = checkGlobal(freeExports && freeModule && typeof global == 'object' && global);
-	
-	/** Detect free variable `self`. */
-	var freeSelf = checkGlobal(objectTypes[typeof self] && self);
-	
-	/** Detect free variable `window`. */
-	var freeWindow = checkGlobal(objectTypes[typeof window] && window);
-	
-	/** Detect `this` as the global object. */
-	var thisGlobal = checkGlobal(objectTypes[typeof this] && this);
-	
-	/**
-	 * Used as a reference to the global object.
-	 *
-	 * The `this` value is used if it's the global object to avoid Greasemonkey's
-	 * restricted `window` object, otherwise the `window` object is used.
-	 */
-	var root = freeGlobal ||
-	  ((freeWindow !== (thisGlobal && thisGlobal.window)) && freeWindow) ||
-	    freeSelf || thisGlobal || Function('return this')();
-	
-	module.exports = root;
-	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(138)(module), (function() { return this; }())))
-
-/***/ },
-/* 138 */
-/***/ function(module, exports) {
-
-	module.exports = function(module) {
-		if(!module.webpackPolyfill) {
-			module.deprecate = function() {};
-			module.paths = [];
-			// module.parent = undefined by default
-			module.children = [];
-			module.webpackPolyfill = 1;
-		}
-		return module;
-	}
-
-
-/***/ },
-/* 139 */
-/***/ function(module, exports) {
-
-	/**
-	 * Checks if `value` is a global object.
-	 *
-	 * @private
-	 * @param {*} value The value to check.
-	 * @returns {null|Object} Returns `value` if it's a global object, else `null`.
-	 */
-	function checkGlobal(value) {
-	  return (value && value.Object === Object) ? value : null;
-	}
-	
-	module.exports = checkGlobal;
-
-
-/***/ },
-/* 140 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var getMapData = __webpack_require__(141);
+	var getMapData = __webpack_require__(148);
 	
 	/**
 	 * Removes `key` and its value from the map.
@@ -3888,17 +3938,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {boolean} Returns `true` if the entry was removed, else `false`.
 	 */
 	function mapCacheDelete(key) {
-	  return getMapData(this, key)['delete'](key);
+	  var result = getMapData(this, key)['delete'](key);
+	  this.size -= result ? 1 : 0;
+	  return result;
 	}
 	
 	module.exports = mapCacheDelete;
 
 
 /***/ },
-/* 141 */
+/* 148 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isKeyable = __webpack_require__(142);
+	var isKeyable = __webpack_require__(149);
 	
 	/**
 	 * Gets the data for `map`.
@@ -3919,7 +3971,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 142 */
+/* 149 */
 /***/ function(module, exports) {
 
 	/**
@@ -3940,10 +3992,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 143 */
+/* 150 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getMapData = __webpack_require__(141);
+	var getMapData = __webpack_require__(148);
 	
 	/**
 	 * Gets the map value for `key`.
@@ -3962,10 +4014,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 144 */
+/* 151 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getMapData = __webpack_require__(141);
+	var getMapData = __webpack_require__(148);
 	
 	/**
 	 * Checks if a map value for `key` exists.
@@ -3984,10 +4036,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 145 */
+/* 152 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getMapData = __webpack_require__(141);
+	var getMapData = __webpack_require__(148);
 	
 	/**
 	 * Sets the map `key` to `value`.
@@ -4000,7 +4052,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {Object} Returns the map cache instance.
 	 */
 	function mapCacheSet(key, value) {
-	  getMapData(this, key).set(key, value);
+	  var data = getMapData(this, key),
+	      size = data.size;
+	
+	  data.set(key, value);
+	  this.size += data.size == size ? 0 : 1;
 	  return this;
 	}
 	
@@ -4008,12 +4064,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 146 */
+/* 153 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseIsEqualDeep = __webpack_require__(147),
-	    isObject = __webpack_require__(98),
-	    isObjectLike = __webpack_require__(100);
+	var baseIsEqualDeep = __webpack_require__(154),
+	    isObject = __webpack_require__(91),
+	    isObjectLike = __webpack_require__(104);
 	
 	/**
 	 * The base implementation of `_.isEqual` which supports partial comparisons
@@ -4044,17 +4100,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 147 */
+/* 154 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Stack = __webpack_require__(109),
-	    equalArrays = __webpack_require__(148),
-	    equalByTag = __webpack_require__(153),
-	    equalObjects = __webpack_require__(158),
-	    getTag = __webpack_require__(159),
-	    isArray = __webpack_require__(101),
-	    isHostObject = __webpack_require__(130),
-	    isTypedArray = __webpack_require__(164);
+	var Stack = __webpack_require__(123),
+	    equalArrays = __webpack_require__(155),
+	    equalByTag = __webpack_require__(161),
+	    equalObjects = __webpack_require__(165),
+	    getTag = __webpack_require__(166),
+	    isArray = __webpack_require__(105),
+	    isBuffer = __webpack_require__(106),
+	    isTypedArray = __webpack_require__(110);
 	
 	/** Used to compose bitmasks for comparison styles. */
 	var PARTIAL_COMPARE_FLAG = 2;
@@ -4099,10 +4155,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    othTag = getTag(other);
 	    othTag = othTag == argsTag ? objectTag : othTag;
 	  }
-	  var objIsObj = objTag == objectTag && !isHostObject(object),
-	      othIsObj = othTag == objectTag && !isHostObject(other),
+	  var objIsObj = objTag == objectTag,
+	      othIsObj = othTag == objectTag,
 	      isSameTag = objTag == othTag;
 	
+	  if (isSameTag && isBuffer(object)) {
+	    if (!isBuffer(other)) {
+	      return false;
+	    }
+	    objIsArr = true;
+	    objIsObj = false;
+	  }
 	  if (isSameTag && !objIsObj) {
 	    stack || (stack = new Stack);
 	    return (objIsArr || isTypedArray(object))
@@ -4132,11 +4195,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 148 */
+/* 155 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var SetCache = __webpack_require__(149),
-	    arraySome = __webpack_require__(152);
+	var SetCache = __webpack_require__(156),
+	    arraySome = __webpack_require__(159),
+	    cacheHas = __webpack_require__(160);
 	
 	/** Used to compose bitmasks for comparison styles. */
 	var UNORDERED_COMPARE_FLAG = 1,
@@ -4166,7 +4230,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	  // Assume cyclic values are equal.
 	  var stacked = stack.get(array);
-	  if (stacked) {
+	  if (stacked && stack.get(other)) {
 	    return stacked == other;
 	  }
 	  var index = -1,
@@ -4174,6 +4238,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      seen = (bitmask & UNORDERED_COMPARE_FLAG) ? new SetCache : undefined;
 	
 	  stack.set(array, other);
+	  stack.set(other, array);
 	
 	  // Ignore non-index properties.
 	  while (++index < arrLength) {
@@ -4195,9 +4260,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // Recursively compare arrays (susceptible to call stack limits).
 	    if (seen) {
 	      if (!arraySome(other, function(othValue, othIndex) {
-	            if (!seen.has(othIndex) &&
+	            if (!cacheHas(seen, othIndex) &&
 	                (arrValue === othValue || equalFunc(arrValue, othValue, customizer, bitmask, stack))) {
-	              return seen.add(othIndex);
+	              return seen.push(othIndex);
 	            }
 	          })) {
 	        result = false;
@@ -4212,6 +4277,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }
 	  stack['delete'](array);
+	  stack['delete'](other);
 	  return result;
 	}
 	
@@ -4219,12 +4285,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 149 */
+/* 156 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var MapCache = __webpack_require__(123),
-	    setCacheAdd = __webpack_require__(150),
-	    setCacheHas = __webpack_require__(151);
+	var MapCache = __webpack_require__(138),
+	    setCacheAdd = __webpack_require__(157),
+	    setCacheHas = __webpack_require__(158);
 	
 	/**
 	 *
@@ -4236,7 +4302,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	function SetCache(values) {
 	  var index = -1,
-	      length = values ? values.length : 0;
+	      length = values == null ? 0 : values.length;
 	
 	  this.__data__ = new MapCache;
 	  while (++index < length) {
@@ -4252,7 +4318,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 150 */
+/* 157 */
 /***/ function(module, exports) {
 
 	/** Used to stand-in for `undefined` hash values. */
@@ -4277,7 +4343,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 151 */
+/* 158 */
 /***/ function(module, exports) {
 
 	/**
@@ -4297,7 +4363,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 152 */
+/* 159 */
 /***/ function(module, exports) {
 
 	/**
@@ -4305,14 +4371,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * shorthands.
 	 *
 	 * @private
-	 * @param {Array} array The array to iterate over.
+	 * @param {Array} [array] The array to iterate over.
 	 * @param {Function} predicate The function invoked per iteration.
 	 * @returns {boolean} Returns `true` if any element passes the predicate check,
 	 *  else `false`.
 	 */
 	function arraySome(array, predicate) {
 	  var index = -1,
-	      length = array.length;
+	      length = array == null ? 0 : array.length;
 	
 	  while (++index < length) {
 	    if (predicate(array[index], index, array)) {
@@ -4326,14 +4392,34 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 153 */
+/* 160 */
+/***/ function(module, exports) {
+
+	/**
+	 * Checks if a `cache` value for `key` exists.
+	 *
+	 * @private
+	 * @param {Object} cache The cache to query.
+	 * @param {string} key The key of the entry to check.
+	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+	 */
+	function cacheHas(cache, key) {
+	  return cache.has(key);
+	}
+	
+	module.exports = cacheHas;
+
+
+/***/ },
+/* 161 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Symbol = __webpack_require__(154),
-	    Uint8Array = __webpack_require__(155),
-	    equalArrays = __webpack_require__(148),
-	    mapToArray = __webpack_require__(156),
-	    setToArray = __webpack_require__(157);
+	var Symbol = __webpack_require__(86),
+	    Uint8Array = __webpack_require__(162),
+	    eq = __webpack_require__(128),
+	    equalArrays = __webpack_require__(155),
+	    mapToArray = __webpack_require__(163),
+	    setToArray = __webpack_require__(164);
 	
 	/** Used to compose bitmasks for comparison styles. */
 	var UNORDERED_COMPARE_FLAG = 1,
@@ -4394,22 +4480,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    case boolTag:
 	    case dateTag:
-	      // Coerce dates and booleans to numbers, dates to milliseconds and
-	      // booleans to `1` or `0` treating invalid dates coerced to `NaN` as
-	      // not equal.
-	      return +object == +other;
+	    case numberTag:
+	      // Coerce booleans to `1` or `0` and dates to milliseconds.
+	      // Invalid dates are coerced to `NaN`.
+	      return eq(+object, +other);
 	
 	    case errorTag:
 	      return object.name == other.name && object.message == other.message;
 	
-	    case numberTag:
-	      // Treat `NaN` vs. `NaN` as equal.
-	      return (object != +object) ? other != +other : object == +other;
-	
 	    case regexpTag:
 	    case stringTag:
 	      // Coerce regexes to strings and treat strings, primitives and objects,
-	      // as equal. See http://www.ecma-international.org/ecma-262/6.0/#sec-regexp.prototype.tostring
+	      // as equal. See http://www.ecma-international.org/ecma-262/7.0/#sec-regexp.prototype.tostring
 	      // for more details.
 	      return object == (other + '');
 	
@@ -4429,10 +4511,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return stacked == other;
 	      }
 	      bitmask |= UNORDERED_COMPARE_FLAG;
-	      stack.set(object, other);
 	
 	      // Recursively compare objects (susceptible to call stack limits).
-	      return equalArrays(convert(object), convert(other), equalFunc, customizer, bitmask, stack);
+	      stack.set(object, other);
+	      var result = equalArrays(convert(object), convert(other), equalFunc, customizer, bitmask, stack);
+	      stack['delete'](object);
+	      return result;
 	
 	    case symbolTag:
 	      if (symbolValueOf) {
@@ -4446,22 +4530,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 154 */
+/* 162 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var root = __webpack_require__(137);
-	
-	/** Built-in value references. */
-	var Symbol = root.Symbol;
-	
-	module.exports = Symbol;
-
-
-/***/ },
-/* 155 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var root = __webpack_require__(137);
+	var root = __webpack_require__(87);
 	
 	/** Built-in value references. */
 	var Uint8Array = root.Uint8Array;
@@ -4470,7 +4542,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 156 */
+/* 163 */
 /***/ function(module, exports) {
 
 	/**
@@ -4494,7 +4566,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 157 */
+/* 164 */
 /***/ function(module, exports) {
 
 	/**
@@ -4518,14 +4590,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 158 */
+/* 165 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseHas = __webpack_require__(87),
-	    keys = __webpack_require__(86);
+	var keys = __webpack_require__(99);
 	
 	/** Used to compose bitmasks for comparison styles. */
 	var PARTIAL_COMPARE_FLAG = 2;
+	
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+	
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
 	
 	/**
 	 * A specialized version of `baseIsEqualDeep` for objects with support for
@@ -4554,17 +4631,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var index = objLength;
 	  while (index--) {
 	    var key = objProps[index];
-	    if (!(isPartial ? key in other : baseHas(other, key))) {
+	    if (!(isPartial ? key in other : hasOwnProperty.call(other, key))) {
 	      return false;
 	    }
 	  }
 	  // Assume cyclic values are equal.
 	  var stacked = stack.get(object);
-	  if (stacked) {
+	  if (stacked && stack.get(other)) {
 	    return stacked == other;
 	  }
 	  var result = true;
 	  stack.set(object, other);
+	  stack.set(other, object);
 	
 	  var skipCtor = isPartial;
 	  while (++index < objLength) {
@@ -4600,6 +4678,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }
 	  stack['delete'](object);
+	  stack['delete'](other);
 	  return result;
 	}
 	
@@ -4607,15 +4686,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 159 */
+/* 166 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var DataView = __webpack_require__(160),
-	    Map = __webpack_require__(136),
-	    Promise = __webpack_require__(161),
-	    Set = __webpack_require__(162),
-	    WeakMap = __webpack_require__(163),
-	    toSource = __webpack_require__(131);
+	var DataView = __webpack_require__(167),
+	    Map = __webpack_require__(137),
+	    Promise = __webpack_require__(168),
+	    Set = __webpack_require__(169),
+	    WeakMap = __webpack_require__(170),
+	    baseGetTag = __webpack_require__(85),
+	    toSource = __webpack_require__(94);
 	
 	/** `Object#toString` result references. */
 	var mapTag = '[object Map]',
@@ -4625,16 +4705,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    weakMapTag = '[object WeakMap]';
 	
 	var dataViewTag = '[object DataView]';
-	
-	/** Used for built-in method references. */
-	var objectProto = Object.prototype;
-	
-	/**
-	 * Used to resolve the
-	 * [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
-	 * of values.
-	 */
-	var objectToString = objectProto.toString;
 	
 	/** Used to detect maps, sets, and weakmaps. */
 	var dataViewCtorString = toSource(DataView),
@@ -4650,21 +4720,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param {*} value The value to query.
 	 * @returns {string} Returns the `toStringTag`.
 	 */
-	function getTag(value) {
-	  return objectToString.call(value);
-	}
+	var getTag = baseGetTag;
 	
-	// Fallback for data views, maps, sets, and weak maps in IE 11,
-	// for data views in Edge, and promises in Node.js.
+	// Fallback for data views, maps, sets, and weak maps in IE 11 and promises in Node.js < 6.
 	if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
 	    (Map && getTag(new Map) != mapTag) ||
 	    (Promise && getTag(Promise.resolve()) != promiseTag) ||
 	    (Set && getTag(new Set) != setTag) ||
 	    (WeakMap && getTag(new WeakMap) != weakMapTag)) {
 	  getTag = function(value) {
-	    var result = objectToString.call(value),
+	    var result = baseGetTag(value),
 	        Ctor = result == objectTag ? value.constructor : undefined,
-	        ctorString = Ctor ? toSource(Ctor) : undefined;
+	        ctorString = Ctor ? toSource(Ctor) : '';
 	
 	    if (ctorString) {
 	      switch (ctorString) {
@@ -4683,11 +4750,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 160 */
+/* 167 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getNative = __webpack_require__(128),
-	    root = __webpack_require__(137);
+	var getNative = __webpack_require__(82),
+	    root = __webpack_require__(87);
 	
 	/* Built-in method references that are verified to be native. */
 	var DataView = getNative(root, 'DataView');
@@ -4696,11 +4763,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 161 */
+/* 168 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getNative = __webpack_require__(128),
-	    root = __webpack_require__(137);
+	var getNative = __webpack_require__(82),
+	    root = __webpack_require__(87);
 	
 	/* Built-in method references that are verified to be native. */
 	var Promise = getNative(root, 'Promise');
@@ -4709,11 +4776,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 162 */
+/* 169 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getNative = __webpack_require__(128),
-	    root = __webpack_require__(137);
+	var getNative = __webpack_require__(82),
+	    root = __webpack_require__(87);
 	
 	/* Built-in method references that are verified to be native. */
 	var Set = getNative(root, 'Set');
@@ -4722,11 +4789,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 163 */
+/* 170 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var getNative = __webpack_require__(128),
-	    root = __webpack_require__(137);
+	var getNative = __webpack_require__(82),
+	    root = __webpack_require__(87);
 	
 	/* Built-in method references that are verified to be native. */
 	var WeakMap = getNative(root, 'WeakMap');
@@ -4735,97 +4802,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 164 */
+/* 171 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isLength = __webpack_require__(99),
-	    isObjectLike = __webpack_require__(100);
-	
-	/** `Object#toString` result references. */
-	var argsTag = '[object Arguments]',
-	    arrayTag = '[object Array]',
-	    boolTag = '[object Boolean]',
-	    dateTag = '[object Date]',
-	    errorTag = '[object Error]',
-	    funcTag = '[object Function]',
-	    mapTag = '[object Map]',
-	    numberTag = '[object Number]',
-	    objectTag = '[object Object]',
-	    regexpTag = '[object RegExp]',
-	    setTag = '[object Set]',
-	    stringTag = '[object String]',
-	    weakMapTag = '[object WeakMap]';
-	
-	var arrayBufferTag = '[object ArrayBuffer]',
-	    dataViewTag = '[object DataView]',
-	    float32Tag = '[object Float32Array]',
-	    float64Tag = '[object Float64Array]',
-	    int8Tag = '[object Int8Array]',
-	    int16Tag = '[object Int16Array]',
-	    int32Tag = '[object Int32Array]',
-	    uint8Tag = '[object Uint8Array]',
-	    uint8ClampedTag = '[object Uint8ClampedArray]',
-	    uint16Tag = '[object Uint16Array]',
-	    uint32Tag = '[object Uint32Array]';
-	
-	/** Used to identify `toStringTag` values of typed arrays. */
-	var typedArrayTags = {};
-	typedArrayTags[float32Tag] = typedArrayTags[float64Tag] =
-	typedArrayTags[int8Tag] = typedArrayTags[int16Tag] =
-	typedArrayTags[int32Tag] = typedArrayTags[uint8Tag] =
-	typedArrayTags[uint8ClampedTag] = typedArrayTags[uint16Tag] =
-	typedArrayTags[uint32Tag] = true;
-	typedArrayTags[argsTag] = typedArrayTags[arrayTag] =
-	typedArrayTags[arrayBufferTag] = typedArrayTags[boolTag] =
-	typedArrayTags[dataViewTag] = typedArrayTags[dateTag] =
-	typedArrayTags[errorTag] = typedArrayTags[funcTag] =
-	typedArrayTags[mapTag] = typedArrayTags[numberTag] =
-	typedArrayTags[objectTag] = typedArrayTags[regexpTag] =
-	typedArrayTags[setTag] = typedArrayTags[stringTag] =
-	typedArrayTags[weakMapTag] = false;
-	
-	/** Used for built-in method references. */
-	var objectProto = Object.prototype;
-	
-	/**
-	 * Used to resolve the
-	 * [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
-	 * of values.
-	 */
-	var objectToString = objectProto.toString;
-	
-	/**
-	 * Checks if `value` is classified as a typed array.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 3.0.0
-	 * @category Lang
-	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is correctly classified,
-	 *  else `false`.
-	 * @example
-	 *
-	 * _.isTypedArray(new Uint8Array);
-	 * // => true
-	 *
-	 * _.isTypedArray([]);
-	 * // => false
-	 */
-	function isTypedArray(value) {
-	  return isObjectLike(value) &&
-	    isLength(value.length) && !!typedArrayTags[objectToString.call(value)];
-	}
-	
-	module.exports = isTypedArray;
-
-
-/***/ },
-/* 165 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var isStrictComparable = __webpack_require__(166),
-	    toPairs = __webpack_require__(167);
+	var isStrictComparable = __webpack_require__(172),
+	    keys = __webpack_require__(99);
 	
 	/**
 	 * Gets the property names, values, and compare flags of `object`.
@@ -4835,11 +4816,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {Array} Returns the match data of `object`.
 	 */
 	function getMatchData(object) {
-	  var result = toPairs(object),
+	  var result = keys(object),
 	      length = result.length;
 	
 	  while (length--) {
-	    result[length][2] = isStrictComparable(result[length][1]);
+	    var key = result[length],
+	        value = object[key];
+	
+	    result[length] = [key, value, isStrictComparable(value)];
 	  }
 	  return result;
 	}
@@ -4848,10 +4832,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 166 */
+/* 172 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isObject = __webpack_require__(98);
+	var isObject = __webpack_require__(91);
 	
 	/**
 	 * Checks if `value` is suitable for strict equality comparisons, i.e. `===`.
@@ -4869,154 +4853,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 167 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var createToPairs = __webpack_require__(168),
-	    keys = __webpack_require__(86);
-	
-	/**
-	 * Creates an array of own enumerable string keyed-value pairs for `object`
-	 * which can be consumed by `_.fromPairs`. If `object` is a map or set, its
-	 * entries are returned.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @alias entries
-	 * @category Object
-	 * @param {Object} object The object to query.
-	 * @returns {Array} Returns the key-value pairs.
-	 * @example
-	 *
-	 * function Foo() {
-	 *   this.a = 1;
-	 *   this.b = 2;
-	 * }
-	 *
-	 * Foo.prototype.c = 3;
-	 *
-	 * _.toPairs(new Foo);
-	 * // => [['a', 1], ['b', 2]] (iteration order is not guaranteed)
-	 */
-	var toPairs = createToPairs(keys);
-	
-	module.exports = toPairs;
-
-
-/***/ },
-/* 168 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseToPairs = __webpack_require__(169),
-	    getTag = __webpack_require__(159),
-	    mapToArray = __webpack_require__(156),
-	    setToPairs = __webpack_require__(171);
-	
-	/** `Object#toString` result references. */
-	var mapTag = '[object Map]',
-	    setTag = '[object Set]';
-	
-	/**
-	 * Creates a `_.toPairs` or `_.toPairsIn` function.
-	 *
-	 * @private
-	 * @param {Function} keysFunc The function to get the keys of a given object.
-	 * @returns {Function} Returns the new pairs function.
-	 */
-	function createToPairs(keysFunc) {
-	  return function(object) {
-	    var tag = getTag(object);
-	    if (tag == mapTag) {
-	      return mapToArray(object);
-	    }
-	    if (tag == setTag) {
-	      return setToPairs(object);
-	    }
-	    return baseToPairs(object, keysFunc(object));
-	  };
-	}
-	
-	module.exports = createToPairs;
-
-
-/***/ },
-/* 169 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var arrayMap = __webpack_require__(170);
-	
-	/**
-	 * The base implementation of `_.toPairs` and `_.toPairsIn` which creates an array
-	 * of key-value pairs for `object` corresponding to the property names of `props`.
-	 *
-	 * @private
-	 * @param {Object} object The object to query.
-	 * @param {Array} props The property names to get values for.
-	 * @returns {Object} Returns the key-value pairs.
-	 */
-	function baseToPairs(object, props) {
-	  return arrayMap(props, function(key) {
-	    return [key, object[key]];
-	  });
-	}
-	
-	module.exports = baseToPairs;
-
-
-/***/ },
-/* 170 */
-/***/ function(module, exports) {
-
-	/**
-	 * A specialized version of `_.map` for arrays without support for iteratee
-	 * shorthands.
-	 *
-	 * @private
-	 * @param {Array} array The array to iterate over.
-	 * @param {Function} iteratee The function invoked per iteration.
-	 * @returns {Array} Returns the new mapped array.
-	 */
-	function arrayMap(array, iteratee) {
-	  var index = -1,
-	      length = array.length,
-	      result = Array(length);
-	
-	  while (++index < length) {
-	    result[index] = iteratee(array[index], index, array);
-	  }
-	  return result;
-	}
-	
-	module.exports = arrayMap;
-
-
-/***/ },
-/* 171 */
-/***/ function(module, exports) {
-
-	/**
-	 * Converts `set` to its value-value pairs.
-	 *
-	 * @private
-	 * @param {Object} set The set to convert.
-	 * @returns {Array} Returns the value-value pairs.
-	 */
-	function setToPairs(set) {
-	  var index = -1,
-	      result = Array(set.size);
-	
-	  set.forEach(function(value) {
-	    result[++index] = [value, value];
-	  });
-	  return result;
-	}
-	
-	module.exports = setToPairs;
-
-
-/***/ },
-/* 172 */
+/* 173 */
 /***/ function(module, exports) {
 
 	/**
@@ -5042,16 +4879,16 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 173 */
+/* 174 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseIsEqual = __webpack_require__(146),
-	    get = __webpack_require__(174),
-	    hasIn = __webpack_require__(184),
-	    isKey = __webpack_require__(182),
-	    isStrictComparable = __webpack_require__(166),
-	    matchesStrictComparable = __webpack_require__(172),
-	    toKey = __webpack_require__(183);
+	var baseIsEqual = __webpack_require__(153),
+	    get = __webpack_require__(175),
+	    hasIn = __webpack_require__(187),
+	    isKey = __webpack_require__(185),
+	    isStrictComparable = __webpack_require__(172),
+	    matchesStrictComparable = __webpack_require__(173),
+	    toKey = __webpack_require__(186);
 	
 	/** Used to compose bitmasks for comparison styles. */
 	var UNORDERED_COMPARE_FLAG = 1,
@@ -5081,14 +4918,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 174 */
+/* 175 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseGet = __webpack_require__(175);
+	var baseGet = __webpack_require__(176);
 	
 	/**
 	 * Gets the value at `path` of `object`. If the resolved value is
-	 * `undefined`, the `defaultValue` is used in its place.
+	 * `undefined`, the `defaultValue` is returned in its place.
 	 *
 	 * @static
 	 * @memberOf _
@@ -5120,12 +4957,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 175 */
+/* 176 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var castPath = __webpack_require__(176),
-	    isKey = __webpack_require__(182),
-	    toKey = __webpack_require__(183);
+	var castPath = __webpack_require__(177),
+	    isKey = __webpack_require__(185),
+	    toKey = __webpack_require__(186);
 	
 	/**
 	 * The base implementation of `_.get` without support for default values.
@@ -5151,11 +4988,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 176 */
+/* 177 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArray = __webpack_require__(101),
-	    stringToPath = __webpack_require__(177);
+	var isArray = __webpack_require__(105),
+	    stringToPath = __webpack_require__(178);
 	
 	/**
 	 * Casts `value` to a path array if it's not one.
@@ -5172,14 +5009,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 177 */
+/* 178 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var memoize = __webpack_require__(178),
-	    toString = __webpack_require__(179);
+	var memoizeCapped = __webpack_require__(179),
+	    toString = __webpack_require__(181);
 	
 	/** Used to match property names within property paths. */
-	var rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]/g;
+	var reLeadingDot = /^\./,
+	    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
 	
 	/** Used to match backslashes in property paths. */
 	var reEscapeChar = /\\(\\)?/g;
@@ -5191,9 +5029,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param {string} string The string to convert.
 	 * @returns {Array} Returns the property path array.
 	 */
-	var stringToPath = memoize(function(string) {
+	var stringToPath = memoizeCapped(function(string) {
+	  string = toString(string);
+	
 	  var result = [];
-	  toString(string).replace(rePropName, function(match, number, quote, string) {
+	  if (reLeadingDot.test(string)) {
+	    result.push('');
+	  }
+	  string.replace(rePropName, function(match, number, quote, string) {
 	    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
 	  });
 	  return result;
@@ -5203,12 +5046,44 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 178 */
+/* 179 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var MapCache = __webpack_require__(123);
+	var memoize = __webpack_require__(180);
 	
-	/** Used as the `TypeError` message for "Functions" methods. */
+	/** Used as the maximum memoize cache size. */
+	var MAX_MEMOIZE_SIZE = 500;
+	
+	/**
+	 * A specialized version of `_.memoize` which clears the memoized function's
+	 * cache when it exceeds `MAX_MEMOIZE_SIZE`.
+	 *
+	 * @private
+	 * @param {Function} func The function to have its output memoized.
+	 * @returns {Function} Returns the new memoized function.
+	 */
+	function memoizeCapped(func) {
+	  var result = memoize(func, function(key) {
+	    if (cache.size === MAX_MEMOIZE_SIZE) {
+	      cache.clear();
+	    }
+	    return key;
+	  });
+	
+	  var cache = result.cache;
+	  return result;
+	}
+	
+	module.exports = memoizeCapped;
+
+
+/***/ },
+/* 180 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var MapCache = __webpack_require__(138);
+	
+	/** Error message constants. */
 	var FUNC_ERROR_TEXT = 'Expected a function';
 	
 	/**
@@ -5221,8 +5096,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * **Note:** The cache is exposed as the `cache` property on the memoized
 	 * function. Its creation may be customized by replacing the `_.memoize.Cache`
 	 * constructor with one whose instances implement the
-	 * [`Map`](http://ecma-international.org/ecma-262/6.0/#sec-properties-of-the-map-prototype-object)
-	 * method interface of `delete`, `get`, `has`, and `set`.
+	 * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+	 * method interface of `clear`, `delete`, `get`, `has`, and `set`.
 	 *
 	 * @static
 	 * @memberOf _
@@ -5256,7 +5131,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * _.memoize.Cache = WeakMap;
 	 */
 	function memoize(func, resolver) {
-	  if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
+	  if (typeof func != 'function' || (resolver != null && typeof resolver != 'function')) {
 	    throw new TypeError(FUNC_ERROR_TEXT);
 	  }
 	  var memoized = function() {
@@ -5268,24 +5143,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return cache.get(key);
 	    }
 	    var result = func.apply(this, args);
-	    memoized.cache = cache.set(key, result);
+	    memoized.cache = cache.set(key, result) || cache;
 	    return result;
 	  };
 	  memoized.cache = new (memoize.Cache || MapCache);
 	  return memoized;
 	}
 	
-	// Assign cache to `_.memoize`.
+	// Expose `MapCache`.
 	memoize.Cache = MapCache;
 	
 	module.exports = memoize;
 
 
 /***/ },
-/* 179 */
+/* 181 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseToString = __webpack_require__(180);
+	var baseToString = __webpack_require__(182);
 	
 	/**
 	 * Converts `value` to a string. An empty string is returned for `null`
@@ -5295,8 +5170,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @memberOf _
 	 * @since 4.0.0
 	 * @category Lang
-	 * @param {*} value The value to process.
-	 * @returns {string} Returns the string.
+	 * @param {*} value The value to convert.
+	 * @returns {string} Returns the converted string.
 	 * @example
 	 *
 	 * _.toString(null);
@@ -5316,11 +5191,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 180 */
+/* 182 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Symbol = __webpack_require__(154),
-	    isSymbol = __webpack_require__(181);
+	var Symbol = __webpack_require__(86),
+	    arrayMap = __webpack_require__(183),
+	    isArray = __webpack_require__(105),
+	    isSymbol = __webpack_require__(184);
 	
 	/** Used as references for various `Number` constants. */
 	var INFINITY = 1 / 0;
@@ -5342,6 +5219,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  if (typeof value == 'string') {
 	    return value;
 	  }
+	  if (isArray(value)) {
+	    // Recursively convert values (susceptible to call stack limits).
+	    return arrayMap(value, baseToString) + '';
+	  }
 	  if (isSymbol(value)) {
 	    return symbolToString ? symbolToString.call(value) : '';
 	  }
@@ -5353,23 +5234,41 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 181 */
+/* 183 */
+/***/ function(module, exports) {
+
+	/**
+	 * A specialized version of `_.map` for arrays without support for iteratee
+	 * shorthands.
+	 *
+	 * @private
+	 * @param {Array} [array] The array to iterate over.
+	 * @param {Function} iteratee The function invoked per iteration.
+	 * @returns {Array} Returns the new mapped array.
+	 */
+	function arrayMap(array, iteratee) {
+	  var index = -1,
+	      length = array == null ? 0 : array.length,
+	      result = Array(length);
+	
+	  while (++index < length) {
+	    result[index] = iteratee(array[index], index, array);
+	  }
+	  return result;
+	}
+	
+	module.exports = arrayMap;
+
+
+/***/ },
+/* 184 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isObjectLike = __webpack_require__(100);
+	var baseGetTag = __webpack_require__(85),
+	    isObjectLike = __webpack_require__(104);
 	
 	/** `Object#toString` result references. */
 	var symbolTag = '[object Symbol]';
-	
-	/** Used for built-in method references. */
-	var objectProto = Object.prototype;
-	
-	/**
-	 * Used to resolve the
-	 * [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
-	 * of values.
-	 */
-	var objectToString = objectProto.toString;
 	
 	/**
 	 * Checks if `value` is classified as a `Symbol` primitive or object.
@@ -5379,8 +5278,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @since 4.0.0
 	 * @category Lang
 	 * @param {*} value The value to check.
-	 * @returns {boolean} Returns `true` if `value` is correctly classified,
-	 *  else `false`.
+	 * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
 	 * @example
 	 *
 	 * _.isSymbol(Symbol.iterator);
@@ -5391,18 +5289,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	function isSymbol(value) {
 	  return typeof value == 'symbol' ||
-	    (isObjectLike(value) && objectToString.call(value) == symbolTag);
+	    (isObjectLike(value) && baseGetTag(value) == symbolTag);
 	}
 	
 	module.exports = isSymbol;
 
 
 /***/ },
-/* 182 */
+/* 185 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArray = __webpack_require__(101),
-	    isSymbol = __webpack_require__(181);
+	var isArray = __webpack_require__(105),
+	    isSymbol = __webpack_require__(184);
 	
 	/** Used to match property names within property paths. */
 	var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
@@ -5433,10 +5331,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 183 */
+/* 186 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isSymbol = __webpack_require__(181);
+	var isSymbol = __webpack_require__(184);
 	
 	/** Used as references for various `Number` constants. */
 	var INFINITY = 1 / 0;
@@ -5460,11 +5358,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 184 */
+/* 187 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseHasIn = __webpack_require__(185),
-	    hasPath = __webpack_require__(186);
+	var baseHasIn = __webpack_require__(188),
+	    hasPath = __webpack_require__(189);
 	
 	/**
 	 * Checks if `path` is a direct or inherited property of `object`.
@@ -5500,36 +5398,35 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 185 */
+/* 188 */
 /***/ function(module, exports) {
 
 	/**
 	 * The base implementation of `_.hasIn` without support for deep paths.
 	 *
 	 * @private
-	 * @param {Object} object The object to query.
+	 * @param {Object} [object] The object to query.
 	 * @param {Array|string} key The key to check.
 	 * @returns {boolean} Returns `true` if `key` exists, else `false`.
 	 */
 	function baseHasIn(object, key) {
-	  return key in Object(object);
+	  return object != null && key in Object(object);
 	}
 	
 	module.exports = baseHasIn;
 
 
 /***/ },
-/* 186 */
+/* 189 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var castPath = __webpack_require__(176),
-	    isArguments = __webpack_require__(92),
-	    isArray = __webpack_require__(101),
-	    isIndex = __webpack_require__(103),
-	    isKey = __webpack_require__(182),
-	    isLength = __webpack_require__(99),
-	    isString = __webpack_require__(102),
-	    toKey = __webpack_require__(183);
+	var castPath = __webpack_require__(177),
+	    isArguments = __webpack_require__(102),
+	    isArray = __webpack_require__(105),
+	    isIndex = __webpack_require__(109),
+	    isKey = __webpack_require__(185),
+	    isLength = __webpack_require__(112),
+	    toKey = __webpack_require__(186);
 	
 	/**
 	 * Checks if `path` exists on `object`.
@@ -5543,9 +5440,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	function hasPath(object, path, hasFunc) {
 	  path = isKey(path, object) ? [path] : castPath(path);
 	
-	  var result,
-	      index = -1,
-	      length = path.length;
+	  var index = -1,
+	      length = path.length,
+	      result = false;
 	
 	  while (++index < length) {
 	    var key = toKey(path[index]);
@@ -5554,23 +5451,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	    object = object[key];
 	  }
-	  if (result) {
+	  if (result || ++index != length) {
 	    return result;
 	  }
-	  var length = object ? object.length : 0;
+	  length = object == null ? 0 : object.length;
 	  return !!length && isLength(length) && isIndex(key, length) &&
-	    (isArray(object) || isString(object) || isArguments(object));
+	    (isArray(object) || isArguments(object));
 	}
 	
 	module.exports = hasPath;
 
 
 /***/ },
-/* 187 */
+/* 190 */
 /***/ function(module, exports) {
 
 	/**
-	 * This method returns the first argument given to it.
+	 * This method returns the first argument it receives.
 	 *
 	 * @static
 	 * @since 0.1.0
@@ -5580,9 +5477,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {*} Returns `value`.
 	 * @example
 	 *
-	 * var object = { 'user': 'fred' };
+	 * var object = { 'a': 1 };
 	 *
-	 * _.identity(object) === object;
+	 * console.log(_.identity(object) === object);
 	 * // => true
 	 */
 	function identity(value) {
@@ -5593,13 +5490,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 188 */
+/* 191 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseProperty = __webpack_require__(96),
-	    basePropertyDeep = __webpack_require__(189),
-	    isKey = __webpack_require__(182),
-	    toKey = __webpack_require__(183);
+	var baseProperty = __webpack_require__(192),
+	    basePropertyDeep = __webpack_require__(193),
+	    isKey = __webpack_require__(185),
+	    toKey = __webpack_require__(186);
 	
 	/**
 	 * Creates a function that returns the value at `path` of a given object.
@@ -5631,10 +5528,30 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 189 */
+/* 192 */
+/***/ function(module, exports) {
+
+	/**
+	 * The base implementation of `_.property` without support for deep paths.
+	 *
+	 * @private
+	 * @param {string} key The key of the property to get.
+	 * @returns {Function} Returns the new accessor function.
+	 */
+	function baseProperty(key) {
+	  return function(object) {
+	    return object == null ? undefined : object[key];
+	  };
+	}
+	
+	module.exports = baseProperty;
+
+
+/***/ },
+/* 193 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseGet = __webpack_require__(175);
+	var baseGet = __webpack_require__(176);
 	
 	/**
 	 * A specialized version of `baseProperty` which supports deep paths.
@@ -5653,374 +5570,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 190 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var arrayFilter = __webpack_require__(80),
-	    baseFilter = __webpack_require__(81),
-	    baseIteratee = __webpack_require__(106),
-	    isArray = __webpack_require__(101);
-	
-	/**
-	 * Iterates over elements of `collection`, returning an array of all elements
-	 * `predicate` returns truthy for. The predicate is invoked with three
-	 * arguments: (value, index|key, collection).
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Collection
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Array|Function|Object|string} [predicate=_.identity]
-	 *  The function invoked per iteration.
-	 * @returns {Array} Returns the new filtered array.
-	 * @see _.reject
-	 * @example
-	 *
-	 * var users = [
-	 *   { 'user': 'barney', 'age': 36, 'active': true },
-	 *   { 'user': 'fred',   'age': 40, 'active': false }
-	 * ];
-	 *
-	 * _.filter(users, function(o) { return !o.active; });
-	 * // => objects for ['fred']
-	 *
-	 * // The `_.matches` iteratee shorthand.
-	 * _.filter(users, { 'age': 36, 'active': true });
-	 * // => objects for ['barney']
-	 *
-	 * // The `_.matchesProperty` iteratee shorthand.
-	 * _.filter(users, ['active', false]);
-	 * // => objects for ['fred']
-	 *
-	 * // The `_.property` iteratee shorthand.
-	 * _.filter(users, 'active');
-	 * // => objects for ['barney']
-	 */
-	function filter(collection, predicate) {
-	  var func = isArray(collection) ? arrayFilter : baseFilter;
-	  return func(collection, baseIteratee(predicate, 3));
-	}
-	
-	module.exports = filter;
-
-
-/***/ },
-/* 191 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseForOwn = __webpack_require__(83),
-	    baseIteratee = __webpack_require__(106);
-	
-	/**
-	 * Creates an object with the same keys as `object` and values generated
-	 * by running each own enumerable string keyed property of `object` thru
-	 * `iteratee`. The iteratee is invoked with three arguments:
-	 * (value, key, object).
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 2.4.0
-	 * @category Object
-	 * @param {Object} object The object to iterate over.
-	 * @param {Array|Function|Object|string} [iteratee=_.identity]
-	 *  The function invoked per iteration.
-	 * @returns {Object} Returns the new mapped object.
-	 * @see _.mapKeys
-	 * @example
-	 *
-	 * var users = {
-	 *   'fred':    { 'user': 'fred',    'age': 40 },
-	 *   'pebbles': { 'user': 'pebbles', 'age': 1 }
-	 * };
-	 *
-	 * _.mapValues(users, function(o) { return o.age; });
-	 * // => { 'fred': 40, 'pebbles': 1 } (iteration order is not guaranteed)
-	 *
-	 * // The `_.property` iteratee shorthand.
-	 * _.mapValues(users, 'age');
-	 * // => { 'fred': 40, 'pebbles': 1 } (iteration order is not guaranteed)
-	 */
-	function mapValues(object, iteratee) {
-	  var result = {};
-	  iteratee = baseIteratee(iteratee, 3);
-	
-	  baseForOwn(object, function(value, key, object) {
-	    result[key] = iteratee(value, key, object);
-	  });
-	  return result;
-	}
-	
-	module.exports = mapValues;
-
-
-/***/ },
-/* 192 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseOrderBy = __webpack_require__(193),
-	    isArray = __webpack_require__(101);
-	
-	/**
-	 * This method is like `_.sortBy` except that it allows specifying the sort
-	 * orders of the iteratees to sort by. If `orders` is unspecified, all values
-	 * are sorted in ascending order. Otherwise, specify an order of "desc" for
-	 * descending or "asc" for ascending sort order of corresponding values.
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 4.0.0
-	 * @category Collection
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Array[]|Function[]|Object[]|string[]} [iteratees=[_.identity]]
-	 *  The iteratees to sort by.
-	 * @param {string[]} [orders] The sort orders of `iteratees`.
-	 * @param- {Object} [guard] Enables use as an iteratee for methods like `_.reduce`.
-	 * @returns {Array} Returns the new sorted array.
-	 * @example
-	 *
-	 * var users = [
-	 *   { 'user': 'fred',   'age': 48 },
-	 *   { 'user': 'barney', 'age': 34 },
-	 *   { 'user': 'fred',   'age': 40 },
-	 *   { 'user': 'barney', 'age': 36 }
-	 * ];
-	 *
-	 * // Sort by `user` in ascending order and by `age` in descending order.
-	 * _.orderBy(users, ['user', 'age'], ['asc', 'desc']);
-	 * // => objects for [['barney', 36], ['barney', 34], ['fred', 48], ['fred', 40]]
-	 */
-	function orderBy(collection, iteratees, orders, guard) {
-	  if (collection == null) {
-	    return [];
-	  }
-	  if (!isArray(iteratees)) {
-	    iteratees = iteratees == null ? [] : [iteratees];
-	  }
-	  orders = guard ? undefined : orders;
-	  if (!isArray(orders)) {
-	    orders = orders == null ? [] : [orders];
-	  }
-	  return baseOrderBy(collection, iteratees, orders);
-	}
-	
-	module.exports = orderBy;
-
-
-/***/ },
-/* 193 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var arrayMap = __webpack_require__(170),
-	    baseIteratee = __webpack_require__(106),
-	    baseMap = __webpack_require__(194),
-	    baseSortBy = __webpack_require__(195),
-	    baseUnary = __webpack_require__(196),
-	    compareMultiple = __webpack_require__(197),
-	    identity = __webpack_require__(187);
-	
-	/**
-	 * The base implementation of `_.orderBy` without param guards.
-	 *
-	 * @private
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Function[]|Object[]|string[]} iteratees The iteratees to sort by.
-	 * @param {string[]} orders The sort orders of `iteratees`.
-	 * @returns {Array} Returns the new sorted array.
-	 */
-	function baseOrderBy(collection, iteratees, orders) {
-	  var index = -1;
-	  iteratees = arrayMap(iteratees.length ? iteratees : [identity], baseUnary(baseIteratee));
-	
-	  var result = baseMap(collection, function(value, key, collection) {
-	    var criteria = arrayMap(iteratees, function(iteratee) {
-	      return iteratee(value);
-	    });
-	    return { 'criteria': criteria, 'index': ++index, 'value': value };
-	  });
-	
-	  return baseSortBy(result, function(object, other) {
-	    return compareMultiple(object, other, orders);
-	  });
-	}
-	
-	module.exports = baseOrderBy;
-
-
-/***/ },
 /* 194 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseEach = __webpack_require__(82),
-	    isArrayLike = __webpack_require__(94);
-	
-	/**
-	 * The base implementation of `_.map` without support for iteratee shorthands.
-	 *
-	 * @private
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Function} iteratee The function invoked per iteration.
-	 * @returns {Array} Returns the new mapped array.
-	 */
-	function baseMap(collection, iteratee) {
-	  var index = -1,
-	      result = isArrayLike(collection) ? Array(collection.length) : [];
-	
-	  baseEach(collection, function(value, key, collection) {
-	    result[++index] = iteratee(value, key, collection);
-	  });
-	  return result;
-	}
-	
-	module.exports = baseMap;
-
-
-/***/ },
-/* 195 */
-/***/ function(module, exports) {
-
-	/**
-	 * The base implementation of `_.sortBy` which uses `comparer` to define the
-	 * sort order of `array` and replaces criteria objects with their corresponding
-	 * values.
-	 *
-	 * @private
-	 * @param {Array} array The array to sort.
-	 * @param {Function} comparer The function to define sort order.
-	 * @returns {Array} Returns `array`.
-	 */
-	function baseSortBy(array, comparer) {
-	  var length = array.length;
-	
-	  array.sort(comparer);
-	  while (length--) {
-	    array[length] = array[length].value;
-	  }
-	  return array;
-	}
-	
-	module.exports = baseSortBy;
-
-
-/***/ },
-/* 196 */
-/***/ function(module, exports) {
-
-	/**
-	 * The base implementation of `_.unary` without support for storing wrapper metadata.
-	 *
-	 * @private
-	 * @param {Function} func The function to cap arguments for.
-	 * @returns {Function} Returns the new capped function.
-	 */
-	function baseUnary(func) {
-	  return function(value) {
-	    return func(value);
-	  };
-	}
-	
-	module.exports = baseUnary;
-
-
-/***/ },
-/* 197 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var compareAscending = __webpack_require__(198);
-	
-	/**
-	 * Used by `_.orderBy` to compare multiple properties of a value to another
-	 * and stable sort them.
-	 *
-	 * If `orders` is unspecified, all values are sorted in ascending order. Otherwise,
-	 * specify an order of "desc" for descending or "asc" for ascending sort order
-	 * of corresponding values.
-	 *
-	 * @private
-	 * @param {Object} object The object to compare.
-	 * @param {Object} other The other object to compare.
-	 * @param {boolean[]|string[]} orders The order to sort by for each property.
-	 * @returns {number} Returns the sort order indicator for `object`.
-	 */
-	function compareMultiple(object, other, orders) {
-	  var index = -1,
-	      objCriteria = object.criteria,
-	      othCriteria = other.criteria,
-	      length = objCriteria.length,
-	      ordersLength = orders.length;
-	
-	  while (++index < length) {
-	    var result = compareAscending(objCriteria[index], othCriteria[index]);
-	    if (result) {
-	      if (index >= ordersLength) {
-	        return result;
-	      }
-	      var order = orders[index];
-	      return result * (order == 'desc' ? -1 : 1);
-	    }
-	  }
-	  // Fixes an `Array#sort` bug in the JS engine embedded in Adobe applications
-	  // that causes it, under certain circumstances, to provide the same value for
-	  // `object` and `other`. See https://github.com/jashkenas/underscore/pull/1247
-	  // for more details.
-	  //
-	  // This also ensures a stable sort in V8 and other engines.
-	  // See https://bugs.chromium.org/p/v8/issues/detail?id=90 for more details.
-	  return object.index - other.index;
-	}
-	
-	module.exports = compareMultiple;
-
-
-/***/ },
-/* 198 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var isSymbol = __webpack_require__(181);
-	
-	/**
-	 * Compares values to sort them in ascending order.
-	 *
-	 * @private
-	 * @param {*} value The value to compare.
-	 * @param {*} other The other value to compare.
-	 * @returns {number} Returns the sort order indicator for `value`.
-	 */
-	function compareAscending(value, other) {
-	  if (value !== other) {
-	    var valIsDefined = value !== undefined,
-	        valIsNull = value === null,
-	        valIsReflexive = value === value,
-	        valIsSymbol = isSymbol(value);
-	
-	    var othIsDefined = other !== undefined,
-	        othIsNull = other === null,
-	        othIsReflexive = other === other,
-	        othIsSymbol = isSymbol(other);
-	
-	    if ((!othIsNull && !othIsSymbol && !valIsSymbol && value > other) ||
-	        (valIsSymbol && othIsDefined && othIsReflexive && !othIsNull && !othIsSymbol) ||
-	        (valIsNull && othIsDefined && othIsReflexive) ||
-	        (!valIsDefined && othIsReflexive) ||
-	        !valIsReflexive) {
-	      return 1;
-	    }
-	    if ((!valIsNull && !valIsSymbol && !othIsSymbol && value < other) ||
-	        (othIsSymbol && valIsDefined && valIsReflexive && !valIsNull && !valIsSymbol) ||
-	        (othIsNull && valIsDefined && valIsReflexive) ||
-	        (!othIsDefined && valIsReflexive) ||
-	        !othIsReflexive) {
-	      return -1;
-	    }
-	  }
-	  return 0;
-	}
-	
-	module.exports = compareAscending;
-
-
-/***/ },
-/* 199 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -6028,149 +5578,50 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
-	exports.arrayDiffActions = exports.includes = exports.ops = exports.objectShallowEquals = exports.reverseFieldErrorMessage = exports.normalizeEntity = exports.ListIterator = exports.reverseFieldName = exports.m2mToFieldName = exports.m2mFromFieldName = exports.m2mName = exports.attachQuerySetMethods = exports.match = undefined;
+	exports.warnDeprecated = exports.getBatchToken = exports.arrayDiffActions = exports.includes = exports.ops = exports.objectShallowEquals = exports.reverseFieldErrorMessage = exports.normalizeEntity = exports.reverseFieldName = exports.m2mToFieldName = exports.m2mFromFieldName = exports.m2mName = exports.attachQuerySetMethods = undefined;
 	
 	var _defineProperty = __webpack_require__(76);
 	
 	var _defineProperty2 = _interopRequireDefault(_defineProperty);
 	
-	var _getOwnPropertyDescriptor = __webpack_require__(200);
+	var _getOwnPropertyDescriptor = __webpack_require__(195);
 	
 	var _getOwnPropertyDescriptor2 = _interopRequireDefault(_getOwnPropertyDescriptor);
 	
-	var _getPrototypeOf = __webpack_require__(204);
+	var _getPrototypeOf = __webpack_require__(199);
 	
 	var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
 	
-	var _keys = __webpack_require__(207);
-	
-	var _keys2 = _interopRequireDefault(_keys);
-	
-	var _classCallCheck2 = __webpack_require__(74);
-	
-	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
-	
-	var _createClass2 = __webpack_require__(75);
-	
-	var _createClass3 = _interopRequireDefault(_createClass2);
-	
-	var _forOwn = __webpack_require__(210);
+	var _forOwn = __webpack_require__(202);
 	
 	var _forOwn2 = _interopRequireDefault(_forOwn);
 	
-	var _includes = __webpack_require__(211);
+	var _includes = __webpack_require__(204);
 	
 	var _includes2 = _interopRequireDefault(_includes);
 	
-	var _immutableOps = __webpack_require__(219);
+	var _immutableOps = __webpack_require__(215);
 	
 	var _immutableOps2 = _interopRequireDefault(_immutableOps);
 	
-	var _intersection = __webpack_require__(230);
+	var _intersection = __webpack_require__(234);
 	
 	var _intersection2 = _interopRequireDefault(_intersection);
 	
-	var _difference = __webpack_require__(238);
+	var _difference = __webpack_require__(247);
 	
 	var _difference2 = _interopRequireDefault(_difference);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	function warnDeprecated(msg) {
+	    var logger = typeof console.warn === 'function' ? console.warn.bind(console) : console.log.bind(console);
+	    return logger(msg);
+	}
+	
 	/**
 	 * @module utils
 	 */
-	
-	/**
-	 * A simple ListIterator implementation.
-	 */
-	
-	var ListIterator = function () {
-	    /**
-	     * Creates a new ListIterator instance.
-	     * @param  {Array} list - list to iterate over
-	     * @param  {Number} [idx=0] - starting index. Defaults to `0`
-	     * @param  {Function} [getValue] a function that receives the current `idx`
-	     *                               and `list` and should return the value that
-	     *                               `next` should return. Defaults to `(idx, list) => list[idx]`
-	     */
-	
-	    function ListIterator(list, idx, getValue) {
-	        (0, _classCallCheck3.default)(this, ListIterator);
-	
-	        this.list = list;
-	        this.idx = idx || 0;
-	
-	        if (typeof getValue === 'function') {
-	            this.getValue = getValue;
-	        }
-	    }
-	
-	    /**
-	     * The default implementation for the `getValue` function.
-	     *
-	     * @param  {Number} idx - the current iterator index
-	     * @param  {Array} list - the list being iterated
-	     * @return {*} - the value at index `idx` in `list`.
-	     */
-	
-	
-	    (0, _createClass3.default)(ListIterator, [{
-	        key: 'getValue',
-	        value: function getValue(idx, list) {
-	            return list[idx];
-	        }
-	
-	        /**
-	         * Returns the next element from the iterator instance.
-	         * Always returns an Object with keys `value` and `done`.
-	         * If the returned element is the last element being iterated,
-	         * `done` will equal `true`, otherwise `false`. `value` holds
-	         * the value returned by `getValue`.
-	         *
-	         * @return {Object|undefined} Object with keys `value` and `done`, or
-	         *                            `undefined` if the list index is out of bounds.
-	         */
-	
-	    }, {
-	        key: 'next',
-	        value: function next() {
-	            if (this.idx < this.list.length - 1) {
-	                return {
-	                    value: this.getValue(this.list, this.idx++),
-	                    done: false
-	                };
-	            } else if (this.idx < this.list.length) {
-	                return {
-	                    value: this.getValue(this.list, this.idx++),
-	                    done: true
-	                };
-	            }
-	
-	            return undefined;
-	        }
-	    }]);
-	    return ListIterator;
-	}();
-	
-	/**
-	 * Checks if the properties in `lookupObj` match
-	 * the corresponding properties in `entity`.
-	 *
-	 * @private
-	 * @param  {Object} lookupObj - properties to match against
-	 * @param  {Object} entity - object to match
-	 * @return {Boolean} Returns `true` if the property names in
-	 *                   `lookupObj` have the same values in `lookupObj`
-	 *                   and `entity`, `false` if not.
-	 */
-	
-	
-	function match(lookupObj, entity) {
-	    var keys = (0, _keys2.default)(lookupObj);
-	    return keys.every(function (key) {
-	        return lookupObj[key] === entity[key];
-	    });
-	}
 	
 	function capitalize(string) {
 	    return string.charAt(0).toUpperCase() + string.slice(1);
@@ -6328,55 +5779,53 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return null;
 	}
 	
-	// A global instance of immutable-ops for general use
-	var ops = (0, _immutableOps2.default)();
-	
-	exports.match = match;
+	var getBatchToken = _immutableOps2.default.getBatchToken;
 	exports.attachQuerySetMethods = attachQuerySetMethods;
 	exports.m2mName = m2mName;
 	exports.m2mFromFieldName = m2mFromFieldName;
 	exports.m2mToFieldName = m2mToFieldName;
 	exports.reverseFieldName = reverseFieldName;
-	exports.ListIterator = ListIterator;
 	exports.normalizeEntity = normalizeEntity;
 	exports.reverseFieldErrorMessage = reverseFieldErrorMessage;
 	exports.objectShallowEquals = objectShallowEquals;
-	exports.ops = ops;
+	exports.ops = _immutableOps2.default;
 	exports.includes = _includes2.default;
 	exports.arrayDiffActions = arrayDiffActions;
+	exports.getBatchToken = getBatchToken;
+	exports.warnDeprecated = warnDeprecated;
 
 /***/ },
-/* 200 */
+/* 195 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = { "default": __webpack_require__(201), __esModule: true };
+	module.exports = { "default": __webpack_require__(196), __esModule: true };
 
 /***/ },
-/* 201 */
+/* 196 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(202);
+	__webpack_require__(197);
 	var $Object = __webpack_require__(13).Object;
 	module.exports = function getOwnPropertyDescriptor(it, key){
 	  return $Object.getOwnPropertyDescriptor(it, key);
 	};
 
 /***/ },
-/* 202 */
+/* 197 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 19.1.2.6 Object.getOwnPropertyDescriptor(O, P)
 	var toIObject                 = __webpack_require__(34)
 	  , $getOwnPropertyDescriptor = __webpack_require__(66).f;
 	
-	__webpack_require__(203)('getOwnPropertyDescriptor', function(){
+	__webpack_require__(198)('getOwnPropertyDescriptor', function(){
 	  return function getOwnPropertyDescriptor(it, key){
 	    return $getOwnPropertyDescriptor(toIObject(it), key);
 	  };
 	});
 
 /***/ },
-/* 203 */
+/* 198 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// most Object methods by ES6 should accept primitives
@@ -6391,65 +5840,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 204 */
+/* 199 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = { "default": __webpack_require__(205), __esModule: true };
+	module.exports = { "default": __webpack_require__(200), __esModule: true };
 
 /***/ },
-/* 205 */
+/* 200 */
 /***/ function(module, exports, __webpack_require__) {
 
-	__webpack_require__(206);
+	__webpack_require__(201);
 	module.exports = __webpack_require__(13).Object.getPrototypeOf;
 
 /***/ },
-/* 206 */
+/* 201 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// 19.1.2.9 Object.getPrototypeOf(O)
 	var toObject        = __webpack_require__(48)
 	  , $getPrototypeOf = __webpack_require__(47);
 	
-	__webpack_require__(203)('getPrototypeOf', function(){
+	__webpack_require__(198)('getPrototypeOf', function(){
 	  return function getPrototypeOf(it){
 	    return $getPrototypeOf(toObject(it));
 	  };
 	});
 
 /***/ },
-/* 207 */
+/* 202 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = { "default": __webpack_require__(208), __esModule: true };
-
-/***/ },
-/* 208 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(209);
-	module.exports = __webpack_require__(13).Object.keys;
-
-/***/ },
-/* 209 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// 19.1.2.14 Object.keys(O)
-	var toObject = __webpack_require__(48)
-	  , $keys    = __webpack_require__(32);
-	
-	__webpack_require__(203)('keys', function(){
-	  return function keys(it){
-	    return $keys(toObject(it));
-	  };
-	});
-
-/***/ },
-/* 210 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseForOwn = __webpack_require__(83),
-	    baseIteratee = __webpack_require__(106);
+	var baseForOwn = __webpack_require__(96),
+	    castFunction = __webpack_require__(203);
 	
 	/**
 	 * Iterates over own enumerable string keyed properties of an object and
@@ -6480,21 +5902,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * // => Logs 'a' then 'b' (iteration order is not guaranteed).
 	 */
 	function forOwn(object, iteratee) {
-	  return object && baseForOwn(object, baseIteratee(iteratee, 3));
+	  return object && baseForOwn(object, castFunction(iteratee));
 	}
 	
 	module.exports = forOwn;
 
 
 /***/ },
-/* 211 */
+/* 203 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseIndexOf = __webpack_require__(212),
-	    isArrayLike = __webpack_require__(94),
-	    isString = __webpack_require__(102),
-	    toInteger = __webpack_require__(214),
-	    values = __webpack_require__(217);
+	var identity = __webpack_require__(190);
+	
+	/**
+	 * Casts `value` to `identity` if it's not a function.
+	 *
+	 * @private
+	 * @param {*} value The value to inspect.
+	 * @returns {Function} Returns cast function.
+	 */
+	function castFunction(value) {
+	  return typeof value == 'function' ? value : identity;
+	}
+	
+	module.exports = castFunction;
+
+
+/***/ },
+/* 204 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseIndexOf = __webpack_require__(205),
+	    isArrayLike = __webpack_require__(119),
+	    isString = __webpack_require__(209),
+	    toInteger = __webpack_require__(210),
+	    values = __webpack_require__(213);
 	
 	/* Built-in method references for those with the same name as other `lodash` methods. */
 	var nativeMax = Math.max;
@@ -6502,7 +5944,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	/**
 	 * Checks if `value` is in `collection`. If `collection` is a string, it's
 	 * checked for a substring of `value`, otherwise
-	 * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
+	 * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
 	 * is used for equality comparisons. If `fromIndex` is negative, it's used as
 	 * the offset from the end of `collection`.
 	 *
@@ -6510,7 +5952,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @memberOf _
 	 * @since 0.1.0
 	 * @category Collection
-	 * @param {Array|Object|string} collection The collection to search.
+	 * @param {Array|Object|string} collection The collection to inspect.
 	 * @param {*} value The value to search for.
 	 * @param {number} [fromIndex=0] The index to search from.
 	 * @param- {Object} [guard] Enables use as an iteratee for methods like `_.reduce`.
@@ -6523,10 +5965,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * _.includes([1, 2, 3], 1, 2);
 	 * // => false
 	 *
-	 * _.includes({ 'user': 'fred', 'age': 40 }, 'fred');
+	 * _.includes({ 'a': 1, 'b': 2 }, 1);
 	 * // => true
 	 *
-	 * _.includes('pebbles', 'eb');
+	 * _.includes('abcd', 'bc');
 	 * // => true
 	 */
 	function includes(collection, value, fromIndex, guard) {
@@ -6546,24 +5988,94 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 212 */
+/* 205 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var indexOfNaN = __webpack_require__(213);
+	var baseFindIndex = __webpack_require__(206),
+	    baseIsNaN = __webpack_require__(207),
+	    strictIndexOf = __webpack_require__(208);
 	
 	/**
 	 * The base implementation of `_.indexOf` without `fromIndex` bounds checks.
 	 *
 	 * @private
-	 * @param {Array} array The array to search.
+	 * @param {Array} array The array to inspect.
 	 * @param {*} value The value to search for.
 	 * @param {number} fromIndex The index to search from.
 	 * @returns {number} Returns the index of the matched value, else `-1`.
 	 */
 	function baseIndexOf(array, value, fromIndex) {
-	  if (value !== value) {
-	    return indexOfNaN(array, fromIndex);
+	  return value === value
+	    ? strictIndexOf(array, value, fromIndex)
+	    : baseFindIndex(array, baseIsNaN, fromIndex);
+	}
+	
+	module.exports = baseIndexOf;
+
+
+/***/ },
+/* 206 */
+/***/ function(module, exports) {
+
+	/**
+	 * The base implementation of `_.findIndex` and `_.findLastIndex` without
+	 * support for iteratee shorthands.
+	 *
+	 * @private
+	 * @param {Array} array The array to inspect.
+	 * @param {Function} predicate The function invoked per iteration.
+	 * @param {number} fromIndex The index to search from.
+	 * @param {boolean} [fromRight] Specify iterating from right to left.
+	 * @returns {number} Returns the index of the matched value, else `-1`.
+	 */
+	function baseFindIndex(array, predicate, fromIndex, fromRight) {
+	  var length = array.length,
+	      index = fromIndex + (fromRight ? 1 : -1);
+	
+	  while ((fromRight ? index-- : ++index < length)) {
+	    if (predicate(array[index], index, array)) {
+	      return index;
+	    }
 	  }
+	  return -1;
+	}
+	
+	module.exports = baseFindIndex;
+
+
+/***/ },
+/* 207 */
+/***/ function(module, exports) {
+
+	/**
+	 * The base implementation of `_.isNaN` without support for number objects.
+	 *
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is `NaN`, else `false`.
+	 */
+	function baseIsNaN(value) {
+	  return value !== value;
+	}
+	
+	module.exports = baseIsNaN;
+
+
+/***/ },
+/* 208 */
+/***/ function(module, exports) {
+
+	/**
+	 * A specialized version of `_.indexOf` which performs strict equality
+	 * comparisons of values, i.e. `===`.
+	 *
+	 * @private
+	 * @param {Array} array The array to inspect.
+	 * @param {*} value The value to search for.
+	 * @param {number} fromIndex The index to search from.
+	 * @returns {number} Returns the index of the matched value, else `-1`.
+	 */
+	function strictIndexOf(array, value, fromIndex) {
 	  var index = fromIndex - 1,
 	      length = array.length;
 	
@@ -6575,49 +6087,56 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return -1;
 	}
 	
-	module.exports = baseIndexOf;
+	module.exports = strictIndexOf;
 
 
 /***/ },
-/* 213 */
-/***/ function(module, exports) {
-
-	/**
-	 * Gets the index at which the first occurrence of `NaN` is found in `array`.
-	 *
-	 * @private
-	 * @param {Array} array The array to search.
-	 * @param {number} fromIndex The index to search from.
-	 * @param {boolean} [fromRight] Specify iterating from right to left.
-	 * @returns {number} Returns the index of the matched `NaN`, else `-1`.
-	 */
-	function indexOfNaN(array, fromIndex, fromRight) {
-	  var length = array.length,
-	      index = fromIndex + (fromRight ? 0 : -1);
-	
-	  while ((fromRight ? index-- : ++index < length)) {
-	    var other = array[index];
-	    if (other !== other) {
-	      return index;
-	    }
-	  }
-	  return -1;
-	}
-	
-	module.exports = indexOfNaN;
-
-
-/***/ },
-/* 214 */
+/* 209 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var toFinite = __webpack_require__(215);
+	var baseGetTag = __webpack_require__(85),
+	    isArray = __webpack_require__(105),
+	    isObjectLike = __webpack_require__(104);
+	
+	/** `Object#toString` result references. */
+	var stringTag = '[object String]';
+	
+	/**
+	 * Checks if `value` is classified as a `String` primitive or object.
+	 *
+	 * @static
+	 * @since 0.1.0
+	 * @memberOf _
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a string, else `false`.
+	 * @example
+	 *
+	 * _.isString('abc');
+	 * // => true
+	 *
+	 * _.isString(1);
+	 * // => false
+	 */
+	function isString(value) {
+	  return typeof value == 'string' ||
+	    (!isArray(value) && isObjectLike(value) && baseGetTag(value) == stringTag);
+	}
+	
+	module.exports = isString;
+
+
+/***/ },
+/* 210 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var toFinite = __webpack_require__(211);
 	
 	/**
 	 * Converts `value` to an integer.
 	 *
-	 * **Note:** This function is loosely based on
-	 * [`ToInteger`](http://www.ecma-international.org/ecma-262/6.0/#sec-tointeger).
+	 * **Note:** This method is loosely based on
+	 * [`ToInteger`](http://www.ecma-international.org/ecma-262/7.0/#sec-tointeger).
 	 *
 	 * @static
 	 * @memberOf _
@@ -6650,10 +6169,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 215 */
+/* 211 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var toNumber = __webpack_require__(216);
+	var toNumber = __webpack_require__(212);
 	
 	/** Used as references for various `Number` constants. */
 	var INFINITY = 1 / 0,
@@ -6698,12 +6217,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 216 */
+/* 212 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isFunction = __webpack_require__(97),
-	    isObject = __webpack_require__(98),
-	    isSymbol = __webpack_require__(181);
+	var isObject = __webpack_require__(91),
+	    isSymbol = __webpack_require__(184);
 	
 	/** Used as references for various `Number` constants. */
 	var NAN = 0 / 0;
@@ -6754,7 +6272,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return NAN;
 	  }
 	  if (isObject(value)) {
-	    var other = isFunction(value.valueOf) ? value.valueOf() : value;
+	    var other = typeof value.valueOf == 'function' ? value.valueOf() : value;
 	    value = isObject(other) ? (other + '') : other;
 	  }
 	  if (typeof value != 'string') {
@@ -6771,11 +6289,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 217 */
+/* 213 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseValues = __webpack_require__(218),
-	    keys = __webpack_require__(86);
+	var baseValues = __webpack_require__(214),
+	    keys = __webpack_require__(99);
 	
 	/**
 	 * Creates an array of the own enumerable string keyed property values of `object`.
@@ -6804,17 +6322,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * // => ['h', 'i']
 	 */
 	function values(object) {
-	  return object ? baseValues(object, keys(object)) : [];
+	  return object == null ? [] : baseValues(object, keys(object));
 	}
 	
 	module.exports = values;
 
 
 /***/ },
-/* 218 */
+/* 214 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var arrayMap = __webpack_require__(170);
+	var arrayMap = __webpack_require__(183);
 	
 	/**
 	 * The base implementation of `_.values` and `_.valuesIn` which creates an
@@ -6836,42 +6354,62 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 219 */
+/* 215 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 	
-	Object.defineProperty(exports, '__esModule', {
+	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+	exports.ops = exports.getBatchToken = undefined;
+	
+	var _toConsumableArray2 = __webpack_require__(216);
+	
+	var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
+	
+	var _assign = __webpack_require__(70);
+	
+	var _assign2 = _interopRequireDefault(_assign);
+	
+	var _defineProperty = __webpack_require__(76);
+	
+	var _defineProperty2 = _interopRequireDefault(_defineProperty);
+	
+	var _symbol = __webpack_require__(54);
+	
+	var _symbol2 = _interopRequireDefault(_symbol);
+	
+	var _typeof2 = __webpack_require__(2);
+	
+	var _typeof3 = _interopRequireDefault(_typeof2);
+	
 	exports.canMutate = canMutate;
-	exports['default'] = getImmutableOps;
+	exports.getImmutableOps = getImmutableOps;
 	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+	var _curry = __webpack_require__(226);
 	
-	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
+	var _curry2 = _interopRequireDefault(_curry);
 	
-	var _lodashForOwn = __webpack_require__(210);
+	var _ = __webpack_require__(233);
 	
-	var _lodashForOwn2 = _interopRequireDefault(_lodashForOwn);
+	var _2 = _interopRequireDefault(_);
 	
-	var _lodashIsArrayLike = __webpack_require__(94);
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	var _lodashIsArrayLike2 = _interopRequireDefault(_lodashIsArrayLike);
+	function forOwn(obj, fn) {
+	    for (var key in obj) {
+	        if (obj.hasOwnProperty(key)) {
+	            fn(obj[key], key);
+	        }
+	    }
+	}
 	
-	var _ramdaSrcCurry = __webpack_require__(220);
+	function isArrayLike(value) {
+	    return value && (typeof value === 'undefined' ? 'undefined' : (0, _typeof3.default)(value)) === 'object' && typeof value.length === 'number' && value.length >= 0 && value.length % 1 === 0;
+	}
 	
-	var _ramdaSrcCurry2 = _interopRequireDefault(_ramdaSrcCurry);
-	
-	var _ramdaSrcWrap = __webpack_require__(227);
-	
-	var _ramdaSrcWrap2 = _interopRequireDefault(_ramdaSrcWrap);
-	
-	var _ramdaSrc__ = __webpack_require__(229);
-	
-	var _ramdaSrc__2 = _interopRequireDefault(_ramdaSrc__);
-	
-	var MUTABILITY_TAG = '@@_______canMutate';
+	var OWNER_ID_TAG = '@@_______immutableOpsOwnerID';
 	
 	function fastArrayCopy(arr) {
 	    var copied = new Array(arr.length);
@@ -6881,32 +6419,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return copied;
 	}
 	
-	function canMutate(obj) {
-	    return obj.hasOwnProperty(MUTABILITY_TAG);
+	function canMutate(obj, ownerID) {
+	    if (!ownerID) return false;
+	    return obj[OWNER_ID_TAG] === ownerID;
 	}
 	
-	function addCanMutateTag(opts, obj) {
-	    Object.defineProperty(obj, MUTABILITY_TAG, {
-	        value: true,
+	var newOwnerID = typeof _symbol2.default === 'function' ? function () {
+	    return (0, _symbol2.default)('ownerID');
+	} : function () {
+	    return {};
+	};
+	
+	var getBatchToken = exports.getBatchToken = newOwnerID;
+	
+	function addOwnerID(obj, ownerID) {
+	    (0, _defineProperty2.default)(obj, OWNER_ID_TAG, {
+	        value: ownerID,
 	        configurable: true,
 	        enumerable: false
 	    });
 	
-	    opts.batchManager.addMutated(obj);
-	
 	    return obj;
 	}
 	
-	function removeCanMutateTag(obj) {
-	    delete obj[MUTABILITY_TAG];
-	    return obj;
-	}
-	
-	function prepareNewObject(opts, instance) {
-	    if (opts.batchManager.isWithMutations()) {
-	        addCanMutateTag(opts, instance);
+	function prepareNewObject(instance, ownerID) {
+	    if (ownerID) {
+	        addOwnerID(instance, ownerID);
 	    }
-	    opts.createdObjects++;
 	    return instance;
 	}
 	
@@ -6930,42 +6469,46 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return pathArg;
 	}
 	
-	function mutableSet(opts, key, value, obj) {
+	function mutableSet(key, value, obj) {
 	    obj[key] = value;
 	    return obj;
 	}
 	
-	function mutableSetIn(opts, _pathArg, value, obj) {
+	function mutableSetIn(_pathArg, value, obj) {
 	    var originalPathArg = normalizePath(_pathArg);
 	
 	    var pathLen = originalPathArg.length;
-	    originalPathArg.reduce(function (acc, curr, idx) {
+	
+	    var done = false;
+	    var idx = 0;
+	    var acc = obj;
+	    var curr = originalPathArg[idx];
+	
+	    while (!done) {
 	        if (idx === pathLen - 1) {
 	            acc[curr] = value;
-	            return value;
+	            done = true;
+	        } else {
+	            var currType = (0, _typeof3.default)(acc[curr]);
+	
+	            if (currType === 'undefined') {
+	                var newObj = {};
+	                prepareNewObject(newObj, null);
+	                acc[curr] = newObj;
+	            } else if (currType !== 'object') {
+	                var pathRepr = originalPathArg[idx - 1] + '.' + curr;
+	                throw new Error('A non-object value was encountered when traversing setIn path at ' + pathRepr + '.');
+	            }
+	            acc = acc[curr];
+	            idx++;
+	            curr = originalPathArg[idx];
 	        }
-	
-	        var currType = typeof acc[curr];
-	
-	        if (currType === 'undefined') {
-	            var newObj = {};
-	            prepareNewObject(opts, newObj);
-	            acc[curr] = newObj;
-	            return newObj;
-	        }
-	
-	        if (currType === 'object') {
-	            return acc[curr];
-	        }
-	
-	        var pathRepr = originalPathArg[idx - 1] + '.' + curr;
-	        throw new Error('A non-object value was encountered when traversing setIn path at ' + pathRepr + '.');
-	    });
+	    }
 	
 	    return obj;
 	}
 	
-	function valueInPath(opts, _pathArg, obj) {
+	function valueInPath(_pathArg, obj) {
 	    var pathArg = normalizePath(_pathArg);
 	
 	    var acc = obj;
@@ -6976,7 +6519,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            return currRef;
 	        }
 	
-	        if (typeof currRef === 'object') {
+	        if ((typeof currRef === 'undefined' ? 'undefined' : (0, _typeof3.default)(currRef)) === 'object') {
 	            acc = currRef;
 	        } else {
 	            return undefined;
@@ -6984,14 +6527,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	}
 	
-	function immutableSetIn(opts, _pathArg, value, obj) {
+	function immutableSetIn(ownerID, _pathArg, value, obj) {
 	    var pathArg = normalizePath(_pathArg);
 	
-	    var currentValue = valueInPath(opts, pathArg, obj);
+	    var currentValue = valueInPath(pathArg, obj);
 	    if (value === currentValue) return obj;
 	
 	    var pathLen = pathArg.length;
-	    var acc = Object.assign(prepareNewObject(opts, {}), obj);
+	
+	    var acc = void 0;
+	    if (canMutate(obj, ownerID)) {
+	        acc = obj;
+	    } else {
+	        acc = (0, _assign2.default)(prepareNewObject({}, ownerID), obj);
+	    }
+	
 	    var rootObj = acc;
 	
 	    pathArg.forEach(function (curr, idx) {
@@ -7001,23 +6551,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	
 	        var currRef = acc[curr];
-	        var currType = typeof currRef;
+	        var currType = typeof currRef === 'undefined' ? 'undefined' : (0, _typeof3.default)(currRef);
 	
 	        if (currType === 'object') {
-	            if (canMutate(currRef)) {
+	            if (canMutate(currRef, ownerID)) {
 	                acc = currRef;
 	            } else {
-	                var newObj = prepareNewObject(opts, {});
-	                acc[curr] = Object.assign(newObj, currRef);
+	                var newObj = prepareNewObject({}, ownerID);
+	                acc[curr] = (0, _assign2.default)(newObj, currRef);
 	                acc = newObj;
 	            }
 	            return;
 	        }
 	
 	        if (currType === 'undefined') {
-	            var newObj = prepareNewObject(opts, {});
-	            acc[curr] = newObj;
-	            acc = newObj;
+	            var _newObj = prepareNewObject({}, ownerID);
+	            acc[curr] = _newObj;
+	            acc = _newObj;
 	            return;
 	        }
 	
@@ -7028,19 +6578,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return rootObj;
 	}
 	
-	function mutableMerge(isDeep, opts, _mergeObjs, baseObj) {
+	function mutableMerge(isDeep, _mergeObjs, baseObj) {
 	    var mergeObjs = forceArray(_mergeObjs);
 	
-	    if (opts.deep) {
+	    if (isDeep) {
 	        mergeObjs.forEach(function (mergeObj) {
-	            (0, _lodashForOwn2['default'])(mergeObj, function (value, key) {
+	            forOwn(mergeObj, function (value, key) {
 	                if (isDeep && baseObj.hasOwnProperty(key)) {
-	                    var assignValue = undefined;
-	                    if (typeof value === 'object') {
-	                        assignValue = canMutate(value) ? mutableMerge(isDeep, opts, [value], baseObj[key]) : immutableMerge(isDeep, opts, [value], baseObj[key]); // eslint-disable-line
+	                    var assignValue = void 0;
+	                    if ((typeof value === 'undefined' ? 'undefined' : (0, _typeof3.default)(value)) === 'object') {
+	                        assignValue = mutableMerge(isDeep, [value], baseObj[key]);
 	                    } else {
-	                            assignValue = value;
-	                        }
+	                        assignValue = value;
+	                    }
 	
 	                    baseObj[key] = assignValue;
 	                } else {
@@ -7049,7 +6599,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            });
 	        });
 	    } else {
-	        Object.assign.apply(Object, [baseObj].concat(_toConsumableArray(mergeObjs)));
+	        _assign2.default.apply(Object, [baseObj].concat((0, _toConsumableArray3.default)(mergeObjs)));
 	    }
 	
 	    return baseObj;
@@ -7058,7 +6608,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var mutableShallowMerge = mutableMerge.bind(null, false);
 	var mutableDeepMerge = mutableMerge.bind(null, true);
 	
-	function mutableOmit(opts, _keys, obj) {
+	function mutableOmit(_keys, obj) {
 	    var keys = forceArray(_keys);
 	    keys.forEach(function (key) {
 	        delete obj[key];
@@ -7070,8 +6620,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return obj[key] !== other[key];
 	}
 	
-	function immutableMerge(isDeep, opts, _mergeObjs, obj) {
-	    if (canMutate(obj)) return mutableMerge(isDeep, opts, _mergeObjs, obj);
+	function immutableMerge(isDeep, ownerID, _mergeObjs, obj) {
+	    if (canMutate(obj, ownerID)) return mutableMerge(isDeep, _mergeObjs, obj);
 	    var mergeObjs = forceArray(_mergeObjs);
 	
 	    var hasChanges = false;
@@ -7080,18 +6630,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var willChange = function willChange() {
 	        if (!hasChanges) {
 	            hasChanges = true;
-	            nextObject = Object.assign({}, obj);
-	            prepareNewObject(opts, nextObject);
+	            nextObject = (0, _assign2.default)({}, obj);
+	            prepareNewObject(nextObject, ownerID);
 	        }
 	    };
 	
 	    mergeObjs.forEach(function (mergeObj) {
-	        (0, _lodashForOwn2['default'])(mergeObj, function (mergeValue, key) {
+	        forOwn(mergeObj, function (mergeValue, key) {
 	            if (isDeep && obj.hasOwnProperty(key)) {
 	                var currentValue = nextObject[key];
-	                if (typeof mergeValue === 'object' && !(mergeValue instanceof Array)) {
+	                if ((typeof mergeValue === 'undefined' ? 'undefined' : (0, _typeof3.default)(mergeValue)) === 'object' && !(mergeValue instanceof Array)) {
 	                    if (_shouldMergeKey(nextObject, mergeObj, key)) {
-	                        var recursiveMergeResult = immutableMerge(isDeep, opts, mergeValue, currentValue);
+	                        var recursiveMergeResult = immutableMerge(isDeep, ownerID, mergeValue, currentValue);
 	
 	                        if (recursiveMergeResult !== currentValue) {
 	                            willChange();
@@ -7114,32 +6664,32 @@ return /******/ (function(modules) { // webpackBootstrap
 	var immutableDeepMerge = immutableMerge.bind(null, true);
 	var immutableShallowMerge = immutableMerge.bind(null, false);
 	
-	function immutableArrSet(opts, index, value, arr) {
-	    if (canMutate(arr)) return mutableSet(opts, index, value, arr);
+	function immutableArrSet(ownerID, index, value, arr) {
+	    if (canMutate(arr, ownerID)) return mutableSet(index, value, arr);
 	
 	    if (arr[index] === value) return arr;
 	
 	    var newArr = fastArrayCopy(arr);
 	    newArr[index] = value;
-	    prepareNewObject(opts, newArr);
+	    prepareNewObject(newArr, ownerID);
 	
 	    return newArr;
 	}
 	
-	function immutableSet(opts, key, value, obj) {
-	    if ((0, _lodashIsArrayLike2['default'])(obj)) return immutableArrSet(opts, key, value, obj);
-	    if (canMutate(obj)) return mutableSet(opts, key, value, obj);
+	function immutableSet(ownerID, key, value, obj) {
+	    if (isArrayLike(obj)) return immutableArrSet(ownerID, key, value, obj);
+	    if (canMutate(obj, ownerID)) return mutableSet(key, value, obj);
 	
 	    if (obj[key] === value) return obj;
 	
-	    var newObj = Object.assign({}, obj);
-	    prepareNewObject(opts, newObj);
+	    var newObj = (0, _assign2.default)({}, obj);
+	    prepareNewObject(newObj, ownerID);
 	    newObj[key] = value;
 	    return newObj;
 	}
 	
-	function immutableOmit(opts, _keys, obj) {
-	    if (canMutate(obj)) return mutableOmit(opts, _keys, obj);
+	function immutableOmit(ownerID, _keys, obj) {
+	    if (canMutate(obj, ownerID)) return mutableOmit(_keys, obj);
 	
 	    var keys = forceArray(_keys);
 	    var keysInObj = keys.filter(function (key) {
@@ -7149,21 +6699,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // None of the keys were in the object, so we can return `obj`.
 	    if (keysInObj.length === 0) return obj;
 	
-	    var newObj = Object.assign({}, obj);
+	    var newObj = (0, _assign2.default)({}, obj);
 	    keysInObj.forEach(function (key) {
 	        delete newObj[key];
 	    });
-	    prepareNewObject(opts, newObj);
+	    prepareNewObject(newObj, ownerID);
 	    return newObj;
 	}
 	
-	function mutableArrPush(opts, _vals, arr) {
+	function mutableArrPush(_vals, arr) {
 	    var vals = forceArray(_vals);
-	    arr.push.apply(arr, _toConsumableArray(vals));
+	    arr.push.apply(arr, (0, _toConsumableArray3.default)(vals));
 	    return arr;
 	}
 	
-	function mutableArrFilter(opts, func, arr) {
+	function mutableArrFilter(func, arr) {
 	    var currIndex = 0;
 	    var originalIndex = 0;
 	    while (currIndex < arr.length) {
@@ -7179,47 +6729,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return arr;
 	}
 	
-	function mutableArrSplice(opts, index, deleteCount, _vals, arr) {
+	function mutableArrSplice(index, deleteCount, _vals, arr) {
 	    var vals = forceArray(_vals);
-	    arr.splice.apply(arr, [index, deleteCount].concat(_toConsumableArray(vals)));
+	    arr.splice.apply(arr, [index, deleteCount].concat((0, _toConsumableArray3.default)(vals)));
 	    return arr;
 	}
 	
-	function mutableArrInsert(opts, index, _vals, arr) {
-	    return mutableArrSplice(opts, index, 0, _vals, arr);
+	function mutableArrInsert(index, _vals, arr) {
+	    return mutableArrSplice(index, 0, _vals, arr);
 	}
 	
-	function immutableArrSplice(opts, index, deleteCount, _vals, arr) {
-	    if (canMutate(arr)) return mutableArrSplice(opts, index, deleteCount, _vals, arr);
+	function immutableArrSplice(ownerID, index, deleteCount, _vals, arr) {
+	    if (canMutate(arr, ownerID)) return mutableArrSplice(index, deleteCount, _vals, arr);
 	
 	    var vals = forceArray(_vals);
 	    var newArr = arr.slice();
-	    prepareNewObject(opts, newArr);
-	    newArr.splice.apply(newArr, [index, deleteCount].concat(_toConsumableArray(vals)));
+	    prepareNewObject(newArr, ownerID);
+	    newArr.splice.apply(newArr, [index, deleteCount].concat((0, _toConsumableArray3.default)(vals)));
 	
 	    return newArr;
 	}
 	
-	function immutableArrInsert(opts, index, _vals, arr) {
-	    if (canMutate(arr)) return mutableArrInsert(opts, index, _vals, arr);
-	    return immutableArrSplice(opts, index, 0, _vals, arr);
+	function immutableArrInsert(ownerID, index, _vals, arr) {
+	    if (canMutate(arr, ownerID)) return mutableArrInsert(index, _vals, arr);
+	    return immutableArrSplice(ownerID, index, 0, _vals, arr);
 	}
 	
-	function immutableArrPush(opts, vals, arr) {
-	    return immutableArrInsert(opts, arr.length, vals, arr);
+	function immutableArrPush(ownerID, vals, arr) {
+	    return immutableArrInsert(ownerID, arr.length, vals, arr);
 	}
 	
-	function immutableArrFilter(opts, func, arr) {
-	    if (canMutate(arr)) return mutableArrFilter(opts, func, arr);
+	function immutableArrFilter(ownerID, func, arr) {
+	    if (canMutate(arr, ownerID)) return mutableArrFilter(func, arr);
 	    var newArr = arr.filter(func);
 	
 	    if (newArr.length === arr.length) return arr;
 	
-	    prepareNewObject(opts, newArr);
+	    prepareNewObject(newArr, ownerID);
 	    return newArr;
 	}
 	
-	var operations = {
+	var immutableOperations = {
 	    // object operations
 	    merge: immutableShallowMerge,
 	    deepMerge: immutableDeepMerge,
@@ -7233,135 +6783,273 @@ return /******/ (function(modules) { // webpackBootstrap
 	    splice: immutableArrSplice,
 	
 	    // both
-	    set: immutableSet,
-	
-	    mutable: {
-	        // object operations
-	        merge: mutableShallowMerge,
-	        deepMerge: mutableDeepMerge,
-	        omit: mutableOmit,
-	        setIn: mutableSetIn,
-	
-	        // array operations
-	        insert: mutableArrInsert,
-	        push: mutableArrPush,
-	        filter: mutableArrFilter,
-	        splice: mutableArrSplice,
-	
-	        // both
-	        set: mutableSet
-	    }
+	    set: immutableSet
 	};
 	
-	function bindOperationsToOptions(opsObj, opts) {
-	    var boundOperations = {};
+	var mutableOperations = {
+	    // object operations
+	    merge: mutableShallowMerge,
+	    deepMerge: mutableDeepMerge,
+	    omit: mutableOmit,
+	    setIn: mutableSetIn,
 	
-	    (0, _lodashForOwn2['default'])(opsObj, function (value, key) {
-	        if (typeof value === 'object') {
-	            boundOperations[key] = bindOperationsToOptions(value, opts);
-	        } else {
-	            boundOperations[key] = value.bind(null, opts);
+	    // array operations
+	    insert: mutableArrInsert,
+	    push: mutableArrPush,
+	    filter: mutableArrFilter,
+	    splice: mutableArrSplice,
 	
-	            if (opts.curried) {
-	                boundOperations[key] = (0, _ramdaSrcCurry2['default'])(boundOperations[key]);
-	            }
-	        }
+	    // both
+	    set: mutableSet
+	};
+	
+	function getImmutableOps() {
+	    var immutableOps = (0, _assign2.default)({}, immutableOperations);
+	    forOwn(immutableOps, function (value, key) {
+	        immutableOps[key] = (0, _curry2.default)(value.bind(null, null));
 	    });
 	
-	    return boundOperations;
-	}
+	    var mutableOps = (0, _assign2.default)({}, mutableOperations);
+	    forOwn(mutableOps, function (value, key) {
+	        mutableOps[key] = (0, _curry2.default)(value);
+	    });
 	
-	function getBatchManager() {
-	    var previousSessionStack = [];
-	    var currMutatedObjects = null;
-	    var objectsCreated = 0;
+	    var batchOps = (0, _assign2.default)({}, immutableOperations);
+	    forOwn(batchOps, function (value, key) {
+	        batchOps[key] = (0, _curry2.default)(value);
+	    });
 	
-	    return {
-	        open: function open() {
-	            if (currMutatedObjects !== null) {
-	                previousSessionStack.push(currMutatedObjects);
-	            }
-	            currMutatedObjects = [];
-	        },
+	    function batched(_token, _fn) {
+	        var token = void 0;
+	        var fn = void 0;
 	
-	        isWithMutations: function isWithMutations() {
-	            return currMutatedObjects !== null;
-	        },
-	
-	        addMutated: function addMutated(obj) {
-	            currMutatedObjects.push(obj);
-	            objectsCreated++;
-	        },
-	
-	        getMutatedObjects: function getMutatedObjects() {
-	            return currMutatedObjects;
-	        },
-	
-	        getObjectsCreatedCount: function getObjectsCreatedCount() {
-	            return objectsCreated;
-	        },
-	
-	        close: function close() {
-	            if (currMutatedObjects !== null) {
-	                currMutatedObjects.forEach(removeCanMutateTag);
-	                if (previousSessionStack.length) {
-	                    currMutatedObjects = previousSessionStack.pop();
-	                } else {
-	                    currMutatedObjects = null;
-	                }
-	                objectsCreated = 0;
-	            }
+	        if (typeof _token === 'function') {
+	            fn = _token;
+	            token = getBatchToken();
+	        } else {
+	            token = _token;
+	            fn = _fn;
 	        }
-	    };
-	}
 	
-	function getImmutableOps(userOpts) {
-	    var defaultOpts = {
-	        curried: true,
-	        batchManager: getBatchManager()
-	    };
-	
-	    var opts = Object.assign({ createdObjects: 0 }, defaultOpts, userOpts || {});
-	
-	    var boundOperations = bindOperationsToOptions(operations, opts);
-	
-	    function batchWrapper() {
-	        var func = arguments[0];
-	        var args = Array.prototype.slice.call(arguments, 1);
-	        opts.batchManager.open();
-	        var returnValue = func.apply(null, args);
-	        opts.batchManager.close();
-	        return returnValue;
+	        var immutableOpsBoundToToken = (0, _assign2.default)({}, immutableOperations);
+	        forOwn(immutableOpsBoundToToken, function (value, key) {
+	            immutableOpsBoundToToken[key] = (0, _curry2.default)(value.bind(null, token));
+	        });
+	        return fn(immutableOpsBoundToToken);
 	    }
 	
-	    boundOperations.batched = batchWrapper;
-	    boundOperations.batch = (0, _ramdaSrcWrap2['default'])(_ramdaSrc__2['default'], batchWrapper);
-	    boundOperations.createdObjectsCount = function () {
-	        return opts.createdObjects;
-	    };
-	    boundOperations.getMutatedObjects = opts.batchManager.getMutatedObjects;
-	    boundOperations.__ = _ramdaSrc__2['default'];
-	    boundOperations.open = opts.batchManager.open;
-	    boundOperations.close = opts.batchManager.close;
-	    boundOperations.getBatchManager = getBatchManager;
-	
-	    boundOperations.useBatchManager = function (manager) {
-	        opts.batchManager.close();
-	        opts.batchManager = manager;
-	        boundOperations.open = manager.open;
-	        boundOperations.close = manager.close;
-	        boundOperations.getMutatedObjects = manager.getMutatedObjects;
-	    };
-	
-	    return boundOperations;
+	    return (0, _assign2.default)(immutableOps, {
+	        mutable: mutableOps,
+	        batch: batchOps,
+	        batched: batched,
+	        __: _2.default,
+	        getBatchToken: getBatchToken
+	    });
 	}
+	
+	var ops = exports.ops = getImmutableOps();
+	
+	exports.default = ops;
+
+/***/ },
+/* 216 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	exports.__esModule = true;
+	
+	var _from = __webpack_require__(217);
+	
+	var _from2 = _interopRequireDefault(_from);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	exports.default = function (arr) {
+	  if (Array.isArray(arr)) {
+	    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+	      arr2[i] = arr[i];
+	    }
+	
+	    return arr2;
+	  } else {
+	    return (0, _from2.default)(arr);
+	  }
+	};
+
+/***/ },
+/* 217 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(218), __esModule: true };
+
+/***/ },
+/* 218 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(5);
+	__webpack_require__(219);
+	module.exports = __webpack_require__(13).Array.from;
+
+/***/ },
+/* 219 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	var ctx            = __webpack_require__(14)
+	  , $export        = __webpack_require__(11)
+	  , toObject       = __webpack_require__(48)
+	  , call           = __webpack_require__(220)
+	  , isArrayIter    = __webpack_require__(221)
+	  , toLength       = __webpack_require__(38)
+	  , createProperty = __webpack_require__(222)
+	  , getIterFn      = __webpack_require__(223);
+	
+	$export($export.S + $export.F * !__webpack_require__(225)(function(iter){ Array.from(iter); }), 'Array', {
+	  // 22.1.2.1 Array.from(arrayLike, mapfn = undefined, thisArg = undefined)
+	  from: function from(arrayLike/*, mapfn = undefined, thisArg = undefined*/){
+	    var O       = toObject(arrayLike)
+	      , C       = typeof this == 'function' ? this : Array
+	      , aLen    = arguments.length
+	      , mapfn   = aLen > 1 ? arguments[1] : undefined
+	      , mapping = mapfn !== undefined
+	      , index   = 0
+	      , iterFn  = getIterFn(O)
+	      , length, result, step, iterator;
+	    if(mapping)mapfn = ctx(mapfn, aLen > 2 ? arguments[2] : undefined, 2);
+	    // if object isn't iterable or it's array with default iterator - use simple case
+	    if(iterFn != undefined && !(C == Array && isArrayIter(iterFn))){
+	      for(iterator = iterFn.call(O), result = new C; !(step = iterator.next()).done; index++){
+	        createProperty(result, index, mapping ? call(iterator, mapfn, [step.value, index], true) : step.value);
+	      }
+	    } else {
+	      length = toLength(O.length);
+	      for(result = new C(length); length > index; index++){
+	        createProperty(result, index, mapping ? mapfn(O[index], index) : O[index]);
+	      }
+	    }
+	    result.length = index;
+	    return result;
+	  }
+	});
+
 
 /***/ },
 /* 220 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _curry1 = __webpack_require__(221);
-	var curryN = __webpack_require__(223);
+	// call something on iterator step with safe closing on error
+	var anObject = __webpack_require__(18);
+	module.exports = function(iterator, fn, value, entries){
+	  try {
+	    return entries ? fn(anObject(value)[0], value[1]) : fn(value);
+	  // 7.4.6 IteratorClose(iterator, completion)
+	  } catch(e){
+	    var ret = iterator['return'];
+	    if(ret !== undefined)anObject(ret.call(iterator));
+	    throw e;
+	  }
+	};
+
+/***/ },
+/* 221 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// check on default Array iterator
+	var Iterators  = __webpack_require__(28)
+	  , ITERATOR   = __webpack_require__(46)('iterator')
+	  , ArrayProto = Array.prototype;
+	
+	module.exports = function(it){
+	  return it !== undefined && (Iterators.Array === it || ArrayProto[ITERATOR] === it);
+	};
+
+/***/ },
+/* 222 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	var $defineProperty = __webpack_require__(17)
+	  , createDesc      = __webpack_require__(25);
+	
+	module.exports = function(object, index, value){
+	  if(index in object)$defineProperty.f(object, index, createDesc(0, value));
+	  else object[index] = value;
+	};
+
+/***/ },
+/* 223 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var classof   = __webpack_require__(224)
+	  , ITERATOR  = __webpack_require__(46)('iterator')
+	  , Iterators = __webpack_require__(28);
+	module.exports = __webpack_require__(13).getIteratorMethod = function(it){
+	  if(it != undefined)return it[ITERATOR]
+	    || it['@@iterator']
+	    || Iterators[classof(it)];
+	};
+
+/***/ },
+/* 224 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// getting tag from 19.1.3.6 Object.prototype.toString()
+	var cof = __webpack_require__(36)
+	  , TAG = __webpack_require__(46)('toStringTag')
+	  // ES3 wrong here
+	  , ARG = cof(function(){ return arguments; }()) == 'Arguments';
+	
+	// fallback for IE11 Script Access Denied error
+	var tryGet = function(it, key){
+	  try {
+	    return it[key];
+	  } catch(e){ /* empty */ }
+	};
+	
+	module.exports = function(it){
+	  var O, T, B;
+	  return it === undefined ? 'Undefined' : it === null ? 'Null'
+	    // @@toStringTag case
+	    : typeof (T = tryGet(O = Object(it), TAG)) == 'string' ? T
+	    // builtinTag case
+	    : ARG ? cof(O)
+	    // ES3 arguments fallback
+	    : (B = cof(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : B;
+	};
+
+/***/ },
+/* 225 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var ITERATOR     = __webpack_require__(46)('iterator')
+	  , SAFE_CLOSING = false;
+	
+	try {
+	  var riter = [7][ITERATOR]();
+	  riter['return'] = function(){ SAFE_CLOSING = true; };
+	  Array.from(riter, function(){ throw 2; });
+	} catch(e){ /* empty */ }
+	
+	module.exports = function(exec, skipClosing){
+	  if(!skipClosing && !SAFE_CLOSING)return false;
+	  var safe = false;
+	  try {
+	    var arr  = [7]
+	      , iter = arr[ITERATOR]();
+	    iter.next = function(){ return {done: safe = true}; };
+	    arr[ITERATOR] = function(){ return iter; };
+	    exec(arr);
+	  } catch(e){ /* empty */ }
+	  return safe;
+	};
+
+/***/ },
+/* 226 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var _curry1 = __webpack_require__(227);
+	var curryN = __webpack_require__(229);
 	
 	
 	/**
@@ -7411,10 +7099,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 221 */
+/* 227 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _isPlaceholder = __webpack_require__(222);
+	var _isPlaceholder = __webpack_require__(228);
 	
 	
 	/**
@@ -7437,7 +7125,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 222 */
+/* 228 */
 /***/ function(module, exports) {
 
 	module.exports = function _isPlaceholder(a) {
@@ -7448,13 +7136,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 223 */
+/* 229 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _arity = __webpack_require__(224);
-	var _curry1 = __webpack_require__(221);
-	var _curry2 = __webpack_require__(225);
-	var _curryN = __webpack_require__(226);
+	var _arity = __webpack_require__(230);
+	var _curry1 = __webpack_require__(227);
+	var _curry2 = __webpack_require__(231);
+	var _curryN = __webpack_require__(232);
 	
 	
 	/**
@@ -7508,7 +7196,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 224 */
+/* 230 */
 /***/ function(module, exports) {
 
 	module.exports = function _arity(n, fn) {
@@ -7531,11 +7219,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 225 */
+/* 231 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _curry1 = __webpack_require__(221);
-	var _isPlaceholder = __webpack_require__(222);
+	var _curry1 = __webpack_require__(227);
+	var _isPlaceholder = __webpack_require__(228);
 	
 	
 	/**
@@ -7565,11 +7253,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 226 */
+/* 232 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var _arity = __webpack_require__(224);
-	var _isPlaceholder = __webpack_require__(222);
+	var _arity = __webpack_require__(230);
+	var _isPlaceholder = __webpack_require__(228);
 	
 	
 	/**
@@ -7611,86 +7299,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 227 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var _concat = __webpack_require__(228);
-	var _curry2 = __webpack_require__(225);
-	var curryN = __webpack_require__(223);
-	
-	
-	/**
-	 * Wrap a function inside another to allow you to make adjustments to the
-	 * parameters, or do other processing either before the internal function is
-	 * called or with its results.
-	 *
-	 * @func
-	 * @memberOf R
-	 * @since v0.1.0
-	 * @category Function
-	 * @sig (a... -> b) -> ((a... -> b) -> a... -> c) -> (a... -> c)
-	 * @param {Function} fn The function to wrap.
-	 * @param {Function} wrapper The wrapper function.
-	 * @return {Function} The wrapped function.
-	 * @example
-	 *
-	 *      var greet = name => 'Hello ' + name;
-	 *
-	 *      var shoutedGreet = R.wrap(greet, (gr, name) => gr(name).toUpperCase());
-	 *
-	 *      shoutedGreet("Kathy"); //=> "HELLO KATHY"
-	 *
-	 *      var shortenedGreet = R.wrap(greet, function(gr, name) {
-	 *        return gr(name.substring(0, 3));
-	 *      });
-	 *      shortenedGreet("Robert"); //=> "Hello Rob"
-	 */
-	module.exports = _curry2(function wrap(fn, wrapper) {
-	  return curryN(fn.length, function() {
-	    return wrapper.apply(this, _concat([fn], arguments));
-	  });
-	});
-
-
-/***/ },
-/* 228 */
-/***/ function(module, exports) {
-
-	/**
-	 * Private `concat` function to merge two array-like objects.
-	 *
-	 * @private
-	 * @param {Array|Arguments} [set1=[]] An array-like object.
-	 * @param {Array|Arguments} [set2=[]] An array-like object.
-	 * @return {Array} A new, merged array.
-	 * @example
-	 *
-	 *      _concat([4, 5, 6], [1, 2, 3]); //=> [4, 5, 6, 1, 2, 3]
-	 */
-	module.exports = function _concat(set1, set2) {
-	  set1 = set1 || [];
-	  set2 = set2 || [];
-	  var idx;
-	  var len1 = set1.length;
-	  var len2 = set2.length;
-	  var result = [];
-	
-	  idx = 0;
-	  while (idx < len1) {
-	    result[result.length] = set1[idx];
-	    idx += 1;
-	  }
-	  idx = 0;
-	  while (idx < len2) {
-	    result[result.length] = set2[idx];
-	    idx += 1;
-	  }
-	  return result;
-	};
-
-
-/***/ },
-/* 229 */
+/* 233 */
 /***/ function(module, exports) {
 
 	/**
@@ -7723,19 +7332,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 230 */
+/* 234 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var arrayMap = __webpack_require__(170),
-	    baseIntersection = __webpack_require__(231),
-	    castArrayLikeObject = __webpack_require__(235),
-	    rest = __webpack_require__(236);
+	var arrayMap = __webpack_require__(183),
+	    baseIntersection = __webpack_require__(235),
+	    baseRest = __webpack_require__(238),
+	    castArrayLikeObject = __webpack_require__(245);
 	
 	/**
 	 * Creates an array of unique values that are included in all given arrays
-	 * using [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
-	 * for equality comparisons. The order of result values is determined by the
-	 * order they occur in the first array.
+	 * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+	 * for equality comparisons. The order and references of result values are
+	 * determined by the first array.
 	 *
 	 * @static
 	 * @memberOf _
@@ -7745,10 +7354,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {Array} Returns the new array of intersecting values.
 	 * @example
 	 *
-	 * _.intersection([2, 1], [4, 2], [1, 2]);
+	 * _.intersection([2, 1], [2, 3]);
 	 * // => [2]
 	 */
-	var intersection = rest(function(arrays) {
+	var intersection = baseRest(function(arrays) {
 	  var mapped = arrayMap(arrays, castArrayLikeObject);
 	  return (mapped.length && mapped[0] === arrays[0])
 	    ? baseIntersection(mapped)
@@ -7759,15 +7368,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 231 */
+/* 235 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var SetCache = __webpack_require__(149),
-	    arrayIncludes = __webpack_require__(232),
-	    arrayIncludesWith = __webpack_require__(233),
-	    arrayMap = __webpack_require__(170),
-	    baseUnary = __webpack_require__(196),
-	    cacheHas = __webpack_require__(234);
+	var SetCache = __webpack_require__(156),
+	    arrayIncludes = __webpack_require__(236),
+	    arrayIncludesWith = __webpack_require__(237),
+	    arrayMap = __webpack_require__(183),
+	    baseUnary = __webpack_require__(113),
+	    cacheHas = __webpack_require__(160);
 	
 	/* Built-in method references for those with the same name as other `lodash` methods. */
 	var nativeMin = Math.min;
@@ -7839,43 +7448,44 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 232 */
+/* 236 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseIndexOf = __webpack_require__(212);
+	var baseIndexOf = __webpack_require__(205);
 	
 	/**
 	 * A specialized version of `_.includes` for arrays without support for
 	 * specifying an index to search from.
 	 *
 	 * @private
-	 * @param {Array} array The array to search.
+	 * @param {Array} [array] The array to inspect.
 	 * @param {*} target The value to search for.
 	 * @returns {boolean} Returns `true` if `target` is found, else `false`.
 	 */
 	function arrayIncludes(array, value) {
-	  return !!array.length && baseIndexOf(array, value, 0) > -1;
+	  var length = array == null ? 0 : array.length;
+	  return !!length && baseIndexOf(array, value, 0) > -1;
 	}
 	
 	module.exports = arrayIncludes;
 
 
 /***/ },
-/* 233 */
+/* 237 */
 /***/ function(module, exports) {
 
 	/**
 	 * This function is like `arrayIncludes` except that it accepts a comparator.
 	 *
 	 * @private
-	 * @param {Array} array The array to search.
+	 * @param {Array} [array] The array to inspect.
 	 * @param {*} target The value to search for.
 	 * @param {Function} comparator The comparator invoked per element.
 	 * @returns {boolean} Returns `true` if `target` is found, else `false`.
 	 */
 	function arrayIncludesWith(array, value, comparator) {
 	  var index = -1,
-	      length = array.length;
+	      length = array == null ? 0 : array.length;
 	
 	  while (++index < length) {
 	    if (comparator(value, array[index])) {
@@ -7889,29 +7499,225 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 234 */
-/***/ function(module, exports) {
+/* 238 */
+/***/ function(module, exports, __webpack_require__) {
 
+	var identity = __webpack_require__(190),
+	    overRest = __webpack_require__(239),
+	    setToString = __webpack_require__(241);
+	
 	/**
-	 * Checks if a cache value for `key` exists.
+	 * The base implementation of `_.rest` which doesn't validate or coerce arguments.
 	 *
 	 * @private
-	 * @param {Object} cache The cache to query.
-	 * @param {string} key The key of the entry to check.
-	 * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+	 * @param {Function} func The function to apply a rest parameter to.
+	 * @param {number} [start=func.length-1] The start position of the rest parameter.
+	 * @returns {Function} Returns the new function.
 	 */
-	function cacheHas(cache, key) {
-	  return cache.has(key);
+	function baseRest(func, start) {
+	  return setToString(overRest(func, start, identity), func + '');
 	}
 	
-	module.exports = cacheHas;
+	module.exports = baseRest;
 
 
 /***/ },
-/* 235 */
+/* 239 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArrayLikeObject = __webpack_require__(93);
+	var apply = __webpack_require__(240);
+	
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+	var nativeMax = Math.max;
+	
+	/**
+	 * A specialized version of `baseRest` which transforms the rest array.
+	 *
+	 * @private
+	 * @param {Function} func The function to apply a rest parameter to.
+	 * @param {number} [start=func.length-1] The start position of the rest parameter.
+	 * @param {Function} transform The rest array transform.
+	 * @returns {Function} Returns the new function.
+	 */
+	function overRest(func, start, transform) {
+	  start = nativeMax(start === undefined ? (func.length - 1) : start, 0);
+	  return function() {
+	    var args = arguments,
+	        index = -1,
+	        length = nativeMax(args.length - start, 0),
+	        array = Array(length);
+	
+	    while (++index < length) {
+	      array[index] = args[start + index];
+	    }
+	    index = -1;
+	    var otherArgs = Array(start + 1);
+	    while (++index < start) {
+	      otherArgs[index] = args[index];
+	    }
+	    otherArgs[start] = transform(array);
+	    return apply(func, this, otherArgs);
+	  };
+	}
+	
+	module.exports = overRest;
+
+
+/***/ },
+/* 240 */
+/***/ function(module, exports) {
+
+	/**
+	 * A faster alternative to `Function#apply`, this function invokes `func`
+	 * with the `this` binding of `thisArg` and the arguments of `args`.
+	 *
+	 * @private
+	 * @param {Function} func The function to invoke.
+	 * @param {*} thisArg The `this` binding of `func`.
+	 * @param {Array} args The arguments to invoke `func` with.
+	 * @returns {*} Returns the result of `func`.
+	 */
+	function apply(func, thisArg, args) {
+	  switch (args.length) {
+	    case 0: return func.call(thisArg);
+	    case 1: return func.call(thisArg, args[0]);
+	    case 2: return func.call(thisArg, args[0], args[1]);
+	    case 3: return func.call(thisArg, args[0], args[1], args[2]);
+	  }
+	  return func.apply(thisArg, args);
+	}
+	
+	module.exports = apply;
+
+
+/***/ },
+/* 241 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseSetToString = __webpack_require__(242),
+	    shortOut = __webpack_require__(244);
+	
+	/**
+	 * Sets the `toString` method of `func` to return `string`.
+	 *
+	 * @private
+	 * @param {Function} func The function to modify.
+	 * @param {Function} string The `toString` result.
+	 * @returns {Function} Returns `func`.
+	 */
+	var setToString = shortOut(baseSetToString);
+	
+	module.exports = setToString;
+
+
+/***/ },
+/* 242 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var constant = __webpack_require__(243),
+	    defineProperty = __webpack_require__(81),
+	    identity = __webpack_require__(190);
+	
+	/**
+	 * The base implementation of `setToString` without support for hot loop shorting.
+	 *
+	 * @private
+	 * @param {Function} func The function to modify.
+	 * @param {Function} string The `toString` result.
+	 * @returns {Function} Returns `func`.
+	 */
+	var baseSetToString = !defineProperty ? identity : function(func, string) {
+	  return defineProperty(func, 'toString', {
+	    'configurable': true,
+	    'enumerable': false,
+	    'value': constant(string),
+	    'writable': true
+	  });
+	};
+	
+	module.exports = baseSetToString;
+
+
+/***/ },
+/* 243 */
+/***/ function(module, exports) {
+
+	/**
+	 * Creates a function that returns `value`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 2.4.0
+	 * @category Util
+	 * @param {*} value The value to return from the new function.
+	 * @returns {Function} Returns the new constant function.
+	 * @example
+	 *
+	 * var objects = _.times(2, _.constant({ 'a': 1 }));
+	 *
+	 * console.log(objects);
+	 * // => [{ 'a': 1 }, { 'a': 1 }]
+	 *
+	 * console.log(objects[0] === objects[1]);
+	 * // => true
+	 */
+	function constant(value) {
+	  return function() {
+	    return value;
+	  };
+	}
+	
+	module.exports = constant;
+
+
+/***/ },
+/* 244 */
+/***/ function(module, exports) {
+
+	/** Used to detect hot functions by number of calls within a span of milliseconds. */
+	var HOT_COUNT = 800,
+	    HOT_SPAN = 16;
+	
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+	var nativeNow = Date.now;
+	
+	/**
+	 * Creates a function that'll short out and invoke `identity` instead
+	 * of `func` when it's called `HOT_COUNT` or more times in `HOT_SPAN`
+	 * milliseconds.
+	 *
+	 * @private
+	 * @param {Function} func The function to restrict.
+	 * @returns {Function} Returns the new shortable function.
+	 */
+	function shortOut(func) {
+	  var count = 0,
+	      lastCalled = 0;
+	
+	  return function() {
+	    var stamp = nativeNow(),
+	        remaining = HOT_SPAN - (stamp - lastCalled);
+	
+	    lastCalled = stamp;
+	    if (remaining > 0) {
+	      if (++count >= HOT_COUNT) {
+	        return arguments[0];
+	      }
+	    } else {
+	      count = 0;
+	    }
+	    return func.apply(undefined, arguments);
+	  };
+	}
+	
+	module.exports = shortOut;
+
+
+/***/ },
+/* 245 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isArrayLikeObject = __webpack_require__(246);
 	
 	/**
 	 * Casts `value` to an empty array if it's not an array like object.
@@ -7928,117 +7734,60 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 236 */
+/* 246 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var apply = __webpack_require__(237),
-	    toInteger = __webpack_require__(214);
-	
-	/** Used as the `TypeError` message for "Functions" methods. */
-	var FUNC_ERROR_TEXT = 'Expected a function';
-	
-	/* Built-in method references for those with the same name as other `lodash` methods. */
-	var nativeMax = Math.max;
+	var isArrayLike = __webpack_require__(119),
+	    isObjectLike = __webpack_require__(104);
 	
 	/**
-	 * Creates a function that invokes `func` with the `this` binding of the
-	 * created function and arguments from `start` and beyond provided as
-	 * an array.
-	 *
-	 * **Note:** This method is based on the
-	 * [rest parameter](https://mdn.io/rest_parameters).
+	 * This method is like `_.isArrayLike` except that it also checks if `value`
+	 * is an object.
 	 *
 	 * @static
 	 * @memberOf _
 	 * @since 4.0.0
-	 * @category Function
-	 * @param {Function} func The function to apply a rest parameter to.
-	 * @param {number} [start=func.length-1] The start position of the rest parameter.
-	 * @returns {Function} Returns the new function.
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is an array-like object,
+	 *  else `false`.
 	 * @example
 	 *
-	 * var say = _.rest(function(what, names) {
-	 *   return what + ' ' + _.initial(names).join(', ') +
-	 *     (_.size(names) > 1 ? ', & ' : '') + _.last(names);
-	 * });
+	 * _.isArrayLikeObject([1, 2, 3]);
+	 * // => true
 	 *
-	 * say('hello', 'fred', 'barney', 'pebbles');
-	 * // => 'hello fred, barney, & pebbles'
+	 * _.isArrayLikeObject(document.body.children);
+	 * // => true
+	 *
+	 * _.isArrayLikeObject('abc');
+	 * // => false
+	 *
+	 * _.isArrayLikeObject(_.noop);
+	 * // => false
 	 */
-	function rest(func, start) {
-	  if (typeof func != 'function') {
-	    throw new TypeError(FUNC_ERROR_TEXT);
-	  }
-	  start = nativeMax(start === undefined ? (func.length - 1) : toInteger(start), 0);
-	  return function() {
-	    var args = arguments,
-	        index = -1,
-	        length = nativeMax(args.length - start, 0),
-	        array = Array(length);
-	
-	    while (++index < length) {
-	      array[index] = args[start + index];
-	    }
-	    switch (start) {
-	      case 0: return func.call(this, array);
-	      case 1: return func.call(this, args[0], array);
-	      case 2: return func.call(this, args[0], args[1], array);
-	    }
-	    var otherArgs = Array(start + 1);
-	    index = -1;
-	    while (++index < start) {
-	      otherArgs[index] = args[index];
-	    }
-	    otherArgs[start] = array;
-	    return apply(func, this, otherArgs);
-	  };
+	function isArrayLikeObject(value) {
+	  return isObjectLike(value) && isArrayLike(value);
 	}
 	
-	module.exports = rest;
+	module.exports = isArrayLikeObject;
 
 
 /***/ },
-/* 237 */
-/***/ function(module, exports) {
-
-	/**
-	 * A faster alternative to `Function#apply`, this function invokes `func`
-	 * with the `this` binding of `thisArg` and the arguments of `args`.
-	 *
-	 * @private
-	 * @param {Function} func The function to invoke.
-	 * @param {*} thisArg The `this` binding of `func`.
-	 * @param {Array} args The arguments to invoke `func` with.
-	 * @returns {*} Returns the result of `func`.
-	 */
-	function apply(func, thisArg, args) {
-	  var length = args.length;
-	  switch (length) {
-	    case 0: return func.call(thisArg);
-	    case 1: return func.call(thisArg, args[0]);
-	    case 2: return func.call(thisArg, args[0], args[1]);
-	    case 3: return func.call(thisArg, args[0], args[1], args[2]);
-	  }
-	  return func.apply(thisArg, args);
-	}
-	
-	module.exports = apply;
-
-
-/***/ },
-/* 238 */
+/* 247 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var baseDifference = __webpack_require__(239),
-	    baseFlatten = __webpack_require__(240),
-	    isArrayLikeObject = __webpack_require__(93),
-	    rest = __webpack_require__(236);
+	var baseDifference = __webpack_require__(248),
+	    baseFlatten = __webpack_require__(249),
+	    baseRest = __webpack_require__(238),
+	    isArrayLikeObject = __webpack_require__(246);
 	
 	/**
-	 * Creates an array of unique `array` values not included in the other given
-	 * arrays using [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
-	 * for equality comparisons. The order of result values is determined by the
-	 * order they occur in the first array.
+	 * Creates an array of `array` values not included in the other given arrays
+	 * using [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+	 * for equality comparisons. The order and references of result values are
+	 * determined by the first array.
+	 *
+	 * **Note:** Unlike `_.pullAll`, this method returns a new array.
 	 *
 	 * @static
 	 * @memberOf _
@@ -8050,10 +7799,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @see _.without, _.xor
 	 * @example
 	 *
-	 * _.difference([3, 2, 1], [4, 2]);
-	 * // => [3, 1]
+	 * _.difference([2, 1], [2, 3]);
+	 * // => [1]
 	 */
-	var difference = rest(function(array, values) {
+	var difference = baseRest(function(array, values) {
 	  return isArrayLikeObject(array)
 	    ? baseDifference(array, baseFlatten(values, 1, isArrayLikeObject, true))
 	    : [];
@@ -8063,15 +7812,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 239 */
+/* 248 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var SetCache = __webpack_require__(149),
-	    arrayIncludes = __webpack_require__(232),
-	    arrayIncludesWith = __webpack_require__(233),
-	    arrayMap = __webpack_require__(170),
-	    baseUnary = __webpack_require__(196),
-	    cacheHas = __webpack_require__(234);
+	var SetCache = __webpack_require__(156),
+	    arrayIncludes = __webpack_require__(236),
+	    arrayIncludesWith = __webpack_require__(237),
+	    arrayMap = __webpack_require__(183),
+	    baseUnary = __webpack_require__(113),
+	    cacheHas = __webpack_require__(160);
 	
 	/** Used as the size to enable large array optimizations. */
 	var LARGE_ARRAY_SIZE = 200;
@@ -8113,7 +7862,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  outer:
 	  while (++index < length) {
 	    var value = array[index],
-	        computed = iteratee ? iteratee(value) : value;
+	        computed = iteratee == null ? value : iteratee(value);
 	
 	    value = (comparator || value !== 0) ? value : 0;
 	    if (isCommon && computed === computed) {
@@ -8136,11 +7885,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 240 */
+/* 249 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var arrayPush = __webpack_require__(241),
-	    isFlattenable = __webpack_require__(242);
+	var arrayPush = __webpack_require__(250),
+	    isFlattenable = __webpack_require__(251);
 	
 	/**
 	 * The base implementation of `_.flatten` with support for restricting flattening.
@@ -8180,7 +7929,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 241 */
+/* 250 */
 /***/ function(module, exports) {
 
 	/**
@@ -8206,11 +7955,15 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 242 */
+/* 251 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var isArguments = __webpack_require__(92),
-	    isArray = __webpack_require__(101);
+	var Symbol = __webpack_require__(86),
+	    isArguments = __webpack_require__(102),
+	    isArray = __webpack_require__(105);
+	
+	/** Built-in value references. */
+	var spreadableSymbol = Symbol ? Symbol.isConcatSpreadable : undefined;
 	
 	/**
 	 * Checks if `value` is a flattenable `arguments` object or array.
@@ -8220,14 +7973,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @returns {boolean} Returns `true` if `value` is flattenable, else `false`.
 	 */
 	function isFlattenable(value) {
-	  return isArray(value) || isArguments(value);
+	  return isArray(value) || isArguments(value) ||
+	    !!(spreadableSymbol && value && value[spreadableSymbol]);
 	}
 	
 	module.exports = isFlattenable;
 
 
 /***/ },
-/* 243 */
+/* 252 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -8238,9 +7992,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	var UPDATE = exports.UPDATE = 'REDUX_ORM_UPDATE';
 	var DELETE = exports.DELETE = 'REDUX_ORM_DELETE';
 	var CREATE = exports.CREATE = 'REDUX_ORM_CREATE';
+	
+	var FILTER = exports.FILTER = 'REDUX_ORM_FILTER';
+	var EXCLUDE = exports.EXCLUDE = 'REDUX_ORM_EXCLUDE';
+	var ORDER_BY = exports.ORDER_BY = 'REDUX_ORM_ORDER_BY';
+	
+	var SUCCESS = exports.SUCCESS = 'SUCCESS';
+	var FAILURE = exports.FAILURE = 'FAILURE';
 
 /***/ },
-/* 244 */
+/* 253 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -8249,7 +8010,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 	
-	var _defineProperty2 = __webpack_require__(245);
+	var _toConsumableArray2 = __webpack_require__(216);
+	
+	var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
+	
+	var _keys = __webpack_require__(254);
+	
+	var _keys2 = _interopRequireDefault(_keys);
+	
+	var _defineProperty2 = __webpack_require__(76);
 	
 	var _defineProperty3 = _interopRequireDefault(_defineProperty2);
 	
@@ -8265,229 +8034,599 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass3 = _interopRequireDefault(_createClass2);
 	
-	var _utils = __webpack_require__(199);
+	var _defineProperty4 = __webpack_require__(257);
 	
-	var _immutableOps = __webpack_require__(219);
+	var _defineProperty5 = _interopRequireDefault(_defineProperty4);
 	
-	var _immutableOps2 = _interopRequireDefault(_immutableOps);
+	var _forOwn = __webpack_require__(202);
+	
+	var _forOwn2 = _interopRequireDefault(_forOwn);
+	
+	var _isArray = __webpack_require__(105);
+	
+	var _isArray2 = _interopRequireDefault(_isArray);
+	
+	var _uniq = __webpack_require__(258);
+	
+	var _uniq2 = _interopRequireDefault(_uniq);
+	
+	var _Session = __webpack_require__(262);
+	
+	var _Session2 = _interopRequireDefault(_Session);
+	
+	var _QuerySet = __webpack_require__(1);
+	
+	var _QuerySet2 = _interopRequireDefault(_QuerySet);
+	
+	var _fields = __webpack_require__(272);
+	
+	var _constants = __webpack_require__(252);
+	
+	var _utils = __webpack_require__(194);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	var globalOps = (0, _immutableOps2.default)();
+	// Generates a query specification
+	// to get a single row from a table identified
+	// by a primary key.
+	function getByIdQuery(modelInstance) {
+	    var modelClass = modelInstance.getClass();
+	    return {
+	        table: modelClass.modelName,
+	        clauses: [{
+	            type: _constants.FILTER,
+	            payload: (0, _defineProperty5.default)({}, modelClass.idAttribute, modelInstance.getId())
+	        }]
+	    };
+	}
 	
 	/**
-	 * Handles the underlying data structure for a {@link Model} class.
+	 * The heart of an ORM, the data model.
+	 *
+	 * The fields you specify to the Model will be used to generate
+	 * a schema to the database, related property accessors, and
+	 * possibly through models.
+	 *
+	 * In each {@link Session} you instantiate from an {@link ORM} instance,
+	 * you will receive a session-specific subclass of this Model. The methods
+	 * you define here will be available to you in sessions.
+	 *
+	 * An instance of {@link Model} represents a record in the database, though
+	 * it is possible to generate multiple instances from the same record in the database.
+	 *
+	 * To create data models in your schema, subclass {@link Model}. To define
+	 * information about the data model, override static class methods. Define instance
+	 * logic by defining prototype methods (without `static` keyword).
 	 */
-	var Backend = function () {
+	var Model = function () {
 	    /**
-	     * Creates a new {@link Backend} instance.
-	     * @param  {Object} userOpts - options to use.
-	     * @param  {string} [userOpts.idAttribute=id] - the id attribute of the entity.
-	     * @param  {string} [userOpts.arrName=items] - the state attribute where an array of
-	     *                                             entity id's are stored
-	     * @param  {string} [userOpts.mapName=itemsById] - the state attribute where the entity objects
-	     *                                                 are stored in a id to entity object
-	     *                                                 map.
-	     * @param  {Boolean} [userOpts.withMutations=false] - a boolean indicating if the backend
-	     *                                                    operations should be executed
-	     *                                                    with or without mutations.
+	     * Creates a Model instance from it's properties.
+	     * Don't use this to create a new record; Use the static method {@link Model#create}.
+	     * @param  {Object} props - the properties to instantiate with
 	     */
+	    function Model(props) {
+	        (0, _classCallCheck3.default)(this, Model);
 	
-	    function Backend(userOpts) {
-	        (0, _classCallCheck3.default)(this, Backend);
-	
-	        var defaultOpts = {
-	            idAttribute: 'id',
-	            arrName: 'items',
-	            mapName: 'itemsById',
-	            withMutations: false
-	        };
-	
-	        (0, _assign2.default)(this, defaultOpts, userOpts);
+	        this._initFields(props);
 	    }
 	
+	    Model.prototype._initFields = function _initFields(props) {
+	        var _this = this;
+	
+	        this._fields = (0, _assign2.default)({}, props);
+	
+	        var ThisModel = this.getClass();
+	
+	        (0, _forOwn2.default)(props, function (fieldValue, fieldName) {
+	            // In this case, we got a prop that wasn't defined as a field.
+	            // Assuming it's an arbitrary data field, making an instance-specific
+	            // descriptor for it.
+	            // Using the in operator as the property could be defined anywhere
+	            // on the prototype chain.
+	            if (!(fieldName in _this)) {
+	                (0, _defineProperty3.default)(_this, fieldName, {
+	                    get: function get() {
+	                        return _this._fields[fieldName];
+	                    },
+	                    set: function set(value) {
+	                        return _this.set(fieldName, value);
+	                    },
+	                    configurable: true,
+	                    enumerable: true
+	                });
+	            }
+	        });
+	    };
+	
+	    Model.toString = function toString() {
+	        return 'ModelClass: ' + this.modelName;
+	    };
+	
 	    /**
-	     * Returns a reference to the object at index `id`
-	     * in state `branch`.
+	     * Returns the options object passed to the database for the table that represents
+	     * this Model class.
 	     *
-	     * @param  {Object} branch - the state
-	     * @param  {Number} id - the id of the object to get
-	     * @return {Object|undefined} A reference to the raw object in the state or
-	     *                            `undefined` if not found.
+	     * Returns an empty object by default, which means the database
+	     * will use default options. You can either override this function to return the options
+	     * you want to use, or assign the options object as a static property of the same name to the
+	     * Model class.
+	     *
+	     * @return {Object} the options object passed to the database for the table
+	     *                  representing this Model class.
 	     */
 	
 	
-	    (0, _createClass3.default)(Backend, [{
-	        key: 'accessId',
-	        value: function accessId(branch, id) {
-	            return branch[this.mapName][id];
+	    Model.options = function options() {
+	        return {};
+	    };
+	
+	    Model._getTableOpts = function _getTableOpts() {
+	        if (typeof this.backend === 'function') {
+	            (0, _utils.warnDeprecated)('Model.backend is deprecated. Please rename to .options');
+	            return this.backend();
+	        } else if (this.backend) {
+	            (0, _utils.warnDeprecated)('Model.backend is deprecated. Please rename to .options');
+	            return this.backend;
+	        } else if (typeof this.options === 'function') {
+	            return this.options();
 	        }
-	    }, {
-	        key: 'accessIdList',
-	        value: function accessIdList(branch) {
-	            return branch[this.arrName];
+	        return this.options;
+	    };
+	
+	    Model.markAccessed = function markAccessed() {
+	        this.session.markAccessed(this);
+	    };
+	
+	    /**
+	     * Returns the id attribute of this {@link Model}.
+	     *
+	     * @return {string} The id attribute of this {@link Model}.
+	     */
+	
+	
+	    /**
+	     * Connect the model class to a {@link Session}.
+	     *
+	     * @private
+	     * @param  {Session} session - The session to connect to.
+	     */
+	    Model.connect = function connect(session) {
+	        if (!session instanceof _Session2.default) {
+	            throw Error('A model can only connect to a Session instance.');
 	        }
-	    }, {
-	        key: 'getOps',
-	        value: function getOps(tx) {
-	            if (!tx) {
-	                return globalOps;
-	            }
-	            if (!tx.meta.hasOwnProperty('ops')) {
-	                tx.meta.ops = (0, _immutableOps2.default)();
-	                tx.meta.ops.open();
-	                tx.onClose(function (_tx) {
-	                    _tx.meta.ops.close();
-	                });
-	            }
-	            return tx.meta.ops;
-	        }
+	        this._session = session;
+	    };
 	
-	        /**
-	         * Returns a {@link ListIterator} instance for
-	         * the list of objects in `branch`.
-	         *
-	         * @param  {Object} branch - the model's state branch
-	         * @return {ListIterator} An iterator that loops through the objects in `branch`
-	         */
-	
-	    }, {
-	        key: 'iterator',
-	        value: function iterator(branch) {
-	            var _this = this;
-	
-	            return new _utils.ListIterator(branch[this.arrName], 0, function (list, idx) {
-	                return branch[_this.mapName][list[idx]];
-	            });
-	        }
-	    }, {
-	        key: 'accessList',
-	        value: function accessList(branch) {
-	            var _this2 = this;
-	
-	            return branch[this.arrName].map(function (id) {
-	                var obj = _this2.accessId(branch, id);
-	                return (0, _assign2.default)((0, _defineProperty3.default)({}, _this2.idAttribute, id), obj);
-	            });
-	        }
-	
-	        /**
-	         * Returns the default state for the data structure.
-	         * @return {Object} The default state for this {@link Backend} instance's data structure
-	         */
-	
-	    }, {
-	        key: 'getDefaultState',
-	        value: function getDefaultState() {
-	            var _ref;
-	
-	            return _ref = {}, (0, _defineProperty3.default)(_ref, this.arrName, []), (0, _defineProperty3.default)(_ref, this.mapName, {}), _ref;
-	        }
-	
-	        /**
-	         * Returns the data structure including a new object `entry`
-	         * @param  {Object} session - the current Session instance
-	         * @param  {Object} branch - the data structure state
-	         * @param  {Object} entry - the object to insert
-	         * @return {Object} the data structure including `entry`.
-	         */
-	
-	    }, {
-	        key: 'insert',
-	        value: function insert(tx, branch, entry) {
-	            var _ops$merge2;
-	
-	            var ops = this.getOps(tx);
-	            var id = entry[this.idAttribute];
-	
-	            if (this.withMutations) {
-	                ops.mutable.push(id, branch[this.arrName]);
-	                ops.mutable.set(id, entry, branch[this.mapName]);
-	                return branch;
-	            }
-	
-	            return ops.merge((_ops$merge2 = {}, (0, _defineProperty3.default)(_ops$merge2, this.arrName, ops.push(id, branch[this.arrName])), (0, _defineProperty3.default)(_ops$merge2, this.mapName, ops.merge((0, _defineProperty3.default)({}, id, entry), branch[this.mapName])), _ops$merge2), branch);
-	        }
-	
-	        /**
-	         * Returns the data structure with objects where id in `idArr`
-	         * are merged with `mergeObj`.
-	         *
-	         * @param  {Object} session - the current Session instance
-	         * @param  {Object} branch - the data structure state
-	         * @param  {Array} idArr - the id's of the objects to update
-	         * @param  {Object} mergeObj - The object to merge with objects
-	         *                             where their id is in `idArr`.
-	         * @return {Object} the data structure with objects with their id in `idArr` updated with `mergeObj`.
-	         */
-	
-	    }, {
-	        key: 'update',
-	        value: function update(tx, branch, idArr, mergeObj) {
-	            var _this3 = this;
-	
-	            var ops = this.getOps(tx);
-	
-	            var mapName = this.mapName;
+	    /**
+	     * Get the current {@link Session} instance.
+	     *
+	     * @private
+	     * @return {Session} The current {@link Session} instance.
+	     */
 	
 	
-	            var mapFunction = function mapFunction(entity) {
-	                var merge = _this3.withMutations ? ops.mutable.merge : ops.merge;
-	                return merge(mergeObj, entity);
-	            };
+	    Model.getQuerySet = function getQuerySet() {
+	        var QuerySetClass = this.querySetClass;
+	        return new QuerySetClass(this);
+	    };
 	
-	            var set = this.withMutations ? ops.mutable.set : ops.set;
+	    Model.invalidateClassCache = function invalidateClassCache() {
+	        this.isSetUp = undefined;
+	        this.virtualFields = {};
+	    };
 	
-	            var newMap = idArr.reduce(function (map, id) {
-	                var result = mapFunction(branch[mapName][id]);
-	                return set(id, result, map);
-	            }, branch[mapName]);
-	            return ops.set(mapName, newMap, branch);
-	        }
+	    /**
+	     * Returns a {@link QuerySet} containing all {@link Model} instances.
+	     * @return {QuerySet} a QuerySet containing all {@link Model} instances
+	     */
+	    Model.all = function all() {
+	        return this.getQuerySet();
+	    };
 	
-	        /**
-	         * Returns the data structure without objects with their id included in `idsToDelete`.
-	         * @param  {Object} session - the current Session instance
-	         * @param  {Object} branch - the data structure state
-	         * @param  {Array} idsToDelete - the ids to delete from the data structure
-	         * @return {Object} the data structure without ids in `idsToDelete`.
-	         */
+	    /**
+	     * Creates a new record in the database, instantiates a {@link Model} and returns it.
+	     *
+	     * If you pass values for many-to-many fields, instances are created on the through
+	     * model as well.
+	     *
+	     * @param  {props} props - the new {@link Model}'s properties.
+	     * @return {Model} a new {@link Model} instance.
+	     */
 	
-	    }, {
-	        key: 'delete',
-	        value: function _delete(tx, branch, idsToDelete) {
-	            var _ops$merge3;
 	
-	            var ops = this.getOps(tx);
+	    Model.create = function create(userProps) {
+	        var _this2 = this;
 	
-	            var arrName = this.arrName;
-	            var mapName = this.mapName;
+	        var props = (0, _assign2.default)({}, userProps);
 	
-	            var arr = branch[arrName];
+	        var m2mVals = {};
 	
-	            if (this.withMutations) {
-	                idsToDelete.forEach(function (id) {
-	                    var idx = arr.indexOf(id);
-	                    if (idx !== -1) {
-	                        ops.mutable.splice(idx, 1, [], arr);
+	        var declaredFieldNames = (0, _keys2.default)(this.fields);
+	
+	        declaredFieldNames.forEach(function (key) {
+	            var field = _this2.fields[key];
+	            var valuePassed = userProps.hasOwnProperty(key);
+	            if (!valuePassed && !(field instanceof _fields.ManyToMany)) {
+	                if (field.getDefault) {
+	                    props[key] = field.getDefault();
+	                }
+	            } else {
+	                var value = userProps[key];
+	                props[key] = (0, _utils.normalizeEntity)(value);
+	
+	                // If a value is supplied for a ManyToMany field,
+	                // discard them from props and save for later processing.
+	                if ((0, _isArray2.default)(value)) {
+	                    if (_this2.fields.hasOwnProperty(key) && _this2.fields[key] instanceof _fields.ManyToMany) {
+	                        m2mVals[key] = value;
+	                        delete props[key];
 	                    }
-	                    ops.mutable.omit(id, branch[mapName]);
-	                });
-	                return branch;
+	                }
 	            }
+	        });
 	
-	            return ops.merge((_ops$merge3 = {}, (0, _defineProperty3.default)(_ops$merge3, arrName, ops.filter(function (id) {
-	                return !(0, _utils.includes)(idsToDelete, id);
-	            }, branch[arrName])), (0, _defineProperty3.default)(_ops$merge3, mapName, ops.omit(idsToDelete, branch[mapName])), _ops$merge3), branch);
+	        var newEntry = this.session.applyUpdate({
+	            action: _constants.CREATE,
+	            table: this.modelName,
+	            payload: props
+	        });
+	
+	        var ModelClass = this;
+	        var instance = new ModelClass(newEntry);
+	
+	        (0, _forOwn2.default)(m2mVals, function (value, key) {
+	            var _instance$key;
+	
+	            var ids = value.map(_utils.normalizeEntity);
+	            var uniqueIds = (0, _uniq2.default)(ids);
+	
+	            if (ids.length !== uniqueIds.length) {
+	                var idsString = ids;
+	                throw new Error('Found duplicate id(s) when passing "' + idsString + '" to ' + _this2.modelName + '.' + key + ' value on create');
+	            }
+	            (_instance$key = instance[key]).add.apply(_instance$key, (0, _toConsumableArray3.default)(ids));
+	        });
+	
+	        return instance;
+	    };
+	
+	    /**
+	     * Returns a {@link Model} instance for the object with id `id`.
+	     * This throws if the `id` doesn't exist. Use {@link Model#hasId}
+	     * to check for existence first if you're not certain.
+	     *
+	     * @param  {*} id - the `id` of the object to get
+	     * @throws If object with id `id` doesn't exist
+	     * @return {Model} {@link Model} instance with id `id`
+	     */
+	
+	
+	    Model.withId = function withId(id) {
+	        var ModelClass = this;
+	        var rows = this._findDatabaseRows((0, _defineProperty5.default)({}, ModelClass.idAttribute, id));
+	        if (rows.length === 0) {
+	            throw new Error(ModelClass.modelName + ' instance with id ' + id + ' not found');
+	        }
+	
+	        return new ModelClass(rows[0]);
+	    };
+	
+	    /**
+	     * Returns a boolean indicating if an entity with the id `id` exists
+	     * in the state.
+	     *
+	     * @param  {*}  id - a value corresponding to the id attribute of the {@link Model} class.
+	     * @return {Boolean} a boolean indicating if entity with `id` exists in the state
+	     */
+	
+	
+	    Model.hasId = function hasId(id) {
+	        var rows = this._findDatabaseRows((0, _defineProperty5.default)({}, this.idAttribute, id));
+	        return rows.length === 1;
+	    };
+	
+	    Model._findDatabaseRows = function _findDatabaseRows(lookupObj) {
+	        var ModelClass = this;
+	        return ModelClass.session.query({
+	            table: ModelClass.modelName,
+	            clauses: [{
+	                type: _constants.FILTER,
+	                payload: lookupObj
+	            }]
+	        }).rows;
+	    };
+	
+	    /**
+	     * Gets the {@link Model} instance that matches properties in `lookupObj`.
+	     * Throws an error if {@link Model} is not found, or multiple records match
+	     * the properties.
+	     *
+	     * @param  {Object} lookupObj - the properties used to match a single entity.
+	     * @return {Model} a {@link Model} instance that matches `lookupObj` properties.
+	     */
+	
+	
+	    Model.get = function get(lookupObj) {
+	        var ModelClass = this;
+	
+	        var rows = this._findDatabaseRows(lookupObj);
+	
+	        if (rows.length === 0) {
+	            throw new Error('Model instance not found when calling get method');
+	        } else if (rows.length > 1) {
+	            throw new Error('Expected to find a single row in Model.get. Found ' + rows.length + '.');
+	        }
+	
+	        return new ModelClass(rows[0]);
+	    };
+	
+	    /**
+	     * Gets the {@link Model} class or subclass constructor (the class that
+	     * instantiated this instance).
+	     *
+	     * @return {Model} The {@link Model} class or subclass constructor used to instantiate
+	     *                 this instance.
+	     */
+	
+	
+	    Model.prototype.getClass = function getClass() {
+	        return this.constructor;
+	    };
+	
+	    /**
+	     * Gets the id value of the current instance by looking up the id attribute.
+	     * @return {*} The id value of the current instance.
+	     */
+	
+	
+	    Model.prototype.getId = function getId() {
+	        return this._fields[this.getClass().idAttribute];
+	    };
+	
+	    /**
+	     * Returns a reference to the plain JS object in the store.
+	     * Make sure to not mutate this.
+	     *
+	     * @return {Object} a reference to the plain JS object in the store
+	     */
+	
+	
+	    /**
+	     * Returns a string representation of the {@link Model} instance.
+	     *
+	     * @return {string} A string representation of this {@link Model} instance.
+	     */
+	    Model.prototype.toString = function toString() {
+	        var _this3 = this;
+	
+	        var ThisModel = this.getClass();
+	        var className = ThisModel.modelName;
+	        var fieldNames = (0, _keys2.default)(ThisModel.fields);
+	        var fields = fieldNames.map(function (fieldName) {
+	            var field = ThisModel.fields[fieldName];
+	            if (field instanceof _fields.ManyToMany) {
+	                var ids = _this3[fieldName].toModelArray().map(function (model) {
+	                    return model.getId();
+	                });
+	                return fieldName + ': [' + ids.join(', ') + ']';
+	            }
+	            var val = _this3._fields[fieldName];
+	            return fieldName + ': ' + val;
+	        }).join(', ');
+	        return className + ': {' + fields + '}';
+	    };
+	
+	    /**
+	     * Returns a boolean indicating if `otherModel` equals this {@link Model} instance.
+	     * Equality is determined by shallow comparing their attributes.
+	     *
+	     * @param  {Model} otherModel - a {@link Model} instance to compare
+	     * @return {Boolean} a boolean indicating if the {@link Model} instance's are equal.
+	     */
+	
+	
+	    Model.prototype.equals = function equals(otherModel) {
+	        return (0, _utils.objectShallowEquals)(this._fields, otherModel._fields);
+	    };
+	
+	    /**
+	     * Updates a property name to given value for this {@link Model} instance.
+	     * The values are immediately committed to the database.
+	     *
+	     * @param {string} propertyName - name of the property to set
+	     * @param {*} value - value assigned to the property
+	     * @return {undefined}
+	     */
+	
+	
+	    Model.prototype.set = function set(propertyName, value) {
+	        this.update((0, _defineProperty5.default)({}, propertyName, value));
+	    };
+	
+	    /**
+	     * Assigns multiple fields and corresponding values to this {@link Model} instance.
+	     * The updates are immediately committed to the database.
+	     *
+	     * @param  {Object} userMergeObj - an object that will be merged with this instance.
+	     * @return {undefined}
+	     */
+	
+	
+	    Model.prototype.update = function update(userMergeObj) {
+	        var ThisModel = this.getClass();
+	        var relFields = ThisModel.fields;
+	        var mergeObj = (0, _assign2.default)({}, userMergeObj);
+	
+	        // If an array of entities or id's is supplied for a
+	        // many-to-many related field, clear the old relations
+	        // and add the new ones.
+	        for (var mergeKey in mergeObj) {
+	            // eslint-disable-line no-restricted-syntax
+	            if (relFields.hasOwnProperty(mergeKey)) {
+	                var field = relFields[mergeKey];
+	                if (field) {
+	                    if (field instanceof _fields.ManyToMany) {
+	                        var currentIds = this[mergeKey].toRefArray().map(function (row) {
+	                            return row[ThisModel.idAttribute];
+	                        });
+	
+	                        var normalizedNewIds = mergeObj[mergeKey].map(_utils.normalizeEntity);
+	                        var diffActions = (0, _utils.arrayDiffActions)(currentIds, normalizedNewIds);
+	                        if (diffActions) {
+	                            var idsToDelete = diffActions.delete;
+	                            var idsToAdd = diffActions.add;
+	                            if (idsToDelete.length > 0) {
+	                                var _mergeKey;
+	
+	                                (_mergeKey = this[mergeKey]).remove.apply(_mergeKey, (0, _toConsumableArray3.default)(idsToDelete));
+	                            }
+	                            if (idsToAdd.length > 0) {
+	                                var _mergeKey2;
+	
+	                                (_mergeKey2 = this[mergeKey]).add.apply(_mergeKey2, (0, _toConsumableArray3.default)(idsToAdd));
+	                            }
+	                        }
+	                        delete mergeObj[mergeKey];
+	                    } else if (field instanceof _fields.ForeignKey || field instanceof _fields.OneToOne) {
+	                        mergeObj[mergeKey] = (0, _utils.normalizeEntity)(mergeObj[mergeKey]);
+	                    }
+	                }
+	            }
+	        }
+	
+	        this._initFields((0, _assign2.default)({}, this._fields, mergeObj));
+	
+	        ThisModel.session.applyUpdate({
+	            action: _constants.UPDATE,
+	            query: getByIdQuery(this),
+	            payload: mergeObj
+	        });
+	    };
+	
+	    /**
+	     * Updates {@link Model} instance attributes to reflect the
+	     * database state in the current session.
+	     * @return {undefined}
+	     */
+	
+	
+	    Model.prototype.refreshFromState = function refreshFromState() {
+	        this._initFields(this.ref);
+	    };
+	
+	    /**
+	     * Deletes the record for this {@link Model} instance.
+	     * You'll still be able to access fields and values on the instance.
+	     *
+	     * @return {undefined}
+	     */
+	
+	
+	    Model.prototype.delete = function _delete() {
+	        this._onDelete();
+	        this.getClass().session.applyUpdate({
+	            action: _constants.DELETE,
+	            query: getByIdQuery(this)
+	        });
+	    };
+	
+	    Model.prototype._onDelete = function _onDelete() {
+	        var virtualFields = this.getClass().virtualFields;
+	        for (var key in virtualFields) {
+	            // eslint-disable-line
+	            var field = virtualFields[key];
+	            if (field instanceof _fields.ManyToMany) {
+	                // Delete any many-to-many rows the entity is included in.
+	                this[key].clear();
+	            } else if (field instanceof _fields.ForeignKey) {
+	                var relatedQs = this[key];
+	                if (relatedQs.exists()) {
+	                    relatedQs.update((0, _defineProperty5.default)({}, field.relatedName, null));
+	                }
+	            } else if (field instanceof _fields.OneToOne) {
+	                // Set null to any foreign keys or one to ones pointed to
+	                // this instance.
+	                if (this[key] !== null) {
+	                    this[key][field.relatedName] = null;
+	                }
+	            }
+	        }
+	    };
+	
+	    // DEPRECATED AND REMOVED METHODS
+	
+	    Model.prototype.getNextState = function getNextState() {
+	        throw new Error('Model.prototype.getNextState is removed. See the 0.9 ' + 'migration guide on the GitHub repo.');
+	    };
+	
+	    (0, _createClass3.default)(Model, [{
+	        key: 'ref',
+	        get: function get() {
+	            var ModelClass = this.getClass();
+	            return ModelClass._findDatabaseRows((0, _defineProperty5.default)({}, ModelClass.idAttribute, this.getId()))[0];
+	        }
+	    }], [{
+	        key: '_sessionData',
+	        get: function get() {
+	            if (!this.session) return {};
+	            return this.session.getDataForModel(this.modelName);
+	        }
+	    }, {
+	        key: 'idAttribute',
+	        get: function get() {
+	            return this.session.db.describe(this.modelName).idAttribute;
+	        }
+	    }, {
+	        key: 'session',
+	        get: function get() {
+	            return this._session;
+	        }
+	    }, {
+	        key: 'query',
+	        get: function get() {
+	            return this.getQuerySet();
 	        }
 	    }]);
-	    return Backend;
+	    return Model;
 	}();
 	
-	exports.default = Backend;
+	Model.fields = {
+	    id: (0, _fields.attr)()
+	};
+	Model.virtualFields = {};
+	Model.querySetClass = _QuerySet2.default;
+	
+	exports.default = Model;
 
 /***/ },
-/* 245 */
+/* 254 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(255), __esModule: true };
+
+/***/ },
+/* 255 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(256);
+	module.exports = __webpack_require__(13).Object.keys;
+
+/***/ },
+/* 256 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// 19.1.2.14 Object.keys(O)
+	var toObject = __webpack_require__(48)
+	  , $keys    = __webpack_require__(32);
+	
+	__webpack_require__(198)('keys', function(){
+	  return function keys(it){
+	    return $keys(toObject(it));
+	  };
+	});
+
+/***/ },
+/* 257 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -8516,1031 +8655,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 246 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	
-	var _extends2 = __webpack_require__(247);
-	
-	var _extends3 = _interopRequireDefault(_extends2);
-	
-	var _toConsumableArray2 = __webpack_require__(248);
-	
-	var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
-	
-	var _defineProperty2 = __webpack_require__(245);
-	
-	var _defineProperty3 = _interopRequireDefault(_defineProperty2);
-	
-	var _defineProperty4 = __webpack_require__(76);
-	
-	var _defineProperty5 = _interopRequireDefault(_defineProperty4);
-	
-	var _assign = __webpack_require__(70);
-	
-	var _assign2 = _interopRequireDefault(_assign);
-	
-	var _classCallCheck2 = __webpack_require__(74);
-	
-	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
-	
-	var _createClass2 = __webpack_require__(75);
-	
-	var _createClass3 = _interopRequireDefault(_createClass2);
-	
-	var _forOwn = __webpack_require__(210);
-	
-	var _forOwn2 = _interopRequireDefault(_forOwn);
-	
-	var _isArray = __webpack_require__(101);
-	
-	var _isArray2 = _interopRequireDefault(_isArray);
-	
-	var _uniq = __webpack_require__(258);
-	
-	var _uniq2 = _interopRequireDefault(_uniq);
-	
-	var _Session = __webpack_require__(262);
-	
-	var _Session2 = _interopRequireDefault(_Session);
-	
-	var _Backend = __webpack_require__(244);
-	
-	var _Backend2 = _interopRequireDefault(_Backend);
-	
-	var _QuerySet = __webpack_require__(1);
-	
-	var _QuerySet2 = _interopRequireDefault(_QuerySet);
-	
-	var _fields = __webpack_require__(277);
-	
-	var _constants = __webpack_require__(243);
-	
-	var _utils = __webpack_require__(199);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	/**
-	 * The heart of an ORM, the data model.
-	 * The static class methods manages the updates
-	 * passed to this. The class itself is connected to a session,
-	 * and because of this you can only have a single session at a time
-	 * for a {@link Model} class.
-	 *
-	 * An instance of {@link Model} represents an object in the database.
-	 *
-	 * To create data models in your schema, subclass {@link Model}. To define
-	 * information about the data model, override static class methods. Define instance
-	 * logic by defining prototype methods (without `static` keyword).
-	 */
-	var Model = function () {
-	    /**
-	     * Creates a Model instance.
-	     * @param  {Object} props - the properties to instantiate with
-	     */
-	
-	    function Model(props) {
-	        (0, _classCallCheck3.default)(this, Model);
-	
-	        this._initFields(props);
-	    }
-	
-	    (0, _createClass3.default)(Model, [{
-	        key: '_initFields',
-	        value: function _initFields(props) {
-	            var _this = this;
-	
-	            var ModelClass = this.getClass();
-	
-	            this._fieldNames = [];
-	            this._fields = (0, _assign2.default)({}, props);
-	
-	            (0, _forOwn2.default)(props, function (fieldValue, fieldName) {
-	                _this._fields[fieldName] = fieldValue;
-	                _this._fieldNames.push(fieldName);
-	                // If the field has not already been defined on the
-	                // prototype for a relation.
-	                if (!ModelClass.definedProperties[fieldName]) {
-	                    (0, _defineProperty5.default)(_this, fieldName, {
-	                        get: function get() {
-	                            return fieldValue;
-	                        },
-	                        set: function set(value) {
-	                            return _this.set(fieldName, value);
-	                        },
-	                        configurable: true
-	                    });
-	                }
-	            });
-	        }
-	
-	        /**
-	         * Returns the raw state for this {@link Model} in the current {@link Session}.
-	         * @return {Object} The state for this {@link Model} in the current {@link Session}.
-	         */
-	
-	    }, {
-	        key: 'getClass',
-	
-	
-	        /**
-	         * Gets the {@link Model} class or subclass constructor (the class that
-	         * instantiated this instance).
-	         *
-	         * @return {Model} The {@link Model} class or subclass constructor used to instantiate
-	         *                 this instance.
-	         */
-	        value: function getClass() {
-	            return this.constructor;
-	        }
-	
-	        /**
-	         * Gets the id value of the current instance by looking up the id attribute.
-	         * @return {*} The id value of the current instance.
-	         */
-	
-	    }, {
-	        key: 'getId',
-	        value: function getId() {
-	            return this._fields[this.getClass().idAttribute];
-	        }
-	
-	        /**
-	         * Returns a reference to the plain JS object in the store.
-	         * Make sure to not mutate this.
-	         *
-	         * @return {Object} a reference to the plain JS object in the store
-	         */
-	
-	    }, {
-	        key: 'toString',
-	
-	
-	        /**
-	         * Returns a string representation of the {@link Model} instance.
-	         *
-	         * @return {string} A string representation of this {@link Model} instance.
-	         */
-	        value: function toString() {
-	            var _this2 = this;
-	
-	            var className = this.getClass().modelName;
-	            var fields = this._fieldNames.map(function (fieldName) {
-	                var val = _this2._fields[fieldName];
-	                return fieldName + ': ' + val;
-	            }).join(', ');
-	            return className + ': {' + fields + '}';
-	        }
-	
-	        /**
-	         * Returns a boolean indicating if `otherModel` equals this {@link Model} instance.
-	         * Equality is determined by shallow comparing their attributes.
-	         *
-	         * @param  {Model} otherModel - a {@link Model} instance to compare
-	         * @return {Boolean} a boolean indicating if the {@link Model} instance's are equal.
-	         */
-	
-	    }, {
-	        key: 'equals',
-	        value: function equals(otherModel) {
-	            return (0, _utils.objectShallowEquals)(this._fields, otherModel._fields);
-	        }
-	
-	        /**
-	         * Records a update to the {@link Model} instance for a single
-	         * field value assignment.
-	         *
-	         * @param {string} propertyName - name of the property to set
-	         * @param {*} value - value assigned to the property
-	         * @return {undefined}
-	         */
-	
-	    }, {
-	        key: 'set',
-	        value: function set(propertyName, value) {
-	            this.update((0, _defineProperty3.default)({}, propertyName, value));
-	        }
-	
-	        /**
-	         * Records an update to the {@link Model} instance for multiple field value assignments.
-	         * If the session is with mutations, updates the instance to reflect the new values.
-	         *
-	         * @param  {Object} userMergeObj - an object that will be merged with this instance.
-	         * @return {undefined}
-	         */
-	
-	    }, {
-	        key: 'update',
-	        value: function update(userMergeObj) {
-	            var relFields = this.getClass().fields;
-	            var mergeObj = (0, _assign2.default)({}, userMergeObj);
-	
-	            // If an array of entities or id's is supplied for a
-	            // many-to-many related field, clear the old relations
-	            // and add the new ones.
-	            for (var mergeKey in mergeObj) {
-	                // eslint-disable-line no-restricted-syntax
-	                if (relFields.hasOwnProperty(mergeKey)) {
-	                    var field = relFields[mergeKey];
-	                    if (field instanceof _fields.ManyToMany) {
-	                        var currentIds = this[mergeKey].idArr;
-	
-	                        // TODO: It could be better to check this stuff in Backend.
-	                        var normalizedNewIds = mergeObj[mergeKey].map(_utils.normalizeEntity);
-	                        var diffActions = (0, _utils.arrayDiffActions)(currentIds, normalizedNewIds);
-	                        if (diffActions) {
-	                            var idsToDelete = diffActions.delete;
-	                            var idsToAdd = diffActions.add;
-	                            if (idsToDelete.length > 0) {
-	                                var _mergeKey;
-	
-	                                (_mergeKey = this[mergeKey]).remove.apply(_mergeKey, (0, _toConsumableArray3.default)(idsToDelete));
-	                            }
-	                            if (idsToAdd.length > 0) {
-	                                var _mergeKey2;
-	
-	                                (_mergeKey2 = this[mergeKey]).add.apply(_mergeKey2, (0, _toConsumableArray3.default)(idsToAdd));
-	                            }
-	                        }
-	                        delete mergeObj[mergeKey];
-	                    } else if (field instanceof _fields.ForeignKey || field instanceof _fields.OneToOne) {
-	                        mergeObj[mergeKey] = (0, _utils.normalizeEntity)(mergeObj[mergeKey]);
-	                    }
-	                }
-	            }
-	
-	            var session = this.getClass().session;
-	            if (session && session.withMutations) {
-	                this._initFields((0, _assign2.default)({}, this._fields, mergeObj));
-	            }
-	
-	            this.getClass().addUpdate({
-	                type: _constants.UPDATE,
-	                payload: {
-	                    idArr: [this.getId()],
-	                    mergeObj: mergeObj
-	                }
-	            });
-	        }
-	
-	        /**
-	         * Records the {@link Model} to be deleted.
-	         * @return {undefined}
-	         */
-	
-	    }, {
-	        key: 'delete',
-	        value: function _delete() {
-	            this.getClass().addUpdate({
-	                type: _constants.DELETE,
-	                payload: [this.getId()]
-	            });
-	            this._onDelete();
-	        }
-	    }, {
-	        key: '_onDelete',
-	        value: function _onDelete() {
-	            var virtualFields = this.getClass().virtualFields;
-	            for (var key in virtualFields) {
-	                // eslint-disable-line
-	                var field = virtualFields[key];
-	                if (field instanceof _fields.ManyToMany) {
-	                    // Delete any many-to-many rows the entity is included in.
-	                    this[key].clear();
-	                } else if (field instanceof _fields.ForeignKey) {
-	                    var relatedQs = this[key];
-	                    if (relatedQs.exists()) {
-	                        relatedQs.update((0, _defineProperty3.default)({}, field.relatedName, null));
-	                    }
-	                } else if (field instanceof _fields.OneToOne) {
-	                    // Set null to any foreign keys or one to ones pointed to
-	                    // this instance.
-	                    if (this[key] !== null) {
-	                        this[key][field.relatedName] = null;
-	                    }
-	                }
-	            }
-	        }
-	    }, {
-	        key: 'ref',
-	        get: function get() {
-	            return this.getClass().accessId(this.getId());
-	        }
-	    }], [{
-	        key: 'toString',
-	        value: function toString() {
-	            return 'ModelClass: ' + this.modelName;
-	        }
-	
-	        /**
-	         * Returns the options object passed to the {@link Backend} class constructor.
-	         * By default, returns an empty object (which means the {@link Backend} instance
-	         * will use default options). You can either override this function to return the options
-	         * you want to use, or assign the options object as a static property to the
-	         * Model class.
-	         *
-	         * @return {Object} the options object used to instantiate a {@link Backend} class.
-	         */
-	
-	    }, {
-	        key: 'backend',
-	        value: function backend() {
-	            return {};
-	        }
-	    }, {
-	        key: '_getBackendOpts',
-	        value: function _getBackendOpts() {
-	            if (typeof this.backend === 'function') {
-	                return this.backend();
-	            }
-	            return this.backend;
-	        }
-	
-	        /**
-	         * Returns the {@link Backend} class used to instantiate
-	         * the {@link Backend} instance for this {@link Model}.
-	         *
-	         * Override this if you want to use a custom {@link Backend} class.
-	         * @return {Backend} The {@link Backend} class or subclass to use for this {@link Model}.
-	         */
-	
-	    }, {
-	        key: 'getBackendClass',
-	        value: function getBackendClass() {
-	            return _Backend2.default;
-	        }
-	    }, {
-	        key: 'getBackend',
-	
-	
-	        /**
-	         * Gets the {@link Backend} instance linked to this {@link Model}.
-	         *
-	         * @private
-	         * @return {Backend} The {@link Backend} instance linked to this {@link Model}.
-	         */
-	        value: function getBackend() {
-	            if (!this._sessionData.backend) {
-	                var BackendClass = this.getBackendClass();
-	                var opts = (0, _extends3.default)({}, this._getBackendOpts());
-	
-	                if (this.session && this.session.withMutations) {
-	                    opts.withMutations = true;
-	                }
-	
-	                var backend = new BackendClass(opts);
-	
-	                if (!this.session) {
-	                    return backend;
-	                }
-	                this._sessionData.backend = backend;
-	            }
-	            return this._sessionData.backend;
-	        }
-	
-	        /**
-	         * Gets the Model's next state by applying the recorded
-	         * updates.
-	         *
-	         * @private
-	         * @param {Transction} tx - the current Transaction instance
-	         * @return {Object} The next state.
-	         */
-	
-	    }, {
-	        key: 'getNextState',
-	        value: function getNextState(_tx) {
-	            var tx = _tx || this.session.currentTx;
-	
-	            var state = void 0;
-	            if (this._sessionData.hasOwnProperty('nextState')) {
-	                state = this._sessionData.nextState;
-	            } else {
-	                state = this.state;
-	            }
-	
-	            var updates = tx.getUpdatesFor(this);
-	
-	            if (updates.length > 0) {
-	                var nextState = updates.reduce(this.updateReducer.bind(this, tx), state);
-	                this._sessionData.nextState = nextState;
-	                tx.markApplied(this);
-	                return nextState;
-	            }
-	
-	            return state;
-	        }
-	
-	        /**
-	         * A reducer that takes the Model's state and an internal redux-orm
-	         * action object and applies the update specified by the `action` object
-	         * by delegating to this model's Backend instance.
-	         *
-	         * @private
-	         * @param  {Object} state - the Model's state
-	         * @param  {Object} action - the internal redux-orm update action to apply
-	         * @return {Object} the state after applying the action
-	         */
-	
-	    }, {
-	        key: 'updateReducer',
-	        value: function updateReducer(tx, state, action) {
-	            var backend = this.getBackend();
-	            switch (action.type) {
-	                case _constants.CREATE:
-	                    return backend.insert(tx, state, action.payload);
-	                case _constants.UPDATE:
-	                    return backend.update(tx, state, action.payload.idArr, action.payload.mergeObj);
-	                case _constants.DELETE:
-	                    return backend.delete(tx, state, action.payload);
-	                default:
-	                    return state;
-	            }
-	        }
-	
-	        /**
-	         * The default reducer implementation.
-	         * If the user doesn't define a reducer, this is used.
-	         *
-	         * @param {Object} state - the current state
-	         * @param {Object} action - the dispatched action
-	         * @param {Model} model - the concrete model class being used
-	         * @param {Session} session - the current {@link Session} instance
-	         * @return {Object} the next state for the Model
-	         */
-	
-	    }, {
-	        key: 'reducer',
-	        value: function reducer(state, action, model, session) {
-	            // eslint-disable-line
-	            return this.getNextState();
-	        }
-	
-	        /**
-	         * Gets the default, empty state of the branch.
-	         * Delegates to a {@link Backend} instance.
-	         *
-	         * @private
-	         * @return {Object} The default state.
-	         */
-	
-	    }, {
-	        key: 'getDefaultState',
-	        value: function getDefaultState() {
-	            return this.getBackend().getDefaultState();
-	        }
-	    }, {
-	        key: 'markAccessed',
-	        value: function markAccessed() {
-	            this.session.markAccessed(this);
-	        }
-	
-	        /**
-	         * Returns the id attribute of this {@link Model}.
-	         * Delegates to the related {@link Backend} instance.
-	         *
-	         * @return {string} The id attribute of this {@link Model}.
-	         */
-	
-	    }, {
-	        key: 'accessId',
-	
-	
-	        /**
-	         * A convenience method to call {@link Backend#accessId} from
-	         * the {@link Model} class.
-	         *
-	         * @param  {Number} id - the object id to access
-	         * @return {Object} a reference to the object in the database.
-	         */
-	        value: function accessId(id) {
-	            this.markAccessed();
-	            return this.getBackend().accessId(this.state, id);
-	        }
-	
-	        /**
-	         * A convenience method to call {@link Backend#accessIdList} from
-	         * the {@link Model} class with the current state.
-	         */
-	
-	    }, {
-	        key: 'accessIds',
-	        value: function accessIds() {
-	            this.markAccessed();
-	            return this.getBackend().accessIdList(this.state);
-	        }
-	    }, {
-	        key: 'accessList',
-	        value: function accessList() {
-	            this.markAccessed();
-	            return this.getBackend().accessList(this.state);
-	        }
-	    }, {
-	        key: 'iterator',
-	        value: function iterator() {
-	            this.markAccessed();
-	            return this.getBackend().iterator(this.state);
-	        }
-	
-	        /**
-	         * Connect the model class to a {@link Session}.
-	         *
-	         * @private
-	         * @param  {Session} session - The session to connect to.
-	         */
-	
-	    }, {
-	        key: 'connect',
-	        value: function connect(session) {
-	            if (!session instanceof _Session2.default) {
-	                throw Error('A model can only connect to a Session instance.');
-	            }
-	            this._session = session;
-	        }
-	
-	        /**
-	         * Get the current {@link Session} instance.
-	         *
-	         * @private
-	         * @return {Session} The current {@link Session} instance.
-	         */
-	
-	    }, {
-	        key: 'addUpdate',
-	
-	
-	        /**
-	         * A convenience method that delegates to the current {@link Session} instane.
-	         * Adds the required backenddata about this {@link Model} to the update object.
-	         *
-	         * @private
-	         * @param {Object} update - the update to add.
-	         */
-	        value: function addUpdate(update) {
-	            update.meta = { name: this.modelName };
-	            this.session.addUpdate(update);
-	        }
-	
-	        /**
-	         * Returns the id to be assigned to a new entity.
-	         * You may override this to suit your needs.
-	         * @return {*} the id value for a new entity.
-	         */
-	
-	    }, {
-	        key: 'nextId',
-	        value: function nextId() {
-	            if (typeof this._sessionData.nextId === 'undefined') {
-	                var idArr = this.accessIds();
-	                if (idArr.length === 0) {
-	                    this._sessionData.nextId = 0;
-	                } else {
-	                    this._sessionData.nextId = Math.max.apply(Math, (0, _toConsumableArray3.default)(idArr)) + 1;
-	                }
-	            }
-	            return this._sessionData.nextId;
-	        }
-	    }, {
-	        key: 'getQuerySet',
-	        value: function getQuerySet() {
-	            return this.getQuerySetFromIds(this.accessIds());
-	        }
-	    }, {
-	        key: 'getQuerySetFromIds',
-	        value: function getQuerySetFromIds(ids) {
-	            var QuerySetClass = this.querySetClass;
-	            return new QuerySetClass(this, ids);
-	        }
-	    }, {
-	        key: 'invalidateClassCache',
-	        value: function invalidateClassCache() {
-	            this.isSetUp = undefined;
-	            this.definedProperties = {};
-	            this.virtualFields = {};
-	        }
-	    }, {
-	        key: 'all',
-	
-	
-	        /**
-	         * Returns a {@link QuerySet} containing all {@link Model} instances.
-	         * @return {QuerySet} a QuerySet containing all {@link Model} instances
-	         */
-	        value: function all() {
-	            return this.getQuerySet();
-	        }
-	
-	        /**
-	         * Records the addition of a new {@link Model} instance and returns it.
-	         *
-	         * @param  {props} props - the new {@link Model}'s properties.
-	         * @return {Model} a new {@link Model} instance.
-	         */
-	
-	    }, {
-	        key: 'create',
-	        value: function create(userProps) {
-	            var _this3 = this;
-	
-	            var idAttribute = this.idAttribute;
-	            var props = (0, _assign2.default)({}, userProps);
-	
-	            if (!props.hasOwnProperty(idAttribute)) {
-	                var nextId = this.nextId();
-	                props[idAttribute] = nextId;
-	                this._sessionData.nextId++;
-	            } else {
-	                var id = props[idAttribute];
-	                if (id > this.nextId()) {
-	                    this._sessionData.nextId = id + 1;
-	                }
-	            }
-	
-	            var m2mVals = {};
-	
-	            (0, _forOwn2.default)(userProps, function (value, key) {
-	                props[key] = (0, _utils.normalizeEntity)(value);
-	
-	                // If a value is supplied for a ManyToMany field,
-	                // discard them from props and save for later processing.
-	                if ((0, _isArray2.default)(value)) {
-	                    if (_this3.fields.hasOwnProperty(key) && _this3.fields[key] instanceof _fields.ManyToMany) {
-	                        m2mVals[key] = value;
-	                        delete props[key];
-	                    }
-	                }
-	            });
-	
-	            this.addUpdate({
-	                type: _constants.CREATE,
-	                payload: props
-	            });
-	            var ModelClass = this;
-	            var instance = new ModelClass(props);
-	
-	            (0, _forOwn2.default)(m2mVals, function (value, key) {
-	                var _instance$key;
-	
-	                var ids = value.map(_utils.normalizeEntity);
-	                var uniqueIds = (0, _uniq2.default)(ids);
-	
-	                if (ids.length !== uniqueIds.length) {
-	                    var idsString = ids;
-	                    throw new Error('Found duplicate id(s) when passing "' + idsString + '" to ' + _this3.modelName + '.' + key + ' value on create');
-	                }
-	                (_instance$key = instance[key]).add.apply(_instance$key, (0, _toConsumableArray3.default)(ids));
-	            });
-	
-	            return instance;
-	        }
-	
-	        /**
-	         * Returns a {@link Model} instance for the object with id `id`.
-	         *
-	         * @param  {*} id - the `id` of the object to get
-	         * @throws If object with id `id` doesn't exist
-	         * @return {Model} {@link Model} instance with id `id`
-	         */
-	
-	    }, {
-	        key: 'withId',
-	        value: function withId(id) {
-	            var ModelClass = this;
-	
-	            if (!this.hasId(id)) {
-	                throw new Error(this.modelName + ' instance with id ' + id + ' not found');
-	            }
-	
-	            var ref = this.accessId(id);
-	
-	            return new ModelClass(ref);
-	        }
-	
-	        /**
-	         * Returns a boolean indicating if an entity with the id `id` exists
-	         * in the state.
-	         *
-	         * @param  {*}  id - a value corresponding to the id attribute of the {@link Model} class.
-	         * @return {Boolean} a boolean indicating if entity with `id` exists in the state
-	         */
-	
-	    }, {
-	        key: 'hasId',
-	        value: function hasId(id) {
-	            var ref = this.accessId(id);
-	
-	            if (typeof ref === 'undefined') return false;
-	
-	            return true;
-	        }
-	
-	        /**
-	         * Gets the {@link Model} instance that matches properties in `lookupObj`.
-	         * Throws an error if {@link Model} is not found.
-	         *
-	         * @param  {Object} lookupObj - the properties used to match a single entity.
-	         * @return {Model} a {@link Model} instance that matches `lookupObj` properties.
-	         */
-	
-	    }, {
-	        key: 'get',
-	        value: function get(lookupObj) {
-	            if (!this.accessIds().length) {
-	                throw new Error('No entities found for model ' + this.modelName);
-	            }
-	            var ModelClass = this;
-	
-	            // We treat `idAttribute` as unique, so if it's
-	            // in `lookupObj` we search with that attribute only.
-	            if (lookupObj.hasOwnProperty(this.idAttribute)) {
-	                var props = this.accessId(lookupObj[this.idAttribute]);
-	                if (typeof props !== 'undefined') {
-	                    return new ModelClass(props);
-	                }
-	
-	                throw new Error('Model instance not found when calling get method');
-	            }
-	
-	            var iterator = this.iterator();
-	
-	            var done = false;
-	            while (!done) {
-	                var curr = iterator.next();
-	                if ((0, _utils.match)(lookupObj, curr.value)) {
-	                    return new ModelClass(curr.value);
-	                }
-	                done = curr.done;
-	            }
-	
-	            throw new Error('Model instance not found when calling get method');
-	        }
-	    }, {
-	        key: 'state',
-	        get: function get() {
-	            return this.session.getState(this.modelName);
-	        }
-	    }, {
-	        key: '_sessionData',
-	        get: function get() {
-	            if (!this.session) return {};
-	            return this.session.getDataForModel(this.modelName);
-	        }
-	    }, {
-	        key: 'idAttribute',
-	        get: function get() {
-	            return this.getBackend().idAttribute;
-	        }
-	    }, {
-	        key: 'session',
-	        get: function get() {
-	            return this._session;
-	        }
-	    }, {
-	        key: 'query',
-	        get: function get() {
-	            if (!this._sessionData.queryset) {
-	                this._sessionData.queryset = this.getQuerySet();
-	            }
-	            return this._sessionData.queryset;
-	        }
-	    }]);
-	    return Model;
-	}();
-	
-	Model.fields = {};
-	Model.definedProperties = {};
-	Model.virtualFields = {};
-	Model.querySetClass = _QuerySet2.default;
-	
-	exports.default = Model;
-
-/***/ },
-/* 247 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	
-	exports.__esModule = true;
-	
-	var _assign = __webpack_require__(70);
-	
-	var _assign2 = _interopRequireDefault(_assign);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	exports.default = _assign2.default || function (target) {
-	  for (var i = 1; i < arguments.length; i++) {
-	    var source = arguments[i];
-	
-	    for (var key in source) {
-	      if (Object.prototype.hasOwnProperty.call(source, key)) {
-	        target[key] = source[key];
-	      }
-	    }
-	  }
-	
-	  return target;
-	};
-
-/***/ },
-/* 248 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	
-	exports.__esModule = true;
-	
-	var _from = __webpack_require__(249);
-	
-	var _from2 = _interopRequireDefault(_from);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	exports.default = function (arr) {
-	  if (Array.isArray(arr)) {
-	    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
-	      arr2[i] = arr[i];
-	    }
-	
-	    return arr2;
-	  } else {
-	    return (0, _from2.default)(arr);
-	  }
-	};
-
-/***/ },
-/* 249 */
-/***/ function(module, exports, __webpack_require__) {
-
-	module.exports = { "default": __webpack_require__(250), __esModule: true };
-
-/***/ },
-/* 250 */
-/***/ function(module, exports, __webpack_require__) {
-
-	__webpack_require__(5);
-	__webpack_require__(251);
-	module.exports = __webpack_require__(13).Array.from;
-
-/***/ },
-/* 251 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	var ctx            = __webpack_require__(14)
-	  , $export        = __webpack_require__(11)
-	  , toObject       = __webpack_require__(48)
-	  , call           = __webpack_require__(252)
-	  , isArrayIter    = __webpack_require__(253)
-	  , toLength       = __webpack_require__(38)
-	  , createProperty = __webpack_require__(254)
-	  , getIterFn      = __webpack_require__(255);
-	
-	$export($export.S + $export.F * !__webpack_require__(257)(function(iter){ Array.from(iter); }), 'Array', {
-	  // 22.1.2.1 Array.from(arrayLike, mapfn = undefined, thisArg = undefined)
-	  from: function from(arrayLike/*, mapfn = undefined, thisArg = undefined*/){
-	    var O       = toObject(arrayLike)
-	      , C       = typeof this == 'function' ? this : Array
-	      , aLen    = arguments.length
-	      , mapfn   = aLen > 1 ? arguments[1] : undefined
-	      , mapping = mapfn !== undefined
-	      , index   = 0
-	      , iterFn  = getIterFn(O)
-	      , length, result, step, iterator;
-	    if(mapping)mapfn = ctx(mapfn, aLen > 2 ? arguments[2] : undefined, 2);
-	    // if object isn't iterable or it's array with default iterator - use simple case
-	    if(iterFn != undefined && !(C == Array && isArrayIter(iterFn))){
-	      for(iterator = iterFn.call(O), result = new C; !(step = iterator.next()).done; index++){
-	        createProperty(result, index, mapping ? call(iterator, mapfn, [step.value, index], true) : step.value);
-	      }
-	    } else {
-	      length = toLength(O.length);
-	      for(result = new C(length); length > index; index++){
-	        createProperty(result, index, mapping ? mapfn(O[index], index) : O[index]);
-	      }
-	    }
-	    result.length = index;
-	    return result;
-	  }
-	});
-
-
-/***/ },
-/* 252 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// call something on iterator step with safe closing on error
-	var anObject = __webpack_require__(18);
-	module.exports = function(iterator, fn, value, entries){
-	  try {
-	    return entries ? fn(anObject(value)[0], value[1]) : fn(value);
-	  // 7.4.6 IteratorClose(iterator, completion)
-	  } catch(e){
-	    var ret = iterator['return'];
-	    if(ret !== undefined)anObject(ret.call(iterator));
-	    throw e;
-	  }
-	};
-
-/***/ },
-/* 253 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// check on default Array iterator
-	var Iterators  = __webpack_require__(28)
-	  , ITERATOR   = __webpack_require__(46)('iterator')
-	  , ArrayProto = Array.prototype;
-	
-	module.exports = function(it){
-	  return it !== undefined && (Iterators.Array === it || ArrayProto[ITERATOR] === it);
-	};
-
-/***/ },
-/* 254 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	var $defineProperty = __webpack_require__(17)
-	  , createDesc      = __webpack_require__(25);
-	
-	module.exports = function(object, index, value){
-	  if(index in object)$defineProperty.f(object, index, createDesc(0, value));
-	  else object[index] = value;
-	};
-
-/***/ },
-/* 255 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var classof   = __webpack_require__(256)
-	  , ITERATOR  = __webpack_require__(46)('iterator')
-	  , Iterators = __webpack_require__(28);
-	module.exports = __webpack_require__(13).getIteratorMethod = function(it){
-	  if(it != undefined)return it[ITERATOR]
-	    || it['@@iterator']
-	    || Iterators[classof(it)];
-	};
-
-/***/ },
-/* 256 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// getting tag from 19.1.3.6 Object.prototype.toString()
-	var cof = __webpack_require__(36)
-	  , TAG = __webpack_require__(46)('toStringTag')
-	  // ES3 wrong here
-	  , ARG = cof(function(){ return arguments; }()) == 'Arguments';
-	
-	// fallback for IE11 Script Access Denied error
-	var tryGet = function(it, key){
-	  try {
-	    return it[key];
-	  } catch(e){ /* empty */ }
-	};
-	
-	module.exports = function(it){
-	  var O, T, B;
-	  return it === undefined ? 'Undefined' : it === null ? 'Null'
-	    // @@toStringTag case
-	    : typeof (T = tryGet(O = Object(it), TAG)) == 'string' ? T
-	    // builtinTag case
-	    : ARG ? cof(O)
-	    // ES3 arguments fallback
-	    : (B = cof(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : B;
-	};
-
-/***/ },
-/* 257 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var ITERATOR     = __webpack_require__(46)('iterator')
-	  , SAFE_CLOSING = false;
-	
-	try {
-	  var riter = [7][ITERATOR]();
-	  riter['return'] = function(){ SAFE_CLOSING = true; };
-	  Array.from(riter, function(){ throw 2; });
-	} catch(e){ /* empty */ }
-	
-	module.exports = function(exec, skipClosing){
-	  if(!skipClosing && !SAFE_CLOSING)return false;
-	  var safe = false;
-	  try {
-	    var arr  = [7]
-	      , iter = arr[ITERATOR]();
-	    iter.next = function(){ return {done: safe = true}; };
-	    arr[ITERATOR] = function(){ return iter; };
-	    exec(arr);
-	  } catch(e){ /* empty */ }
-	  return safe;
-	};
-
-/***/ },
 /* 258 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -9548,9 +8662,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	/**
 	 * Creates a duplicate-free version of an array, using
-	 * [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
-	 * for equality comparisons, in which only the first occurrence of each
-	 * element is kept.
+	 * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+	 * for equality comparisons, in which only the first occurrence of each element
+	 * is kept. The order of result values is determined by the order they occur
+	 * in the array.
 	 *
 	 * @static
 	 * @memberOf _
@@ -9564,9 +8679,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * // => [2, 1]
 	 */
 	function uniq(array) {
-	  return (array && array.length)
-	    ? baseUniq(array)
-	    : [];
+	  return (array && array.length) ? baseUniq(array) : [];
 	}
 	
 	module.exports = uniq;
@@ -9576,12 +8689,12 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 259 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var SetCache = __webpack_require__(149),
-	    arrayIncludes = __webpack_require__(232),
-	    arrayIncludesWith = __webpack_require__(233),
-	    cacheHas = __webpack_require__(234),
+	var SetCache = __webpack_require__(156),
+	    arrayIncludes = __webpack_require__(236),
+	    arrayIncludesWith = __webpack_require__(237),
+	    cacheHas = __webpack_require__(160),
 	    createSet = __webpack_require__(260),
-	    setToArray = __webpack_require__(157);
+	    setToArray = __webpack_require__(164);
 	
 	/** Used as the size to enable large array optimizations. */
 	var LARGE_ARRAY_SIZE = 200;
@@ -9654,15 +8767,15 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 260 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Set = __webpack_require__(162),
+	var Set = __webpack_require__(169),
 	    noop = __webpack_require__(261),
-	    setToArray = __webpack_require__(157);
+	    setToArray = __webpack_require__(164);
 	
 	/** Used as references for various `Number` constants. */
 	var INFINITY = 1 / 0;
 	
 	/**
-	 * Creates a set of `values`.
+	 * Creates a set object of `values`.
 	 *
 	 * @private
 	 * @param {Array} values The values to add to the set.
@@ -9680,8 +8793,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	/**
-	 * A no-operation function that returns `undefined` regardless of the
-	 * arguments it receives.
+	 * This method returns `undefined`.
 	 *
 	 * @static
 	 * @memberOf _
@@ -9689,10 +8801,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @category Util
 	 * @example
 	 *
-	 * var object = { 'user': 'fred' };
-	 *
-	 * _.noop(object) === undefined;
-	 * // => true
+	 * _.times(2, _.noop);
+	 * // => [undefined, undefined]
 	 */
 	function noop() {
 	  // No operation performed.
@@ -9715,10 +8825,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _defineProperty2 = _interopRequireDefault(_defineProperty);
 	
-	var _getPrototypeOf = __webpack_require__(204);
-	
-	var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
-	
 	var _possibleConstructorReturn2 = __webpack_require__(263);
 	
 	var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
@@ -9735,40 +8841,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _createClass3 = _interopRequireDefault(_createClass2);
 	
-	var _Transaction = __webpack_require__(272);
+	var _immutableOps = __webpack_require__(215);
 	
-	var _Transaction2 = _interopRequireDefault(_Transaction);
+	var _constants = __webpack_require__(252);
 	
-	var _utils = __webpack_require__(199);
+	var _utils = __webpack_require__(194);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	/**
-	 * Session handles a single
-	 * action dispatch.
-	 */
 	var Session = function () {
 	    /**
 	     * Creates a new Session.
 	     *
-	     * @param  {Schema} schema - a {@link Schema} instance
+	     * @param  {Database} db - a {@link Database} instance
 	     * @param  {Object} state - the database state
-	     * @param  {Object} [action] - the current action in the dispatch cycle.
-	     *                             Will be passed to the user defined reducers.
-	     * @param  {Boolean} withMutations - whether the session should mutate data
+	     * @param  {Boolean} [withMutations] - whether the session should mutate data
+	     * @param  {Object} [batchToken] - used by the backend to identify objects that can be
+	     *                                 mutated.
 	     */
-	
-	    function Session(schema, state, action, withMutations) {
+	    function Session(schema, db, state, withMutations, batchToken) {
 	        var _this2 = this;
 	
 	        (0, _classCallCheck3.default)(this, Session);
 	
 	        this.schema = schema;
-	        this.state = state || schema.getDefaultState();
-	        this.action = action;
-	        this.withMutations = !!withMutations;
+	        this.db = db;
+	        this.state = state || db.getEmptyState();
+	        this.initialState = this.state;
 	
-	        this.currentTx = new _Transaction2.default();
+	        this.withMutations = !!withMutations;
+	        this.batchToken = batchToken || (0, _immutableOps.getBatchToken)();
 	
 	        this._accessedModels = {};
 	        this.modelData = {};
@@ -9781,7 +8883,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	                function SessionBoundModel() {
 	                    (0, _classCallCheck3.default)(this, SessionBoundModel);
-	                    return (0, _possibleConstructorReturn3.default)(this, (0, _getPrototypeOf2.default)(SessionBoundModel).apply(this, arguments));
+	                    return (0, _possibleConstructorReturn3.default)(this, _modelClass.apply(this, arguments));
 	                }
 	
 	                return SessionBoundModel;
@@ -9797,156 +8899,72 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	    }
 	
+	    Session.prototype.markAccessed = function markAccessed(modelName) {
+	        this.getDataForModel(modelName).accessed = true;
+	    };
+	
+	    Session.prototype.getDataForModel = function getDataForModel(modelName) {
+	        if (!this.modelData[modelName]) {
+	            this.modelData[modelName] = {};
+	        }
+	        return this.modelData[modelName];
+	    };
+	
+	    /**
+	     * Applies update to a model state.
+	     *
+	     * @private
+	     * @param {Object} update - the update object. Must have keys
+	     *                          `type`, `payload`.
+	     */
+	
+	
+	    Session.prototype.applyUpdate = function applyUpdate(updateSpec) {
+	        var batchToken = this.batchToken,
+	            withMutations = this.withMutations;
+	
+	        var tx = { batchToken: batchToken, withMutations: withMutations };
+	        var result = this.db.update(updateSpec, tx, this.state);
+	        var status = result.status,
+	            state = result.state;
+	
+	
+	        if (status === _constants.SUCCESS) {
+	            this.state = state;
+	        } else {
+	            throw new Error('Applying update failed: ' + result.toString());
+	        }
+	
+	        return result.payload;
+	    };
+	
+	    Session.prototype.query = function query(querySpec) {
+	        var table = querySpec.table;
+	
+	        this.markAccessed(table);
+	        return this.db.query(querySpec, this.state);
+	    };
+	
+	    // DEPRECATED AND REMOVED METHODS
+	
+	    Session.prototype.getNextState = function getNextState() {
+	        (0, _utils.warnDeprecated)('Session.prototype.getNextState function is deprecated. Access ' + 'the Session.prototype.state property instead.');
+	        return this.state;
+	    };
+	
+	    Session.prototype.reduce = function reduce() {
+	        throw new Error('Session.prototype.reduce is removed. The Redux integration API ' + 'is now decoupled from ORM and Session - see the 0.9 migration guide ' + 'in the GitHub repo.');
+	    };
+	
 	    (0, _createClass3.default)(Session, [{
-	        key: 'markAccessed',
-	        value: function markAccessed(model) {
-	            this.getDataForModel(model.modelName).accessed = true;
-	        }
-	    }, {
-	        key: 'getDataForModel',
-	        value: function getDataForModel(modelName) {
-	            if (!this.modelData[modelName]) {
-	                this.modelData[modelName] = {};
-	            }
-	
-	            return this.modelData[modelName];
-	        }
-	
-	        /**
-	         * Records an update to the session.
-	         *
-	         * @private
-	         * @param {Object} update - the update object. Must have keys
-	         *                          `type`, `payload` and `meta`. `meta`
-	         *                          must also include a `name` attribute
-	         *                          that contains the model name.
-	         */
-	
-	    }, {
-	        key: 'addUpdate',
-	        value: function addUpdate(update) {
-	            if (this.withMutations) {
-	                var modelName = update.meta.name;
-	                var modelState = this.getState(modelName);
-	
-	                // The backend used in the updateReducer
-	                // will mutate the model state.
-	                this[modelName].updateReducer(null, modelState, update);
-	            } else {
-	                this.currentTx.addUpdate(update);
-	            }
-	        }
-	    }, {
-	        key: 'getUpdatesFor',
-	        value: function getUpdatesFor(modelName) {
-	            return this.currentTx.getUpdatesFor(modelName);
-	        }
-	    }, {
-	        key: 'getState',
-	
-	
-	        /**
-	         * Returns the current state for a model with name `modelName`.
-	         *
-	         * @private
-	         * @param  {string} modelName - the name of the model to get state for.
-	         * @return {*} The state for model with name `modelName`.
-	         */
-	        value: function getState(modelName) {
-	            return this.state[modelName];
-	        }
-	
-	        /**
-	         * Applies recorded updates and returns the next state.
-	         * @param  {Object} [opts] - Options object
-	         * @param  {Boolean} [opts.runReducers] - A boolean indicating if the user-defined
-	         *                                        model reducers should be run. If not specified,
-	         *                                        is set to `true` if an action object was specified
-	         *                                        on session instantiation, otherwise `false`.
-	         * @return {Object} The next state
-	         */
-	
-	    }, {
-	        key: 'getNextState',
-	        value: function getNextState(userOpts) {
-	            var _this3 = this;
-	
-	            if (this.withMutations) return this.state;
-	
-	            var prevState = this.state;
-	            var action = this.action;
-	            var opts = userOpts || {};
-	
-	            // If the session does not have a specified action object,
-	            // don't run the user-defined model reducers unless
-	            // explicitly specified.
-	            var runReducers = opts.hasOwnProperty('runReducers') ? opts.runReducers : !!action;
-	
-	            var tx = this.currentTx;
-	            _utils.ops.open();
-	
-	            var nextState = prevState;
-	            if (runReducers) {
-	                nextState = this.sessionBoundModels.reduce(function (_nextState, modelClass) {
-	                    var modelState = _this3.getState(modelClass.modelName);
-	
-	                    var returnValue = modelClass.reducer(modelState, action, modelClass, _this3);
-	                    if (typeof returnValue === 'undefined') {
-	                        returnValue = modelClass.getNextState(tx);
-	                    }
-	                    return _utils.ops.set(modelClass.modelName, returnValue, _nextState);
-	                }, nextState);
-	            }
-	
-	            // There might be some m2m updates left.
-	            var unappliedUpdates = this.currentTx.getUnappliedUpdatesByModel();
-	            if (unappliedUpdates) {
-	                nextState = this.sessionBoundModels.reduce(function (_nextState, modelClass) {
-	                    var modelName = modelClass.modelName;
-	                    if (!unappliedUpdates.hasOwnProperty(modelName)) {
-	                        return _nextState;
-	                    }
-	
-	                    return _utils.ops.set(modelName, modelClass.getNextState(tx), _nextState);
-	                }, nextState);
-	            }
-	
-	            _utils.ops.close();
-	            tx.close();
-	            this.currentTx = new _Transaction2.default();
-	
-	            return nextState;
-	        }
-	
-	        /**
-	         * Calls the user-defined reducers and returns the next state.
-	         * If the session uses mutations, just returns the state.
-	         * Delegates to {@link Session#getNextState}
-	         *
-	         * @return {Object} the next state
-	         */
-	
-	    }, {
-	        key: 'reduce',
-	        value: function reduce() {
-	            return this.getNextState({ runReducers: true });
-	        }
-	    }, {
 	        key: 'accessedModels',
 	        get: function get() {
-	            var _this4 = this;
+	            var _this3 = this;
 	
 	            return this.sessionBoundModels.filter(function (model) {
-	                return !!_this4.getDataForModel(model.modelName).accessed;
+	                return !!_this3.getDataForModel(model.modelName).accessed;
 	            }).map(function (model) {
 	                return model.modelName;
-	            });
-	        }
-	    }, {
-	        key: 'updates',
-	        get: function get() {
-	            return this.currentTx.updates.map(function (update) {
-	                return update.update;
 	            });
 	        }
 	    }]);
@@ -10099,256 +9117,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+	exports.OneToOne = exports.ManyToMany = exports.ForeignKey = exports.Attribute = undefined;
 	
-	var _classCallCheck2 = __webpack_require__(74);
+	var _slicedToArray2 = __webpack_require__(273);
 	
-	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+	var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
 	
-	var _createClass2 = __webpack_require__(75);
+	var _getOwnPropertyDescriptor = __webpack_require__(195);
 	
-	var _createClass3 = _interopRequireDefault(_createClass2);
-	
-	var _groupBy = __webpack_require__(273);
-	
-	var _groupBy2 = _interopRequireDefault(_groupBy);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	/**
-	 * Handles a single unit of work on the database backend.
-	 */
-	var Transaction = function () {
-	    function Transaction() {
-	        (0, _classCallCheck3.default)(this, Transaction);
-	
-	        this.updates = [];
-	        this.updatesByModelName = {};
-	
-	        this.meta = {};
-	        this.onCloseCallbacks = [];
-	    }
-	
-	    (0, _createClass3.default)(Transaction, [{
-	        key: 'getUpdatesFor',
-	        value: function getUpdatesFor(modelClass) {
-	            var modelName = modelClass.modelName;
-	            if (!this.updatesByModelName.hasOwnProperty(modelName)) {
-	                return [];
-	            }
-	
-	            return this.updatesByModelName[modelName].filter(function (update) {
-	                return !update.applied;
-	            }).map(function (update) {
-	                return update.update;
-	            });
-	        }
-	    }, {
-	        key: 'getUnappliedUpdatesByModel',
-	        value: function getUnappliedUpdatesByModel() {
-	            var unappliedUpdates = this.updates.filter(function (update) {
-	                return !update.applied;
-	            }).map(function (update) {
-	                return update.update;
-	            });
-	            if (unappliedUpdates.length) {
-	                return (0, _groupBy2.default)(unappliedUpdates, 'meta.name');
-	            }
-	            return null;
-	        }
-	    }, {
-	        key: 'markApplied',
-	        value: function markApplied(modelClass) {
-	            var modelName = modelClass.modelName;
-	            this.updatesByModelName[modelName].forEach(function (update) {
-	                update.applied = true; // eslint-disable-line no-param-reassign
-	            });
-	        }
-	    }, {
-	        key: 'addUpdate',
-	        value: function addUpdate(_update) {
-	            var update = { update: _update, applied: false };
-	            this.updates.push(update);
-	            var modelName = _update.meta.name;
-	            if (this.updatesByModelName.hasOwnProperty(modelName)) {
-	                this.updatesByModelName[modelName].push(update);
-	            } else {
-	                this.updatesByModelName[modelName] = [update];
-	            }
-	        }
-	    }, {
-	        key: 'addUpdates',
-	        value: function addUpdates(updates) {
-	            var _this = this;
-	
-	            updates.forEach(function (update) {
-	                return _this.addUpdate(update);
-	            });
-	        }
-	    }, {
-	        key: 'onClose',
-	        value: function onClose(fn) {
-	            this.onCloseCallbacks.push(fn);
-	        }
-	    }, {
-	        key: 'close',
-	        value: function close() {
-	            var _this2 = this;
-	
-	            this.onCloseCallbacks.forEach(function (cb) {
-	                return cb.call(null, _this2);
-	            });
-	        }
-	    }]);
-	    return Transaction;
-	}();
-	
-	exports.default = Transaction;
-
-/***/ },
-/* 273 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var createAggregator = __webpack_require__(274);
-	
-	/** Used for built-in method references. */
-	var objectProto = Object.prototype;
-	
-	/** Used to check objects for own properties. */
-	var hasOwnProperty = objectProto.hasOwnProperty;
-	
-	/**
-	 * Creates an object composed of keys generated from the results of running
-	 * each element of `collection` thru `iteratee`. The order of grouped values
-	 * is determined by the order they occur in `collection`. The corresponding
-	 * value of each key is an array of elements responsible for generating the
-	 * key. The iteratee is invoked with one argument: (value).
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Collection
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Array|Function|Object|string} [iteratee=_.identity]
-	 *  The iteratee to transform keys.
-	 * @returns {Object} Returns the composed aggregate object.
-	 * @example
-	 *
-	 * _.groupBy([6.1, 4.2, 6.3], Math.floor);
-	 * // => { '4': [4.2], '6': [6.1, 6.3] }
-	 *
-	 * // The `_.property` iteratee shorthand.
-	 * _.groupBy(['one', 'two', 'three'], 'length');
-	 * // => { '3': ['one', 'two'], '5': ['three'] }
-	 */
-	var groupBy = createAggregator(function(result, value, key) {
-	  if (hasOwnProperty.call(result, key)) {
-	    result[key].push(value);
-	  } else {
-	    result[key] = [value];
-	  }
-	});
-	
-	module.exports = groupBy;
-
-
-/***/ },
-/* 274 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var arrayAggregator = __webpack_require__(275),
-	    baseAggregator = __webpack_require__(276),
-	    baseIteratee = __webpack_require__(106),
-	    isArray = __webpack_require__(101);
-	
-	/**
-	 * Creates a function like `_.groupBy`.
-	 *
-	 * @private
-	 * @param {Function} setter The function to set accumulator values.
-	 * @param {Function} [initializer] The accumulator object initializer.
-	 * @returns {Function} Returns the new aggregator function.
-	 */
-	function createAggregator(setter, initializer) {
-	  return function(collection, iteratee) {
-	    var func = isArray(collection) ? arrayAggregator : baseAggregator,
-	        accumulator = initializer ? initializer() : {};
-	
-	    return func(collection, setter, baseIteratee(iteratee), accumulator);
-	  };
-	}
-	
-	module.exports = createAggregator;
-
-
-/***/ },
-/* 275 */
-/***/ function(module, exports) {
-
-	/**
-	 * A specialized version of `baseAggregator` for arrays.
-	 *
-	 * @private
-	 * @param {Array} array The array to iterate over.
-	 * @param {Function} setter The function to set `accumulator` values.
-	 * @param {Function} iteratee The iteratee to transform keys.
-	 * @param {Object} accumulator The initial aggregated object.
-	 * @returns {Function} Returns `accumulator`.
-	 */
-	function arrayAggregator(array, setter, iteratee, accumulator) {
-	  var index = -1,
-	      length = array.length;
-	
-	  while (++index < length) {
-	    var value = array[index];
-	    setter(accumulator, value, iteratee(value), array);
-	  }
-	  return accumulator;
-	}
-	
-	module.exports = arrayAggregator;
-
-
-/***/ },
-/* 276 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseEach = __webpack_require__(82);
-	
-	/**
-	 * Aggregates elements of `collection` on `accumulator` with keys transformed
-	 * by `iteratee` and values set by `setter`.
-	 *
-	 * @private
-	 * @param {Array|Object} collection The collection to iterate over.
-	 * @param {Function} setter The function to set `accumulator` values.
-	 * @param {Function} iteratee The iteratee to transform keys.
-	 * @param {Object} accumulator The initial aggregated object.
-	 * @returns {Function} Returns `accumulator`.
-	 */
-	function baseAggregator(collection, setter, iteratee, accumulator) {
-	  baseEach(collection, function(value, key, collection) {
-	    setter(accumulator, value, iteratee(value), collection);
-	  });
-	  return accumulator;
-	}
-	
-	module.exports = baseAggregator;
-
-
-/***/ },
-/* 277 */
-/***/ function(module, exports, __webpack_require__) {
-
-	"use strict";
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.OneToOne = exports.ManyToMany = exports.ForeignKey = undefined;
-	
-	var _getPrototypeOf = __webpack_require__(204);
-	
-	var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
+	var _getOwnPropertyDescriptor2 = _interopRequireDefault(_getOwnPropertyDescriptor);
 	
 	var _possibleConstructorReturn2 = __webpack_require__(263);
 	
@@ -10358,54 +9135,298 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _inherits3 = _interopRequireDefault(_inherits2);
 	
+	var _typeof2 = __webpack_require__(2);
+	
+	var _typeof3 = _interopRequireDefault(_typeof2);
+	
+	var _defineProperty = __webpack_require__(76);
+	
+	var _defineProperty2 = _interopRequireDefault(_defineProperty);
+	
 	var _classCallCheck2 = __webpack_require__(74);
 	
 	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 	
+	exports.attr = attr;
 	exports.fk = fk;
 	exports.many = many;
 	exports.oneToOne = oneToOne;
 	
+	var _findKey = __webpack_require__(280);
+	
+	var _findKey2 = _interopRequireDefault(_findKey);
+	
+	var _descriptors = __webpack_require__(282);
+	
+	var _utils = __webpack_require__(194);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	var Field = function Field(toModelName, relatedName) {
-	    (0, _classCallCheck3.default)(this, Field);
+	/**
+	 * @module fields
+	 */
 	
-	    this.toModelName = toModelName;
-	    this.relatedName = relatedName;
-	};
+	var Attribute = exports.Attribute = function () {
+	    function Attribute(opts) {
+	        (0, _classCallCheck3.default)(this, Attribute);
 	
-	var ForeignKey = exports.ForeignKey = function (_Field) {
-	    (0, _inherits3.default)(ForeignKey, _Field);
+	        this.opts = opts || {};
+	
+	        if (this.opts.hasOwnProperty('getDefault')) {
+	            this.getDefault = this.opts.getDefault;
+	        }
+	    }
+	
+	    Attribute.prototype.install = function install(model, fieldName, orm) {
+	        (0, _defineProperty2.default)(model.prototype, fieldName, (0, _descriptors.attrDescriptor)(fieldName));
+	    };
+	
+	    return Attribute;
+	}();
+	
+	var RelationalField = function () {
+	    function RelationalField() {
+	        (0, _classCallCheck3.default)(this, RelationalField);
+	
+	        if (arguments.length === 1 && (0, _typeof3.default)(arguments.length <= 0 ? undefined : arguments[0]) === 'object') {
+	            var opts = arguments.length <= 0 ? undefined : arguments[0];
+	            this.toModelName = opts.to;
+	            this.relatedName = opts.relatedName;
+	            this.through = opts.through;
+	        } else {
+	            this.toModelName = arguments.length <= 0 ? undefined : arguments[0];
+	            this.relatedName = arguments.length <= 1 ? undefined : arguments[1];
+	        }
+	    }
+	
+	    RelationalField.prototype.getClass = function getClass() {
+	        return this.constructor;
+	    };
+	
+	    return RelationalField;
+	}();
+	
+	var ForeignKey = exports.ForeignKey = function (_RelationalField) {
+	    (0, _inherits3.default)(ForeignKey, _RelationalField);
 	
 	    function ForeignKey() {
 	        (0, _classCallCheck3.default)(this, ForeignKey);
-	        return (0, _possibleConstructorReturn3.default)(this, (0, _getPrototypeOf2.default)(ForeignKey).apply(this, arguments));
+	        return (0, _possibleConstructorReturn3.default)(this, _RelationalField.apply(this, arguments));
 	    }
 	
+	    ForeignKey.prototype.install = function install(model, fieldName, orm) {
+	        var toModelName = this.toModelName;
+	        var toModel = toModelName === 'this' ? model : orm.get(toModelName);
+	
+	        // Forwards.
+	        (0, _defineProperty2.default)(model.prototype, fieldName, (0, _descriptors.forwardManyToOneDescriptor)(fieldName, toModel.modelName));
+	
+	        // Backwards.
+	        var backwardsFieldName = this.relatedName ? this.relatedName : (0, _utils.reverseFieldName)(model.modelName);
+	
+	        var backwardsDescriptor = (0, _getOwnPropertyDescriptor2.default)(toModel.prototype, backwardsFieldName);
+	
+	        if (backwardsDescriptor) {
+	            var errorMsg = (0, _utils.reverseFieldErrorMessage)(model.modelName, fieldName, toModel.modelName, backwardsFieldName);
+	            throw new Error(errorMsg);
+	        }
+	
+	        (0, _defineProperty2.default)(toModel.prototype, backwardsFieldName, (0, _descriptors.backwardManyToOneDescriptor)(fieldName, model.modelName));
+	
+	        var ThisField = this.getClass();
+	        toModel.virtualFields[backwardsFieldName] = new ThisField(model.modelName, fieldName);
+	    };
+	
 	    return ForeignKey;
-	}(Field);
-	var ManyToMany = exports.ManyToMany = function (_Field2) {
-	    (0, _inherits3.default)(ManyToMany, _Field2);
+	}(RelationalField);
+	
+	var ManyToMany = exports.ManyToMany = function (_RelationalField2) {
+	    (0, _inherits3.default)(ManyToMany, _RelationalField2);
 	
 	    function ManyToMany() {
 	        (0, _classCallCheck3.default)(this, ManyToMany);
-	        return (0, _possibleConstructorReturn3.default)(this, (0, _getPrototypeOf2.default)(ManyToMany).apply(this, arguments));
+	        return (0, _possibleConstructorReturn3.default)(this, _RelationalField2.apply(this, arguments));
 	    }
 	
+	    ManyToMany.prototype.install = function install(model, fieldName, orm) {
+	        var toModelName = this.toModelName;
+	        var toModel = toModelName === 'this' ? model : orm.get(toModelName);
+	
+	        // Forwards.
+	
+	        var throughModelName = this.through || (0, _utils.m2mName)(model.modelName, fieldName);
+	
+	        var throughModel = orm.get(throughModelName);
+	
+	        var throughFields = void 0;
+	        if (!this.throughFields) {
+	            var toFieldName = (0, _findKey2.default)(throughModel.fields, function (field) {
+	                return field instanceof ForeignKey && field.toModelName === toModel.modelName;
+	            });
+	            var fromFieldName = (0, _findKey2.default)(throughModel.fields, function (field) {
+	                return field instanceof ForeignKey && field.toModelName === model.modelName;
+	            });
+	            throughFields = {
+	                to: toFieldName,
+	                from: fromFieldName
+	            };
+	        } else {
+	            var _throughFields = throughFields,
+	                _throughFields2 = (0, _slicedToArray3.default)(_throughFields, 2),
+	                fieldAName = _throughFields2[0],
+	                fieldBName = _throughFields2[1];
+	
+	            var fieldA = throughModel.fields[fieldAName];
+	            if (fieldA.toModelName === toModel.modelName) {
+	                throughFields = {
+	                    to: fieldAName,
+	                    from: fieldBName
+	                };
+	            } else {
+	                throughFields = {
+	                    to: fieldBName,
+	                    from: fieldAName
+	                };
+	            }
+	        }
+	
+	        (0, _defineProperty2.default)(model.prototype, fieldName, (0, _descriptors.manyToManyDescriptor)(model.modelName, toModel.modelName, throughModelName, throughFields, false));
+	
+	        model.virtualFields[fieldName] = new ManyToMany({
+	            to: toModel.modelName,
+	            relatedName: fieldName,
+	            through: this.through
+	        });
+	
+	        // Backwards.
+	        var backwardsFieldName = this.relatedName ? this.relatedName : (0, _utils.reverseFieldName)(model.modelName);
+	
+	        var backwardsDescriptor = (0, _getOwnPropertyDescriptor2.default)(toModel.prototype, backwardsFieldName);
+	
+	        if (backwardsDescriptor) {
+	            // Backwards field was already defined on toModel.
+	            var errorMsg = (0, _utils.reverseFieldErrorMessage)(model.modelName, fieldName, toModel.modelName, backwardsFieldName);
+	            throw new Error(errorMsg);
+	        }
+	
+	        (0, _defineProperty2.default)(toModel.prototype, backwardsFieldName, (0, _descriptors.manyToManyDescriptor)(model.modelName, toModel.modelName, throughModelName, throughFields, true));
+	        toModel.virtualFields[backwardsFieldName] = new ManyToMany({
+	            to: model.modelName,
+	            relatedName: fieldName,
+	            through: throughModelName
+	        });
+	    };
+	
+	    ManyToMany.prototype.getDefault = function getDefault() {
+	        return [];
+	    };
+	
 	    return ManyToMany;
-	}(Field);
-	var OneToOne = exports.OneToOne = function (_Field3) {
-	    (0, _inherits3.default)(OneToOne, _Field3);
+	}(RelationalField);
+	
+	var OneToOne = exports.OneToOne = function (_RelationalField3) {
+	    (0, _inherits3.default)(OneToOne, _RelationalField3);
 	
 	    function OneToOne() {
 	        (0, _classCallCheck3.default)(this, OneToOne);
-	        return (0, _possibleConstructorReturn3.default)(this, (0, _getPrototypeOf2.default)(OneToOne).apply(this, arguments));
+	        return (0, _possibleConstructorReturn3.default)(this, _RelationalField3.apply(this, arguments));
 	    }
 	
-	    return OneToOne;
-	}(Field);
+	    OneToOne.prototype.install = function install(model, fieldName, orm) {
+	        var toModelName = this.toModelName;
+	        var toModel = toModelName === 'this' ? model : orm.get(toModelName);
 	
+	        // Forwards.
+	        (0, _defineProperty2.default)(model.prototype, fieldName, (0, _descriptors.forwardOneToOneDescriptor)(fieldName, toModel.modelName));
+	
+	        // Backwards.
+	        var backwardsFieldName = this.relatedName ? this.relatedName : model.modelName.toLowerCase();
+	
+	        var backwardsDescriptor = (0, _getOwnPropertyDescriptor2.default)(toModel.prototype, backwardsFieldName);
+	
+	        if (backwardsDescriptor) {
+	            var errorMsg = (0, _utils.reverseFieldErrorMessage)(model.modelName, fieldName, toModel.modelName, backwardsFieldName);
+	            throw new Error(errorMsg);
+	        }
+	
+	        (0, _defineProperty2.default)(toModel.prototype, backwardsFieldName, (0, _descriptors.backwardOneToOneDescriptor)(fieldName, model.modelName));
+	        toModel.virtualFields[backwardsFieldName] = new OneToOne(model.modelName, fieldName);
+	    };
+	
+	    return OneToOne;
+	}(RelationalField);
+	
+	/**
+	 * Defines a value attribute on the model.
+	 * Though not required, it is recommended to define this for each non-foreign key you wish to use.
+	 * Getters and setters need to be defined on each Model
+	 * instantiation for undeclared data fields, which is slower.
+	 * You can use the optional `getDefault` parameter to fill in unpassed values
+	 * to {@link Model#create}, such as for generating ID's with UUID:
+	 *
+	 * ```javascript
+	 * import getUUID from 'your-uuid-package-of-choice';
+	 *
+	 * fields = {
+	 *   id: attr({ getDefault: () => getUUID() }),
+	 *   title: attr(),
+	 * }
+	 * ```
+	 *
+	 * @param  {Object} [opts]
+	 * @param {Function} [opts.getDefault] - if you give a function here, it's return
+	 *                                       value from calling with zero arguments will
+	 *                                       be used as the value when creating a new Model
+	 *                                       instance with {@link Model#create} if the field
+	 *                                       value is not passed.
+	 * @return {Attribute}
+	 */
+	function attr(opts) {
+	    return new Attribute(opts);
+	}
+	
+	/**
+	 * Defines a foreign key on a model, which points
+	 * to a single entity on another model.
+	 *
+	 * You can pass arguments as either a single object,
+	 * or two arguments.
+	 *
+	 * If you pass two arguments, the first one is the name
+	 * of the Model the foreign key is pointing to, and
+	 * the second one is an optional related name, which will
+	 * be used to access the Model the foreign key
+	 * is being defined from, from the target Model.
+	 *
+	 * If the related name is not passed, it will be set as
+	 * `${toModelName}Set`.
+	 *
+	 * If you pass an object to `fk`, it has to be in the form
+	 *
+	 * ```javascript
+	 * fields = {
+	 *   author: fk({ to: 'Author', relatedName: 'books' })
+	 * }
+	 * ```
+	 *
+	 * Which is equal to
+	 *
+	 * ```javascript
+	 * fields = {
+	 *   author: fk('Author', 'books'),
+	 * }
+	 * ```
+	 *
+	 * @param  {string|boolean} toModelNameOrObj - the `modelName` property of
+	 *                                           the Model that is the target of the
+	 *                                           foreign key, or an object with properties
+	 *                                           `to` and optionally `relatedName`.
+	 * @param {string} [relatedName] - if you didn't pass an object as the first argument,
+	 *                                 this is the property name that will be used to
+	 *                                 access a QuerySet the foreign key is defined from,
+	 *                                 from the target model.
+	 * @return {ForeignKey}
+	 */
 	function fk() {
 	    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
 	        args[_key] = arguments[_key];
@@ -10414,6 +9435,76 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return new (Function.prototype.bind.apply(ForeignKey, [null].concat(args)))();
 	}
 	
+	/**
+	 * Defines a many-to-many relationship between
+	 * this (source) and another (target) model.
+	 *
+	 * The relationship is modeled with an extra model called the through model.
+	 * The through model has foreign keys to both the source and target models.
+	 *
+	 * You can define your own through model if you want to associate more information
+	 * to the relationship. A custom through model must have at least two foreign keys,
+	 * one pointing to the source Model, and one pointing to the target Model.
+	 *
+	 * If you have more than one foreign key pointing to a source or target Model in the
+	 * through Model, you must pass the option `throughFields`, which is an array of two
+	 * strings, where the strings are the field names that identify the foreign keys to
+	 * be used for the many-to-many relationship. Redux-ORM will figure out which field name
+	 * points to which model by checking the through Model definition.
+	 *
+	 * Unlike `fk`, this function accepts only an object argument.
+	 *
+	 * ```javascript
+	 * class Authorship extends Model {}
+	 * Authorship.modelName = 'Authorship';
+	 * Authorship.fields = {
+	 *   author: fk('Author', 'authorships'),
+	 *   book: fk('Book', 'authorships'),
+	 * };
+	 *
+	 * class Author extends Model {}
+	 * Author.modelName = 'Author';
+	 * Author.fields = {
+	 *   books: many({
+	 *     to: 'Book',
+	 *     relatedName: 'authors',
+	 *     through: 'Authorship',
+	 *
+	 *     // this is optional, since Redux-ORM can figure
+	 *     // out the through fields itself as there aren't
+	 *     // multiple foreign keys pointing to the same models.
+	 *     throughFields: ['author', 'book'],
+	 *   })
+	 * };
+	 *
+	 * class Book extends Model {}
+	 * Book.modelName = 'Book';
+	 * ```
+	 *
+	 * You should only define the many-to-many relationship on one side. In the
+	 * above case of Authors to Books through Authorships, the relationship is
+	 * defined only on the Author model.
+	 *
+	 * @param  {Object} options - options
+	 * @param  {string} options.to - the `modelName` attribute of the target Model.
+	 * @param  {string} [options.through] - the `modelName` attribute of the through Model which
+	 *                                    must declare at least one foreign key to both source and
+	 *                                    target Models. If not supplied, Redux-Orm will autogenerate
+	 *                                    one.
+	 * @param  {string[]} [options.throughFields] - this must be supplied only when a custom through
+	 *                                            Model has more than one foreign key pointing to
+	 *                                            either the source or target mode. In this case
+	 *                                            Redux-ORM can't figure out the correct fields for
+	 *                                            you, you must provide them. The supplied array should
+	 *                                            have two elements that are the field names for the
+	 *                                            through fields you want to declare the many-to-many
+	 *                                            relationship with. The order doesn't matter;
+	 *                                            Redux-ORM will figure out which field points to
+	 *                                            the source Model and which to the target Model.
+	 * @param  {string} [options.relatedName] - the attribute used to access a QuerySet
+	 *                                          of source Models from target Model.
+	 * @return {ManyToMany}
+	 */
 	function many() {
 	    for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
 	        args[_key2] = arguments[_key2];
@@ -10422,6 +9513,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	    return new (Function.prototype.bind.apply(ManyToMany, [null].concat(args)))();
 	}
 	
+	/**
+	 * Defines a one-to-one relationship. In database terms, this is a foreign key with the
+	 * added restriction that only one entity can point to single target entity.
+	 *
+	 * The arguments are the same as with `fk`. If `relatedName` is not supplied,
+	 * the source model name in lowercase will be used. Note that with the one-to-one
+	 * relationship, the `relatedName` should be in singular, not plural.
+	 * @param  {string|boolean} toModelNameOrObj - the `modelName` property of
+	 *                                           the Model that is the target of the
+	 *                                           foreign key, or an object with properties
+	 *                                           `to` and optionally `relatedName`.
+	 * @param {string} [relatedName] - if you didn't pass an object as the first argument,
+	 *                                 this is the property name that will be used to
+	 *                                 access a Model the foreign key is defined from,
+	 *                                 from the target Model.
+	 * @return {OneToOne}
+	 */
 	function oneToOne() {
 	    for (var _len3 = arguments.length, args = Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
 	        args[_key3] = arguments[_key3];
@@ -10431,7 +9539,196 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
+/* 273 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	exports.__esModule = true;
+	
+	var _isIterable2 = __webpack_require__(274);
+	
+	var _isIterable3 = _interopRequireDefault(_isIterable2);
+	
+	var _getIterator2 = __webpack_require__(277);
+	
+	var _getIterator3 = _interopRequireDefault(_getIterator2);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	exports.default = function () {
+	  function sliceIterator(arr, i) {
+	    var _arr = [];
+	    var _n = true;
+	    var _d = false;
+	    var _e = undefined;
+	
+	    try {
+	      for (var _i = (0, _getIterator3.default)(arr), _s; !(_n = (_s = _i.next()).done); _n = true) {
+	        _arr.push(_s.value);
+	
+	        if (i && _arr.length === i) break;
+	      }
+	    } catch (err) {
+	      _d = true;
+	      _e = err;
+	    } finally {
+	      try {
+	        if (!_n && _i["return"]) _i["return"]();
+	      } finally {
+	        if (_d) throw _e;
+	      }
+	    }
+	
+	    return _arr;
+	  }
+	
+	  return function (arr, i) {
+	    if (Array.isArray(arr)) {
+	      return arr;
+	    } else if ((0, _isIterable3.default)(Object(arr))) {
+	      return sliceIterator(arr, i);
+	    } else {
+	      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+	    }
+	  };
+	}();
+
+/***/ },
+/* 274 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(275), __esModule: true };
+
+/***/ },
+/* 275 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(49);
+	__webpack_require__(5);
+	module.exports = __webpack_require__(276);
+
+/***/ },
+/* 276 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var classof   = __webpack_require__(224)
+	  , ITERATOR  = __webpack_require__(46)('iterator')
+	  , Iterators = __webpack_require__(28);
+	module.exports = __webpack_require__(13).isIterable = function(it){
+	  var O = Object(it);
+	  return O[ITERATOR] !== undefined
+	    || '@@iterator' in O
+	    || Iterators.hasOwnProperty(classof(O));
+	};
+
+/***/ },
+/* 277 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = { "default": __webpack_require__(278), __esModule: true };
+
+/***/ },
 /* 278 */
+/***/ function(module, exports, __webpack_require__) {
+
+	__webpack_require__(49);
+	__webpack_require__(5);
+	module.exports = __webpack_require__(279);
+
+/***/ },
+/* 279 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var anObject = __webpack_require__(18)
+	  , get      = __webpack_require__(223);
+	module.exports = __webpack_require__(13).getIterator = function(it){
+	  var iterFn = get(it);
+	  if(typeof iterFn != 'function')throw TypeError(it + ' is not iterable!');
+	  return anObject(iterFn.call(it));
+	};
+
+/***/ },
+/* 280 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseFindKey = __webpack_require__(281),
+	    baseForOwn = __webpack_require__(96),
+	    baseIteratee = __webpack_require__(120);
+	
+	/**
+	 * This method is like `_.find` except that it returns the key of the first
+	 * element `predicate` returns truthy for instead of the element itself.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 1.1.0
+	 * @category Object
+	 * @param {Object} object The object to inspect.
+	 * @param {Function} [predicate=_.identity] The function invoked per iteration.
+	 * @returns {string|undefined} Returns the key of the matched element,
+	 *  else `undefined`.
+	 * @example
+	 *
+	 * var users = {
+	 *   'barney':  { 'age': 36, 'active': true },
+	 *   'fred':    { 'age': 40, 'active': false },
+	 *   'pebbles': { 'age': 1,  'active': true }
+	 * };
+	 *
+	 * _.findKey(users, function(o) { return o.age < 40; });
+	 * // => 'barney' (iteration order is not guaranteed)
+	 *
+	 * // The `_.matches` iteratee shorthand.
+	 * _.findKey(users, { 'age': 1, 'active': true });
+	 * // => 'pebbles'
+	 *
+	 * // The `_.matchesProperty` iteratee shorthand.
+	 * _.findKey(users, ['active', false]);
+	 * // => 'fred'
+	 *
+	 * // The `_.property` iteratee shorthand.
+	 * _.findKey(users, 'active');
+	 * // => 'barney'
+	 */
+	function findKey(object, predicate) {
+	  return baseFindKey(object, baseIteratee(predicate, 3), baseForOwn);
+	}
+	
+	module.exports = findKey;
+
+
+/***/ },
+/* 281 */
+/***/ function(module, exports) {
+
+	/**
+	 * The base implementation of methods like `_.findKey` and `_.findLastKey`,
+	 * without support for iteratee shorthands, which iterates over `collection`
+	 * using `eachFunc`.
+	 *
+	 * @private
+	 * @param {Array|Object} collection The collection to inspect.
+	 * @param {Function} predicate The function invoked per iteration.
+	 * @param {Function} eachFunc The function to iterate over `collection`.
+	 * @returns {*} Returns the found element or its key, else `undefined`.
+	 */
+	function baseFindKey(collection, predicate, eachFunc) {
+	  var result;
+	  eachFunc(collection, function(value, key, collection) {
+	    if (predicate(value, key, collection)) {
+	      result = key;
+	      return false;
+	    }
+	  });
+	  return result;
+	}
+	
+	module.exports = baseFindKey;
+
+
+/***/ },
+/* 282 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -10439,22 +9736,225 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	    value: true
 	});
+	exports.manyToManyDescriptor = exports.backwardManyToOneDescriptor = exports.backwardOneToOneDescriptor = exports.forwardOneToOneDescriptor = exports.forwardManyToOneDescriptor = exports.attrDescriptor = undefined;
 	
-	var _defineProperty2 = __webpack_require__(76);
+	var _defineProperty2 = __webpack_require__(257);
 	
 	var _defineProperty3 = _interopRequireDefault(_defineProperty2);
 	
-	var _getOwnPropertyDescriptor = __webpack_require__(200);
+	var _difference = __webpack_require__(247);
 	
-	var _getOwnPropertyDescriptor2 = _interopRequireDefault(_getOwnPropertyDescriptor);
+	var _difference2 = _interopRequireDefault(_difference);
 	
-	var _defineProperty4 = __webpack_require__(245);
+	var _utils = __webpack_require__(194);
 	
-	var _defineProperty5 = _interopRequireDefault(_defineProperty4);
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
-	var _getPrototypeOf = __webpack_require__(204);
+	function attrDescriptor(fieldName) {
+	    return {
+	        get: function get() {
+	            return this._fields[fieldName];
+	        },
+	        set: function set(value) {
+	            return this.set(fieldName, value);
+	        },
 	
-	var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
+	
+	        enumerable: true,
+	        configurable: true
+	    };
+	}
+	
+	// Forwards side a Foreign Key: returns one object.
+	// Also works as forwardsOneToOneDescriptor.
+	function forwardManyToOneDescriptor(fieldName, declaredToModelName) {
+	    return {
+	        get: function get() {
+	            var currentSession = this.getClass().session;
+	            var declaredToModel = currentSession[declaredToModelName];
+	            var toId = this._fields[fieldName];
+	            if (typeof toId !== 'undefined' && toId !== null) {
+	                return declaredToModel.withId(toId);
+	            }
+	            return undefined;
+	        },
+	        set: function set(value) {
+	            var currentSession = this.getClass().session;
+	            var declaredToModel = currentSession[declaredToModelName];
+	
+	            var toId = void 0;
+	            if (value instanceof declaredToModel) {
+	                toId = value.getId();
+	            } else {
+	                toId = value;
+	            }
+	
+	            this.update((0, _defineProperty3.default)({}, fieldName, toId));
+	        }
+	    };
+	}
+	
+	var forwardOneToOneDescriptor = forwardManyToOneDescriptor;
+	
+	function backwardOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
+	    return {
+	        get: function get() {
+	            var currentSession = this.getClass().session;
+	            var declaredFromModel = currentSession[declaredFromModelName];
+	            var thisId = this.getId();
+	            var found = void 0;
+	            try {
+	                found = declaredFromModel.get((0, _defineProperty3.default)({}, declaredFieldName, thisId));
+	            } catch (e) {
+	                return null;
+	            }
+	            return found;
+	        },
+	        set: function set() {
+	            throw new Error('Can\'t mutate a reverse one-to-one relation.');
+	        }
+	    };
+	}
+	
+	// Reverse side of a Foreign Key: returns many objects.
+	function backwardManyToOneDescriptor(declaredFieldName, declaredFromModelName) {
+	    return {
+	        get: function get() {
+	            var currentSession = this.getClass().session;
+	            var declaredFromModel = currentSession[declaredFromModelName];
+	            var thisId = this.getId();
+	            return declaredFromModel.filter((0, _defineProperty3.default)({}, declaredFieldName, thisId));
+	        },
+	        set: function set() {
+	            throw new Error('Can\'t mutate a reverse many-to-one relation.');
+	        }
+	    };
+	}
+	
+	// Both sides of Many to Many, use the reverse flag.
+	function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throughModelName, throughFields, reverse) {
+	    return {
+	        get: function get() {
+	            var currentSession = this.getClass().session;
+	            var declaredFromModel = currentSession[declaredFromModelName];
+	            var declaredToModel = currentSession[declaredToModelName];
+	            var throughModel = currentSession[throughModelName];
+	            var thisId = this.getId();
+	
+	            var fromFieldName = throughFields.from;
+	            var toFieldName = throughFields.to;
+	
+	            var lookupObj = {};
+	            if (!reverse) {
+	                lookupObj[fromFieldName] = thisId;
+	            } else {
+	                lookupObj[toFieldName] = thisId;
+	            }
+	
+	            var throughQs = throughModel.filter(lookupObj);
+	            var toIds = throughQs.toRefArray().map(function (obj) {
+	                return obj[reverse ? fromFieldName : toFieldName];
+	            });
+	
+	            var qsFromModel = reverse ? declaredFromModel : declaredToModel;
+	            var qs = qsFromModel.filter(function (attrs) {
+	                return (0, _utils.includes)(toIds, attrs[qsFromModel.idAttribute]);
+	            });
+	
+	            qs.add = function add() {
+	                for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+	                    args[_key] = arguments[_key];
+	                }
+	
+	                var idsToAdd = args.map(_utils.normalizeEntity);
+	
+	                var filterWithAttr = reverse ? fromFieldName : toFieldName;
+	
+	                var existingQs = throughQs.filter(function (through) {
+	                    return (0, _utils.includes)(idsToAdd, through[filterWithAttr]);
+	                });
+	
+	                if (existingQs.exists()) {
+	                    var existingIds = existingQs.toRefArray().map(function (through) {
+	                        return through[filterWithAttr];
+	                    });
+	
+	                    var toAddModel = reverse ? declaredFromModel.modelName : declaredToModel.modelName;
+	
+	                    var addFromModel = reverse ? declaredToModel.modelName : declaredFromModel.modelName;
+	                    throw new Error('Tried to add already existing ' + toAddModel + ' id(s) ' + existingIds + ' to the ' + addFromModel + ' instance with id ' + thisId);
+	                }
+	
+	                idsToAdd.forEach(function (id) {
+	                    var _throughModel$create;
+	
+	                    throughModel.create((_throughModel$create = {}, (0, _defineProperty3.default)(_throughModel$create, fromFieldName, thisId), (0, _defineProperty3.default)(_throughModel$create, toFieldName, id), _throughModel$create));
+	                });
+	            };
+	
+	            qs.clear = function clear() {
+	                throughQs.delete();
+	            };
+	
+	            qs.remove = function remove() {
+	                for (var _len2 = arguments.length, entities = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+	                    entities[_key2] = arguments[_key2];
+	                }
+	
+	                var idsToRemove = entities.map(_utils.normalizeEntity);
+	
+	                var attrInIdsToRemove = reverse ? fromFieldName : toFieldName;
+	                var entitiesToDelete = throughQs.filter(function (through) {
+	                    return (0, _utils.includes)(idsToRemove, through[attrInIdsToRemove]);
+	                });
+	
+	                if (entitiesToDelete.count() !== idsToRemove.length) {
+	                    // Tried deleting non-existing entities.
+	                    var entitiesToDeleteIds = entitiesToDelete.toRefArray().map(function (through) {
+	                        return through[attrInIdsToRemove];
+	                    });
+	
+	                    var unexistingIds = (0, _difference2.default)(idsToRemove, entitiesToDeleteIds);
+	
+	                    var toDeleteModel = reverse ? declaredFromModel.modelName : declaredToModel.modelName;
+	
+	                    var deleteFromModel = reverse ? declaredToModel.modelName : declaredFromModel.modelName;
+	
+	                    throw new Error('Tried to delete non-existing ' + toDeleteModel + ' id(s) ' + unexistingIds + ' from the ' + deleteFromModel + ' instance with id ' + thisId);
+	                }
+	
+	                entitiesToDelete.delete();
+	            };
+	
+	            return qs;
+	        },
+	        set: function set() {
+	            throw new Error('Tried setting a M2M field. Please use the related QuerySet methods add and remove.');
+	        }
+	    };
+	}
+	
+	exports.attrDescriptor = attrDescriptor;
+	exports.forwardManyToOneDescriptor = forwardManyToOneDescriptor;
+	exports.forwardOneToOneDescriptor = forwardOneToOneDescriptor;
+	exports.backwardOneToOneDescriptor = backwardOneToOneDescriptor;
+	exports.backwardManyToOneDescriptor = backwardManyToOneDescriptor;
+	exports.manyToManyDescriptor = manyToManyDescriptor;
+
+/***/ },
+/* 283 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.ORM = undefined;
+	
+	var _defineProperty2 = __webpack_require__(257);
+	
+	var _defineProperty3 = _interopRequireDefault(_defineProperty2);
 	
 	var _possibleConstructorReturn2 = __webpack_require__(263);
 	
@@ -10464,21 +9964,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _inherits3 = _interopRequireDefault(_inherits2);
 	
+	var _assign = __webpack_require__(70);
+	
+	var _assign2 = _interopRequireDefault(_assign);
+	
 	var _classCallCheck2 = __webpack_require__(74);
 	
 	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
 	
-	var _createClass2 = __webpack_require__(75);
+	exports.DeprecatedSchema = DeprecatedSchema;
 	
-	var _createClass3 = _interopRequireDefault(_createClass2);
-	
-	var _reselect = __webpack_require__(279);
-	
-	var _forOwn = __webpack_require__(210);
+	var _forOwn = __webpack_require__(202);
 	
 	var _forOwn2 = _interopRequireDefault(_forOwn);
 	
-	var _find = __webpack_require__(280);
+	var _find = __webpack_require__(284);
 	
 	var _find2 = _interopRequireDefault(_find);
 	
@@ -10486,397 +9986,1502 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _Session2 = _interopRequireDefault(_Session);
 	
-	var _Model3 = __webpack_require__(246);
+	var _Model2 = __webpack_require__(253);
 	
-	var _Model4 = _interopRequireDefault(_Model3);
+	var _Model3 = _interopRequireDefault(_Model2);
 	
-	var _fields = __webpack_require__(277);
+	var _db = __webpack_require__(287);
 	
-	var _descriptors = __webpack_require__(283);
+	var _fields = __webpack_require__(272);
 	
-	var _memoize = __webpack_require__(284);
+	var _redux = __webpack_require__(303);
 	
-	var _utils = __webpack_require__(199);
+	var _utils = __webpack_require__(194);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
+	var ORM_DEFAULTS = {
+	    createDatabase: _db.createDatabase
+	};
+	
 	/**
-	 * Schema's responsibility is tracking the set of {@link Model} classes used in the database.
-	 * To include your model in that set, Schema offers {@link Schema#register} and a
-	 * shortcut {@link Schema#define} methods.
+	 * ORM - the Object Relational Mapper.
 	 *
-	 * Schema also handles starting a Session with {@link Schema#from}.
+	 * Use instances of this class to:
+	 *
+	 * - Register your {@link Model} classes using {@link ORM#register}
+	 * - Get the empty state for the underlying database with {@link ORM#getEmptyState}
+	 * - Start an immutable database session with {@link ORM#session}
+	 * - Start a mutating database session with {@link ORM#mutableSession}
+	 *
+	 * Internally, this class handles generating a schema specification from models
+	 * to the database.
 	 */
-	var Schema = function () {
+	var ORM = exports.ORM = function () {
 	    /**
-	     * Creates a new Schema.
+	     * Creates a new ORM instance.
 	     */
+	    function ORM(opts) {
+	        (0, _classCallCheck3.default)(this, ORM);
 	
-	    function Schema() {
-	        (0, _classCallCheck3.default)(this, Schema);
+	        var _Object$assign = (0, _assign2.default)({}, ORM_DEFAULTS, opts || {}),
+	            createDatabase = _Object$assign.createDatabase;
 	
+	        this.createDatabase = createDatabase;
 	        this.registry = [];
 	        this.implicitThroughModels = [];
-	        this.selectorCreator = (0, _reselect.createSelectorCreator)(_memoize.memoize, _memoize.eqCheck, this);
+	        this.installedFields = {};
 	    }
 	
 	    /**
-	     * Defines a {@link Model} class with the provided options and registers
-	     * it to the schema instance.
+	     * Registers a {@link Model} class to the ORM.
 	     *
-	     * Note that you can also define {@link Model} classes by yourself
-	     * with ES6 classes.
+	     * If the model has declared any ManyToMany fields, their
+	     * through models will be generated and registered with
+	     * this call, unless a custom through model has been specified.
 	     *
-	     * @param  {string} modelName - the name of the {@link Model} class
-	     * @param  {Object} [relatedFields] - a dictionary of `fieldName: fieldInstance`
-	     * @param  {Function} [reducer] - the reducer function to use for this model
-	     * @param  {Object} [backendOpts] - {@link Backend} options for this model.
-	     * @return {Model} The defined model class.
+	     * @param  {...Model} model - a {@link Model} class to register
+	     * @return {undefined}
 	     */
 	
 	
-	    (0, _createClass3.default)(Schema, [{
-	        key: 'define',
-	        value: function define(modelName, relatedFields, reducer, backendOpts) {
-	            var ShortcutDefinedModel = function (_Model) {
-	                (0, _inherits3.default)(ShortcutDefinedModel, _Model);
+	    ORM.prototype.register = function register() {
+	        var _this = this;
 	
-	                function ShortcutDefinedModel() {
-	                    (0, _classCallCheck3.default)(this, ShortcutDefinedModel);
-	                    return (0, _possibleConstructorReturn3.default)(this, (0, _getPrototypeOf2.default)(ShortcutDefinedModel).apply(this, arguments));
+	        for (var _len = arguments.length, models = Array(_len), _key = 0; _key < _len; _key++) {
+	            models[_key] = arguments[_key];
+	        }
+	
+	        models.forEach(function (model) {
+	            model.invalidateClassCache();
+	
+	            _this.registerManyToManyModelsFor(model);
+	            _this.registry.push(model);
+	        });
+	    };
+	
+	    ORM.prototype.registerManyToManyModelsFor = function registerManyToManyModelsFor(model) {
+	        var _this3 = this;
+	
+	        var fields = model.fields;
+	        var thisModelName = model.modelName;
+	
+	        (0, _forOwn2.default)(fields, function (fieldInstance, fieldName) {
+	            if (fieldInstance instanceof _fields.ManyToMany && !fieldInstance.through) {
+	                var _Through$fields;
+	
+	                var toModelName = void 0;
+	                if (fieldInstance.toModelName === 'this') {
+	                    toModelName = thisModelName;
+	                } else {
+	                    toModelName = fieldInstance.toModelName;
 	                }
 	
-	                return ShortcutDefinedModel;
-	            }(_Model4.default);
+	                var fromFieldName = (0, _utils.m2mFromFieldName)(thisModelName);
+	                var toFieldName = (0, _utils.m2mToFieldName)(toModelName);
 	
-	            ShortcutDefinedModel.modelName = modelName;
-	            ShortcutDefinedModel.backend = backendOpts;
-	            ShortcutDefinedModel.fields = relatedFields;
+	                var Through = function (_Model) {
+	                    (0, _inherits3.default)(ThroughModel, _Model);
 	
-	            if (typeof reducer === 'function') {
-	                ShortcutDefinedModel.reducer = reducer;
-	            }
-	
-	            this.register(ShortcutDefinedModel);
-	
-	            return ShortcutDefinedModel;
-	        }
-	
-	        /**
-	         * Registers a {@link Model} class to the schema.
-	         *
-	         * If the model has declared any ManyToMany fields, their
-	         * through models will be generated and registered with
-	         * this call.
-	         *
-	         * @param  {...Model} model - a {@link Model} class to register
-	         * @return {undefined}
-	         */
-	
-	    }, {
-	        key: 'register',
-	        value: function register() {
-	            var _this2 = this;
-	
-	            var models = Array.prototype.slice.call(arguments);
-	            models.forEach(function (model) {
-	                model.invalidateClassCache();
-	
-	                _this2.registerManyToManyModelsFor(model);
-	                _this2.registry.push(model);
-	            });
-	        }
-	    }, {
-	        key: 'registerManyToManyModelsFor',
-	        value: function registerManyToManyModelsFor(model) {
-	            var _this4 = this;
-	
-	            var fields = model.fields;
-	            var thisModelName = model.modelName;
-	
-	            (0, _forOwn2.default)(fields, function (fieldInstance, fieldName) {
-	                if (fieldInstance instanceof _fields.ManyToMany) {
-	                    var _Through$fields;
-	
-	                    var toModelName = void 0;
-	                    if (fieldInstance.toModelName === 'this') {
-	                        toModelName = thisModelName;
-	                    } else {
-	                        toModelName = fieldInstance.toModelName;
+	                    function ThroughModel() {
+	                        (0, _classCallCheck3.default)(this, ThroughModel);
+	                        return (0, _possibleConstructorReturn3.default)(this, _Model.apply(this, arguments));
 	                    }
 	
-	                    var fromFieldName = (0, _utils.m2mFromFieldName)(thisModelName);
-	                    var toFieldName = (0, _utils.m2mToFieldName)(toModelName);
+	                    return ThroughModel;
+	                }(_Model3.default);
 	
-	                    var Through = function (_Model2) {
-	                        (0, _inherits3.default)(ThroughModel, _Model2);
+	                Through.modelName = (0, _utils.m2mName)(thisModelName, fieldName);
 	
-	                        function ThroughModel() {
-	                            (0, _classCallCheck3.default)(this, ThroughModel);
-	                            return (0, _possibleConstructorReturn3.default)(this, (0, _getPrototypeOf2.default)(ThroughModel).apply(this, arguments));
-	                        }
+	                Through.fields = (_Through$fields = {
+	                    id: (0, _fields.attr)()
+	                }, (0, _defineProperty3.default)(_Through$fields, fromFieldName, new _fields.ForeignKey(thisModelName)), (0, _defineProperty3.default)(_Through$fields, toFieldName, new _fields.ForeignKey(toModelName)), _Through$fields);
 	
-	                        return ThroughModel;
-	                    }(_Model4.default);
-	
-	                    Through.modelName = (0, _utils.m2mName)(thisModelName, fieldName);
-	
-	                    Through.fields = (_Through$fields = {}, (0, _defineProperty5.default)(_Through$fields, fromFieldName, new _fields.ForeignKey(thisModelName)), (0, _defineProperty5.default)(_Through$fields, toFieldName, new _fields.ForeignKey(toModelName)), _Through$fields);
-	
-	                    Through.invalidateClassCache();
-	                    _this4.implicitThroughModels.push(Through);
-	                }
-	            });
-	        }
-	
-	        /**
-	         * Gets a {@link Model} class by its name from the registry.
-	         * @param  {string} modelName - the name of the {@link Model} class to get
-	         * @throws If {@link Model} class is not found.
-	         * @return {Model} the {@link Model} class, if found
-	         */
-	
-	    }, {
-	        key: 'get',
-	        value: function get(modelName) {
-	            var found = (0, _find2.default)(this.registry.concat(this.implicitThroughModels), function (model) {
-	                return model.modelName === modelName;
-	            });
-	
-	            if (typeof found === 'undefined') {
-	                throw new Error('Did not find model ' + modelName + ' from registry.');
+	                Through.invalidateClassCache();
+	                _this3.implicitThroughModels.push(Through);
 	            }
-	            return found;
+	        });
+	    };
+	
+	    /**
+	     * Gets a {@link Model} class by its name from the registry.
+	     * @param  {string} modelName - the name of the {@link Model} class to get
+	     * @throws If {@link Model} class is not found.
+	     * @return {Model} the {@link Model} class, if found
+	     */
+	
+	
+	    ORM.prototype.get = function get(modelName) {
+	        var found = (0, _find2.default)(this.registry.concat(this.implicitThroughModels), function (model) {
+	            return model.modelName === modelName;
+	        });
+	
+	        if (typeof found === 'undefined') {
+	            throw new Error('Did not find model ' + modelName + ' from registry.');
 	        }
-	    }, {
-	        key: 'getModelClasses',
-	        value: function getModelClasses() {
-	            this._setupModelPrototypes();
-	            return this.registry.concat(this.implicitThroughModels);
+	        return found;
+	    };
+	
+	    ORM.prototype.getModelClasses = function getModelClasses() {
+	        this._setupModelPrototypes(this.registry);
+	        this._setupModelPrototypes(this.implicitThroughModels);
+	        return this.registry.concat(this.implicitThroughModels);
+	    };
+	
+	    ORM.prototype._attachQuerySetMethods = function _attachQuerySetMethods(model) {
+	        var querySetClass = model.querySetClass;
+	
+	        (0, _utils.attachQuerySetMethods)(model, querySetClass);
+	    };
+	
+	    ORM.prototype.isFieldInstalled = function isFieldInstalled(modelName, fieldName) {
+	        return this.installedFields.hasOwnProperty(modelName) ? !!this.installedFields[modelName][fieldName] : false;
+	    };
+	
+	    ORM.prototype.setFieldInstalled = function setFieldInstalled(modelName, fieldName) {
+	        if (!this.installedFields.hasOwnProperty(modelName)) {
+	            this.installedFields[modelName] = {};
 	        }
-	    }, {
-	        key: '_attachQuerySetMethods',
-	        value: function _attachQuerySetMethods(model) {
-	            var querySetClass = model.querySetClass;
+	        this.installedFields[modelName][fieldName] = true;
+	    };
 	
-	            (0, _utils.attachQuerySetMethods)(model, querySetClass);
+	    ORM.prototype._setupModelPrototypes = function _setupModelPrototypes(models) {
+	        var _this4 = this;
+	
+	        models.forEach(function (model) {
+	            if (!model.isSetUp) {
+	                var fields = model.fields;
+	                (0, _forOwn2.default)(fields, function (fieldInstance, fieldName) {
+	                    if (!_this4.isFieldInstalled(model.modelName, fieldName)) {
+	                        fieldInstance.install(model, fieldName, _this4);
+	                        _this4.setFieldInstalled(model.modelName, fieldName);
+	                    }
+	                });
+	                _this4._attachQuerySetMethods(model);
+	                model.isSetUp = true;
+	            }
+	        });
+	    };
+	
+	    ORM.prototype.generateSchemaSpec = function generateSchemaSpec() {
+	        var models = this.getModelClasses();
+	        var tables = models.reduce(function (spec, modelClass) {
+	            var tableName = modelClass.modelName;
+	            var tableSpec = modelClass._getTableOpts();
+	            spec[tableName] = (0, _assign2.default)({}, { fields: modelClass.fields }, tableSpec);
+	            return spec;
+	        }, {});
+	        return { tables: tables };
+	    };
+	
+	    ORM.prototype.getDatabase = function getDatabase() {
+	        if (!this.db) {
+	            this.db = this.createDatabase(this.generateSchemaSpec());
 	        }
-	    }, {
-	        key: '_setupModelPrototypes',
-	        value: function _setupModelPrototypes() {
-	            var _this5 = this;
+	        return this.db;
+	    };
 	
-	            this.registry.forEach(function (model) {
-	                if (!model.isSetUp) {
-	                    var fields = model.fields;
-	                    (0, _forOwn2.default)(fields, function (fieldInstance, fieldName) {
-	                        var descriptor = (0, _getOwnPropertyDescriptor2.default)(model.prototype, fieldName);
-	                        if (typeof descriptor === 'undefined') {
-	                            var toModelName = fieldInstance.toModelName;
-	                            var toModel = toModelName === 'this' ? model : _this5.get(toModelName);
+	    /**
+	     * Returns the empty database state.
+	     * @return {Object} the empty state
+	     */
 	
-	                            if (fieldInstance instanceof _fields.ForeignKey) {
-	                                // Forwards.
-	                                (0, _defineProperty3.default)(model.prototype, fieldName, (0, _descriptors.forwardManyToOneDescriptor)(fieldName, toModel.modelName));
-	                                model.definedProperties[fieldName] = true;
 	
-	                                // Backwards.
-	                                var backwardsFieldName = fieldInstance.relatedName ? fieldInstance.relatedName : (0, _utils.reverseFieldName)(model.modelName);
+	    ORM.prototype.getEmptyState = function getEmptyState() {
+	        return this.getDatabase().getEmptyState();
+	    };
 	
-	                                if (toModel.definedProperties[backwardsFieldName]) {
-	                                    var errorMsg = (0, _utils.reverseFieldErrorMessage)(model.modelName, fieldName, toModel.modelName, backwardsFieldName);
-	                                    throw new Error(errorMsg);
-	                                }
+	    /**
+	     * Begins an immutable database session.
+	     *
+	     * @param  {Object} state  - the state the database manages
+	     * @return {Session} a new {@link Session} instance
+	     */
 	
-	                                (0, _defineProperty3.default)(toModel.prototype, backwardsFieldName, (0, _descriptors.backwardManyToOneDescriptor)(fieldName, model.modelName));
-	                                toModel.definedProperties[backwardsFieldName] = true;
-	                                toModel.virtualFields[backwardsFieldName] = new _fields.ForeignKey(model.modelName, fieldName);
-	                            } else if (fieldInstance instanceof _fields.ManyToMany) {
-	                                // Forwards.
-	                                var throughModelName = (0, _utils.m2mName)(model.modelName, fieldName);
-	                                // const throughModel = this.get(throughModelName);
 	
-	                                (0, _defineProperty3.default)(model.prototype, fieldName, (0, _descriptors.manyToManyDescriptor)(model.modelName, toModel.modelName, throughModelName, false));
-	                                model.definedProperties[fieldName] = true;
-	                                model.virtualFields[fieldName] = new _fields.ManyToMany(toModel.modelName, fieldName);
+	    ORM.prototype.session = function session(state) {
+	        return new _Session2.default(this, this.getDatabase(), state);
+	    };
 	
-	                                // Backwards.
-	                                var _backwardsFieldName = fieldInstance.relatedName ? fieldInstance.relatedName : (0, _utils.reverseFieldName)(model.modelName);
+	    /**
+	     * Begins a mutable database session.
+	     *
+	     * @param  {Object} state  - the state the database manages
+	     * @return {Session} a new {@link Session} instance
+	     */
 	
-	                                if (toModel.definedProperties[_backwardsFieldName]) {
-	                                    var _errorMsg = (0, _utils.reverseFieldErrorMessage)(model.modelName, fieldName, toModel.modelName, _backwardsFieldName);
-	                                    throw new Error(_errorMsg);
-	                                }
 	
-	                                (0, _defineProperty3.default)(toModel.prototype, _backwardsFieldName, (0, _descriptors.manyToManyDescriptor)(model.modelName, toModel.modelName, throughModelName, true));
-	                                toModel.definedProperties[_backwardsFieldName] = true;
-	                                toModel.virtualFields[_backwardsFieldName] = new _fields.ManyToMany(model.modelName, fieldName);
-	                            } else if (fieldInstance instanceof _fields.OneToOne) {
-	                                // Forwards.
-	                                (0, _defineProperty3.default)(model.prototype, fieldName, (0, _descriptors.forwardOneToOneDescriptor)(fieldName, toModel.modelName));
-	                                model.definedProperties[fieldName] = true;
+	    ORM.prototype.mutableSession = function mutableSession(state) {
+	        return new _Session2.default(this, this.getDatabase(), state, true);
+	    };
 	
-	                                // Backwards.
-	                                var _backwardsFieldName2 = fieldInstance.relatedName ? fieldInstance.relatedName : model.modelName.toLowerCase();
+	    // DEPRECATED AND REMOVED METHODS
 	
-	                                if (toModel.definedProperties[_backwardsFieldName2]) {
-	                                    var _errorMsg2 = (0, _utils.reverseFieldErrorMessage)(model.modelName, fieldName, toModel.modelName, _backwardsFieldName2);
-	                                    throw new Error(_errorMsg2);
-	                                }
+	    ORM.prototype.withMutations = function withMutations(state) {
+	        (0, _utils.warnDeprecated)('ORM.prototype.withMutations is deprecated. ' + 'Use ORM.prototype.mutableSession instead.');
 	
-	                                (0, _defineProperty3.default)(toModel.prototype, _backwardsFieldName2, (0, _descriptors.backwardOneToOneDescriptor)(fieldName, model.modelName));
-	                                toModel.definedProperties[_backwardsFieldName2] = true;
-	                                toModel.virtualFields[_backwardsFieldName2] = new _fields.OneToOne(model.modelName, fieldName);
-	                            }
+	        return this.mutableSession(state);
+	    };
+	
+	    ORM.prototype.from = function from(state) {
+	        (0, _utils.warnDeprecated)('ORM.prototype.from function is deprecated. ' + 'Use ORM.prototype.session instead.');
+	        return this.session(state);
+	    };
+	
+	    ORM.prototype.reducer = function reducer() {
+	        (0, _utils.warnDeprecated)('ORM.prototype.reducer is deprecated. Access ' + 'the Session.prototype.state property instead.');
+	        return (0, _redux.createReducer)(this);
+	    };
+	
+	    ORM.prototype.createSelector = function createSelector() {
+	        (0, _utils.warnDeprecated)('ORM.prototype.createSelector is deprecated. ' + 'Import `createSelector` from Redux-ORM instead.');
+	
+	        for (var _len2 = arguments.length, args = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+	            args[_key2] = arguments[_key2];
+	        }
+	
+	        return _redux.createSelector.apply(undefined, [this].concat(args));
+	    };
+	
+	    ORM.prototype.getDefaultState = function getDefaultState() {
+	        (0, _utils.warnDeprecated)('ORM.prototype.getDefaultState is deprecated. Use ' + 'the ORM.prototype.getEmptyState instead.');
+	        return this.getEmptyState();
+	    };
+	
+	    ORM.prototype.define = function define() {
+	        throw new Error('ORM.prototype.define is removed. Please define a Model class.');
+	    };
+	
+	    return ORM;
+	}();
+	
+	function DeprecatedSchema() {
+	    throw new Error('Schema has been renamed to ORM. Please import ORM instead of Schema ' + 'from Redux-ORM.');
+	}
+	
+	exports.default = ORM;
+
+/***/ },
+/* 284 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var createFind = __webpack_require__(285),
+	    findIndex = __webpack_require__(286);
+	
+	/**
+	 * Iterates over elements of `collection`, returning the first element
+	 * `predicate` returns truthy for. The predicate is invoked with three
+	 * arguments: (value, index|key, collection).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Collection
+	 * @param {Array|Object} collection The collection to inspect.
+	 * @param {Function} [predicate=_.identity] The function invoked per iteration.
+	 * @param {number} [fromIndex=0] The index to search from.
+	 * @returns {*} Returns the matched element, else `undefined`.
+	 * @example
+	 *
+	 * var users = [
+	 *   { 'user': 'barney',  'age': 36, 'active': true },
+	 *   { 'user': 'fred',    'age': 40, 'active': false },
+	 *   { 'user': 'pebbles', 'age': 1,  'active': true }
+	 * ];
+	 *
+	 * _.find(users, function(o) { return o.age < 40; });
+	 * // => object for 'barney'
+	 *
+	 * // The `_.matches` iteratee shorthand.
+	 * _.find(users, { 'age': 1, 'active': true });
+	 * // => object for 'pebbles'
+	 *
+	 * // The `_.matchesProperty` iteratee shorthand.
+	 * _.find(users, ['active', false]);
+	 * // => object for 'fred'
+	 *
+	 * // The `_.property` iteratee shorthand.
+	 * _.find(users, 'active');
+	 * // => object for 'barney'
+	 */
+	var find = createFind(findIndex);
+	
+	module.exports = find;
+
+
+/***/ },
+/* 285 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseIteratee = __webpack_require__(120),
+	    isArrayLike = __webpack_require__(119),
+	    keys = __webpack_require__(99);
+	
+	/**
+	 * Creates a `_.find` or `_.findLast` function.
+	 *
+	 * @private
+	 * @param {Function} findIndexFunc The function to find the collection index.
+	 * @returns {Function} Returns the new find function.
+	 */
+	function createFind(findIndexFunc) {
+	  return function(collection, predicate, fromIndex) {
+	    var iterable = Object(collection);
+	    if (!isArrayLike(collection)) {
+	      var iteratee = baseIteratee(predicate, 3);
+	      collection = keys(collection);
+	      predicate = function(key) { return iteratee(iterable[key], key, iterable); };
+	    }
+	    var index = findIndexFunc(collection, predicate, fromIndex);
+	    return index > -1 ? iterable[iteratee ? collection[index] : index] : undefined;
+	  };
+	}
+	
+	module.exports = createFind;
+
+
+/***/ },
+/* 286 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseFindIndex = __webpack_require__(206),
+	    baseIteratee = __webpack_require__(120),
+	    toInteger = __webpack_require__(210);
+	
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+	var nativeMax = Math.max;
+	
+	/**
+	 * This method is like `_.find` except that it returns the index of the first
+	 * element `predicate` returns truthy for instead of the element itself.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 1.1.0
+	 * @category Array
+	 * @param {Array} array The array to inspect.
+	 * @param {Function} [predicate=_.identity] The function invoked per iteration.
+	 * @param {number} [fromIndex=0] The index to search from.
+	 * @returns {number} Returns the index of the found element, else `-1`.
+	 * @example
+	 *
+	 * var users = [
+	 *   { 'user': 'barney',  'active': false },
+	 *   { 'user': 'fred',    'active': false },
+	 *   { 'user': 'pebbles', 'active': true }
+	 * ];
+	 *
+	 * _.findIndex(users, function(o) { return o.user == 'barney'; });
+	 * // => 0
+	 *
+	 * // The `_.matches` iteratee shorthand.
+	 * _.findIndex(users, { 'user': 'fred', 'active': false });
+	 * // => 1
+	 *
+	 * // The `_.matchesProperty` iteratee shorthand.
+	 * _.findIndex(users, ['active', false]);
+	 * // => 0
+	 *
+	 * // The `_.property` iteratee shorthand.
+	 * _.findIndex(users, 'active');
+	 * // => 2
+	 */
+	function findIndex(array, predicate, fromIndex) {
+	  var length = array == null ? 0 : array.length;
+	  if (!length) {
+	    return -1;
+	  }
+	  var index = fromIndex == null ? 0 : toInteger(fromIndex);
+	  if (index < 0) {
+	    index = nativeMax(length + index, 0);
+	  }
+	  return baseFindIndex(array, baseIteratee(predicate, 3), index);
+	}
+	
+	module.exports = findIndex;
+
+
+/***/ },
+/* 287 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.createDatabase = undefined;
+	
+	var _Database = __webpack_require__(288);
+	
+	var _Database2 = _interopRequireDefault(_Database);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	exports.createDatabase = _Database2.default;
+	exports.default = _Database2.default;
+
+/***/ },
+/* 288 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.createDatabase = createDatabase;
+	
+	var _mapValues = __webpack_require__(79);
+	
+	var _mapValues2 = _interopRequireDefault(_mapValues);
+	
+	var _immutableOps = __webpack_require__(215);
+	
+	var _immutableOps2 = _interopRequireDefault(_immutableOps);
+	
+	var _constants = __webpack_require__(252);
+	
+	var _Table = __webpack_require__(289);
+	
+	var _Table2 = _interopRequireDefault(_Table);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	function replaceTableState(tableName, newTableState, tx, state) {
+	    var batchToken = tx.batchToken,
+	        withMutations = tx.withMutations;
+	
+	
+	    if (withMutations) {
+	        state[tableName] = newTableState;
+	        return state;
+	    }
+	
+	    return _immutableOps2.default.batch.set(batchToken, tableName, newTableState, state);
+	}
+	
+	function query(tables, querySpec, state) {
+	    var tableName = querySpec.table,
+	        clauses = querySpec.clauses;
+	
+	    var table = tables[tableName];
+	    var rows = table.query(state[tableName], clauses);
+	    return {
+	        rows: rows
+	    };
+	}
+	
+	function update(tables, updateSpec, tx, state) {
+	    var action = updateSpec.action,
+	        payload = updateSpec.payload;
+	
+	
+	    var tableName = void 0;
+	    var nextTableState = void 0;
+	    var resultPayload = void 0;
+	
+	    if (action === _constants.CREATE) {
+	        tableName = updateSpec.table;
+	
+	        var table = tables[tableName];
+	        var currTableState = state[tableName];
+	        var result = table.insert(tx, currTableState, payload);
+	        nextTableState = result.state;
+	        resultPayload = result.created;
+	    } else {
+	        var querySpec = updateSpec.query;
+	        tableName = querySpec.table;
+	
+	        var _query = query(tables, querySpec, state),
+	            rows = _query.rows;
+	
+	        var _table = tables[tableName];
+	        var _currTableState = state[tableName];
+	
+	        if (action === _constants.UPDATE) {
+	            nextTableState = _table.update(tx, _currTableState, rows, payload);
+	        } else if (action === _constants.DELETE) {
+	            nextTableState = _table.delete(tx, _currTableState, rows);
+	        } else {
+	            throw new Error('Database received unknown update type: ' + action);
+	        }
+	    }
+	
+	    var nextDBState = replaceTableState(tableName, nextTableState, tx, state);
+	    return {
+	        status: _constants.SUCCESS,
+	        state: nextDBState,
+	        payload: resultPayload
+	    };
+	}
+	
+	function createDatabase(schemaSpec) {
+	    var tablesSpec = schemaSpec.tables;
+	
+	    var tables = (0, _mapValues2.default)(tablesSpec, function (tableSpec) {
+	        return new _Table2.default(tableSpec);
+	    });
+	
+	    var getEmptyState = function getEmptyState() {
+	        return (0, _mapValues2.default)(tables, function (table) {
+	            return table.getEmptyState();
+	        });
+	    };
+	    return {
+	        getEmptyState: getEmptyState,
+	        query: query.bind(null, tables),
+	        update: update.bind(null, tables),
+	        // Used to inspect the schema.
+	        describe: function describe(tableName) {
+	            return tables[tableName];
+	        }
+	    };
+	}
+	
+	exports.default = createDatabase;
+
+/***/ },
+/* 289 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	
+	var _defineProperty2 = __webpack_require__(257);
+	
+	var _defineProperty3 = _interopRequireDefault(_defineProperty2);
+	
+	var _slicedToArray2 = __webpack_require__(273);
+	
+	var _slicedToArray3 = _interopRequireDefault(_slicedToArray2);
+	
+	var _assign = __webpack_require__(70);
+	
+	var _assign2 = _interopRequireDefault(_assign);
+	
+	var _classCallCheck2 = __webpack_require__(74);
+	
+	var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+	
+	var _reject = __webpack_require__(290);
+	
+	var _reject2 = _interopRequireDefault(_reject);
+	
+	var _filter = __webpack_require__(296);
+	
+	var _filter2 = _interopRequireDefault(_filter);
+	
+	var _orderBy = __webpack_require__(297);
+	
+	var _orderBy2 = _interopRequireDefault(_orderBy);
+	
+	var _immutableOps = __webpack_require__(215);
+	
+	var _immutableOps2 = _interopRequireDefault(_immutableOps);
+	
+	var _constants = __webpack_require__(252);
+	
+	var _utils = __webpack_require__(194);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	
+	var DEFAULT_OPTS = {
+	    idAttribute: 'id',
+	    arrName: 'items',
+	    mapName: 'itemsById'
+	};
+	
+	// Input is the current max id and the new id passed to the create action.
+	// Both may be undefined. The current max id in the case that this is the first Model
+	// being created, and the new id if the id was not explicitly passed to the
+	// database.
+	//
+	// Return value is the new max id and the id to use to create the new row.
+	// If the id's are strings, the id must be passed explicitly every time.
+	// In this case, the current max id will remain `NaN` due to `Math.max`, but that's fine.
+	function idSequencer(_currMax, userPassedId) {
+	    var currMax = _currMax;
+	    var newMax = void 0;
+	    var newId = void 0;
+	
+	    if (currMax === undefined) {
+	        currMax = -1;
+	    }
+	
+	    if (userPassedId === undefined) {
+	        newMax = newId = currMax + 1;
+	    } else {
+	        newMax = Math.max(currMax + 1, userPassedId);
+	        newId = userPassedId;
+	    }
+	
+	    return [newMax, // new max id
+	    newId];
+	}
+	
+	/**
+	 * Handles the underlying data structure for a {@link Model} class.
+	 */
+	var Table = function () {
+	    /**
+	     * Creates a new {@link Table} instance.
+	     * @param  {Object} userOpts - options to use.
+	     * @param  {string} [userOpts.idAttribute=id] - the id attribute of the entity.
+	     * @param  {string} [userOpts.arrName=items] - the state attribute where an array of
+	     *                                             entity id's are stored
+	     * @param  {string} [userOpts.mapName=itemsById] - the state attribute where the entity objects
+	     *                                                 are stored in a id to entity object
+	     *                                                 map.
+	     */
+	    function Table(userOpts) {
+	        (0, _classCallCheck3.default)(this, Table);
+	
+	        (0, _assign2.default)(this, DEFAULT_OPTS, userOpts);
+	    }
+	
+	    /**
+	     * Returns a reference to the object at index `id`
+	     * in state `branch`.
+	     *
+	     * @param  {Object} branch - the state
+	     * @param  {Number} id - the id of the object to get
+	     * @return {Object|undefined} A reference to the raw object in the state or
+	     *                            `undefined` if not found.
+	     */
+	
+	
+	    Table.prototype.accessId = function accessId(branch, id) {
+	        return branch[this.mapName][id];
+	    };
+	
+	    Table.prototype.idExists = function idExists(branch, id) {
+	        return branch[this.mapName].hasOwnProperty(id);
+	    };
+	
+	    Table.prototype.accessIdList = function accessIdList(branch) {
+	        return branch[this.arrName];
+	    };
+	
+	    Table.prototype.accessList = function accessList(branch) {
+	        var _this = this;
+	
+	        return branch[this.arrName].map(function (id) {
+	            return _this.accessId(branch, id);
+	        });
+	    };
+	
+	    Table.prototype.getMaxId = function getMaxId(branch) {
+	        return this.getMeta(branch, 'maxId');
+	    };
+	
+	    Table.prototype.setMaxId = function setMaxId(tx, branch, newMaxId) {
+	        return this.setMeta(tx, branch, 'maxId', newMaxId);
+	    };
+	
+	    Table.prototype.nextId = function nextId(id) {
+	        return id + 1;
+	    };
+	
+	    Table.prototype.query = function query(branch, clauses) {
+	        var _this2 = this;
+	
+	        return clauses.reduce(function (rows, _ref) {
+	            var type = _ref.type,
+	                payload = _ref.payload;
+	
+	            switch (type) {
+	                case _constants.FILTER:
+	                    {
+	                        if (payload.hasOwnProperty(_this2.idAttribute) && payload[_this2.idAttribute]) {
+	                            // Payload specified a primary key; Since that is unique, we can directly
+	                            // return that.
+	                            var id = payload[_this2.idAttribute];
+	                            return _this2.idExists(branch, id) ? [_this2.accessId(branch, payload[_this2.idAttribute])] : [];
 	                        }
-	                    });
-	                    _this5._attachQuerySetMethods(model);
-	                    model.isSetUp = true;
-	                }
-	            });
+	                        return (0, _filter2.default)(rows, payload);
+	                    }
+	                case _constants.EXCLUDE:
+	                    {
+	                        return (0, _reject2.default)(rows, payload);
+	                    }
+	                case _constants.ORDER_BY:
+	                    {
+	                        var _payload = (0, _slicedToArray3.default)(payload, 2),
+	                            iteratees = _payload[0],
+	                            orders = _payload[1];
 	
-	            this.implicitThroughModels.forEach(function (model) {
-	                if (!model.isSetUp) {
-	                    (0, _forOwn2.default)(model.fields, function (fieldInstance, fieldName) {
-	                        var toModelName = fieldInstance.toModelName;
-	                        var toModel = toModelName === 'this' ? model : _this5.get(toModelName);
-	                        // Only Forwards.
-	                        (0, _defineProperty3.default)(model.prototype, fieldName, (0, _descriptors.forwardManyToOneDescriptor)(fieldName, toModel.modelName));
-	                        model.definedProperties[fieldName] = true;
-	                    });
-	                    _this5._attachQuerySetMethods(model);
-	                    model.isSetUp = true;
-	                }
-	            });
+	                        return (0, _orderBy2.default)(rows, iteratees, orders);
+	                    }
+	                default:
+	                    return rows;
+	            }
+	        }, this.accessList(branch));
+	    };
+	
+	    /**
+	     * Returns the default state for the data structure.
+	     * @return {Object} The default state for this {@link Backend} instance's data structure
+	     */
+	
+	
+	    Table.prototype.getEmptyState = function getEmptyState() {
+	        var _ref2;
+	
+	        return _ref2 = {}, (0, _defineProperty3.default)(_ref2, this.arrName, []), (0, _defineProperty3.default)(_ref2, this.mapName, {}), (0, _defineProperty3.default)(_ref2, 'meta', {}), _ref2;
+	    };
+	
+	    Table.prototype.setMeta = function setMeta(tx, branch, key, value) {
+	        var batchToken = tx.batchToken,
+	            withMutations = tx.withMutations;
+	
+	        if (withMutations) {
+	            var res = _immutableOps2.default.mutable.setIn(['meta', key], value, branch);
+	            return res;
 	        }
 	
-	        /**
-	         * Returns the default state.
-	         * @return {Object} the default state
-	         */
+	        return _immutableOps2.default.batch.setIn(batchToken, ['meta', key], value, branch);
+	    };
 	
-	    }, {
-	        key: 'getDefaultState',
-	        value: function getDefaultState() {
-	            var models = this.getModelClasses();
-	            var state = {};
-	            models.forEach(function (modelClass) {
-	                state[modelClass.modelName] = modelClass.getDefaultState();
-	            });
-	            return state;
-	        }
+	    Table.prototype.getMeta = function getMeta(branch, key) {
+	        return branch.meta[key];
+	    };
 	
-	        /**
-	         * Begins an immutable database session.
-	         *
-	         * @param  {Object} state  - the state the database manages
-	         * @param  {Object} [action] - the dispatched action object
-	         * @return {Session} a new {@link Session} instance
-	         */
+	    /**
+	     * Returns the data structure including a new object `entry`
+	     * @param  {Object} tx - transaction info
+	     * @param  {Object} branch - the data structure state
+	     * @param  {Object} entry - the object to insert
+	     * @return {Object} an object with two keys: `state` and `created`.
+	     *                  `state` is the new table state and `created` is the
+	     *                  row that was created.
+	     */
 	
-	    }, {
-	        key: 'from',
-	        value: function from(state, action) {
-	            return new _Session2.default(this, state, action);
-	        }
 	
-	        /**
-	         * Begins a mutable database session.
-	         *
-	         * @param  {Object} state  - the state the database manages
-	         * @param  {Object} [action] - the dispatched action object
-	         * @return {Session} a new {@link Session} instance
-	         */
+	    Table.prototype.insert = function insert(tx, branch, entry) {
+	        var _ops$batch$merge2;
 	
-	    }, {
-	        key: 'withMutations',
-	        value: function withMutations(state, action) {
-	            return new _Session2.default(this, state, action, true);
-	        }
+	        var batchToken = tx.batchToken,
+	            withMutations = tx.withMutations;
 	
-	        /**
-	         * Returns a reducer function you can plug into your own
-	         * reducer. One way to do that is to declare your root reducer:
-	         *
-	         * ```javascript
-	         * function rootReducer(state, action) {
-	         *     return {
-	         *         entities: schema.reducer(),
-	         *         // Any other reducers you use.
-	         *     }
-	         * }
-	         * ```
-	         *
-	         * @return {Function} a reducer function that creates a new {@link Session} on
-	         *                    each action dispatch.
-	         */
 	
-	    }, {
-	        key: 'reducer',
-	        value: function reducer() {
-	            var _this6 = this;
+	        var hasId = entry.hasOwnProperty(this.idAttribute);
 	
-	            return function (state, action) {
-	                return _this6.from(state, action).reduce();
+	        var workingState = branch;
+	
+	        // This will not affect string id's.
+	
+	        var _idSequencer = idSequencer(this.getMaxId(branch), entry[this.idAttribute]),
+	            _idSequencer2 = (0, _slicedToArray3.default)(_idSequencer, 2),
+	            newMaxId = _idSequencer2[0],
+	            id = _idSequencer2[1];
+	
+	        workingState = this.setMaxId(tx, branch, newMaxId);
+	
+	        var finalEntry = hasId ? entry : _immutableOps2.default.batch.set(batchToken, this.idAttribute, id, entry);
+	
+	        if (withMutations) {
+	            _immutableOps2.default.mutable.push(id, workingState[this.arrName]);
+	            _immutableOps2.default.mutable.set(id, finalEntry, workingState[this.mapName]);
+	            return {
+	                state: workingState,
+	                created: finalEntry
 	            };
 	        }
 	
-	        /**
-	         * Returns a memoized selector based on passed arguments.
-	         * This is similar to `reselect`'s `createSelector`,
-	         * except you can also pass a single function to be memoized.
-	         *
-	         * If you pass multiple functions, the format will be the
-	         * same as in `reselect`. The last argument is the selector
-	         * function and the previous are input selectors.
-	         *
-	         * When you use this method to create a selector, the returned selector
-	         * expects the whole `redux-orm` state branch as input. In the selector
-	         * function that you pass as the last argument, you will receive
-	         * `session` argument (a `Session` instance) followed by any
-	         * input arguments, like in `reselect`.
-	         *
-	         * This is an example selector:
-	         *
-	         * ```javascript
-	         * const bookSelector = schema.createSelector(session => {
-	         *     return session.Book.map(book => {
-	         *         return Object.assign({}, book.ref, {
-	         *             authors: book.authors.map(author => author.name),
-	         *             genres: book.genres.map(genre => genre.name),
-	         *         });
-	         *     });
-	         * });
-	         * ```
-	         *
-	         * redux-orm uses a special memoization function to avoid recomputations.
-	         * When a selector runs for the first time, it checks which Models' state
-	         * branches were accessed. On subsequent runs, the selector first checks
-	         * if those branches have changed -- if not, it just returns the previous
-	         * result. This way you can use the `PureRenderMixin` in your React
-	         * components for performance gains.
-	         *
-	         * @param  {...Function} args - zero or more input selectors
-	         *                              and the selector function.
-	         * @return {Function} memoized selector
-	         */
+	        var nextState = _immutableOps2.default.batch.merge(batchToken, (_ops$batch$merge2 = {}, (0, _defineProperty3.default)(_ops$batch$merge2, this.arrName, _immutableOps2.default.batch.push(batchToken, id, workingState[this.arrName])), (0, _defineProperty3.default)(_ops$batch$merge2, this.mapName, _immutableOps2.default.batch.merge(batchToken, (0, _defineProperty3.default)({}, id, finalEntry), workingState[this.mapName])), _ops$batch$merge2), workingState);
 	
-	    }, {
-	        key: 'createSelector',
-	        value: function createSelector() {
-	            if (arguments.length === 1) {
-	                return (0, _memoize.memoize)(arguments.length <= 0 ? undefined : arguments[0], _memoize.eqCheck, this);
-	            }
-	            return this.selectorCreator.apply(this, arguments);
+	        return {
+	            state: nextState,
+	            created: finalEntry
+	        };
+	    };
+	
+	    /**
+	     * Returns the data structure with objects where `rows`
+	     * are merged with `mergeObj`.
+	     *
+	     * @param  {Object} tx - transaction info
+	     * @param  {Object} branch - the data structure state
+	     * @param  {Object[]} rows - rows to update
+	     * @param  {Object} mergeObj - The object to merge with each row.
+	     * @return {Object}
+	     */
+	
+	
+	    Table.prototype.update = function update(tx, branch, rows, mergeObj) {
+	        var _this3 = this;
+	
+	        var batchToken = tx.batchToken,
+	            withMutations = tx.withMutations;
+	        var mapName = this.mapName;
+	
+	
+	        var mapFunction = function mapFunction(row) {
+	            var merge = withMutations ? _immutableOps2.default.mutable.merge : _immutableOps2.default.batch.merge(batchToken);
+	            return merge(mergeObj, row);
+	        };
+	
+	        var set = withMutations ? _immutableOps2.default.mutable.set : _immutableOps2.default.batch.set(batchToken);
+	
+	        var newMap = rows.reduce(function (map, row) {
+	            var result = mapFunction(row);
+	            return set(result[_this3.idAttribute], result, map);
+	        }, branch[mapName]);
+	        return _immutableOps2.default.batch.set(batchToken, mapName, newMap, branch);
+	    };
+	
+	    /**
+	     * Returns the data structure without rows `rows`.
+	     * @param  {Object} tx - transaction info
+	     * @param  {Object} branch - the data structure state
+	     * @param  {Object[]} rows - rows to update
+	     * @return {Object} the data structure without ids in `idsToDelete`.
+	     */
+	
+	
+	    Table.prototype.delete = function _delete(tx, branch, rows) {
+	        var _this4 = this,
+	            _ops$batch$merge3;
+	
+	        var batchToken = tx.batchToken,
+	            withMutations = tx.withMutations;
+	        var arrName = this.arrName,
+	            mapName = this.mapName;
+	
+	        var arr = branch[arrName];
+	
+	        var idsToDelete = rows.map(function (row) {
+	            return row[_this4.idAttribute];
+	        });
+	        if (withMutations) {
+	            idsToDelete.forEach(function (id) {
+	                var idx = arr.indexOf(id);
+	                if (idx !== -1) {
+	                    _immutableOps2.default.mutable.splice(idx, 1, [], arr);
+	                }
+	
+	                _immutableOps2.default.mutable.omit(id, branch[mapName]);
+	            });
+	            return branch;
 	        }
-	    }]);
-	    return Schema;
+	
+	        return _immutableOps2.default.batch.merge(batchToken, (_ops$batch$merge3 = {}, (0, _defineProperty3.default)(_ops$batch$merge3, arrName, _immutableOps2.default.batch.filter(batchToken, function (id) {
+	            return !(0, _utils.includes)(idsToDelete, id);
+	        }, branch[arrName])), (0, _defineProperty3.default)(_ops$batch$merge3, mapName, _immutableOps2.default.batch.omit(batchToken, idsToDelete, branch[mapName])), _ops$batch$merge3), branch);
+	    };
+	
+	    return Table;
 	}();
 	
-	exports.default = Schema;
+	exports.default = Table;
 
 /***/ },
-/* 279 */
+/* 290 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var arrayFilter = __webpack_require__(291),
+	    baseFilter = __webpack_require__(292),
+	    baseIteratee = __webpack_require__(120),
+	    isArray = __webpack_require__(105),
+	    negate = __webpack_require__(295);
+	
+	/**
+	 * The opposite of `_.filter`; this method returns the elements of `collection`
+	 * that `predicate` does **not** return truthy for.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Collection
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Function} [predicate=_.identity] The function invoked per iteration.
+	 * @returns {Array} Returns the new filtered array.
+	 * @see _.filter
+	 * @example
+	 *
+	 * var users = [
+	 *   { 'user': 'barney', 'age': 36, 'active': false },
+	 *   { 'user': 'fred',   'age': 40, 'active': true }
+	 * ];
+	 *
+	 * _.reject(users, function(o) { return !o.active; });
+	 * // => objects for ['fred']
+	 *
+	 * // The `_.matches` iteratee shorthand.
+	 * _.reject(users, { 'age': 40, 'active': true });
+	 * // => objects for ['barney']
+	 *
+	 * // The `_.matchesProperty` iteratee shorthand.
+	 * _.reject(users, ['active', false]);
+	 * // => objects for ['fred']
+	 *
+	 * // The `_.property` iteratee shorthand.
+	 * _.reject(users, 'active');
+	 * // => objects for ['barney']
+	 */
+	function reject(collection, predicate) {
+	  var func = isArray(collection) ? arrayFilter : baseFilter;
+	  return func(collection, negate(baseIteratee(predicate, 3)));
+	}
+	
+	module.exports = reject;
+
+
+/***/ },
+/* 291 */
+/***/ function(module, exports) {
+
+	/**
+	 * A specialized version of `_.filter` for arrays without support for
+	 * iteratee shorthands.
+	 *
+	 * @private
+	 * @param {Array} [array] The array to iterate over.
+	 * @param {Function} predicate The function invoked per iteration.
+	 * @returns {Array} Returns the new filtered array.
+	 */
+	function arrayFilter(array, predicate) {
+	  var index = -1,
+	      length = array == null ? 0 : array.length,
+	      resIndex = 0,
+	      result = [];
+	
+	  while (++index < length) {
+	    var value = array[index];
+	    if (predicate(value, index, array)) {
+	      result[resIndex++] = value;
+	    }
+	  }
+	  return result;
+	}
+	
+	module.exports = arrayFilter;
+
+
+/***/ },
+/* 292 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseEach = __webpack_require__(293);
+	
+	/**
+	 * The base implementation of `_.filter` without support for iteratee shorthands.
+	 *
+	 * @private
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Function} predicate The function invoked per iteration.
+	 * @returns {Array} Returns the new filtered array.
+	 */
+	function baseFilter(collection, predicate) {
+	  var result = [];
+	  baseEach(collection, function(value, index, collection) {
+	    if (predicate(value, index, collection)) {
+	      result.push(value);
+	    }
+	  });
+	  return result;
+	}
+	
+	module.exports = baseFilter;
+
+
+/***/ },
+/* 293 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseForOwn = __webpack_require__(96),
+	    createBaseEach = __webpack_require__(294);
+	
+	/**
+	 * The base implementation of `_.forEach` without support for iteratee shorthands.
+	 *
+	 * @private
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Function} iteratee The function invoked per iteration.
+	 * @returns {Array|Object} Returns `collection`.
+	 */
+	var baseEach = createBaseEach(baseForOwn);
+	
+	module.exports = baseEach;
+
+
+/***/ },
+/* 294 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isArrayLike = __webpack_require__(119);
+	
+	/**
+	 * Creates a `baseEach` or `baseEachRight` function.
+	 *
+	 * @private
+	 * @param {Function} eachFunc The function to iterate over a collection.
+	 * @param {boolean} [fromRight] Specify iterating from right to left.
+	 * @returns {Function} Returns the new base function.
+	 */
+	function createBaseEach(eachFunc, fromRight) {
+	  return function(collection, iteratee) {
+	    if (collection == null) {
+	      return collection;
+	    }
+	    if (!isArrayLike(collection)) {
+	      return eachFunc(collection, iteratee);
+	    }
+	    var length = collection.length,
+	        index = fromRight ? length : -1,
+	        iterable = Object(collection);
+	
+	    while ((fromRight ? index-- : ++index < length)) {
+	      if (iteratee(iterable[index], index, iterable) === false) {
+	        break;
+	      }
+	    }
+	    return collection;
+	  };
+	}
+	
+	module.exports = createBaseEach;
+
+
+/***/ },
+/* 295 */
+/***/ function(module, exports) {
+
+	/** Error message constants. */
+	var FUNC_ERROR_TEXT = 'Expected a function';
+	
+	/**
+	 * Creates a function that negates the result of the predicate `func`. The
+	 * `func` predicate is invoked with the `this` binding and arguments of the
+	 * created function.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 3.0.0
+	 * @category Function
+	 * @param {Function} predicate The predicate to negate.
+	 * @returns {Function} Returns the new negated function.
+	 * @example
+	 *
+	 * function isEven(n) {
+	 *   return n % 2 == 0;
+	 * }
+	 *
+	 * _.filter([1, 2, 3, 4, 5, 6], _.negate(isEven));
+	 * // => [1, 3, 5]
+	 */
+	function negate(predicate) {
+	  if (typeof predicate != 'function') {
+	    throw new TypeError(FUNC_ERROR_TEXT);
+	  }
+	  return function() {
+	    var args = arguments;
+	    switch (args.length) {
+	      case 0: return !predicate.call(this);
+	      case 1: return !predicate.call(this, args[0]);
+	      case 2: return !predicate.call(this, args[0], args[1]);
+	      case 3: return !predicate.call(this, args[0], args[1], args[2]);
+	    }
+	    return !predicate.apply(this, args);
+	  };
+	}
+	
+	module.exports = negate;
+
+
+/***/ },
+/* 296 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var arrayFilter = __webpack_require__(291),
+	    baseFilter = __webpack_require__(292),
+	    baseIteratee = __webpack_require__(120),
+	    isArray = __webpack_require__(105);
+	
+	/**
+	 * Iterates over elements of `collection`, returning an array of all elements
+	 * `predicate` returns truthy for. The predicate is invoked with three
+	 * arguments: (value, index|key, collection).
+	 *
+	 * **Note:** Unlike `_.remove`, this method returns a new array.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Collection
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Function} [predicate=_.identity] The function invoked per iteration.
+	 * @returns {Array} Returns the new filtered array.
+	 * @see _.reject
+	 * @example
+	 *
+	 * var users = [
+	 *   { 'user': 'barney', 'age': 36, 'active': true },
+	 *   { 'user': 'fred',   'age': 40, 'active': false }
+	 * ];
+	 *
+	 * _.filter(users, function(o) { return !o.active; });
+	 * // => objects for ['fred']
+	 *
+	 * // The `_.matches` iteratee shorthand.
+	 * _.filter(users, { 'age': 36, 'active': true });
+	 * // => objects for ['barney']
+	 *
+	 * // The `_.matchesProperty` iteratee shorthand.
+	 * _.filter(users, ['active', false]);
+	 * // => objects for ['fred']
+	 *
+	 * // The `_.property` iteratee shorthand.
+	 * _.filter(users, 'active');
+	 * // => objects for ['barney']
+	 */
+	function filter(collection, predicate) {
+	  var func = isArray(collection) ? arrayFilter : baseFilter;
+	  return func(collection, baseIteratee(predicate, 3));
+	}
+	
+	module.exports = filter;
+
+
+/***/ },
+/* 297 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseOrderBy = __webpack_require__(298),
+	    isArray = __webpack_require__(105);
+	
+	/**
+	 * This method is like `_.sortBy` except that it allows specifying the sort
+	 * orders of the iteratees to sort by. If `orders` is unspecified, all values
+	 * are sorted in ascending order. Otherwise, specify an order of "desc" for
+	 * descending or "asc" for ascending sort order of corresponding values.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Collection
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Array[]|Function[]|Object[]|string[]} [iteratees=[_.identity]]
+	 *  The iteratees to sort by.
+	 * @param {string[]} [orders] The sort orders of `iteratees`.
+	 * @param- {Object} [guard] Enables use as an iteratee for methods like `_.reduce`.
+	 * @returns {Array} Returns the new sorted array.
+	 * @example
+	 *
+	 * var users = [
+	 *   { 'user': 'fred',   'age': 48 },
+	 *   { 'user': 'barney', 'age': 34 },
+	 *   { 'user': 'fred',   'age': 40 },
+	 *   { 'user': 'barney', 'age': 36 }
+	 * ];
+	 *
+	 * // Sort by `user` in ascending order and by `age` in descending order.
+	 * _.orderBy(users, ['user', 'age'], ['asc', 'desc']);
+	 * // => objects for [['barney', 36], ['barney', 34], ['fred', 48], ['fred', 40]]
+	 */
+	function orderBy(collection, iteratees, orders, guard) {
+	  if (collection == null) {
+	    return [];
+	  }
+	  if (!isArray(iteratees)) {
+	    iteratees = iteratees == null ? [] : [iteratees];
+	  }
+	  orders = guard ? undefined : orders;
+	  if (!isArray(orders)) {
+	    orders = orders == null ? [] : [orders];
+	  }
+	  return baseOrderBy(collection, iteratees, orders);
+	}
+	
+	module.exports = orderBy;
+
+
+/***/ },
+/* 298 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var arrayMap = __webpack_require__(183),
+	    baseIteratee = __webpack_require__(120),
+	    baseMap = __webpack_require__(299),
+	    baseSortBy = __webpack_require__(300),
+	    baseUnary = __webpack_require__(113),
+	    compareMultiple = __webpack_require__(301),
+	    identity = __webpack_require__(190);
+	
+	/**
+	 * The base implementation of `_.orderBy` without param guards.
+	 *
+	 * @private
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Function[]|Object[]|string[]} iteratees The iteratees to sort by.
+	 * @param {string[]} orders The sort orders of `iteratees`.
+	 * @returns {Array} Returns the new sorted array.
+	 */
+	function baseOrderBy(collection, iteratees, orders) {
+	  var index = -1;
+	  iteratees = arrayMap(iteratees.length ? iteratees : [identity], baseUnary(baseIteratee));
+	
+	  var result = baseMap(collection, function(value, key, collection) {
+	    var criteria = arrayMap(iteratees, function(iteratee) {
+	      return iteratee(value);
+	    });
+	    return { 'criteria': criteria, 'index': ++index, 'value': value };
+	  });
+	
+	  return baseSortBy(result, function(object, other) {
+	    return compareMultiple(object, other, orders);
+	  });
+	}
+	
+	module.exports = baseOrderBy;
+
+
+/***/ },
+/* 299 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var baseEach = __webpack_require__(293),
+	    isArrayLike = __webpack_require__(119);
+	
+	/**
+	 * The base implementation of `_.map` without support for iteratee shorthands.
+	 *
+	 * @private
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {Function} iteratee The function invoked per iteration.
+	 * @returns {Array} Returns the new mapped array.
+	 */
+	function baseMap(collection, iteratee) {
+	  var index = -1,
+	      result = isArrayLike(collection) ? Array(collection.length) : [];
+	
+	  baseEach(collection, function(value, key, collection) {
+	    result[++index] = iteratee(value, key, collection);
+	  });
+	  return result;
+	}
+	
+	module.exports = baseMap;
+
+
+/***/ },
+/* 300 */
+/***/ function(module, exports) {
+
+	/**
+	 * The base implementation of `_.sortBy` which uses `comparer` to define the
+	 * sort order of `array` and replaces criteria objects with their corresponding
+	 * values.
+	 *
+	 * @private
+	 * @param {Array} array The array to sort.
+	 * @param {Function} comparer The function to define sort order.
+	 * @returns {Array} Returns `array`.
+	 */
+	function baseSortBy(array, comparer) {
+	  var length = array.length;
+	
+	  array.sort(comparer);
+	  while (length--) {
+	    array[length] = array[length].value;
+	  }
+	  return array;
+	}
+	
+	module.exports = baseSortBy;
+
+
+/***/ },
+/* 301 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var compareAscending = __webpack_require__(302);
+	
+	/**
+	 * Used by `_.orderBy` to compare multiple properties of a value to another
+	 * and stable sort them.
+	 *
+	 * If `orders` is unspecified, all values are sorted in ascending order. Otherwise,
+	 * specify an order of "desc" for descending or "asc" for ascending sort order
+	 * of corresponding values.
+	 *
+	 * @private
+	 * @param {Object} object The object to compare.
+	 * @param {Object} other The other object to compare.
+	 * @param {boolean[]|string[]} orders The order to sort by for each property.
+	 * @returns {number} Returns the sort order indicator for `object`.
+	 */
+	function compareMultiple(object, other, orders) {
+	  var index = -1,
+	      objCriteria = object.criteria,
+	      othCriteria = other.criteria,
+	      length = objCriteria.length,
+	      ordersLength = orders.length;
+	
+	  while (++index < length) {
+	    var result = compareAscending(objCriteria[index], othCriteria[index]);
+	    if (result) {
+	      if (index >= ordersLength) {
+	        return result;
+	      }
+	      var order = orders[index];
+	      return result * (order == 'desc' ? -1 : 1);
+	    }
+	  }
+	  // Fixes an `Array#sort` bug in the JS engine embedded in Adobe applications
+	  // that causes it, under certain circumstances, to provide the same value for
+	  // `object` and `other`. See https://github.com/jashkenas/underscore/pull/1247
+	  // for more details.
+	  //
+	  // This also ensures a stable sort in V8 and other engines.
+	  // See https://bugs.chromium.org/p/v8/issues/detail?id=90 for more details.
+	  return object.index - other.index;
+	}
+	
+	module.exports = compareMultiple;
+
+
+/***/ },
+/* 302 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var isSymbol = __webpack_require__(184);
+	
+	/**
+	 * Compares values to sort them in ascending order.
+	 *
+	 * @private
+	 * @param {*} value The value to compare.
+	 * @param {*} other The other value to compare.
+	 * @returns {number} Returns the sort order indicator for `value`.
+	 */
+	function compareAscending(value, other) {
+	  if (value !== other) {
+	    var valIsDefined = value !== undefined,
+	        valIsNull = value === null,
+	        valIsReflexive = value === value,
+	        valIsSymbol = isSymbol(value);
+	
+	    var othIsDefined = other !== undefined,
+	        othIsNull = other === null,
+	        othIsReflexive = other === other,
+	        othIsSymbol = isSymbol(other);
+	
+	    if ((!othIsNull && !othIsSymbol && !valIsSymbol && value > other) ||
+	        (valIsSymbol && othIsDefined && othIsReflexive && !othIsNull && !othIsSymbol) ||
+	        (valIsNull && othIsDefined && othIsReflexive) ||
+	        (!valIsDefined && othIsReflexive) ||
+	        !valIsReflexive) {
+	      return 1;
+	    }
+	    if ((!valIsNull && !valIsSymbol && !othIsSymbol && value < other) ||
+	        (othIsSymbol && valIsDefined && valIsReflexive && !valIsNull && !valIsSymbol) ||
+	        (othIsNull && valIsDefined && valIsReflexive) ||
+	        (!othIsDefined && valIsReflexive) ||
+	        !othIsReflexive) {
+	      return -1;
+	    }
+	  }
+	  return 0;
+	}
+	
+	module.exports = compareAscending;
+
+
+/***/ },
+/* 303 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.createReducer = undefined;
+	exports.defaultUpdater = defaultUpdater;
+	exports.createSelector = createSelector;
+	
+	var _reselect = __webpack_require__(304);
+	
+	var _memoize = __webpack_require__(305);
+	
+	function defaultUpdater(session, action) {
+	    session.sessionBoundModels.forEach(function (modelClass) {
+	        if (typeof modelClass.reducer === 'function') {
+	            // This calls this.applyUpdate to update this.state
+	            modelClass.reducer(action, modelClass, session);
+	        }
+	    });
+	}
+	
+	var createReducer = exports.createReducer = function createReducer(orm) {
+	    var updater = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : defaultUpdater;
+	    return function (state, action) {
+	        var session = orm.session(state || orm.getEmptyState());
+	        updater(session, action);
+	        return session.state;
+	    };
+	};
+	
+	/**
+	 * Returns a memoized selector based on passed arguments.
+	 * This is similar to `reselect`'s `createSelector`,
+	 * except you can also pass a single function to be memoized.
+	 *
+	 * If you pass multiple functions, the format will be the
+	 * same as in `reselect`. The last argument is the selector
+	 * function and the previous are input selectors.
+	 *
+	 * When you use this method to create a selector, the returned selector
+	 * expects the whole `redux-orm` state branch as input. In the selector
+	 * function that you pass as the last argument, you will receive
+	 * `session` argument (a `Session` instance) followed by any
+	 * input arguments, like in `reselect`.
+	 *
+	 * This is an example selector:
+	 *
+	 * ```javascript
+	 * // orm is an instance of ORM
+	 * const bookSelector = createSelector(orm, session => {
+	 *     return session.Book.map(book => {
+	 *         return Object.assign({}, book.ref, {
+	 *             authors: book.authors.map(author => author.name),
+	 *             genres: book.genres.map(genre => genre.name),
+	 *         });
+	 *     });
+	 * });
+	 * ```
+	 *
+	 * redux-orm uses a special memoization function to avoid recomputations.
+	 * When a selector runs for the first time, it checks which Models' state
+	 * branches were accessed. On subsequent runs, the selector first checks
+	 * if those branches have changed -- if not, it just returns the previous
+	 * result. This way you can use the `PureRenderMixin` in your React
+	 * components for performance gains.
+	 *
+	 * @param {ORM} orm - the ORM instance
+	 * @param  {...Function} args - zero or more input selectors
+	 *                              and the selector function.
+	 * @return {Function} memoized selector
+	 */
+	function createSelector(orm) {
+	    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+	        args[_key - 1] = arguments[_key];
+	    }
+	
+	    if (args.length === 1) {
+	        return (0, _memoize.memoize)(args[0], _memoize.eqCheck, orm);
+	    }
+	
+	    return (0, _reselect.createSelectorCreator)(_memoize.memoize, _memoize.eqCheck, orm).apply(undefined, args);
+	}
+
+/***/ },
+/* 304 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -10884,7 +11489,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.__esModule = true;
 	exports.defaultMemoize = defaultMemoize;
 	exports.createSelectorCreator = createSelectorCreator;
-	exports.createSelector = createSelector;
 	exports.createStructuredSelector = createStructuredSelector;
 	
 	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -10903,13 +11507,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      args[_key] = arguments[_key];
 	    }
 	
-	    if (lastArgs !== null && lastArgs.length === args.length && args.every(function (value, index) {
+	    if (lastArgs === null || lastArgs.length !== args.length || !args.every(function (value, index) {
 	      return equalityCheck(value, lastArgs[index]);
 	    })) {
-	      return lastResult;
+	      lastResult = func.apply(undefined, args);
 	    }
 	    lastArgs = args;
-	    lastResult = func.apply(undefined, args);
 	    return lastResult;
 	  };
 	}
@@ -10970,9 +11573,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  };
 	}
 	
-	function createSelector() {
-	  return createSelectorCreator(defaultMemoize).apply(undefined, arguments);
-	}
+	var createSelector = exports.createSelector = createSelectorCreator(defaultMemoize);
 	
 	function createStructuredSelector(selectors) {
 	  var selectorCreator = arguments.length <= 1 || arguments[1] === undefined ? createSelector : arguments[1];
@@ -10996,330 +11597,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 280 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var baseEach = __webpack_require__(82),
-	    baseFind = __webpack_require__(281),
-	    baseFindIndex = __webpack_require__(282),
-	    baseIteratee = __webpack_require__(106),
-	    isArray = __webpack_require__(101);
-	
-	/**
-	 * Iterates over elements of `collection`, returning the first element
-	 * `predicate` returns truthy for. The predicate is invoked with three
-	 * arguments: (value, index|key, collection).
-	 *
-	 * @static
-	 * @memberOf _
-	 * @since 0.1.0
-	 * @category Collection
-	 * @param {Array|Object} collection The collection to search.
-	 * @param {Array|Function|Object|string} [predicate=_.identity]
-	 *  The function invoked per iteration.
-	 * @returns {*} Returns the matched element, else `undefined`.
-	 * @example
-	 *
-	 * var users = [
-	 *   { 'user': 'barney',  'age': 36, 'active': true },
-	 *   { 'user': 'fred',    'age': 40, 'active': false },
-	 *   { 'user': 'pebbles', 'age': 1,  'active': true }
-	 * ];
-	 *
-	 * _.find(users, function(o) { return o.age < 40; });
-	 * // => object for 'barney'
-	 *
-	 * // The `_.matches` iteratee shorthand.
-	 * _.find(users, { 'age': 1, 'active': true });
-	 * // => object for 'pebbles'
-	 *
-	 * // The `_.matchesProperty` iteratee shorthand.
-	 * _.find(users, ['active', false]);
-	 * // => object for 'fred'
-	 *
-	 * // The `_.property` iteratee shorthand.
-	 * _.find(users, 'active');
-	 * // => object for 'barney'
-	 */
-	function find(collection, predicate) {
-	  predicate = baseIteratee(predicate, 3);
-	  if (isArray(collection)) {
-	    var index = baseFindIndex(collection, predicate);
-	    return index > -1 ? collection[index] : undefined;
-	  }
-	  return baseFind(collection, predicate, baseEach);
-	}
-	
-	module.exports = find;
-
-
-/***/ },
-/* 281 */
-/***/ function(module, exports) {
-
-	/**
-	 * The base implementation of methods like `_.find` and `_.findKey`, without
-	 * support for iteratee shorthands, which iterates over `collection` using
-	 * `eachFunc`.
-	 *
-	 * @private
-	 * @param {Array|Object} collection The collection to search.
-	 * @param {Function} predicate The function invoked per iteration.
-	 * @param {Function} eachFunc The function to iterate over `collection`.
-	 * @param {boolean} [retKey] Specify returning the key of the found element
-	 *  instead of the element itself.
-	 * @returns {*} Returns the found element or its key, else `undefined`.
-	 */
-	function baseFind(collection, predicate, eachFunc, retKey) {
-	  var result;
-	  eachFunc(collection, function(value, key, collection) {
-	    if (predicate(value, key, collection)) {
-	      result = retKey ? key : value;
-	      return false;
-	    }
-	  });
-	  return result;
-	}
-	
-	module.exports = baseFind;
-
-
-/***/ },
-/* 282 */
-/***/ function(module, exports) {
-
-	/**
-	 * The base implementation of `_.findIndex` and `_.findLastIndex` without
-	 * support for iteratee shorthands.
-	 *
-	 * @private
-	 * @param {Array} array The array to search.
-	 * @param {Function} predicate The function invoked per iteration.
-	 * @param {boolean} [fromRight] Specify iterating from right to left.
-	 * @returns {number} Returns the index of the matched value, else `-1`.
-	 */
-	function baseFindIndex(array, predicate, fromRight) {
-	  var length = array.length,
-	      index = fromRight ? length : -1;
-	
-	  while ((fromRight ? index-- : ++index < length)) {
-	    if (predicate(array[index], index, array)) {
-	      return index;
-	    }
-	  }
-	  return -1;
-	}
-	
-	module.exports = baseFindIndex;
-
-
-/***/ },
-/* 283 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	Object.defineProperty(exports, "__esModule", {
-	    value: true
-	});
-	exports.manyToManyDescriptor = exports.backwardManyToOneDescriptor = exports.backwardOneToOneDescriptor = exports.forwardOneToOneDescriptor = exports.forwardManyToOneDescriptor = undefined;
-	
-	var _defineProperty2 = __webpack_require__(245);
-	
-	var _defineProperty3 = _interopRequireDefault(_defineProperty2);
-	
-	var _difference = __webpack_require__(238);
-	
-	var _difference2 = _interopRequireDefault(_difference);
-	
-	var _constants = __webpack_require__(243);
-	
-	var _constants2 = _interopRequireDefault(_constants);
-	
-	var _utils = __webpack_require__(199);
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-	
-	// Forwards side a Foreign Key: returns one object.
-	// Also works as forwardsOneToOneDescriptor.
-	function forwardManyToOneDescriptor(fieldName, declaredToModelName) {
-	    return {
-	        get: function get() {
-	            var currentSession = this.getClass().session;
-	            var declaredToModel = currentSession[declaredToModelName];
-	            var toId = this._fields[fieldName];
-	            if (typeof toId !== 'undefined' && toId !== null) {
-	                return declaredToModel.withId(toId);
-	            }
-	            return undefined;
-	        },
-	        set: function set(value) {
-	            var currentSession = this.getClass().session;
-	            var declaredToModel = currentSession[declaredToModelName];
-	            var thisId = this.getId();
-	            var toId = void 0;
-	            if (value instanceof declaredToModel) {
-	                toId = value.getId();
-	            } else {
-	                toId = value;
-	            }
-	
-	            this.getClass().addUpdate({
-	                type: _constants2.default,
-	                payload: {
-	                    idArr: [thisId],
-	                    updater: (0, _defineProperty3.default)({}, fieldName, toId)
-	                }
-	            });
-	        }
-	    };
-	}
-	
-	var forwardOneToOneDescriptor = forwardManyToOneDescriptor;
-	
-	function backwardOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
-	    return {
-	        get: function get() {
-	            var currentSession = this.getClass().session;
-	            var declaredFromModel = currentSession[declaredFromModelName];
-	            var thisId = this.getId();
-	            var found = void 0;
-	            try {
-	                found = declaredFromModel.get((0, _defineProperty3.default)({}, declaredFieldName, thisId));
-	            } catch (e) {
-	                return null;
-	            }
-	            return found;
-	        },
-	        set: function set() {
-	            throw new Error('Can\'t mutate a reverse one-to-one relation.');
-	        }
-	    };
-	}
-	
-	// Reverse side of a Foreign Key: returns many objects.
-	function backwardManyToOneDescriptor(declaredFieldName, declaredFromModelName) {
-	    return {
-	        get: function get() {
-	            var currentSession = this.getClass().session;
-	            var declaredFromModel = currentSession[declaredFromModelName];
-	            var thisId = this.getId();
-	            return declaredFromModel.filter((0, _defineProperty3.default)({}, declaredFieldName, thisId));
-	        },
-	        set: function set() {
-	            throw new Error('Can\'t mutate a reverse many-to-one relation.');
-	        }
-	    };
-	}
-	
-	// Both sides of Many to Many, use the reverse flag.
-	function manyToManyDescriptor(declaredFromModelName, declaredToModelName, throughModelName, reverse) {
-	    return {
-	        get: function get() {
-	            var currentSession = this.getClass().session;
-	            var declaredFromModel = currentSession[declaredFromModelName];
-	            var declaredToModel = currentSession[declaredToModelName];
-	            var throughModel = currentSession[throughModelName];
-	            var thisId = this.getId();
-	
-	            var fromFieldName = (0, _utils.m2mFromFieldName)(declaredFromModel.modelName);
-	            var toFieldName = (0, _utils.m2mToFieldName)(declaredToModel.modelName);
-	
-	            var lookupObj = {};
-	            if (!reverse) {
-	                lookupObj[fromFieldName] = thisId;
-	            } else {
-	                lookupObj[toFieldName] = thisId;
-	            }
-	            var throughQs = throughModel.filter(lookupObj);
-	            var toIds = throughQs.withRefs.map(function (obj) {
-	                return obj[reverse ? fromFieldName : toFieldName];
-	            });
-	
-	            var qsFromModel = reverse ? declaredFromModel : declaredToModel;
-	            var qs = qsFromModel.getQuerySetFromIds(toIds);
-	
-	            qs.add = function add() {
-	                for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-	                    args[_key] = arguments[_key];
-	                }
-	
-	                var idsToAdd = args.map(_utils.normalizeEntity);
-	
-	                var filterWithAttr = reverse ? fromFieldName : toFieldName;
-	
-	                var existingQs = throughQs.withRefs.filter(function (through) {
-	                    return (0, _utils.includes)(idsToAdd, through[filterWithAttr]);
-	                });
-	
-	                if (existingQs.exists()) {
-	                    var existingIds = existingQs.withRefs.map(function (through) {
-	                        return through[filterWithAttr];
-	                    });
-	
-	                    var toAddModel = reverse ? declaredFromModel.modelName : declaredToModel.modelName;
-	
-	                    var addFromModel = reverse ? declaredToModel.modelName : declaredFromModel.modelName;
-	
-	                    throw new Error('Tried to add already existing ' + toAddModel + ' id(s) ' + existingIds + ' to the ' + addFromModel + ' instance with id ' + thisId);
-	                }
-	
-	                idsToAdd.forEach(function (id) {
-	                    var _throughModel$create;
-	
-	                    throughModel.create((_throughModel$create = {}, (0, _defineProperty3.default)(_throughModel$create, fromFieldName, thisId), (0, _defineProperty3.default)(_throughModel$create, toFieldName, id), _throughModel$create));
-	                });
-	            };
-	
-	            qs.clear = function clear() {
-	                throughQs.delete();
-	            };
-	
-	            qs.remove = function remove() {
-	                for (var _len2 = arguments.length, entities = Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-	                    entities[_key2] = arguments[_key2];
-	                }
-	
-	                var idsToRemove = entities.map(_utils.normalizeEntity);
-	
-	                var attrInIdsToRemove = reverse ? fromFieldName : toFieldName;
-	                var entitiesToDelete = throughQs.withRefs.filter(function (through) {
-	                    return (0, _utils.includes)(idsToRemove, through[attrInIdsToRemove]);
-	                });
-	
-	                if (entitiesToDelete.count() !== idsToRemove.length) {
-	                    // Tried deleting non-existing entities.
-	                    var entitiesToDeleteIds = entitiesToDelete.withRefs.map(function (through) {
-	                        return through[attrInIdsToRemove];
-	                    });
-	                    var unexistingIds = (0, _difference2.default)(idsToRemove, entitiesToDeleteIds);
-	
-	                    var toDeleteModel = reverse ? declaredFromModel.modelName : declaredToModel.modelName;
-	
-	                    var deleteFromModel = reverse ? declaredToModel.modelName : declaredFromModel.modelName;
-	
-	                    throw new Error('Tried to delete non-existing ' + toDeleteModel + ' id(s) ' + unexistingIds + ' from the ' + deleteFromModel + ' instance with id ' + thisId);
-	                }
-	
-	                entitiesToDelete.delete();
-	            };
-	
-	            return qs;
-	        },
-	        set: function set() {
-	            throw new Error('Tried setting a M2M field. Please use the related QuerySet methods add and remove.');
-	        }
-	    };
-	}
-	
-	exports.forwardManyToOneDescriptor = forwardManyToOneDescriptor;
-	exports.forwardOneToOneDescriptor = forwardOneToOneDescriptor;
-	exports.backwardOneToOneDescriptor = backwardOneToOneDescriptor;
-	exports.backwardManyToOneDescriptor = backwardManyToOneDescriptor;
-	exports.manyToManyDescriptor = manyToManyDescriptor;
-
-/***/ },
-/* 284 */
+/* 305 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -11328,14 +11606,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: true
 	});
 	
-	var _toConsumableArray2 = __webpack_require__(248);
+	var _toConsumableArray2 = __webpack_require__(216);
 	
 	var _toConsumableArray3 = _interopRequireDefault(_toConsumableArray2);
 	
 	exports.eqCheck = eqCheck;
 	exports.memoize = memoize;
 	
-	var _values = __webpack_require__(217);
+	var _values = __webpack_require__(213);
 	
 	var _values2 = _interopRequireDefault(_values);
 	
@@ -11386,12 +11664,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @param  {Function} func - function to memoize
 	 * @param  {Function} equalityCheck - equality check function to use with normal
 	 *                                  selector args
-	 * @param  {Schema} modelSchema - a redux-orm Schema instance
+	 * @param  {ORM} orm - a redux-orm ORM instance
 	 * @return {Function} `func` memoized.
 	 */
 	function memoize(func) {
-	    var equalityCheck = arguments.length <= 1 || arguments[1] === undefined ? eqCheck : arguments[1];
-	    var modelSchema = arguments[2];
+	    var equalityCheck = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : eqCheck;
+	    var orm = arguments[2];
 	
 	    var lastOrmState = null;
 	    var lastResult = null;
@@ -11403,21 +11681,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	            args[_key] = arguments[_key];
 	        }
 	
-	        var ormState = args[0];
-	        var otherArgs = args.slice(1);
+	        var dbState = args[0],
+	            otherArgs = args.slice(1);
 	
 	
-	        var ormIsEqual = lastOrmState === ormState || !shouldRun(modelNameToInvalidatorMap, ormState);
+	        var dbIsEqual = lastOrmState === dbState || !shouldRun(modelNameToInvalidatorMap, dbState);
 	
 	        var argsAreEqual = lastArgs && otherArgs.every(function (value, index) {
 	            return equalityCheck(value, lastArgs[index]);
 	        });
 	
-	        if (ormIsEqual && argsAreEqual) {
+	        if (dbIsEqual && argsAreEqual) {
 	            return lastResult;
 	        }
 	
-	        var session = modelSchema.from(ormState);
+	        var session = orm.session(dbState);
 	        var newArgs = [session].concat((0, _toConsumableArray3.default)(otherArgs));
 	        var result = func.apply(undefined, (0, _toConsumableArray3.default)(newArgs));
 	
@@ -11434,7 +11712,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        });
 	
 	        lastResult = result;
-	        lastOrmState = ormState;
+	        lastOrmState = dbState;
 	        lastArgs = otherArgs;
 	
 	        return lastResult;
