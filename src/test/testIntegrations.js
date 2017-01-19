@@ -180,8 +180,51 @@ describe('Integration', () => {
             expect(() => book.genres.add(existingId)).to.throw(existingId.toString());
         });
 
-        it('updating related many-to-many entities works', () => {
-            const { Book, Genre, Author } = session;
+        it('updating related many-to-many entities through ids works', () => {
+            const { Genre, Author } = session;
+            const tommi = Author.get({ name: 'Tommi Kaikkonen' });
+            const book = tommi.books.first();
+            expect(book.genres.toRefArray().map(row => row.id))
+                .to.deep.equal([0, 1]);
+
+            const deleteGenre = Genre.withId(0);
+
+            book.update({ genres: [1, 2] });
+            expect(book.genres.toRefArray().map(row => row.id))
+                .to.deep.equal([1, 2]);
+
+            expect(deleteGenre.books.filter({ id: book.id }).exists()).to.be.false;
+        });
+
+        it('updating related many-to-many with not existing entities works', () => {
+            const { Book } = session;
+            const book = Book.first();
+
+            book.update({ genres: [0, 99] });
+
+            expect(
+              session.BookGenres
+                .filter({ fromBookId: book.id })
+                .toRefArray()
+                .map(row => row.toGenreId)
+            ).to.deep.equal([0, 99]);
+            expect(book.genres.toRefArray().map(row => row.id))
+              .to.deep.equal([0]);
+
+            book.update({ genres: [1, 98] });
+
+            expect(
+              session.BookGenres
+                .filter({ fromBookId: book.id })
+                .toRefArray()
+                .map(row => row.toGenreId)
+            ).to.deep.equal([1, 98]);
+            expect(book.genres.toRefArray().map(row => row.id))
+              .to.deep.equal([1]);
+        });
+
+        it('updating non-existing many-to-many entities works', () => {
+            const { Genre, Author } = session;
             const tommi = Author.get({ name: 'Tommi Kaikkonen' });
             const book = tommi.books.first();
             expect(book.genres.toRefArray().map(row => row.id))
