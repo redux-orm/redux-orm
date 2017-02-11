@@ -62,7 +62,7 @@ Book.fields = {
 
 ### Register Models and Generate an Empty Database State
 
-Defining fields on a Model specifies the table structure in the database for that Model. In order to generate a description of the whole database's structure, we need a central place register all Models we want to use.
+Defining fields on a Model specifies the table structure in the database for that Model. In order to generate a description of the whole database's structure, we need a central place to register all Models we want to use.
 
 An instance of the ORM class registers Models and handles generating a full schema from all the models and passing that information to the database. Often you'll want to have a file where you can import a single ORM instance across the app, like this:
 
