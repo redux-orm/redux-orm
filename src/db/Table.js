@@ -171,21 +171,37 @@ const Table = class Table {
         const [newMaxId, id] = idSequencer(this.getMaxId(branch), entry[this.idAttribute]);
         workingState = this.setMaxId(tx, branch, newMaxId);
 
-        const finalEntry = hasId
+        let finalEntry = hasId
             ? entry
             : ops.batch.set(batchToken, this.idAttribute, id, entry);
 
+        const idArray = workingState[this.arrName];
+        const idMap = workingState[this.mapName];
+        const idAlreadyExists = idArray.includes(id);
+        const existingEntry = idMap[id];
+
         if (withMutations) {
-            ops.mutable.push(id, workingState[this.arrName]);
-            ops.mutable.set(id, finalEntry, workingState[this.mapName]);
+            if(idAlreadyExists) {
+                // Go and and mutate the entry in place
+               finalEntry = ops.mutable.deepMerge(existingEntry, finalEntry);
+            }
+            else {
+                ops.mutable.push(id, idArray);
+            }
+
+            ops.mutable.set(id, finalEntry, idMap);
             return {
                 state: workingState,
                 created: finalEntry,
             };
         }
 
+        if(idAlreadyExists) {
+            finalEntry = ops.batch.deepMerge(batchToken, finalEntry, existingEntry);
+        }
+
         const nextState = ops.batch.merge(batchToken, {
-            [this.arrName]: ops.batch.push(batchToken, id, workingState[this.arrName]),
+            [this.arrName]: idAlreadyExists ? idArray : ops.batch.push(batchToken, id, idArray),
             [this.mapName]: ops.batch.merge(batchToken, { [id]: finalEntry }, workingState[this.mapName]),
         }, workingState);
 
