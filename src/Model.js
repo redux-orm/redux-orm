@@ -422,7 +422,7 @@ const Model = class Model {
                             if (idsToDelete.length > 0) {
                                 this[mergeKey].remove(...idsToDelete);
                             }
-                            if (idsToAdd.length > 0) {
+                            if (idsToAdd.length > 0 && currentIds.length > 0) {
                                 this[mergeKey].add(...idsToAdd);
                             }
                         }
