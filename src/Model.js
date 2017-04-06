@@ -57,6 +57,14 @@ function getByIdQuery(modelInstance) {
  * logic by defining prototype methods (without `static` keyword).
  */
 const Model = class Model {
+    static createClass(instanceMethods) {
+        const klass = class ModelSubclass extends Model {};
+        Object.keys(instanceMethods).forEach(key => {
+            klass.prototype[key] = instanceMethods[key];
+        });
+        return klass;
+    }
+
     /**
      * Creates a Model instance from it's properties.
      * Don't use this to create a new record; Use the static method {@link Model#create}.
