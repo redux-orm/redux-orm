@@ -187,6 +187,9 @@ const Model = class Model {
   /**
   * Creates a new record in the database, instantiates a {@link Model} and returns it.
   *
+  * If you have the variable updateIfIdExists setted to true it will check if theres an existing item on the store and will
+  * update it automatically
+  *
   * If you pass values for many-to-many fields, instances are created on the through
   * model as well.
   *
