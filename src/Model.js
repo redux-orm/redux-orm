@@ -16,6 +16,8 @@ import {
     arrayDiffActions,
     objectShallowEquals,
     warnDeprecated,
+    m2mName,
+    includes,
 } from './utils';
 
 
@@ -411,8 +413,14 @@ const Model = class Model {
                 const field = relFields[mergeKey];
                 if (field) {
                     if (field instanceof ManyToMany) {
-                        const currentIds = this[mergeKey].toRefArray()
-                            .map(row => row[ThisModel.idAttribute]);
+                        const throughModelName =
+                          field.through || m2mName(ThisModel.modelName, mergeKey);
+                        const ThroughModel = ThisModel.session[throughModelName];
+                        const { from, to } = ThisModel.virtualFields[mergeKey].throughFields;
+
+                        const currentIds = ThroughModel.filter(through =>
+                          through[from] === this[ThisModel.idAttribute]
+                        ).toRefArray().map(ref => ref[to]);
 
                         const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
                         const diffActions = arrayDiffActions(currentIds, normalizedNewIds);

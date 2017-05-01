@@ -45,6 +45,7 @@ const RelationalField = class RelationalField {
             this.toModelName = opts.to;
             this.relatedName = opts.relatedName;
             this.through = opts.through;
+            this.throughFields = opts.throughFields;
         } else {
             this.toModelName = args[0];
             this.relatedName = args[1];
@@ -163,6 +164,7 @@ export const ManyToMany = class ManyToMany extends RelationalField {
             to: toModel.modelName,
             relatedName: fieldName,
             through: this.through,
+            throughFields,
         });
 
         // Backwards.
@@ -201,6 +203,7 @@ export const ManyToMany = class ManyToMany extends RelationalField {
             to: model.modelName,
             relatedName: fieldName,
             through: throughModelName,
+            throughFields,
         });
     }
 
