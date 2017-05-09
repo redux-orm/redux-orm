@@ -14,6 +14,7 @@ import {
     many,
     oneToOne,
     attr,
+    Attribute,
 } from './fields';
 
 const Schema = DeprecatedSchema;
@@ -27,6 +28,7 @@ const Backend = function RemovedBackend() {
 };
 
 export {
+    Attribute,
     QuerySet,
     Model,
     ORM,
