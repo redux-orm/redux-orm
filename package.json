@@ -11,8 +11,11 @@
     "build": "npm run clean && babel src --out-dir lib && webpack && webpack --mode=build && jsdoc src -d docs -c ./jsdoc.conf.json --verbose",
     "lint": "eslint src",
     "deploydocs": "npm run build && gulp deploy",
-    "clean" : "rimraf lib && rimraf dist && rimraf docs"
+    "clean": "rimraf lib && rimraf dist && rimraf docs"
   },
+  "pre-commit": [
+    "lint"
+  ],
   "keywords": [
     "redux",
     "orm"
@@ -36,14 +39,15 @@
     "chai": "^3.0.0",
     "cross-env": "^3.2.4",
     "deep-freeze": "0.0.1",
-    "eslint": "^2.9.0",
-    "eslint-config-airbnb": "9.0.1",
-    "eslint-plugin-import": "^1.7.0",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.2.0",
+    "eslint-plugin-import": "^2.2.0",
     "gulp": "^3.9.0",
     "gulp-gh-pages": "^0.5.4",
     "gulp-rename": "^1.2.2",
     "jsdoc": "^3.4.1",
     "mocha": "^2.2.5",
+    "pre-commit": "^1.2.2",
     "rimraf": "^2.6.1",
     "sinon": "^1.17.2",
     "sinon-chai": "^2.8.0",

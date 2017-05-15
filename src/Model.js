@@ -17,7 +17,6 @@ import {
     objectShallowEquals,
     warnDeprecated,
     m2mName,
-    includes,
 } from './utils';
 
 
@@ -70,8 +69,6 @@ const Model = class Model {
 
     _initFields(props) {
         this._fields = Object.assign({}, props);
-
-        const ThisModel = this.getClass();
 
         forOwn(props, (fieldValue, fieldName) => {
             // In this case, we got a prop that wasn't defined as a field.
@@ -148,7 +145,7 @@ const Model = class Model {
      * @param  {Session} session - The session to connect to.
      */
     static connect(session) {
-        if (!session instanceof Session) {
+        if (!(session instanceof Session)) {
             throw Error('A model can only connect to a Session instance.');
         }
         this._session = session;
