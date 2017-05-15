@@ -189,7 +189,7 @@ const Model = class Model {
      * If you pass values for many-to-many fields, instances are created on the through
      * model as well.
      *
-     * @param  {props} props - the new {@link Model}'s properties.
+     * @param  {props} userProps - the new {@link Model}'s properties.
      * @return {Model} a new {@link Model} instance.
      */
     static create(userProps) {
@@ -235,13 +235,30 @@ const Model = class Model {
             const uniqueIds = uniq(ids);
 
             if (ids.length !== uniqueIds.length) {
-                const idsString = ids;
-                throw new Error(`Found duplicate id(s) when passing "${idsString}" to ${this.modelName}.${key} value on create`);
+                throw new Error(`Found duplicate id(s) when passing "${ids}" to ${this.modelName}.${key} value on create`);
             }
             instance[key].add(...ids);
         });
 
         return instance;
+    }
+
+    /**
+     * Creates a new or update existing record in the database, instantiates a {@link Model} and returns it.
+     *
+     * If you pass values for many-to-many fields, instances are created on the through
+     * model as well.
+     *
+     * @param  {props} userProps - the required {@link Model}'s properties.
+     * @return {Model} a {@link Model} instance.
+     */
+    static upsert(userProps) {
+        const idAttr = this.idAttribute;
+        if (userProps.hasOwnProperty(idAttr) && this.hasId(userProps[idAttr])) {
+            return this.withId(userProps[idAttr]).update(userProps);
+        }
+
+        return super.create(userProps);
     }
 
     /**
