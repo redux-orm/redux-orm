@@ -41,7 +41,7 @@ describe('Redux integration', () => {
         const mockAction = {};
         const nextState = reducer(defaultState, mockAction);
 
-        expect(nextState).toBeUndefined();
+        expect(nextState).not.toBeUndefined();
 
         expect(Author.reducer).toHaveBeenCalledTimes(1);
         expect(Book.reducer).toHaveBeenCalledTimes(1);
