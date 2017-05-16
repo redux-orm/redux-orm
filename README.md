@@ -24,6 +24,15 @@ API can be unstable until 1.0.0. Minor version bumps before 1.0.0 can and will i
 npm install redux-orm --save
 ```
 
+Or with a script tag
+
+```html
+<script src="https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.js"></script>
+```
+
+- [Browser build following master](https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.js)
+- [Browser build following master (minimized)](https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.min.js)
+
 ## Usage
 
 ### Declare Your Models
@@ -443,7 +452,7 @@ For `many` field declarations, accessing the field on a Model instance will retu
 
 When declaring model classes, always remember to set the `modelName` property. It needs to be set explicitly, because running your code through a mangler would otherwise break functionality. The `modelName` will be used to resolve all related fields. 
 
-**Declaring `backend`**:
+**Declaring `modelName`**:
 ```javascript
 class Book extends Model {
     static get modelName() {
@@ -454,7 +463,16 @@ class Book extends Model {
 Book.modelName = 'Book';
 ```
 
+**Declaring `options`**
 
+If you need to specify options to the redux-orm database, you can declare a static `options` property on the Model class with an object key. Currently you can specify the id attribute name:
+
+```javascript
+// This is the default value. 
+Book.options = {
+    idAttribute: 'id',
+};
+```
 
 ### QuerySet
 
@@ -503,6 +521,16 @@ Minor changes before 1.0.0 can include breaking changes.
 ### 0.9.0
 
 A lot. See [the migration guide](https://github.com/tommikaikkonen/redux-orm/wiki/0.9-Migration-Guide).
+
+### 0.8.4
+
+Adds UMD build to partially fix [#41](https://github.com/tommikaikkonen/redux-orm/issues/41). You can now use or try out `redux-orm` through a script tag:
+
+```html
+<script src="https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.js"></script>
+```
+
+`redux-orm.js` will point to the master version of the library; If you need to stick to a version, make a copy or build it yourself.
 
 ### 0.8.3
 

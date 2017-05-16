@@ -10,7 +10,7 @@ import {
     FILTER,
     EXCLUDE,
     ORDER_BY,
-} from './constants.js';
+} from './constants';
 
 /**
  * This class is used to build and make queries to the database

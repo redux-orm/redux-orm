@@ -5,9 +5,11 @@ MOCHA_TARGET=src/**/test*.js
 
 clean:
 	rm -rf lib
+	rm -rf dist
 	rm -rf docs
 
 build: clean
+	$(BIN)/babel src --out-dir lib
 	$(BIN)/webpack
 	$(BIN)/webpack --mode=build
 	$(BIN)/jsdoc src -d docs -c ./jsdoc.conf.json --verbose

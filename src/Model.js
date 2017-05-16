@@ -16,6 +16,7 @@ import {
     arrayDiffActions,
     objectShallowEquals,
     warnDeprecated,
+    m2mName,
 } from './utils';
 
 
@@ -68,8 +69,6 @@ const Model = class Model {
 
     _initFields(props) {
         this._fields = Object.assign({}, props);
-
-        const ThisModel = this.getClass();
 
         forOwn(props, (fieldValue, fieldName) => {
             // In this case, we got a prop that wasn't defined as a field.
@@ -190,7 +189,7 @@ const Model = class Model {
      * If you pass values for many-to-many fields, instances are created on the through
      * model as well.
      *
-     * @param  {props} props - the new {@link Model}'s properties.
+     * @param  {props} userProps - the new {@link Model}'s properties.
      * @return {Model} a new {@link Model} instance.
      */
     static create(userProps) {
@@ -236,13 +235,30 @@ const Model = class Model {
             const uniqueIds = uniq(ids);
 
             if (ids.length !== uniqueIds.length) {
-                const idsString = ids;
-                throw new Error(`Found duplicate id(s) when passing "${idsString}" to ${this.modelName}.${key} value on create`);
+                throw new Error(`Found duplicate id(s) when passing "${ids}" to ${this.modelName}.${key} value on create`);
             }
             instance[key].add(...ids);
         });
 
         return instance;
+    }
+
+    /**
+     * Creates a new or update existing record in the database, instantiates a {@link Model} and returns it.
+     *
+     * If you pass values for many-to-many fields, instances are created on the through
+     * model as well.
+     *
+     * @param  {props} userProps - the required {@link Model}'s properties.
+     * @return {Model} a {@link Model} instance.
+     */
+    static upsert(userProps) {
+        const idAttr = this.idAttribute;
+        if (userProps.hasOwnProperty(idAttr) && this.hasId(userProps[idAttr])) {
+            return this.withId(userProps[idAttr]).update(userProps);
+        }
+
+        return super.create(userProps);
     }
 
     /**
@@ -411,8 +427,14 @@ const Model = class Model {
                 const field = relFields[mergeKey];
                 if (field) {
                     if (field instanceof ManyToMany) {
-                        const currentIds = this[mergeKey].toRefArray()
-                            .map(row => row[ThisModel.idAttribute]);
+                        const throughModelName =
+                          field.through || m2mName(ThisModel.modelName, mergeKey);
+                        const ThroughModel = ThisModel.session[throughModelName];
+                        const { from, to } = ThisModel.virtualFields[mergeKey].throughFields;
+
+                        const currentIds = ThroughModel.filter(through =>
+                          through[from] === this[ThisModel.idAttribute]
+                        ).toRefArray().map(ref => ref[to]);
 
                         const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
                         const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
