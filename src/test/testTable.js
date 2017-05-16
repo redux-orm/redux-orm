@@ -1,8 +1,4 @@
-import chai from 'chai';
-import sinonChai from 'sinon-chai';
 import deepFreeze from 'deep-freeze';
-chai.use(sinonChai);
-const { expect } = chai;
 import Table from '../db/Table';
 import { getBatchToken } from '../utils';
 import { FILTER, EXCLUDE, ORDER_BY } from '../constants';
@@ -39,15 +35,15 @@ describe('Table', () => {
         });
 
         it('correctly accesses an id', () => {
-            expect(table.accessId(state, 1)).to.equal(state.itemsById[1]);
+            expect(table.accessId(state, 1)).toBe(state.itemsById[1]);
         });
 
         it('correctly accesses id\'s', () => {
-            expect(table.accessIdList(state)).to.equal(state.items);
+            expect(table.accessIdList(state)).toBe(state.items);
         });
 
         it('correctly returns a default state', () => {
-            expect(table.getEmptyState()).to.deep.equal({
+            expect(table.getEmptyState()).toEqual({
                 items: [],
                 itemsById: {},
                 meta: {},
@@ -58,11 +54,11 @@ describe('Table', () => {
             const entry = { id: 3, data: 'newdata!' };
             const { state: newState, created } = table.insert(txInfo, state, entry);
 
-            expect(created).to.equal(entry);
+            expect(created).toBe(entry);
 
-            expect(newState).to.not.equal(state);
-            expect(newState.items).to.deep.equal([0, 1, 2, 3]);
-            expect(newState.itemsById).to.deep.equal({
+            expect(newState).not.toBe(state);
+            expect(newState.items).toEqual([0, 1, 2, 3]);
+            expect(newState.itemsById).toEqual({
                 0: {
                     id: 0,
                     data: 'cooldata',
@@ -87,9 +83,9 @@ describe('Table', () => {
             const rowsToUpdate = [state.itemsById[1], state.itemsById[2]];
             const newState = table.update(txInfo, state, rowsToUpdate, toMergeObj);
 
-            expect(newState).to.not.equal(state);
-            expect(newState.items).to.equal(state.items);
-            expect(newState.itemsById).to.deep.equal({
+            expect(newState).not.toBe(state);
+            expect(newState.items).toBe(state.items);
+            expect(newState.itemsById).toEqual({
                 0: {
                     id: 0,
                     data: 'cooldata',
@@ -109,9 +105,9 @@ describe('Table', () => {
             const rowsToDelete = [state.itemsById[1], state.itemsById[2]];
             const newState = table.delete(txInfo, state, rowsToDelete);
 
-            expect(newState).to.not.equal(state);
-            expect(newState.items).to.deep.equal([0]);
-            expect(newState.itemsById).to.deep.equal({
+            expect(newState).not.toBe(state);
+            expect(newState.items).toEqual([0]);
+            expect(newState.itemsById).toEqual({
                 0: {
                     id: 0,
                     data: 'cooldata',
@@ -122,31 +118,27 @@ describe('Table', () => {
         it('filter works correctly with object argument', () => {
             const clauses = [{ type: FILTER, payload: { data: 'verycooldata!' } }];
             const result = table.query(state, clauses);
-            expect(result.length).to.equal(1);
-            expect(result[0]).to.equal(state.itemsById[1]);
+            expect(result.length).toBe(1);
+            expect(result[0]).toBe(state.itemsById[1]);
         });
 
         it('orderBy works correctly with prop argument', () => {
             const clauses = [{ type: ORDER_BY, payload: [['data'], ['inc']] }];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).to.deep.equal(
-                ['awesomedata', 'cooldata', 'verycooldata!']
-            );
+            expect(result.map(row => row.data)).toEqual(['awesomedata', 'cooldata', 'verycooldata!']);
         });
 
         it('orderBy works correctly with function argument', () => {
             const clauses = [{ type: ORDER_BY, payload: [row => row.data, undefined] }];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).to.deep.equal(
-                ['awesomedata', 'cooldata', 'verycooldata!']
-            );
+            expect(result.map(row => row.data)).toEqual(['awesomedata', 'cooldata', 'verycooldata!']);
         });
 
         it('exclude works correctly with object argument', () => {
             const clauses = [{ type: EXCLUDE, payload: { data: 'verycooldata!' } }];
             const result = table.query(state, clauses);
-            expect(result.length).to.equal(2);
-            expect(result.map(row => row.id)).to.deep.equal([0, 2]);
+            expect(result.length).toBe(2);
+            expect(result.map(row => row.id)).toEqual([0, 2]);
         });
 
         it('query works with multiple clauses', () => {
@@ -155,9 +147,7 @@ describe('Table', () => {
                 { type: ORDER_BY, payload: [['data'], ['inc']] },
             ];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).to.deep.equal(
-                ['awesomedata', 'verycooldata!']
-            );
+            expect(result.map(row => row.data)).toEqual(['awesomedata', 'verycooldata!']);
         });
     });
 });

@@ -1,8 +1,4 @@
-import chai from 'chai';
-import sinonChai from 'sinon-chai';
 import deepFreeze from 'deep-freeze';
-chai.use(sinonChai);
-const { expect } = chai;
 import createDatabase from '../db';
 import Table from '../db/Table';
 import { getBatchToken } from '../utils';
@@ -32,7 +28,7 @@ describe('createDatabase', () => {
     const emptyState = deepFreeze(db.getEmptyState());
 
     it('getEmptyState', () => {
-        expect(emptyState).to.deep.equal({
+        expect(emptyState).toEqual({
             Book: {
                 items: [],
                 itemsById: {},
@@ -48,7 +44,7 @@ describe('createDatabase', () => {
 
     it('describe', () => {
         const table = db.describe('Book');
-        expect(table).to.be.an.instanceof(Table);
+        expect(table).toBeInstanceOf(Table);
     });
 
     it('query on empty database', () => {
@@ -57,7 +53,7 @@ describe('createDatabase', () => {
             clauses: [],
         };
         const result = db.query(querySpec, emptyState);
-        expect(result.rows).to.deep.equal([]);
+        expect(result.rows).toEqual([]);
     });
 
     it('insert row with id specified', () => {
@@ -69,10 +65,10 @@ describe('createDatabase', () => {
         };
         const tx = { batchToken: getBatchToken(), withMutations: false };
         const { status, state, payload } = db.update(updateSpec, tx, emptyState);
-        expect(status).to.equal(SUCCESS);
-        expect(payload).to.equal(props);
-        expect(state).to.not.equal(emptyState);
-        expect(state).to.deep.equal({
+        expect(status).toBe(SUCCESS);
+        expect(payload).toBe(props);
+        expect(state).not.toBe(emptyState);
+        expect(state).toEqual({
             Book: {
                 items: [0],
                 itemsById: {
@@ -99,10 +95,10 @@ describe('createDatabase', () => {
         };
         const tx = { batchToken: getBatchToken(), withMutations: false };
         const { status, state, payload } = db.update(updateSpec, tx, emptyState);
-        expect(status).to.equal(SUCCESS);
-        expect(payload).to.deep.equal({ id: 0, name: 'Example Book' });
-        expect(state).to.not.equal(emptyState);
-        expect(state).to.deep.equal({
+        expect(status).toBe(SUCCESS);
+        expect(payload).toEqual({ id: 0, name: 'Example Book' });
+        expect(state).not.toBe(emptyState);
+        expect(state).toEqual({
             Book: {
                 items: [0],
                 itemsById: {
@@ -136,10 +132,10 @@ describe('createDatabase', () => {
             payload: payload2,
         } = db.update(updateSpec2, tx, state);
 
-        expect(status2).to.equal(SUCCESS);
-        expect(payload2).to.deep.equal({ id: 1, name: 'Example Book Two' });
-        expect(state2).to.equal(state);
-        expect(state2).to.deep.equal({
+        expect(status2).toBe(SUCCESS);
+        expect(payload2).toEqual({ id: 1, name: 'Example Book Two' });
+        expect(state2).toBe(state);
+        expect(state2).toEqual({
             Book: {
                 items: [0, 1],
                 itemsById: {
@@ -201,9 +197,9 @@ describe('createDatabase', () => {
         const tx = { batchToken: getBatchToken(), withMutations: false };
         const { status, state } = db.update(updateSpec, tx, startState);
 
-        expect(status).to.equal(SUCCESS);
-        expect(state).to.not.equal(startState);
-        expect(state.Book.itemsById[0].name).to.equal('Modified Example Book');
+        expect(status).toBe(SUCCESS);
+        expect(state).not.toBe(startState);
+        expect(state.Book.itemsById[0].name).toBe('Modified Example Book');
     });
 
     it('delete row', () => {
@@ -240,9 +236,9 @@ describe('createDatabase', () => {
         const tx = { batchToken: getBatchToken(), withMutations: false };
         const { status, state } = db.update(updateSpec, tx, startState);
 
-        expect(status).to.equal(SUCCESS);
-        expect(state).to.not.equal(startState);
-        expect(state.Book.items).to.deep.equal([]);
-        expect(state.Book.itemsById).to.deep.equal({});
+        expect(status).toBe(SUCCESS);
+        expect(state).not.toBe(startState);
+        expect(state.Book.items).toEqual([]);
+        expect(state.Book.itemsById).toEqual({});
     });
 });

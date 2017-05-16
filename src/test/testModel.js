@@ -1,8 +1,3 @@
-import chai from 'chai';
-import sinonChai from 'sinon-chai';
-import sinon from 'sinon';
-chai.use(sinonChai);
-const { expect } = chai;
 import {
     Model as BaseModel,
     ManyToMany,
@@ -32,20 +27,20 @@ describe('Model', () => {
                 enumerableProps[propName] = true;
             }
 
-            expect(enumerableProps.create).to.be.true;
+            expect(enumerableProps.create).toBe(true);
         });
 
         it('session getter works correctly', () => {
-            expect(Model.session).to.be.undefined;
+            expect(Model.session).toBeUndefined();
             Model._session = sessionMock;
-            expect(Model.session).to.equal(sessionMock);
+            expect(Model.session).toBe(sessionMock);
         });
 
         it('connect works correctly', () => {
-            expect(Model.session).to.be.undefined;
+            expect(Model.session).toBeUndefined();
             Model.connect(sessionMock);
 
-            expect(Model.session).to.equal(sessionMock);
+            expect(Model.session).toBe(sessionMock);
         });
     });
 
@@ -68,11 +63,11 @@ describe('Model', () => {
 
         it('equals works correctly', () => {
             const anotherInstance = new Model({ id: 0, name: 'Tommi' });
-            expect(instance.equals(anotherInstance)).to.be.ok;
+            expect(instance.equals(anotherInstance)).toBeTruthy();
         });
 
         it('getClass works correctly', () => {
-            expect(instance.getClass()).to.equal(Model);
+            expect(instance.getClass()).toBe(Model);
         });
     });
 });

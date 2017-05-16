@@ -1,7 +1,3 @@
-import chai from 'chai';
-import sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-
 import {
     ORM,
 } from '../';
@@ -10,9 +6,6 @@ import {
     isSubclass,
 } from './utils';
 import { CREATE } from '../constants';
-
-chai.use(sinonChai);
-const { expect } = chai;
 
 describe('Session', () => {
     let orm;
@@ -36,47 +29,47 @@ describe('Session', () => {
     });
 
     it('connects models', () => {
-        expect(Book.session).to.be.undefined;
-        expect(Cover.session).to.be.undefined;
-        expect(Genre.session).to.be.undefined;
-        expect(Cover.session).to.be.undefined;
-        expect(Publisher.session).to.be.undefined;
+        expect(Book.session).toBeUndefined();
+        expect(Cover.session).toBeUndefined();
+        expect(Genre.session).toBeUndefined();
+        expect(Cover.session).toBeUndefined();
+        expect(Publisher.session).toBeUndefined();
 
         const session = orm.session(emptyState);
 
-        expect(session.Book.session).to.equal(session);
-        expect(session.Cover.session).to.equal(session);
-        expect(session.Genre.session).to.equal(session);
-        expect(session.Cover.session).to.equal(session);
-        expect(session.Publisher.session).to.equal(session);
+        expect(session.Book.session).toBe(session);
+        expect(session.Cover.session).toBe(session);
+        expect(session.Genre.session).toBe(session);
+        expect(session.Cover.session).toBe(session);
+        expect(session.Publisher.session).toBe(session);
     });
 
     it('exposes models as getter properties', () => {
         const session = orm.session(emptyState);
-        expect(isSubclass(session.Book, Book)).to.be.true;
-        expect(isSubclass(session.Author, Author)).to.be.true;
-        expect(isSubclass(session.Cover, Cover)).to.be.true;
-        expect(isSubclass(session.Genre, Genre)).to.be.true;
-        expect(isSubclass(session.Publisher, Publisher)).to.be.true;
+        expect(isSubclass(session.Book, Book)).toBe(true);
+        expect(isSubclass(session.Author, Author)).toBe(true);
+        expect(isSubclass(session.Cover, Cover)).toBe(true);
+        expect(isSubclass(session.Genre, Genre)).toBe(true);
+        expect(isSubclass(session.Publisher, Publisher)).toBe(true);
     });
 
     it('marks accessed models', () => {
         const session = orm.session(emptyState);
-        expect(session.accessedModels).to.have.length(0);
+        expect(session.accessedModels).toHaveLength(0);
 
         session.markAccessed(Book.modelName);
-        expect(session.accessedModels).to.have.length(1);
-        expect(session.accessedModels[0]).to.equal('Book');
+        expect(session.accessedModels).toHaveLength(1);
+        expect(session.accessedModels[0]).toBe('Book');
 
         session.markAccessed(Book.modelName);
 
-        expect(session.accessedModels[0]).to.equal('Book');
+        expect(session.accessedModels[0]).toBe('Book');
     });
 
     describe('gets the next state', () => {
         it('without any updates, the same state is returned', () => {
             const session = orm.session(emptyState);
-            expect(session.state).to.equal(emptyState);
+            expect(session.state).toBe(emptyState);
         });
 
         it('with updates, a new state is returned', () => {
@@ -93,15 +86,15 @@ describe('Session', () => {
 
             const nextState = session.state;
 
-            expect(nextState).to.not.equal(emptyState);
+            expect(nextState).not.toBe(emptyState);
 
-            expect(nextState[Author.modelName]).to.not.equal(emptyState[Author.modelName]);
+            expect(nextState[Author.modelName]).not.toBe(emptyState[Author.modelName]);
 
             // All other model states should stay equal.
-            expect(nextState[Book.modelName]).to.equal(emptyState[Book.modelName]);
-            expect(nextState[Cover.modelName]).to.equal(emptyState[Cover.modelName]);
-            expect(nextState[Genre.modelName]).to.equal(emptyState[Genre.modelName]);
-            expect(nextState[Publisher.modelName]).to.equal(emptyState[Publisher.modelName]);
+            expect(nextState[Book.modelName]).toBe(emptyState[Book.modelName]);
+            expect(nextState[Cover.modelName]).toBe(emptyState[Cover.modelName]);
+            expect(nextState[Genre.modelName]).toBe(emptyState[Genre.modelName]);
+            expect(nextState[Publisher.modelName]).toBe(emptyState[Publisher.modelName]);
         });
     });
 
@@ -111,12 +104,12 @@ describe('Session', () => {
         const firstSession = orm.session(emptyState);
         const secondSession = orm.session(otherState);
 
-        expect(firstSession.sessionBoundModels).to.have.lengthOf(6);
+        expect(firstSession.sessionBoundModels).toHaveLength(6);
 
-        expect(firstSession.Book).not.to.equal(secondSession.Book);
-        expect(firstSession.Author).not.to.equal(secondSession.Author);
-        expect(firstSession.Genre).not.to.equal(secondSession.Genre);
-        expect(firstSession.Cover).not.to.equal(secondSession.Cover);
-        expect(firstSession.Publisher).not.to.equal(secondSession.Publisher);
+        expect(firstSession.Book).not.toBe(secondSession.Book);
+        expect(firstSession.Author).not.toBe(secondSession.Author);
+        expect(firstSession.Genre).not.toBe(secondSession.Genre);
+        expect(firstSession.Cover).not.toBe(secondSession.Cover);
+        expect(firstSession.Publisher).not.toBe(secondSession.Publisher);
     });
 });

@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import {
     Model,
     QuerySet,
@@ -30,33 +29,41 @@ describe('Integration', () => {
         });
 
         it('Initial data bootstrapping results in a correct state', () => {
-            expect(state).to.have.all.keys(
-                'Book', 'Cover', 'Genre', 'Author', 'BookGenres', 'Publisher');
+            expect(state).toEqual(
+                expect.objectContaining({
+                    Book: expect.anything(),
+                    Cover: expect.anything(),
+                    Genre: expect.anything(),
+                    Author: expect.anything(),
+                    BookGenres: expect.anything(),
+                    Publisher: expect.anything()
+                })
+            );
 
-            expect(state.Book.items).to.have.length(3);
-            expect(Object.keys(state.Book.itemsById)).to.have.length(3);
+            expect(state.Book.items).toHaveLength(3);
+            expect(Object.keys(state.Book.itemsById)).toHaveLength(3);
 
-            expect(state.Cover.items).to.have.length(3);
-            expect(Object.keys(state.Cover.itemsById)).to.have.length(3);
+            expect(state.Cover.items).toHaveLength(3);
+            expect(Object.keys(state.Cover.itemsById)).toHaveLength(3);
 
-            expect(state.Genre.items).to.have.length(4);
-            expect(Object.keys(state.Genre.itemsById)).to.have.length(4);
+            expect(state.Genre.items).toHaveLength(4);
+            expect(Object.keys(state.Genre.itemsById)).toHaveLength(4);
 
-            expect(state.BookGenres.items).to.have.length(5);
-            expect(Object.keys(state.BookGenres.itemsById)).to.have.length(5);
+            expect(state.BookGenres.items).toHaveLength(5);
+            expect(Object.keys(state.BookGenres.itemsById)).toHaveLength(5);
 
-            expect(state.Author.items).to.have.length(3);
-            expect(Object.keys(state.Author.itemsById)).to.have.length(3);
+            expect(state.Author.items).toHaveLength(3);
+            expect(Object.keys(state.Author.itemsById)).toHaveLength(3);
 
-            expect(state.Publisher.items).to.have.length(2);
-            expect(Object.keys(state.Publisher.itemsById)).to.have.length(2);
+            expect(state.Publisher.items).toHaveLength(2);
+            expect(Object.keys(state.Publisher.itemsById)).toHaveLength(2);
         });
 
         it('Models correctly indicate if id exists', () => {
             const { Book } = session;
-            expect(Book.hasId(0)).to.be.true;
-            expect(Book.hasId(92384)).to.be.false;
-            expect(Book.hasId()).to.be.false;
+            expect(Book.hasId(0)).toBe(true);
+            expect(Book.hasId(92384)).toBe(false);
+            expect(Book.hasId()).toBe(false);
         });
 
         it('Models correctly create new instances', () => {
@@ -67,14 +74,14 @@ describe('Integration', () => {
                 releaseYear: 2015,
                 publisher: 0,
             });
-            expect(session.Book.count()).to.equal(4);
-            expect(session.Book.last().ref).to.equal(book.ref);
+            expect(session.Book.count()).toBe(4);
+            expect(session.Book.last().ref).toBe(book.ref);
         });
 
         it('Model.getId works', () => {
             const { Book } = session;
-            expect(Book.withId(0).getId()).to.equal(0);
-            expect(Book.withId(1).getId()).to.equal(1);
+            expect(Book.withId(0).getId()).toBe(0);
+            expect(Book.withId(1).getId()).toBe(1);
         });
 
         it('Model.create throws if passing duplicate ids to many-to-many field', () => {
@@ -88,15 +95,15 @@ describe('Integration', () => {
                 publisher: 0,
             };
 
-            expect(() => Book.create(newProps)).to.throw('Book.genres');
+            expect(() => Book.create(newProps)).toThrowError('Book.genres');
         });
 
         it('Models are correctly deleted', () => {
             const { Book } = session;
-            expect(Book.count()).to.equal(3);
+            expect(Book.count()).toBe(3);
             Book.withId(0).delete();
-            expect(session.Book.count()).to.equal(2);
-            expect(session.Book.hasId(0)).to.be.false;
+            expect(session.Book.count()).toBe(2);
+            expect(session.Book.hasId(0)).toBe(false);
         });
 
         it('Models correctly update when setting properties', () => {
@@ -104,22 +111,19 @@ describe('Integration', () => {
             const book = Book.first();
             const newName = 'New Name';
             book.name = newName;
-            expect(session.Book.first().name).to.equal(newName);
+            expect(session.Book.first().name).toBe(newName);
         });
 
         it('Model.toString works', () => {
             const { Book } = session;
             const book = Book.first();
-            expect(book.toString())
-                .to.equal(
-                    'Book: {id: 0, name: Tommi Kaikkonen - an Autobiography, ' +
-                    'releaseYear: 2050, author: 0, cover: 0, genres: [0, 1], publisher: 1}'
-                );
+            expect(book.toString()).toBe('Book: {id: 0, name: Tommi Kaikkonen - an Autobiography, ' +
+            'releaseYear: 2050, author: 0, cover: 0, genres: [0, 1], publisher: 1}');
         });
 
         it('withId throws if model instance not found', () => {
             const { Book } = session;
-            expect(() => Book.withId(10)).to.throw(Error);
+            expect(() => Book.withId(10)).toThrowError(Error);
         });
 
         it('Models correctly create a new instance via upsert', () => {
@@ -130,9 +134,9 @@ describe('Integration', () => {
                 releaseYear: 2015,
                 publisher: 0,
             });
-            expect(session.Book.count()).to.equal(4);
-            expect(session.Book.last().ref).to.equal(book.ref);
-            expect(book).to.be.an.instanceOf(Book);
+            expect(session.Book.count()).toBe(4);
+            expect(session.Book.last().ref).toBe(book.ref);
+            expect(book).toBeInstanceOf(Book);
         });
 
         it('Models correctly update existing instance via upsert', () => {
@@ -143,21 +147,21 @@ describe('Integration', () => {
                 releaseYear: 2015,
                 publisher: 0,
             });
-            expect(session.Book.count()).to.equal(4);
-            expect(session.Book.last().ref).to.equal(book.ref);
-            expect(session.Book.last().releaseYear).to.equal(2015);
+            expect(session.Book.count()).toBe(4);
+            expect(session.Book.last().ref).toBe(book.ref);
+            expect(session.Book.last().releaseYear).toBe(2015);
 
             const nextBook = Book.upsert({
                 [Book.idAttribute]: book.getId(),
                 releaseYear: 2016,
             });
 
-            expect(session.Book.count()).to.equal(4);
-            expect(session.Book.last().ref).to.equal(book.ref);
-            expect(session.Book.last().ref).to.equal(nextBook.ref);
-            expect(session.Book.last().releaseYear).to.equal(2016);
-            expect(book.ref).to.equal(nextBook.ref);
-            expect(nextBook).to.be.an.instanceOf(Book);
+            expect(session.Book.count()).toBe(4);
+            expect(session.Book.last().ref).toBe(book.ref);
+            expect(session.Book.last().ref).toBe(nextBook.ref);
+            expect(session.Book.last().releaseYear).toBe(2016);
+            expect(book.ref).toBe(nextBook.ref);
+            expect(nextBook).toBeInstanceOf(Book);
         });
 
         it('many-to-many relationship descriptors work', () => {
@@ -169,15 +173,15 @@ describe('Integration', () => {
             // Forward (from many-to-many field declaration)
             const book = Book.first();
             const relatedGenres = book.genres;
-            expect(relatedGenres).to.be.an.instanceOf(QuerySet);
-            expect(relatedGenres.modelClass).to.equal(Genre);
-            expect(relatedGenres.count()).to.equal(2);
+            expect(relatedGenres).toBeInstanceOf(QuerySet);
+            expect(relatedGenres.modelClass).toBe(Genre);
+            expect(relatedGenres.count()).toBe(2);
 
             // Backward
             const genre = Genre.first();
             const relatedBooks = genre.books;
-            expect(relatedBooks).to.be.an.instanceOf(QuerySet);
-            expect(relatedBooks.modelClass).to.equal(Book);
+            expect(relatedBooks).toBeInstanceOf(QuerySet);
+            expect(relatedBooks.modelClass).toBe(Book);
         });
 
         it('many-to-many relationship descriptors work with a custom through model', () => {
@@ -189,25 +193,25 @@ describe('Integration', () => {
             // Forward (from many-to-many field declaration)
             const author = Author.get({ name: 'Tommi Kaikkonen' });
             const relatedPublishers = author.publishers;
-            expect(relatedPublishers).to.be.an.instanceOf(QuerySet);
-            expect(relatedPublishers.modelClass).to.equal(Publisher);
-            expect(relatedPublishers.count()).to.equal(1);
+            expect(relatedPublishers).toBeInstanceOf(QuerySet);
+            expect(relatedPublishers.modelClass).toBe(Publisher);
+            expect(relatedPublishers.count()).toBe(1);
 
             // Backward
             const publisher = Publisher.get({ name: 'Technical Publishing' });
             const relatedAuthors = publisher.authors;
-            expect(relatedAuthors).to.be.an.instanceOf(QuerySet);
-            expect(relatedAuthors.modelClass).to.equal(Author);
-            expect(relatedAuthors.count()).to.equal(2);
+            expect(relatedAuthors).toBeInstanceOf(QuerySet);
+            expect(relatedAuthors.modelClass).toBe(Author);
+            expect(relatedAuthors.count()).toBe(2);
         });
 
         it('adding related many-to-many entities works', () => {
             const { Book, Genre } = session;
             const book = Book.withId(0);
-            expect(book.genres.count()).to.equal(2);
+            expect(book.genres.count()).toBe(2);
             book.genres.add(Genre.withId(2));
 
-            expect(session.Book.withId(0).genres.count()).to.equal(3);
+            expect(session.Book.withId(0).genres.count()).toBe(3);
         });
 
         it('trying to add existing related many-to-many entities throws', () => {
@@ -215,23 +219,21 @@ describe('Integration', () => {
             const book = Book.withId(0);
 
             const existingId = 1;
-            expect(() => book.genres.add(existingId)).to.throw(existingId.toString());
+            expect(() => book.genres.add(existingId)).toThrowError(existingId.toString());
         });
 
         it('updating related many-to-many entities through ids works', () => {
             const { Genre, Author } = session;
             const tommi = Author.get({ name: 'Tommi Kaikkonen' });
             const book = tommi.books.first();
-            expect(book.genres.toRefArray().map(row => row.id))
-                .to.deep.equal([0, 1]);
+            expect(book.genres.toRefArray().map(row => row.id)).toEqual([0, 1]);
 
             const deleteGenre = Genre.withId(0);
 
             book.update({ genres: [1, 2] });
-            expect(book.genres.toRefArray().map(row => row.id))
-                .to.deep.equal([1, 2]);
+            expect(book.genres.toRefArray().map(row => row.id)).toEqual([1, 2]);
 
-            expect(deleteGenre.books.filter({ id: book.id }).exists()).to.be.false;
+            expect(deleteGenre.books.filter({ id: book.id }).exists()).toBe(false);
         });
 
         it('updating related many-to-many with not existing entities works', () => {
@@ -245,9 +247,8 @@ describe('Integration', () => {
                 .filter({ fromBookId: book.id })
                 .toRefArray()
                 .map(row => row.toGenreId)
-            ).to.deep.equal([0, 99]);
-            expect(book.genres.toRefArray().map(row => row.id))
-              .to.deep.equal([0]);
+            ).toEqual([0, 99]);
+            expect(book.genres.toRefArray().map(row => row.id)).toEqual([0]);
 
             book.update({ genres: [1, 98] });
 
@@ -256,36 +257,33 @@ describe('Integration', () => {
                 .filter({ fromBookId: book.id })
                 .toRefArray()
                 .map(row => row.toGenreId)
-            ).to.deep.equal([1, 98]);
-            expect(book.genres.toRefArray().map(row => row.id))
-              .to.deep.equal([1]);
+            ).toEqual([1, 98]);
+            expect(book.genres.toRefArray().map(row => row.id)).toEqual([1]);
         });
 
         it('updating non-existing many-to-many entities works', () => {
             const { Genre, Author } = session;
             const tommi = Author.get({ name: 'Tommi Kaikkonen' });
             const book = tommi.books.first();
-            expect(book.genres.toRefArray().map(row => row.id))
-                .to.deep.equal([0, 1]);
+            expect(book.genres.toRefArray().map(row => row.id)).toEqual([0, 1]);
 
             const deleteGenre = Genre.withId(0);
             const keepGenre = Genre.withId(1);
             const addGenre = Genre.withId(2);
 
             book.update({ genres: [addGenre, keepGenre] });
-            expect(book.genres.toRefArray().map(row => row.id))
-                .to.deep.equal([1, 2]);
+            expect(book.genres.toRefArray().map(row => row.id)).toEqual([1, 2]);
 
-            expect(deleteGenre.books.filter({ id: book.id }).exists()).to.be.false;
+            expect(deleteGenre.books.filter({ id: book.id }).exists()).toBe(false);
         });
 
         it('removing related many-to-many entities works', () => {
             const { Book, Genre } = session;
             const book = Book.withId(0);
-            expect(book.genres.count()).to.equal(2);
+            expect(book.genres.count()).toBe(2);
             book.genres.remove(Genre.withId(0));
 
-            expect(session.Book.withId(0).genres.count()).to.equal(1);
+            expect(session.Book.withId(0).genres.count()).toBe(1);
         });
 
         it('trying to remove unexisting related many-to-many entities throws', () => {
@@ -293,16 +291,16 @@ describe('Integration', () => {
             const book = Book.withId(0);
 
             const unexistingId = 2012384;
-            expect(() => book.genres.remove(0, unexistingId)).to.throw(unexistingId.toString());
+            expect(() => book.genres.remove(0, unexistingId)).toThrowError(unexistingId.toString());
         });
 
         it('clearing related many-to-many entities works', () => {
             const { Book } = session;
             const book = Book.withId(0);
-            expect(book.genres.count()).to.equal(2);
+            expect(book.genres.count()).toBe(2);
             book.genres.clear();
 
-            expect(session.Book.withId(0).genres.count()).to.equal(0);
+            expect(session.Book.withId(0).genres.count()).toBe(0);
         });
 
         it('foreign key relationship descriptors work', () => {
@@ -315,15 +313,15 @@ describe('Integration', () => {
             const book = Book.first();
             const author = book.author;
             const rawFk = book.ref.author;
-            expect(author).to.be.an.instanceOf(Author);
-            expect(author.getId()).to.equal(rawFk);
+            expect(author).toBeInstanceOf(Author);
+            expect(author.getId()).toBe(rawFk);
 
             // Backward
             const relatedBooks = author.books;
-            expect(relatedBooks).to.be.an.instanceOf(QuerySet);
+            expect(relatedBooks).toBeInstanceOf(QuerySet);
             relatedBooks._evaluate();
-            expect(relatedBooks.rows).to.include(book.ref);
-            expect(relatedBooks.modelClass).to.equal(Book);
+            expect(relatedBooks.rows).toContain(book.ref);
+            expect(relatedBooks.modelClass).toBe(Book);
         });
 
         it('one-to-one relationship descriptors work', () => {
@@ -336,20 +334,20 @@ describe('Integration', () => {
             const book = Book.first();
             const cover = book.cover;
             const rawFk = book.ref.cover;
-            expect(cover).to.be.an.instanceOf(Cover);
-            expect(cover.getId()).to.equal(rawFk);
+            expect(cover).toBeInstanceOf(Cover);
+            expect(cover.getId()).toBe(rawFk);
 
             // Backward
             const relatedBook = cover.book;
-            expect(relatedBook).to.be.an.instanceOf(Book);
-            expect(relatedBook.getId()).to.equal(book.getId());
+            expect(relatedBook).toBeInstanceOf(Book);
+            expect(relatedBook.getId()).toBe(book.getId());
         });
 
         it('applying no updates returns the same state reference', () => {
             const book = session.Book.first();
             book.name = book.name;
 
-            expect(session.state).to.equal(state);
+            expect(session.state).toBe(state);
         });
 
         it('Model works with default value', () => {
@@ -367,11 +365,11 @@ describe('Integration', () => {
             const sess = _orm.session(_orm.getEmptyState());
             sess.DefaultFieldModel.create({});
 
-            expect(sess.DefaultFieldModel.hasId(1)).to.be.true;
+            expect(sess.DefaultFieldModel.hasId(1)).toBe(true);
 
             returnId = 999;
             sess.DefaultFieldModel.create({});
-            expect(sess.DefaultFieldModel.hasId(999)).to.be.true;
+            expect(sess.DefaultFieldModel.hasId(999)).toBe(true);
         });
     });
 
@@ -397,18 +395,18 @@ describe('Integration', () => {
             const book = Book.first();
             const bookRef = book.ref;
             const bookId = book.getId();
-            expect(state.Book.itemsById[bookId]).to.equal(bookRef);
+            expect(state.Book.itemsById[bookId]).toBe(bookRef);
             const newName = 'New Name';
 
             book.name = newName;
 
-            expect(book.name).to.equal(newName);
+            expect(book.name).toBe(newName);
 
             const nextState = mutating.state;
-            expect(nextState).to.equal(state);
-            expect(state.Book.itemsById[bookId]).to.equal(bookRef);
-            expect(bookRef.name).to.equal(newName);
-            expect(state.Cover.itemsById[coverId].src).to.equal('somecover.png');
+            expect(nextState).toBe(state);
+            expect(state.Book.itemsById[bookId]).toBe(bookRef);
+            expect(bookRef.name).toBe(newName);
+            expect(state.Cover.itemsById[coverId].src).toBe('somecover.png');
         });
     });
 
@@ -425,8 +423,8 @@ describe('Integration', () => {
             const firstSession = session;
             const secondSession = orm.session(state);
 
-            expect(firstSession.Book.count()).to.equal(3);
-            expect(secondSession.Book.count()).to.equal(3);
+            expect(firstSession.Book.count()).toBe(3);
+            expect(secondSession.Book.count()).toBe(3);
 
             const newBookProps = {
                 name: 'New Book',
@@ -437,8 +435,8 @@ describe('Integration', () => {
 
             firstSession.Book.create(newBookProps);
 
-            expect(firstSession.Book.count()).to.equal(4);
-            expect(secondSession.Book.count()).to.equal(3);
+            expect(firstSession.Book.count()).toBe(4);
+            expect(secondSession.Book.count()).toBe(3);
         });
     });
 });
@@ -459,8 +457,6 @@ describe('Big Data Test', () => {
     });
 
     it('adds a big amount of items in acceptable time', function bigDataTest() {
-        this.timeout(30000);
-
         const session = orm.session(orm.getEmptyState());
         const start = new Date().getTime();
 
@@ -471,6 +467,6 @@ describe('Big Data Test', () => {
         const end = new Date().getTime();
         const tookSeconds = (end - start) / 1000;
         console.log(`Creating ${amount} objects took ${tookSeconds}s`);
-        expect(tookSeconds).to.be.at.most(3);
+        expect(tookSeconds).toBeLessThanOrEqual(3);
     });
 });
