@@ -244,6 +244,26 @@ const Model = class Model {
     }
 
     /**
+     * Creates a new or update existing record in the database, instantiates a {@link Model} and returns it.
+     *
+     * If you pass values for many-to-many fields, instances are created on the through
+     * model as well.
+     *
+     * @param  {props} userProps - the required {@link Model}'s properties.
+     * @return {Model} a {@link Model} instance.
+     */
+    static upsert(userProps) {
+        const idAttr = this.idAttribute;
+        if (userProps.hasOwnProperty(idAttr) && this.hasId(userProps[idAttr])) {
+            const model = this.withId(userProps[idAttr]);
+            model.update(userProps);
+            return model;
+        }
+
+        return this.create(userProps);
+    }
+
+    /**
      * Returns a {@link Model} instance for the object with id `id`.
      * This throws if the `id` doesn't exist. Use {@link Model#hasId}
      * to check for existence first if you're not certain.

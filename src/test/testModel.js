@@ -24,7 +24,7 @@ describe('Model', () => {
             Model.modelName = 'Model';
         });
 
-        it('make sure intsance methods are enumerable', () => {
+        it('make sure instance methods are enumerable', () => {
             // See #29.
 
             const enumerableProps = {};

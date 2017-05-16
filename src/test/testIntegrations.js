@@ -122,6 +122,44 @@ describe('Integration', () => {
             expect(() => Book.withId(10)).to.throw(Error);
         });
 
+        it('Models correctly create a new instance via upsert', () => {
+            const { Book } = session;
+            const book = Book.upsert({
+                name: 'New Book',
+                author: 0,
+                releaseYear: 2015,
+                publisher: 0,
+            });
+            expect(session.Book.count()).to.equal(4);
+            expect(session.Book.last().ref).to.equal(book.ref);
+            expect(book).to.be.an.instanceOf(Book);
+        });
+
+        it('Models correctly update existing instance via upsert', () => {
+            const { Book } = session;
+            const book = Book.upsert({
+                name: 'New Book',
+                author: 0,
+                releaseYear: 2015,
+                publisher: 0,
+            });
+            expect(session.Book.count()).to.equal(4);
+            expect(session.Book.last().ref).to.equal(book.ref);
+            expect(session.Book.last().releaseYear).to.equal(2015);
+
+            const nextBook = Book.upsert({
+                [Book.idAttribute]: book.getId(),
+                releaseYear: 2016,
+            });
+
+            expect(session.Book.count()).to.equal(4);
+            expect(session.Book.last().ref).to.equal(book.ref);
+            expect(session.Book.last().ref).to.equal(nextBook.ref);
+            expect(session.Book.last().releaseYear).to.equal(2016);
+            expect(book.ref).to.equal(nextBook.ref);
+            expect(nextBook).to.be.an.instanceOf(Book);
+        });
+
         it('many-to-many relationship descriptors work', () => {
             const {
                 Book,

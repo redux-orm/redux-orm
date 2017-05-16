@@ -406,6 +406,7 @@ See the full documentation for `Model` [here](http://tommikaikkonen.github.io/re
 - `withId(id)`: gets the Model instance with id `id`.
 - `get(matchObj)`: to get a Model instance based on matching properties in `matchObj`,
 - `create(props)`: to create a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`.
+- `upsert(props)`: to create a new Model instance with `props` or to update a existing Model with same `id` - by other words its 'create or update' behaviour.
 
 You will also have access to almost all [QuerySet instance methods](http://tommikaikkonen.github.io/redux-orm/QuerySet.html) from the class object for convenience.
 
