@@ -12,7 +12,7 @@
     "no-underscore-dangle": ["warn", { "allowAfterThis": true }],
     "no-param-reassign": ["error", { "props": false }],
     "import/no-named-as-default": 0,
-    "max-len": 1,
+    "max-len": 0,
     "prefer-template": 1,
     "no-restricted-syntax": 1,
     "consistent-return": 1,
@@ -27,6 +27,7 @@
   },
   "parserOptions": {
     "ecmaFeatures": {
+      "ecmaVersion": 6,
       "experimentalObjectRestSpread": true
     }
   }
