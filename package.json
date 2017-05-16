@@ -63,6 +63,14 @@
     "collectCoverageFrom": [
       "src/*.js"
     ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 75,
+        "functions": 80,
+        "lines": 85,
+        "statements": 85
+      }
+    },
     "moduleFileExtensions": [
       "ts",
       "js",

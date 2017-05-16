@@ -1,9 +1,11 @@
-node_modules
-docs
+node_modules/
+docs/
 *.sublime-project
 *.sublime-workspace
 .DS_Store
-lib
+lib/
 .publish
-dist
+dist/
 min
+coverage/
+.idea/
