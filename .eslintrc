@@ -1,8 +1,6 @@
 {
-  "extends": "airbnb-base",
-  "env": {
-    "mocha": true
-  },
+  "extends": ["airbnb-base"],
+  "parser": "babel-eslint",
   "rules": {
     "indent": [2, 4],
     "no-unused-vars": 1,

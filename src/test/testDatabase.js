@@ -2,15 +2,7 @@ import deepFreeze from 'deep-freeze';
 import createDatabase from '../db';
 import Table from '../db/Table';
 import { getBatchToken } from '../utils';
-import {
-    FILTER,
-    EXCLUDE,
-    ORDER_BY,
-    CREATE,
-    UPDATE,
-    DELETE,
-    SUCCESS,
-} from '../constants';
+import { FILTER, CREATE, UPDATE, DELETE, SUCCESS } from '../constants';
 
 describe('createDatabase', () => {
     const schema = {

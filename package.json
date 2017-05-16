@@ -40,6 +40,7 @@
     "eslint": "^3.19.0",
     "eslint-config-airbnb-base": "^11.2.0",
     "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-jest": "^20.0.1",
     "gulp": "^3.9.0",
     "gulp-gh-pages": "^0.5.4",
     "gulp-rename": "^1.2.2",

@@ -1,13 +1,6 @@
-import {
-    Model,
-    QuerySet,
-    ORM,
-    attr,
-} from '../';
-import {
-    createTestSessionWithData,
-} from './utils';
 import deepFreeze from 'deep-freeze';
+import { Model, QuerySet, ORM, attr } from '../';
+import { createTestSessionWithData } from './utils';
 
 describe('Integration', () => {
     let session;
@@ -456,7 +449,7 @@ describe('Big Data Test', () => {
         orm.register(Item);
     });
 
-    it('adds a big amount of items in acceptable time', function bigDataTest() {
+    it('adds a big amount of items in acceptable time', () => {
         const session = orm.session(orm.getEmptyState());
         const start = new Date().getTime();
 

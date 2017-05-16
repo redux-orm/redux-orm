@@ -1,10 +1,5 @@
-import {
-    Model as BaseModel,
-    ManyToMany,
-    attr,
-} from '../';
+import { Model as BaseModel, ManyToMany, attr } from '../';
 import Table from '../db/Table';
-import { UPDATE, DELETE } from '../constants';
 
 describe('Model', () => {
     describe('static method', () => {

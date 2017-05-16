@@ -1,12 +1,4 @@
-import {
-    ORM,
-    Session,
-    Model,
-    oneToOne,
-    fk,
-    many,
-} from '../';
-
+import { ORM, Session, Model, oneToOne, fk, many } from '../';
 import { createTestModels } from './utils';
 
 describe('ORM', () => {

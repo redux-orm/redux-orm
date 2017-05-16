@@ -1,10 +1,5 @@
-import {
-    ORM,
-} from '../';
-import {
-    createTestModels,
-    isSubclass,
-} from './utils';
+import { ORM } from '../';
+import { createTestModels, isSubclass } from './utils';
 import { CREATE } from '../constants';
 
 describe('Session', () => {
