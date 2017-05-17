@@ -1,20 +1,5 @@
-import chai from 'chai';
-import sinonChai from 'sinon-chai';
-import sinon from 'sinon';
-
-import {
-    ORM,
-    Session,
-    Model,
-    oneToOne,
-    fk,
-    many,
-} from '../';
-
+import { ORM, Session, Model, oneToOne, fk, many } from '../';
 import { createTestModels } from './utils';
-
-chai.use(sinonChai);
-const { expect } = chai;
 
 describe('ORM', () => {
     it('constructor works', () => {
@@ -34,7 +19,7 @@ describe('ORM', () => {
             };
             const orm = new ORM();
             orm.register(A, B);
-            expect(() => orm.getModelClasses()).to.throw(/field/);
+            expect(() => orm.getModelClasses()).toThrowError(/field/);
         });
 
         it('with multiple foreign keys to the same model without related name', () => {
@@ -49,7 +34,7 @@ describe('ORM', () => {
             };
             const orm = new ORM();
             orm.register(A, B);
-            expect(() => orm.getModelClasses()).to.throw(/field/);
+            expect(() => orm.getModelClasses()).toThrowError(/field/);
         });
 
         it('with multiple many-to-manys to the same model without related name', () => {
@@ -64,7 +49,7 @@ describe('ORM', () => {
             };
             const orm = new ORM();
             orm.register(A, B);
-            expect(() => orm.getModelClasses()).to.throw(/field/);
+            expect(() => orm.getModelClasses()).toThrowError(/field/);
         });
     });
 
@@ -88,96 +73,96 @@ describe('ORM', () => {
         });
 
         it('correctly registers a single model at a time', () => {
-            expect(orm.registry).to.have.length(0);
+            expect(orm.registry).toHaveLength(0);
             orm.register(Book);
-            expect(orm.registry).to.have.length(1);
+            expect(orm.registry).toHaveLength(1);
             orm.register(Author);
-            expect(orm.registry).to.have.length(2);
+            expect(orm.registry).toHaveLength(2);
         });
 
         it('correctly registers multiple models', () => {
-            expect(orm.registry).to.have.length(0);
+            expect(orm.registry).toHaveLength(0);
             orm.register(Book, Author);
-            expect(orm.registry).to.have.length(2);
+            expect(orm.registry).toHaveLength(2);
         });
 
         it('correctly starts session', () => {
             const initialState = {};
             const session = orm.session(initialState);
-            expect(session).to.be.instanceOf(Session);
+            expect(session).toBeInstanceOf(Session);
         });
 
 
         it('correctly gets models from registry', () => {
             orm.register(Book);
-            expect(orm.get('Book')).to.equal(Book);
+            expect(orm.get('Book')).toBe(Book);
         });
 
         it('correctly sets model prototypes', () => {
             orm.register(Book, Author, Cover, Genre, Publisher);
-            expect(Book.isSetUp).to.not.be.ok;
+            expect(Book.isSetUp).toBeFalsy();
 
             let coverDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
                 'cover'
             );
-            expect(coverDescriptor).to.be.undefined;
+            expect(coverDescriptor).toBeUndefined();
             let authorDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
                 'author'
             );
-            expect(authorDescriptor).to.be.undefined;
+            expect(authorDescriptor).toBeUndefined();
             let genresDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
                 'genres'
             );
-            expect(genresDescriptor).to.be.undefined;
+            expect(genresDescriptor).toBeUndefined();
 
             let publisherDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
                 'publisher'
             );
-            expect(publisherDescriptor).to.be.undefined;
+            expect(publisherDescriptor).toBeUndefined();
 
             orm._setupModelPrototypes(orm.registry);
             orm._setupModelPrototypes(orm.implicitThroughModels);
 
-            expect(Book.isSetUp).to.be.ok;
+            expect(Book.isSetUp).toBeTruthy();
 
             coverDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
                 'cover'
             );
-            expect(coverDescriptor.get).to.be.a('function');
-            expect(coverDescriptor.set).to.be.a('function');
+            expect(typeof coverDescriptor.get).toBe('function');
+            expect(typeof coverDescriptor.set).toBe('function');
 
             authorDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
                 'author'
             );
-            expect(authorDescriptor.get).to.be.a('function');
-            expect(authorDescriptor.set).to.be.a('function');
+            expect(typeof authorDescriptor.get).toBe('function');
+            expect(typeof authorDescriptor.set).toBe('function');
 
             genresDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
                 'genres'
             );
-            expect(genresDescriptor.get).to.be.a('function');
-            expect(genresDescriptor.set).to.be.a('function');
+            expect(typeof genresDescriptor.get).toBe('function');
+            expect(typeof genresDescriptor.set).toBe('function');
 
             publisherDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
                 'publisher'
             );
-            expect(publisherDescriptor.get).to.be.a('function');
-            expect(publisherDescriptor.set).to.be.a('function');
+            expect(typeof publisherDescriptor.get).toBe('function');
+            expect(typeof publisherDescriptor.set).toBe('function');
         });
 
         it('correctly gets the default state', () => {
             orm.register(Book, Author, Cover, Genre, Publisher);
             const defaultState = orm.getEmptyState();
 
-            expect(defaultState).to.deep.equal({
+            expect(defaultState).toEqual({
                 Book: {
                     items: [],
                     itemsById: {},
@@ -215,8 +200,8 @@ describe('ORM', () => {
             orm.register(Book, Author, Cover, Genre, Publisher);
             const initialState = orm.getEmptyState();
             const session = orm.mutableSession(initialState);
-            expect(session).to.be.an.instanceOf(Session);
-            expect(session.withMutations).to.be.true;
+            expect(session).toBeInstanceOf(Session);
+            expect(session.withMutations).toBe(true);
         });
     });
 });

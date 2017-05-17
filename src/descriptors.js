@@ -141,7 +141,7 @@ function manyToManyDescriptor(
                     throw new Error(`Tried to add already existing ${toAddModel} id(s) ${existingIds} to the ${addFromModel} instance with id ${thisId}`);
                 }
 
-                idsToAdd.forEach(id => {
+                idsToAdd.forEach((id) => {
                     throughModel.create({
                         [fromFieldName]: thisId,
                         [toFieldName]: id,

@@ -63,7 +63,7 @@ export const ORM = class ORM {
      * @return {undefined}
      */
     register(...models) {
-        models.forEach(model => {
+        models.forEach((model) => {
             model.invalidateClassCache();
 
             this.registerManyToManyModelsFor(model);
@@ -112,7 +112,7 @@ export const ORM = class ORM {
     get(modelName) {
         const found = find(
             this.registry.concat(this.implicitThroughModels),
-            (model) => model.modelName === modelName
+            model => model.modelName === modelName
         );
 
         if (typeof found === 'undefined') {
@@ -146,7 +146,7 @@ export const ORM = class ORM {
     }
 
     _setupModelPrototypes(models) {
-        models.forEach(model => {
+        models.forEach((model) => {
             if (!model.isSetUp) {
                 const fields = model.fields;
                 forOwn(fields, (fieldInstance, fieldName) => {
@@ -165,7 +165,7 @@ export const ORM = class ORM {
         const models = this.getModelClasses();
         const tables = models.reduce((spec, modelClass) => {
             const tableName = modelClass.modelName;
-            const tableSpec = modelClass._getTableOpts();
+            const tableSpec = modelClass._getTableOpts(); // eslint-disable-line no-underscore-dangle
             spec[tableName] = Object.assign({}, { fields: modelClass.fields }, tableSpec);
             return spec;
         }, {});

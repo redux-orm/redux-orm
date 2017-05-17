@@ -1,30 +1,22 @@
-import chai from 'chai';
-import sinonChai from 'sinon-chai';
-import sinon from 'sinon';
-chai.use(sinonChai);
-const { expect } = chai;
-import {
-    Model as BaseModel,
-    ManyToMany,
-    attr,
-} from '../';
-import Table from '../db/Table';
-import { UPDATE, DELETE } from '../constants';
+import { ORM, Model as BaseModel, ManyToMany, attr } from '../';
 
 describe('Model', () => {
     describe('static method', () => {
         let Model;
-        const sessionMock = { db: { tables: { Model: new Table() } } };
-
+        let sessionMock;
         beforeEach(() => {
             // Get a fresh copy
             // of Model, so our manipulations
             // won't survive longer than each test.
             Model = class TestModel extends BaseModel {};
             Model.modelName = 'Model';
+
+            const orm = new ORM();
+            orm.register(Model);
+            sessionMock = orm.session();
         });
 
-        it('make sure intsance methods are enumerable', () => {
+        it('make sure instance methods are enumerable', () => {
             // See #29.
 
             const enumerableProps = {};
@@ -32,20 +24,19 @@ describe('Model', () => {
                 enumerableProps[propName] = true;
             }
 
-            expect(enumerableProps.create).to.be.true;
+            expect(enumerableProps.create).toBe(true);
         });
 
         it('session getter works correctly', () => {
-            expect(Model.session).to.be.undefined;
+            expect(Model.session).toBeUndefined();
             Model._session = sessionMock;
-            expect(Model.session).to.equal(sessionMock);
+            expect(Model.session).toBe(sessionMock);
         });
 
         it('connect works correctly', () => {
-            expect(Model.session).to.be.undefined;
+            expect(Model.session).toBeUndefined();
             Model.connect(sessionMock);
-
-            expect(Model.session).to.equal(sessionMock);
+            expect(Model.session).toBe(sessionMock);
         });
     });
 
@@ -68,11 +59,11 @@ describe('Model', () => {
 
         it('equals works correctly', () => {
             const anotherInstance = new Model({ id: 0, name: 'Tommi' });
-            expect(instance.equals(anotherInstance)).to.be.ok;
+            expect(instance.equals(anotherInstance)).toBeTruthy();
         });
 
         it('getClass works correctly', () => {
-            expect(instance.getClass()).to.equal(Model);
+            expect(instance.getClass()).toBe(Model);
         });
     });
 });

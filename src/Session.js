@@ -1,8 +1,7 @@
 import { getBatchToken } from 'immutable-ops';
 
-import { SUCCESS, FAILURE } from './constants';
+import { SUCCESS } from './constants';
 import { warnDeprecated } from './utils';
-
 
 const Session = class Session {
     /**
@@ -28,7 +27,7 @@ const Session = class Session {
 
         this.models = schema.getModelClasses();
 
-        this.sessionBoundModels = this.models.map(modelClass => {
+        this.sessionBoundModels = this.models.map((modelClass) => {
             const sessionBoundModel = class SessionBoundModel extends modelClass {};
             Object.defineProperty(this, modelClass.modelName, {
                 get: () => sessionBoundModel,

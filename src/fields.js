@@ -18,9 +18,7 @@ import {
 /**
  * @module fields
  */
-
-
-export const Attribute = class Attribute {
+export class Attribute {
     constructor(opts) {
         this.opts = (opts || {});
 
@@ -36,9 +34,9 @@ export const Attribute = class Attribute {
             attrDescriptor(fieldName)
         );
     }
-};
+}
 
-const RelationalField = class RelationalField {
+class RelationalField {
     constructor(...args) {
         if (args.length === 1 && typeof args[0] === 'object') {
             const opts = args[0];
@@ -55,9 +53,9 @@ const RelationalField = class RelationalField {
     getClass() {
         return this.constructor;
     }
-};
+}
 
-export const ForeignKey = class ForeignKey extends RelationalField {
+export class ForeignKey extends RelationalField {
     install(model, fieldName, orm) {
         const toModelName = this.toModelName;
         const toModel = toModelName === 'this' ? model : orm.get(toModelName);
@@ -98,10 +96,9 @@ export const ForeignKey = class ForeignKey extends RelationalField {
         const ThisField = this.getClass();
         toModel.virtualFields[backwardsFieldName] = new ThisField(model.modelName, fieldName);
     }
-};
+}
 
-
-export const ManyToMany = class ManyToMany extends RelationalField {
+export class ManyToMany extends RelationalField {
     install(model, fieldName, orm) {
         const toModelName = this.toModelName;
         const toModel = toModelName === 'this' ? model : orm.get(toModelName);
@@ -210,10 +207,9 @@ export const ManyToMany = class ManyToMany extends RelationalField {
     getDefault() {
         return [];
     }
-};
+}
 
-
-export const OneToOne = class OneToOne extends RelationalField {
+export class OneToOne extends RelationalField {
     install(model, fieldName, orm) {
         const toModelName = this.toModelName;
         const toModel = toModelName === 'this' ? model : orm.get(toModelName);
@@ -252,7 +248,7 @@ export const OneToOne = class OneToOne extends RelationalField {
         );
         toModel.virtualFields[backwardsFieldName] = new OneToOne(model.modelName, fieldName);
     }
-};
+}
 
 /**
  * Defines a value attribute on the model.

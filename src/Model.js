@@ -145,7 +145,7 @@ const Model = class Model {
      * @param  {Session} session - The session to connect to.
      */
     static connect(session) {
-        if (!session instanceof Session) {
+        if (!(session instanceof Session)) {
             throw Error('A model can only connect to a Session instance.');
         }
         this._session = session;
@@ -199,7 +199,7 @@ const Model = class Model {
 
         const declaredFieldNames = Object.keys(this.fields);
 
-        declaredFieldNames.forEach(key => {
+        declaredFieldNames.forEach((key) => {
             const field = this.fields[key];
             const valuePassed = userProps.hasOwnProperty(key);
             if (!valuePassed && !(field instanceof ManyToMany)) {
@@ -241,6 +241,26 @@ const Model = class Model {
         });
 
         return instance;
+    }
+
+    /**
+     * Creates a new or update existing record in the database, instantiates a {@link Model} and returns it.
+     *
+     * If you pass values for many-to-many fields, instances are created on the through
+     * model as well.
+     *
+     * @param  {props} userProps - the required {@link Model}'s properties.
+     * @return {Model} a {@link Model} instance.
+     */
+    static upsert(userProps) {
+        const idAttr = this.idAttribute;
+        if (userProps.hasOwnProperty(idAttr) && this.hasId(userProps[idAttr])) {
+            const model = this.withId(userProps[idAttr]);
+            model.update(userProps);
+            return model;
+        }
+
+        return this.create(userProps);
     }
 
     /**
@@ -338,6 +358,8 @@ const Model = class Model {
      */
     get ref() {
         const ModelClass = this.getClass();
+
+        // eslint-disable-next-line no-underscore-dangle
         return ModelClass._findDatabaseRows({
             [ModelClass.idAttribute]: this.getId(),
         })[0];
@@ -352,7 +374,7 @@ const Model = class Model {
         const ThisModel = this.getClass();
         const className = ThisModel.modelName;
         const fieldNames = Object.keys(ThisModel.fields);
-        const fields = fieldNames.map(fieldName => {
+        const fields = fieldNames.map((fieldName) => {
             const field = ThisModel.fields[fieldName];
             if (field instanceof ManyToMany) {
                 const ids = this[fieldName].toModelArray().map(
@@ -374,6 +396,7 @@ const Model = class Model {
      * @return {Boolean} a boolean indicating if the {@link Model} instance's are equal.
      */
     equals(otherModel) {
+        // eslint-disable-next-line no-underscore-dangle
         return objectShallowEquals(this._fields, otherModel._fields);
     }
 

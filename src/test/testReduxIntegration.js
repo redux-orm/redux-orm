@@ -1,20 +1,5 @@
-import chai from 'chai';
-import sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-
-import {
-    ORM,
-    Session,
-    createReducer,
-    createSelector,
-} from '../';
-
-import {
-    createTestModels,
-} from './utils';
-
-chai.use(sinonChai);
-const { expect } = chai;
+import { ORM, Session, createReducer, createSelector } from '../';
+import { createTestModels } from './utils';
 
 describe('Redux integration', () => {
     let orm;
@@ -38,42 +23,42 @@ describe('Redux integration', () => {
     });
 
     it('runs reducers if explicitly specified', () => {
-        Author.reducer = sinon.spy();
-        Book.reducer = sinon.spy();
-        Cover.reducer = sinon.spy();
-        Genre.reducer = sinon.spy();
-        Publisher.reducer = sinon.spy();
+        Author.reducer = jest.fn();
+        Book.reducer = jest.fn();
+        Cover.reducer = jest.fn();
+        Genre.reducer = jest.fn();
+        Publisher.reducer = jest.fn();
 
         const reducer = createReducer(orm);
         const mockAction = {};
         const nextState = reducer(defaultState, mockAction);
 
-        expect(nextState).to.not.be.a('undefined');
+        expect(nextState).not.toBeUndefined();
 
-        expect(Author.reducer).to.be.calledOnce;
-        expect(Book.reducer).to.be.calledOnce;
-        expect(Cover.reducer).to.be.calledOnce;
-        expect(Genre.reducer).to.be.calledOnce;
-        expect(Publisher.reducer).to.be.calledOnce;
+        expect(Author.reducer).toHaveBeenCalledTimes(1);
+        expect(Book.reducer).toHaveBeenCalledTimes(1);
+        expect(Cover.reducer).toHaveBeenCalledTimes(1);
+        expect(Genre.reducer).toHaveBeenCalledTimes(1);
+        expect(Publisher.reducer).toHaveBeenCalledTimes(1);
     });
 
     it('correctly creates a selector', () => {
         let selectorTimesRun = 0;
         const selector = createSelector(orm, () => selectorTimesRun++);
-        expect(selector).to.be.a('function');
+        expect(typeof selector).toBe('function');
 
         const state = orm.getEmptyState();
 
         selector(state);
-        expect(selectorTimesRun).to.equal(1);
+        expect(selectorTimesRun).toBe(1);
         selector(state);
-        expect(selectorTimesRun).to.equal(1);
+        expect(selectorTimesRun).toBe(1);
         selector(orm.getEmptyState());
-        expect(selectorTimesRun).to.equal(1);
+        expect(selectorTimesRun).toBe(1);
     });
 
     it('correctly creates a selector with input selectors', () => {
-        const _selectorFunc = sinon.spy();
+        const _selectorFunc = jest.fn();
 
         const selector = createSelector(
             orm,
@@ -89,23 +74,23 @@ describe('Redux integration', () => {
             selectedUser: 5,
         };
 
-        expect(selector).to.be.a('function');
+        expect(typeof selector).toBe('function');
 
         selector(appState);
-        expect(_selectorFunc.callCount).to.equal(1);
+        expect(_selectorFunc.mock.calls.length).toBe(1);
 
-        expect(_selectorFunc.lastCall.args[0]).to.be.an.instanceOf(Session);
-        expect(_selectorFunc.lastCall.args[0].state).to.equal(_state);
-
-        expect(_selectorFunc.lastCall.args[1]).to.equal(5);
+        const lastCall = _selectorFunc.mock.calls[_selectorFunc.mock.calls.length - 1];
+        expect(lastCall[0]).toBeInstanceOf(Session);
+        expect(lastCall[0].state).toBe(_state);
+        expect(lastCall[1]).toBe(5);
 
         selector(appState);
-        expect(_selectorFunc.callCount).to.equal(1);
+        expect(_selectorFunc.mock.calls.length).toBe(1);
 
         const otherUserState = Object.assign({}, appState, { selectedUser: 0 });
 
         selector(otherUserState);
-        expect(_selectorFunc.callCount).to.equal(2);
+        expect(_selectorFunc.mock.calls.length).toBe(2);
     });
 
     it('calling reducer with undefined state doesn\'t throw', () => {
