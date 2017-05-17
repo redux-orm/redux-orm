@@ -4,7 +4,7 @@ import { memoize, eqCheck } from './memoize';
 
 
 export function defaultUpdater(session, action) {
-    session.sessionBoundModels.forEach(modelClass => {
+    session.sessionBoundModels.forEach((modelClass) => {
         if (typeof modelClass.reducer === 'function') {
             // This calls this.applyUpdate to update this.state
             modelClass.reducer(action, modelClass, session);

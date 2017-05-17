@@ -67,7 +67,7 @@ function m2mToFieldName(otherModelName) {
 }
 
 function reverseFieldName(modelName) {
-    return modelName.toLowerCase() + 'Set';
+    return modelName.toLowerCase() + 'Set'; // eslint-disable-line prefer-template
 }
 
 function querySetDelegatorFactory(methodName) {
@@ -144,8 +144,8 @@ function reverseFieldErrorMessage(modelName, fieldName, toModelName, backwardsFi
 
 function objectShallowEquals(a, b) {
     let keysInA = 0;
-    let keysInB = 0;
 
+    // eslint-disable-next-line consistent-return
     forOwn(a, (value, key) => {
         if (!b.hasOwnProperty(key) || b[key] !== value) {
             return false;
@@ -153,11 +153,7 @@ function objectShallowEquals(a, b) {
         keysInA++;
     });
 
-    for (const key in b) {
-        if (b.hasOwnProperty(key)) keysInB++;
-    }
-
-    return keysInA === keysInB;
+    return keysInA === Object.keys(b).length;
 }
 
 function arrayDiffActions(sourceArr, targetArr) {

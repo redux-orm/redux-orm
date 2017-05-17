@@ -1,12 +1,4 @@
-import chai from 'chai';
-import sinon from 'sinon';
-import sinonChai from 'sinon-chai';
-import {
-    arrayDiffActions,
-} from '../utils';
-
-chai.use(sinonChai);
-const { expect } = chai;
+import { arrayDiffActions } from '../utils';
 
 describe('Utils', () => {
     describe('arrayDiffActions', () => {
@@ -15,8 +7,8 @@ describe('Utils', () => {
             const source = [1, 2, 4];
 
             const actions = arrayDiffActions(source, target);
-            expect(actions.add).to.deep.equal([3]);
-            expect(actions.delete).to.deep.equal([1, 4]);
+            expect(actions.add).toEqual([3]);
+            expect(actions.delete).toEqual([1, 4]);
         });
 
         it('only add', () => {
@@ -24,8 +16,8 @@ describe('Utils', () => {
             const source = [2];
 
             const actions = arrayDiffActions(source, target);
-            expect(actions.add).to.deep.equal([3]);
-            expect(actions.delete).to.deep.equal([]);
+            expect(actions.add).toEqual([3]);
+            expect(actions.delete).toEqual([]);
         });
 
         it('only remove', () => {
@@ -33,8 +25,8 @@ describe('Utils', () => {
             const source = [2, 3, 4];
 
             const actions = arrayDiffActions(source, target);
-            expect(actions.add).to.deep.equal([]);
-            expect(actions.delete).to.deep.equal([4]);
+            expect(actions.add).toEqual([]);
+            expect(actions.delete).toEqual([4]);
         });
 
         it('identical', () => {
@@ -42,7 +34,7 @@ describe('Utils', () => {
             const source = [2, 3];
 
             const actions = arrayDiffActions(source, target);
-            expect(actions).to.equal(null);
+            expect(actions).toBe(null);
         });
     });
 });

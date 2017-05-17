@@ -74,7 +74,7 @@ export function memoize(func, equalityCheck = eqCheck, orm) {
         // input arguments might result in a different set of
         // accessed models. On each run, we check if any new
         // models are accessed and add their invalidator functions.
-        session.accessedModels.forEach(modelName => {
+        session.accessedModels.forEach((modelName) => {
             if (!modelNameToInvalidatorMap.hasOwnProperty(modelName)) {
                 modelNameToInvalidatorMap[modelName] = nextState =>
                     lastOrmState[modelName] !== nextState[modelName];

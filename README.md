@@ -1,5 +1,10 @@
 redux-orm
 ===============
+[![Build Status](https://img.shields.io/travis/tommikaikkonen/redux-orm.svg?style=flat-square)](https://travis-ci.org/tommikaikkonen/redux-orm)
+[![Coverage Status](https://img.shields.io/codecov/c/github/tommikaikkonen/redux-orm/master.svg?style=flat-square)](https://codecov.io/gh/tommikaikkonen/redux-orm/branch/master)
+[![NPM package](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
+[![NPM downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
+[![Gitter](https://badges.gitter.im/redux-orm/Lobby.svg)](https://gitter.im/redux-orm/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 A small, simple and immutable ORM to manage relational data in your Redux store.
 
@@ -10,9 +15,6 @@ See a [a guide to creating a simple app with Redux-ORM](https://github.com/tommi
 Looking for the 0.8 docs? Read the [old README.md in the repo](https://github.com/tommikaikkonen/redux-orm/tree/3c36fa804d2810b2aaaad89ff1d99534b847ea35). For the API reference, clone the repo, `npm install`, `make build` and open up `index.html` in your browser. Sorry for the inconvenience.
 
 API can be unstable until 1.0.0. Minor version bumps before 1.0.0 can and will introduce breaking changes. They will be noted in the [changelog](https://github.com/tommikaikkonen/redux-orm#changelog).
-
-[![npm version](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
-[![npm downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
 
 ## Extensions
 
@@ -406,7 +408,7 @@ See the full documentation for `Model` [here](http://tommikaikkonen.github.io/re
 - `withId(id)`: gets the Model instance with id `id`.
 - `get(matchObj)`: to get a Model instance based on matching properties in `matchObj`,
 - `create(props)`: to create a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`.
-- `upsert(props)`: to create a new Model instance with `props` or to update a existing Model with same `id` - by other words its 'create or update' behaviour.
+- `upsert(props)`: to create a new Model instance with `props` or to update a existing Model with same `id` - by other words its **create or update** behaviour.
 
 You will also have access to almost all [QuerySet instance methods](http://tommikaikkonen.github.io/redux-orm/QuerySet.html) from the class object for convenience.
 
