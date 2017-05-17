@@ -4,16 +4,13 @@
   "description": "Simple ORM to manage and query your state trees",
   "main": "lib/index.js",
   "scripts": {
-    "test": "jest --coverage && codecov",
+    "test": "jest --config=jest.conf.json --coverage && codecov",
     "prepublish": "npm run build",
     "build": "npm run clean && babel src --out-dir lib && webpack && webpack --mode=build && jsdoc src -d docs -c ./jsdoc.conf.json --verbose",
     "lint": "eslint src",
     "deploydocs": "npm run build && gulp deploy",
     "clean": "rimraf lib && rimraf dist && rimraf docs"
   },
-  "pre-commit": [
-    "lint"
-  ],
   "keywords": [
     "redux",
     "orm"
@@ -47,7 +44,6 @@
     "gulp-rename": "^1.2.2",
     "jest": "^20.0.1",
     "jsdoc": "^3.4.1",
-    "pre-commit": "^1.2.2",
     "rimraf": "^2.6.1",
     "typescript-babel-jest": "^1.0.3",
     "webpack": "^1.13.2",
@@ -58,31 +54,5 @@
     "immutable-ops": "^0.5.2",
     "lodash": "^4.12.0",
     "reselect": "^2.0.1"
-  },
-  "jest": {
-    "testEnvironment": "node",
-    "coverageDirectory": "./coverage/",
-    "collectCoverage": true,
-    "collectCoverageFrom": [
-      "src/*.js"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 75,
-        "functions": 80,
-        "lines": 85,
-        "statements": 85
-      }
-    },
-    "moduleFileExtensions": [
-      "ts",
-      "js",
-      "json"
-    ],
-    "testRegex": "src/test/test(.*)\\.(js|ts)",
-    "transform": {
-      "\\.ts?$": "./node_modules/typescript-babel-jest",
-      "\\.js$": "./node_modules/babel-jest"
-    }
   }
 }
