@@ -21,8 +21,7 @@
   },
   "parserOptions": {
     "ecmaFeatures": {
-      "ecmaVersion": 6,
-      "experimentalObjectRestSpread": true
+      "ecmaVersion": 6
     }
   }
 }

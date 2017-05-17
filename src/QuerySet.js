@@ -242,6 +242,7 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     delete() {
+        // eslint-disable-next-line no-underscore-dangle
         this.toModelArray().forEach(model => model._onDelete());
 
         this.modelClass.session.applyUpdate({

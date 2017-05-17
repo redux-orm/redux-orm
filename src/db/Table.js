@@ -31,7 +31,8 @@ function idSequencer(_currMax, userPassedId) {
     }
 
     if (userPassedId === undefined) {
-        newMax = newId = currMax + 1;
+        newMax = currMax + 1;
+        newId = newMax;
     } else {
         newMax = Math.max(currMax + 1, userPassedId);
         newId = userPassedId;
@@ -212,7 +213,7 @@ const Table = class Table {
             mapName,
         } = this;
 
-        const mapFunction = row => {
+        const mapFunction = (row) => {
             const merge = withMutations ? ops.mutable.merge : ops.batch.merge(batchToken);
             return merge(mergeObj, row);
         };
@@ -241,7 +242,7 @@ const Table = class Table {
 
         const idsToDelete = rows.map(row => row[this.idAttribute]);
         if (withMutations) {
-            idsToDelete.forEach(id => {
+            idsToDelete.forEach((id) => {
                 const idx = arr.indexOf(id);
                 if (idx !== -1) {
                     ops.mutable.splice(idx, 1, [], arr);

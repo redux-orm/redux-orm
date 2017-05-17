@@ -1,17 +1,19 @@
-import { Model as BaseModel, ManyToMany, attr } from '../';
-import Table from '../db/Table';
+import { ORM, Model as BaseModel, ManyToMany, attr } from '../';
 
 describe('Model', () => {
     describe('static method', () => {
         let Model;
-        const sessionMock = { db: { tables: { Model: new Table() } } };
-
+        let sessionMock;
         beforeEach(() => {
             // Get a fresh copy
             // of Model, so our manipulations
             // won't survive longer than each test.
             Model = class TestModel extends BaseModel {};
             Model.modelName = 'Model';
+
+            const orm = new ORM();
+            orm.register(Model);
+            sessionMock = orm.session();
         });
 
         it('make sure instance methods are enumerable', () => {
@@ -34,7 +36,6 @@ describe('Model', () => {
         it('connect works correctly', () => {
             expect(Model.session).toBeUndefined();
             Model.connect(sessionMock);
-
             expect(Model.session).toBe(sessionMock);
         });
     });
