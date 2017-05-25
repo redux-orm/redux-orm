@@ -1,5 +1,5 @@
 import deepFreeze from 'deep-freeze';
-import { Model, QuerySet, ORM, attr } from '../';
+import { Model, QuerySet, ORM, attr, many } from '../';
 import { createTestSessionWithData } from './utils';
 
 describe('Integration', () => {
@@ -203,8 +203,7 @@ describe('Integration', () => {
             const book = Book.withId(0);
             expect(book.genres.count()).toBe(2);
             book.genres.add(Genre.withId(2));
-
-            expect(session.Book.withId(0).genres.count()).toBe(3);
+            expect(book.genres.count()).toBe(3);
         });
 
         it('trying to add existing related many-to-many entities throws', () => {
@@ -400,6 +399,79 @@ describe('Integration', () => {
             expect(state.Book.itemsById[bookId]).toBe(bookRef);
             expect(bookRef.name).toBe(newName);
             expect(state.Cover.itemsById[coverId].src).toBe('somecover.png');
+        });
+    });
+
+    describe('many-many forward/backward updates', () => {
+        let Team;
+        let User;
+        let teamFirst;
+        let userFirst;
+        let userLast;
+        let validateRelationState;
+
+        beforeEach(() => {
+            User = class extends Model {};
+            User.modelName = 'User';
+            User.fields = {
+                id: attr(),
+                name: attr(),
+            };
+
+            Team = class extends Model {};
+            Team.modelName = 'Team';
+            Team.fields = {
+                id: attr(),
+                name: attr(),
+                users: many('User', 'teams'),
+            };
+
+            orm = new ORM();
+            orm.register(User, Team);
+            session = orm.session(orm.getEmptyState());
+
+            session.Team.create({ name: 'team0' });
+            session.Team.create({ name: 'team1' });
+
+            session.User.create({ name: 'user0' });
+            session.User.create({ name: 'user1' });
+            session.User.create({ name: 'user2' });
+
+            teamFirst = session.Team.first();
+            userFirst = session.User.first();
+            userLast = session.User.last();
+
+            validateRelationState = () => {
+                const { TeamUsers } = session;
+
+                expect(teamFirst.users.toRefArray().map(row => row.id)).toEqual([userFirst.id, userLast.id]);
+                expect(userFirst.teams.toRefArray().map(row => row.id)).toEqual([teamFirst.id]);
+                expect(userLast.teams.toRefArray().map(row => row.id)).toEqual([teamFirst.id]);
+
+                expect(TeamUsers.count()).toBe(2);
+            };
+        });
+
+        it('add forward many-many field', () => {
+            teamFirst.users.add(userFirst, userLast);
+            validateRelationState();
+        });
+
+        it('update forward many-many field', () => {
+            teamFirst.update({ users: [userFirst, userLast] });
+            validateRelationState();
+        });
+
+        it('add backward many-many field', () => {
+            userFirst.teams.add(teamFirst);
+            userLast.teams.add(teamFirst);
+            validateRelationState();
+        });
+
+        it('update backward many-many field', () => {
+            userFirst.update({ teams: [teamFirst] });
+            userLast.update({ teams: [teamFirst] });
+            validateRelationState();
         });
     });
 

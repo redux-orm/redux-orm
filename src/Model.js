@@ -421,43 +421,72 @@ const Model = class Model {
      */
     update(userMergeObj) {
         const ThisModel = this.getClass();
-        const relFields = ThisModel.fields;
         const mergeObj = Object.assign({}, userMergeObj);
+
+        const fields = ThisModel.fields;
+        const virtualFields = ThisModel.virtualFields;
 
         // If an array of entities or id's is supplied for a
         // many-to-many related field, clear the old relations
         // and add the new ones.
-        for (const mergeKey in mergeObj) { // eslint-disable-line no-restricted-syntax
-            if (relFields.hasOwnProperty(mergeKey)) {
-                const field = relFields[mergeKey];
-                if (field) {
-                    if (field instanceof ManyToMany) {
-                        const throughModelName =
-                          field.through || m2mName(ThisModel.modelName, mergeKey);
-                        const ThroughModel = ThisModel.session[throughModelName];
-                        const { from, to } = ThisModel.virtualFields[mergeKey].throughFields;
+        for (const mergeKey in mergeObj) { // eslint-disable-line no-restricted-syntax, guard-for-in
+            const isRealField = fields.hasOwnProperty(mergeKey);
+            let m2mField;
 
-                        const currentIds = ThroughModel.filter(through =>
-                          through[from] === this[ThisModel.idAttribute]
-                        ).toRefArray().map(ref => ref[to]);
+            if (isRealField) {
+                const field = fields[mergeKey];
 
-                        const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
-                        const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
-                        if (diffActions) {
-                            const idsToDelete = diffActions.delete;
-                            const idsToAdd = diffActions.add;
-                            if (idsToDelete.length > 0) {
-                                this[mergeKey].remove(...idsToDelete);
-                            }
-                            if (idsToAdd.length > 0) {
-                                this[mergeKey].add(...idsToAdd);
-                            }
-                        }
-                        delete mergeObj[mergeKey];
-                    } else if (field instanceof ForeignKey || field instanceof OneToOne) {
-                        mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
+                if (field instanceof ForeignKey || field instanceof OneToOne) {
+                    // update one-one/fk relations
+                    mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
+                    continue; // eslint-disable-line no-continue
+                } else if (field instanceof ManyToMany) {
+                    // field is forward relation
+                    m2mField = field;
+                }
+            }
+
+            if (virtualFields.hasOwnProperty(mergeKey)) {
+                const field = virtualFields[mergeKey];
+                if (field instanceof ManyToMany) {
+                    // field is backward relation
+                    m2mField = field;
+                }
+            }
+
+            if (m2mField) {
+                // update many-many relations
+                const throughModelName = m2mField.through || m2mName(ThisModel.modelName, mergeKey);
+                const ThroughModel = ThisModel.session[throughModelName];
+
+                let fromField;
+                let toField;
+
+                if (isRealField) {
+                    ({ from: fromField, to: toField } = m2mField.throughFields);
+                } else {
+                    ({ from: toField, to: fromField } = m2mField.throughFields);
+                }
+
+                const currentIds = ThroughModel.filter(through =>
+                    through[fromField] === this[ThisModel.idAttribute]
+                ).toRefArray().map(ref => ref[toField]);
+
+                const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
+                const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
+
+                if (diffActions) {
+                    const idsToDelete = diffActions.delete;
+                    const idsToAdd = diffActions.add;
+                    if (idsToDelete.length > 0) {
+                        this[mergeKey].remove(...idsToDelete);
+                    }
+                    if (idsToAdd.length > 0) {
+                        this[mergeKey].add(...idsToAdd);
                     }
                 }
+
+                delete mergeObj[mergeKey];
             }
         }
 
@@ -469,7 +498,6 @@ const Model = class Model {
             payload: mergeObj,
         });
     }
-
 
     /**
      * Updates {@link Model} instance attributes to reflect the

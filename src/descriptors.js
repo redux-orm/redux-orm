@@ -141,12 +141,21 @@ function manyToManyDescriptor(
                     throw new Error(`Tried to add already existing ${toAddModel} id(s) ${existingIds} to the ${addFromModel} instance with id ${thisId}`);
                 }
 
-                idsToAdd.forEach((id) => {
-                    throughModel.create({
-                        [fromFieldName]: thisId,
-                        [toFieldName]: id,
+                if (reverse) {
+                    idsToAdd.forEach((id) => {
+                        throughModel.create({
+                            [fromFieldName]: id,
+                            [toFieldName]: thisId,
+                        });
                     });
-                });
+                } else {
+                    idsToAdd.forEach((id) => {
+                        throughModel.create({
+                            [fromFieldName]: thisId,
+                            [toFieldName]: id,
+                        });
+                    });
+                }
             };
 
             qs.clear = function clear() {
