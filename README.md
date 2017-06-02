@@ -378,7 +378,7 @@ The ORM abstraction will never be as performant compared to writing reducers by 
 
 ### ORM
 
-See the full documentation for ORM [here](http://tommikaikkonen.github.io/redux-orm/ORM.html)
+See the full documentation for ORM [here](http://tommikaikkonen.github.io/redux-orm/global.html#ORM)
 
 Instantiation
 
