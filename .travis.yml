@@ -1,22 +1,11 @@
-sudo: false
-
 language: node_js
 
-node_js:
-  - "6"
-
-env:
-  matrix:
-    - TEST_TYPE=lint
-    - TEST_TYPE=build
-    - TEST_TYPE=test
+node_js: "6"
 
 script:
-  - |
-    if [ "$TEST_TYPE" = lint ]; then
-      npm run lint
-    elif [ "$TEST_TYPE" = build ]; then
-      npm run build
-    elif [ "$TEST_TYPE" = test ]; then
-      npm run test
-    fi
+  - npm run lint
+  - npm run build
+  - npm run test
+
+after_success:
+  - codecov

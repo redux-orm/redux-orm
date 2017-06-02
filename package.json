@@ -4,9 +4,10 @@
   "description": "Simple ORM to manage and query your state trees",
   "main": "lib/index.js",
   "scripts": {
-    "test": "jest --config=jest.conf.json --coverage && codecov",
+    "test": "jest --config=jest.conf.json --coverage",
     "prepublish": "npm run build",
     "build": "npm run clean && babel src --out-dir lib && webpack && webpack --mode=build && jsdoc src -d docs -c ./jsdoc.conf.json --verbose",
+    "pub": "npm run build && npm version patch && npm publish && git push origin",
     "lint": "eslint src",
     "deploydocs": "npm run build && gulp deploy",
     "clean": "rimraf lib && rimraf dist && rimraf docs"
@@ -53,6 +54,6 @@
     "babel-runtime": "^6.6.1",
     "immutable-ops": "^0.5.2",
     "lodash": "^4.12.0",
-    "reselect": "^2.0.1"
+    "reselect": "^2.5.4"
   }
 }
