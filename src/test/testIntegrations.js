@@ -511,6 +511,74 @@ describe('Integration', () => {
 
             validateRelationState();
         });
+
+        it('create with forward field with future many-many', () => {
+            session.Team.all().delete();
+            session.User.all().delete();
+            expect(session.Team.count()).toBe(0);
+            expect(session.User.count()).toBe(0);
+            expect(session.TeamUsers.count()).toBe(0);
+
+            session.Team.create({ id: 't0', users: ['u0', 'u2'] });
+            session.Team.create({ id: 't1' });
+
+            session.User.create({ id: 'u0' });
+            session.User.create({ id: 'u1' });
+            session.User.create({ id: 'u2' });
+
+            validateRelationState();
+        });
+
+        it('create with backward field with future many-many', () => {
+            session.Team.all().delete();
+            session.User.all().delete();
+            expect(session.Team.count()).toBe(0);
+            expect(session.User.count()).toBe(0);
+            expect(session.TeamUsers.count()).toBe(0);
+
+            session.User.create({ id: 'u0', teams: ['t0'] });
+            session.User.create({ id: 'u1' });
+            session.User.create({ id: 'u2', teams: ['t0'] });
+
+            session.Team.create({ id: 't0' });
+            session.Team.create({ id: 't1' });
+
+            validateRelationState();
+        });
+
+        it('create with forward field and existing backward many-many', () => {
+            session.Team.all().delete();
+            session.User.all().delete();
+            expect(session.Team.count()).toBe(0);
+            expect(session.User.count()).toBe(0);
+            expect(session.TeamUsers.count()).toBe(0);
+
+            session.User.create({ id: 'u0', teams: ['t0'] });
+            session.User.create({ id: 'u1' });
+            session.User.create({ id: 'u2', teams: ['t0'] });
+
+            session.Team.create({ id: 't0', users: ['u0', 'u2'] });
+            session.Team.create({ id: 't1' });
+
+            validateRelationState();
+        });
+
+        it('create with backward field and existing forward many-many', () => {
+            session.Team.all().delete();
+            session.User.all().delete();
+            expect(session.Team.count()).toBe(0);
+            expect(session.User.count()).toBe(0);
+            expect(session.TeamUsers.count()).toBe(0);
+
+            session.Team.create({ id: 't0', users: ['u0', 'u2'] });
+            session.Team.create({ id: 't1' });
+
+            session.User.create({ id: 'u0', teams: ['t0'] });
+            session.User.create({ id: 'u1' });
+            session.User.create({ id: 'u2', teams: ['t0'] });
+
+            validateRelationState();
+        });
     });
 
     describe('many-many with a custom through model', () => {
