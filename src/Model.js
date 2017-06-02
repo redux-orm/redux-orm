@@ -198,25 +198,40 @@ const Model = class Model {
         const m2mVals = {};
 
         const declaredFieldNames = Object.keys(this.fields);
+        const declaredVirtualFieldNames = Object.keys(this.virtualFields);
 
         declaredFieldNames.forEach((key) => {
             const field = this.fields[key];
             const valuePassed = userProps.hasOwnProperty(key);
-            if (!valuePassed && !(field instanceof ManyToMany)) {
-                if (field.getDefault) {
+            if (!(field instanceof ManyToMany)) {
+                if (!valuePassed && field.getDefault) {
                     props[key] = field.getDefault();
                 }
-            } else {
+            } else if (valuePassed) {
+                // forward many-many
                 const value = userProps[key];
                 props[key] = normalizeEntity(value);
 
                 // If a value is supplied for a ManyToMany field,
                 // discard them from props and save for later processing.
                 if (isArray(value)) {
-                    if (this.fields.hasOwnProperty(key) && this.fields[key] instanceof ManyToMany) {
-                        m2mVals[key] = value;
-                        delete props[key];
-                    }
+                    m2mVals[key] = value;
+                    delete props[key];
+                }
+            }
+        });
+        declaredVirtualFieldNames.forEach((key) => {
+            const field = this.virtualFields[key];
+            if (userProps.hasOwnProperty(key) && field instanceof ManyToMany) {
+                // backward many-many
+                const value = userProps[key];
+                props[key] = normalizeEntity(value);
+
+                // If a value is supplied for a ManyToMany field,
+                // discard them from props and save for later processing.
+                if (isArray(value)) {
+                    m2mVals[key] = value;
+                    delete props[key];
                 }
             }
         });

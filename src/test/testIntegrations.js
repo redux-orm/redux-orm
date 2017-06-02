@@ -1,5 +1,5 @@
 import deepFreeze from 'deep-freeze';
-import { Model, QuerySet, ORM, attr, many } from '../';
+import { Model, QuerySet, ORM, attr, many, fk } from '../';
 import { createTestSessionWithData } from './utils';
 
 describe('Integration', () => {
@@ -444,6 +444,10 @@ describe('Integration', () => {
             validateRelationState = () => {
                 const { TeamUsers } = session;
 
+                teamFirst = session.Team.first();
+                userFirst = session.User.first();
+                userLast = session.User.last();
+
                 expect(teamFirst.users.toRefArray().map(row => row.id)).toEqual([userFirst.id, userLast.id]);
                 expect(userFirst.teams.toRefArray().map(row => row.id)).toEqual([teamFirst.id]);
                 expect(userLast.teams.toRefArray().map(row => row.id)).toEqual([teamFirst.id]);
@@ -471,6 +475,40 @@ describe('Integration', () => {
         it('update backward many-many field', () => {
             userFirst.update({ teams: [teamFirst] });
             userLast.update({ teams: [teamFirst] });
+            validateRelationState();
+        });
+
+        it('create with forward many-many field', () => {
+            session.Team.all().delete();
+            session.User.all().delete();
+            expect(session.Team.count()).toBe(0);
+            expect(session.User.count()).toBe(0);
+            expect(session.TeamUsers.count()).toBe(0);
+
+            session.User.create({ name: 'user0' });
+            session.User.create({ name: 'user1' });
+            session.User.create({ name: 'user2' });
+
+            session.Team.create({ name: 'team0', users: [session.User.first(), session.User.last()] });
+            session.Team.create({ name: 'team1' });
+
+            validateRelationState();
+        });
+
+        it('create with backward many-many field', () => {
+            session.Team.all().delete();
+            session.User.all().delete();
+            expect(session.Team.count()).toBe(0);
+            expect(session.User.count()).toBe(0);
+            expect(session.TeamUsers.count()).toBe(0);
+
+            session.Team.create({ name: 'team0' });
+            session.Team.create({ name: 'team1' });
+
+            session.User.create({ name: 'user0', teams: [session.Team.first()] });
+            session.User.create({ name: 'user1' });
+            session.User.create({ name: 'user2', teams: [session.Team.first()] });
+
             validateRelationState();
         });
     });
