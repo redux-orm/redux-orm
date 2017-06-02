@@ -1,13 +1,13 @@
 {
   "name": "redux-orm",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Simple ORM to manage and query your state trees",
   "main": "lib/index.js",
   "scripts": {
     "test": "jest --config=jest.conf.json --coverage",
     "prepublish": "npm run build",
     "build": "npm run clean && babel src --out-dir lib && webpack && webpack --mode=build && jsdoc src -d docs -c ./jsdoc.conf.json --verbose",
-    "pub": "npm run build && npm version patch && npm publish && git push origin && deploydocs",
+    "pub": "npm run build && npm version patch && npm publish && git push origin && gulp deploy && npm run clean",
     "lint": "eslint src",
     "deploydocs": "npm run build && gulp deploy",
     "clean": "rimraf lib && rimraf dist && rimraf docs"
