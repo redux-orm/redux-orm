@@ -8402,25 +8402,40 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var m2mVals = {};
 	
 	        var declaredFieldNames = (0, _keys2.default)(this.fields);
+	        var declaredVirtualFieldNames = (0, _keys2.default)(this.virtualFields);
 	
 	        declaredFieldNames.forEach(function (key) {
 	            var field = _this2.fields[key];
 	            var valuePassed = userProps.hasOwnProperty(key);
-	            if (!valuePassed && !(field instanceof _fields.ManyToMany)) {
-	                if (field.getDefault) {
+	            if (!(field instanceof _fields.ManyToMany)) {
+	                if (!valuePassed && field.getDefault) {
 	                    props[key] = field.getDefault();
 	                }
-	            } else {
+	            } else if (valuePassed) {
+	                // forward many-many
 	                var value = userProps[key];
 	                props[key] = (0, _utils.normalizeEntity)(value);
 	
 	                // If a value is supplied for a ManyToMany field,
 	                // discard them from props and save for later processing.
 	                if ((0, _isArray2.default)(value)) {
-	                    if (_this2.fields.hasOwnProperty(key) && _this2.fields[key] instanceof _fields.ManyToMany) {
-	                        m2mVals[key] = value;
-	                        delete props[key];
-	                    }
+	                    m2mVals[key] = value;
+	                    delete props[key];
+	                }
+	            }
+	        });
+	        declaredVirtualFieldNames.forEach(function (key) {
+	            var field = _this2.virtualFields[key];
+	            if (userProps.hasOwnProperty(key) && field instanceof _fields.ManyToMany) {
+	                // backward many-many
+	                var value = userProps[key];
+	                props[key] = (0, _utils.normalizeEntity)(value);
+	
+	                // If a value is supplied for a ManyToMany field,
+	                // discard them from props and save for later processing.
+	                if ((0, _isArray2.default)(value)) {
+	                    m2mVals[key] = value;
+	                    delete props[key];
 	                }
 	            }
 	        });
@@ -9472,10 +9487,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                from: fromFieldName
 	            };
 	        } else {
-	            var _throughFields = throughFields,
-	                _throughFields2 = (0, _slicedToArray3.default)(_throughFields, 2),
-	                fieldAName = _throughFields2[0],
-	                fieldBName = _throughFields2[1];
+	            var _throughFields = (0, _slicedToArray3.default)(this.throughFields, 2),
+	                fieldAName = _throughFields[0],
+	                fieldBName = _throughFields[1];
 	
 	            var fieldA = throughModel.fields[fieldAName];
 	            if (fieldA.toModelName === toModel.modelName) {
