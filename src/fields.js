@@ -130,7 +130,7 @@ export class ManyToMany extends RelationalField {
                 from: fromFieldName,
             };
         } else {
-            const [fieldAName, fieldBName] = throughFields;
+            const [fieldAName, fieldBName] = this.throughFields;
             const fieldA = throughModel.fields[fieldAName];
             if (fieldA.toModelName === toModel.modelName) {
                 throughFields = {

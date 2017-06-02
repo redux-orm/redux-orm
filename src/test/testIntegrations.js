@@ -513,6 +513,113 @@ describe('Integration', () => {
         });
     });
 
+    describe('many-many with a custom through model', () => {
+        it('without throughFields', () => {
+            const UserModel = class extends Model {};
+            UserModel.modelName = 'User';
+            UserModel.fields = {
+                id: attr(),
+                name: attr(),
+            };
+            const User2TeamModel = class extends Model {};
+            User2TeamModel.modelName = 'User2Team';
+            User2TeamModel.fields = {
+                user: fk('User'),
+                team: fk('Team'),
+            };
+            const TeamModel = class extends Model {};
+            TeamModel.modelName = 'Team';
+            TeamModel.fields = {
+                id: attr(),
+                name: attr(),
+                users: many({
+                    to: 'User',
+                    through: 'User2Team',
+                    relatedName: 'teams',
+                }),
+            };
+
+            orm = new ORM();
+            orm.register(UserModel, TeamModel, User2TeamModel);
+            session = orm.session(orm.getEmptyState());
+            const { User, Team, User2Team } = session;
+
+            Team.create({ id: 't0', name: 'team0' });
+            Team.create({ id: 't1', name: 'team1' });
+            Team.create({ id: 't2', name: 'team2' });
+
+            User.create({ id: 'u0', name: 'user0', teams: ['t0'] });
+            User.create({ id: 'u1', name: 'user1', teams: ['t0', 't2'] });
+
+            // Forward (from many-to-many field declaration)
+            const user = User.get({ name: 'user0' });
+            const relatedTeams = user.teams;
+            expect(relatedTeams).toBeInstanceOf(QuerySet);
+            expect(relatedTeams.modelClass).toBe(Team);
+            expect(relatedTeams.count()).toBe(1);
+
+            // Backward
+            const team = Team.get({ name: 'team0' });
+            const relatedUsers = team.users;
+            expect(relatedUsers).toBeInstanceOf(QuerySet);
+            expect(relatedUsers.modelClass).toBe(User);
+            expect(relatedUsers.count()).toBe(2);
+        });
+
+        it('with throughFields', () => {
+            const UserModel = class extends Model {};
+            UserModel.modelName = 'User';
+            UserModel.fields = {
+                id: attr(),
+                name: attr(),
+            };
+            const User2TeamModel = class extends Model {};
+            User2TeamModel.modelName = 'User2Team';
+            User2TeamModel.fields = {
+                user: fk('User'),
+                team: fk('Team'),
+            };
+            const TeamModel = class extends Model {};
+            TeamModel.modelName = 'Team';
+            TeamModel.fields = {
+                id: attr(),
+                name: attr(),
+                users: many({
+                    to: 'User',
+                    through: 'User2Team',
+                    relatedName: 'teams',
+                    throughFields: ['user', 'team'],
+                }),
+            };
+
+            orm = new ORM();
+            orm.register(UserModel, TeamModel, User2TeamModel);
+            session = orm.session(orm.getEmptyState());
+            const { User, Team, User2Team } = session;
+
+            Team.create({ id: 't0', name: 'team0' });
+            Team.create({ id: 't1', name: 'team1' });
+            Team.create({ id: 't2', name: 'team2' });
+
+            User.create({ id: 'u0', name: 'user0', teams: ['t0'] });
+            User.create({ id: 'u1', name: 'user1', teams: ['t0', 't2'] });
+
+            // Forward (from many-to-many field declaration)
+            const user = User.get({ name: 'user0' });
+            const relatedTeams = user.teams;
+            expect(relatedTeams).toBeInstanceOf(QuerySet);
+            expect(relatedTeams.modelClass).toBe(Team);
+            expect(relatedTeams.count()).toBe(1);
+
+            // Backward
+            const team = Team.get({ name: 'team0' });
+            const relatedUsers = team.users;
+            expect(relatedUsers).toBeInstanceOf(QuerySet);
+            expect(relatedUsers.modelClass).toBe(User);
+            expect(relatedUsers.count()).toBe(2);
+        });
+    });
+
     describe('Multiple concurrent sessions', () => {
         beforeEach(() => {
             ({
