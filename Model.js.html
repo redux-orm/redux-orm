@@ -44,6 +44,7 @@ import {
     arrayDiffActions,
     objectShallowEquals,
     warnDeprecated,
+    m2mName,
 } from './utils';
 
 
@@ -96,8 +97,6 @@ const Model = class Model {
 
     _initFields(props) {
         this._fields = Object.assign({}, props);
-
-        const ThisModel = this.getClass();
 
         forOwn(props, (fieldValue, fieldName) => {
             // In this case, we got a prop that wasn't defined as a field.
@@ -174,7 +173,7 @@ const Model = class Model {
      * @param  {Session} session - The session to connect to.
      */
     static connect(session) {
-        if (!session instanceof Session) {
+        if (!(session instanceof Session)) {
             throw Error('A model can only connect to a Session instance.');
         }
         this._session = session;
@@ -218,7 +217,7 @@ const Model = class Model {
      * If you pass values for many-to-many fields, instances are created on the through
      * model as well.
      *
-     * @param  {props} props - the new {@link Model}'s properties.
+     * @param  {props} userProps - the new {@link Model}'s properties.
      * @return {Model} a new {@link Model} instance.
      */
     static create(userProps) {
@@ -228,7 +227,7 @@ const Model = class Model {
 
         const declaredFieldNames = Object.keys(this.fields);
 
-        declaredFieldNames.forEach(key => {
+        declaredFieldNames.forEach((key) => {
             const field = this.fields[key];
             const valuePassed = userProps.hasOwnProperty(key);
             if (!valuePassed &amp;&amp; !(field instanceof ManyToMany)) {
@@ -264,13 +263,32 @@ const Model = class Model {
             const uniqueIds = uniq(ids);
 
             if (ids.length !== uniqueIds.length) {
-                const idsString = ids;
-                throw new Error(`Found duplicate id(s) when passing "${idsString}" to ${this.modelName}.${key} value on create`);
+                throw new Error(`Found duplicate id(s) when passing "${ids}" to ${this.modelName}.${key} value on create`);
             }
             instance[key].add(...ids);
         });
 
         return instance;
+    }
+
+    /**
+     * Creates a new or update existing record in the database, instantiates a {@link Model} and returns it.
+     *
+     * If you pass values for many-to-many fields, instances are created on the through
+     * model as well.
+     *
+     * @param  {props} userProps - the required {@link Model}'s properties.
+     * @return {Model} a {@link Model} instance.
+     */
+    static upsert(userProps) {
+        const idAttr = this.idAttribute;
+        if (userProps.hasOwnProperty(idAttr) &amp;&amp; this.hasId(userProps[idAttr])) {
+            const model = this.withId(userProps[idAttr]);
+            model.update(userProps);
+            return model;
+        }
+
+        return this.create(userProps);
     }
 
     /**
@@ -368,6 +386,8 @@ const Model = class Model {
      */
     get ref() {
         const ModelClass = this.getClass();
+
+        // eslint-disable-next-line no-underscore-dangle
         return ModelClass._findDatabaseRows({
             [ModelClass.idAttribute]: this.getId(),
         })[0];
@@ -382,7 +402,7 @@ const Model = class Model {
         const ThisModel = this.getClass();
         const className = ThisModel.modelName;
         const fieldNames = Object.keys(ThisModel.fields);
-        const fields = fieldNames.map(fieldName => {
+        const fields = fieldNames.map((fieldName) => {
             const field = ThisModel.fields[fieldName];
             if (field instanceof ManyToMany) {
                 const ids = this[fieldName].toModelArray().map(
@@ -404,6 +424,7 @@ const Model = class Model {
      * @return {Boolean} a boolean indicating if the {@link Model} instance's are equal.
      */
     equals(otherModel) {
+        // eslint-disable-next-line no-underscore-dangle
         return objectShallowEquals(this._fields, otherModel._fields);
     }
 
@@ -428,37 +449,72 @@ const Model = class Model {
      */
     update(userMergeObj) {
         const ThisModel = this.getClass();
-        const relFields = ThisModel.fields;
         const mergeObj = Object.assign({}, userMergeObj);
+
+        const fields = ThisModel.fields;
+        const virtualFields = ThisModel.virtualFields;
 
         // If an array of entities or id's is supplied for a
         // many-to-many related field, clear the old relations
         // and add the new ones.
-        for (const mergeKey in mergeObj) { // eslint-disable-line no-restricted-syntax
-            if (relFields.hasOwnProperty(mergeKey)) {
-                const field = relFields[mergeKey];
-                if (field) {
-                    if (field instanceof ManyToMany) {
-                        const currentIds = this[mergeKey].toRefArray()
-                            .map(row => row[ThisModel.idAttribute]);
+        for (const mergeKey in mergeObj) { // eslint-disable-line no-restricted-syntax, guard-for-in
+            const isRealField = fields.hasOwnProperty(mergeKey);
+            let m2mField;
 
-                        const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
-                        const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
-                        if (diffActions) {
-                            const idsToDelete = diffActions.delete;
-                            const idsToAdd = diffActions.add;
-                            if (idsToDelete.length > 0) {
-                                this[mergeKey].remove(...idsToDelete);
-                            }
-                            if (idsToAdd.length > 0) {
-                                this[mergeKey].add(...idsToAdd);
-                            }
-                        }
-                        delete mergeObj[mergeKey];
-                    } else if (field instanceof ForeignKey || field instanceof OneToOne) {
-                        mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
+            if (isRealField) {
+                const field = fields[mergeKey];
+
+                if (field instanceof ForeignKey || field instanceof OneToOne) {
+                    // update one-one/fk relations
+                    mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
+                    continue; // eslint-disable-line no-continue
+                } else if (field instanceof ManyToMany) {
+                    // field is forward relation
+                    m2mField = field;
+                }
+            }
+
+            if (virtualFields.hasOwnProperty(mergeKey)) {
+                const field = virtualFields[mergeKey];
+                if (field instanceof ManyToMany) {
+                    // field is backward relation
+                    m2mField = field;
+                }
+            }
+
+            if (m2mField) {
+                // update many-many relations
+                const throughModelName = m2mField.through || m2mName(ThisModel.modelName, mergeKey);
+                const ThroughModel = ThisModel.session[throughModelName];
+
+                let fromField;
+                let toField;
+
+                if (isRealField) {
+                    ({ from: fromField, to: toField } = m2mField.throughFields);
+                } else {
+                    ({ from: toField, to: fromField } = m2mField.throughFields);
+                }
+
+                const currentIds = ThroughModel.filter(through =>
+                    through[fromField] === this[ThisModel.idAttribute]
+                ).toRefArray().map(ref => ref[toField]);
+
+                const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
+                const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
+
+                if (diffActions) {
+                    const idsToDelete = diffActions.delete;
+                    const idsToAdd = diffActions.add;
+                    if (idsToDelete.length > 0) {
+                        this[mergeKey].remove(...idsToDelete);
+                    }
+                    if (idsToAdd.length > 0) {
+                        this[mergeKey].add(...idsToAdd);
                     }
                 }
+
+                delete mergeObj[mergeKey];
             }
         }
 
@@ -470,7 +526,6 @@ const Model = class Model {
             payload: mergeObj,
         });
     }
-
 
     /**
      * Updates {@link Model} instance attributes to reflect the
@@ -550,7 +605,7 @@ export default Model;
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Fri Jan 13 2017 01:14:07 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Fri Jun 02 2017 11:01:58 GMT+0300 (EEST)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -156,7 +156,7 @@ Don't use this to create a new record; Use the static method <code>Model#create<
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line59">line 59</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line60">line 60</a>
     </li></ul></dd>
     
 
@@ -244,7 +244,7 @@ Don't use this to create a new record; Use the static method <code>Model#create<
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line138">line 138</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line137">line 137</a>
     </li></ul></dd>
     
 
@@ -307,7 +307,7 @@ Make sure to not mutate this.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line341">line 341</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line359">line 359</a>
     </li></ul></dd>
     
 
@@ -385,7 +385,7 @@ Make sure to not mutate this.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line183">line 183</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line182">line 182</a>
     </li></ul></dd>
     
 
@@ -438,7 +438,7 @@ Make sure to not mutate this.</p>
 
     
 
-    <h4 class="name" id=".create"><span class="type-signature">(static) </span>create<span class="signature">(props)</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>}</span></h4>
+    <h4 class="name" id=".create"><span class="type-signature">(static) </span>create<span class="signature">(userProps)</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>}</span></h4>
 
     
 
@@ -483,7 +483,7 @@ model as well.</p>
 
         <tr>
             
-                <td class="name"><code>props</code></td>
+                <td class="name"><code>userProps</code></td>
             
 
             <td class="type">
@@ -540,7 +540,7 @@ model as well.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line196">line 196</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line195">line 195</a>
     </li></ul></dd>
     
 
@@ -695,7 +695,7 @@ the properties.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line302">line 302</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line320">line 320</a>
     </li></ul></dd>
     
 
@@ -849,7 +849,7 @@ in the state.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line274">line 274</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line292">line 292</a>
     </li></ul></dd>
     
 
@@ -958,7 +958,7 @@ Model class.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line107">line 107</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line106">line 106</a>
     </li></ul></dd>
     
 
@@ -998,6 +998,161 @@ Model class.</p>
     <dd>
         
 <span class="param-type">Object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id=".upsert"><span class="type-signature">(static) </span>upsert<span class="signature">(userProps)</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>}</span></h4>
+
+    
+
+
+
+<div class="description">
+    <p>Creates a new or update existing record in the database, instantiates a <a href="Model.html"><code>Model</code></a> and returns it.</p>
+<p>If you pass values for many-to-many fields, instances are created on the through
+model as well.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>userProps</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">props</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the required <a href="Model.html"><code>Model</code></a>'s properties.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line255">line 255</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>a <a href="Model.html"><code>Model</code></a> instance.</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="Model.html">Model</a></span>
 
 
     </dd>
@@ -1114,7 +1269,7 @@ to check for existence first if you're not certain.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line257">line 257</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line275">line 275</a>
     </li></ul></dd>
     
 
@@ -1231,7 +1386,7 @@ You'll still be able to access fields and values on the instance.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line462">line 462</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line517">line 517</a>
     </li></ul></dd>
     
 
@@ -1381,7 +1536,7 @@ Equality is determined by shallow comparing their attributes.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line378">line 378</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line398">line 398</a>
     </li></ul></dd>
     
 
@@ -1486,7 +1641,7 @@ instantiated this instance).</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line323">line 323</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line341">line 341</a>
     </li></ul></dd>
     
 
@@ -1591,7 +1746,7 @@ instantiated this instance).</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line331">line 331</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line349">line 349</a>
     </li></ul></dd>
     
 
@@ -1696,7 +1851,7 @@ database state in the current session.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line452">line 452</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line507">line 507</a>
     </li></ul></dd>
     
 
@@ -1869,7 +2024,7 @@ The values are immediately committed to the database.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line390">line 390</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line411">line 411</a>
     </li></ul></dd>
     
 
@@ -1969,7 +2124,7 @@ The values are immediately committed to the database.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line353">line 353</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line373">line 373</a>
     </li></ul></dd>
     
 
@@ -2123,7 +2278,7 @@ The updates are immediately committed to the database.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line401">line 401</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line422">line 422</a>
     </li></ul></dd>
     
 
@@ -2189,7 +2344,7 @@ The updates are immediately committed to the database.</p>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Fri Jan 13 2017 01:14:07 GMT-0800 (PST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Fri Jun 02 2017 11:01:58 GMT+0300 (EEST)
 </footer>
 
 <script> prettyPrint(); </script>
