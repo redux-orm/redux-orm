@@ -201,7 +201,7 @@ const Model = class Model {
             const uniqueIds = uniq(normalizedNewIds);
 
             if (normalizedNewIds.length !== uniqueIds.length) {
-                throw new Error(`Found duplicate id(s) when passing "${normalizedNewIds}" to ${ThisModel.modelName}.${name} value on create`);
+                throw new Error(`Found duplicate id(s) when passing "${normalizedNewIds}" to ${ThisModel.modelName}.${name} value`);
             }
 
             const throughModelName = field.through || m2mName(ThisModel.modelName, name);
@@ -247,7 +247,7 @@ const Model = class Model {
     static create(userProps) {
         const props = Object.assign({}, userProps);
 
-        const relations = {};
+        const m2mRelations = {};
 
         const declaredFieldNames = Object.keys(this.fields);
         const declaredVirtualFieldNames = Object.keys(this.virtualFields);
@@ -265,19 +265,19 @@ const Model = class Model {
             } else if (valuePassed) {
                 // If a value is supplied for a ManyToMany field,
                 // discard them from props and save for later processing.
-                relations[key] = userProps[key];
+                m2mRelations[key] = userProps[key];
                 delete props[key];
             }
         });
 
         // add backward many-many if required
         declaredVirtualFieldNames.forEach((key) => {
-            if (!relations.hasOwnProperty(key)) {
+            if (!m2mRelations.hasOwnProperty(key)) {
                 const field = this.virtualFields[key];
                 if (userProps.hasOwnProperty(key) && field instanceof ManyToMany) {
                     // If a value is supplied for a ManyToMany field,
                     // discard them from props and save for later processing.
-                    relations[key] = userProps[key];
+                    m2mRelations[key] = userProps[key];
                     delete props[key];
                 }
             }
@@ -291,7 +291,7 @@ const Model = class Model {
 
         const ModelClass = this;
         const instance = new ModelClass(newEntry);
-        instance._refreshMany2Many(relations); // eslint-disable-line no-underscore-dangle
+        instance._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
         return instance;
     }
 
@@ -477,38 +477,37 @@ const Model = class Model {
 
         const fields = ThisModel.fields;
         const virtualFields = ThisModel.virtualFields;
-        const relations = {};
+        const m2mRelations = {};
 
         // If an array of entities or id's is supplied for a
         // many-to-many related field, clear the old relations
         // and add the new ones.
         for (const mergeKey in mergeObj) { // eslint-disable-line no-restricted-syntax, guard-for-in
-            const isForwardField = fields.hasOwnProperty(mergeKey);
+            const isRealField = fields.hasOwnProperty(mergeKey);
 
-            if (isForwardField) {
+            if (isRealField) {
                 const field = fields[mergeKey];
 
                 if (field instanceof ForeignKey || field instanceof OneToOne) {
                     // update one-one/fk relations
                     mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
-                    continue; // eslint-disable-line no-continue
                 } else if (field instanceof ManyToMany) {
                     // field is forward relation
-                    relations[mergeKey] = mergeObj[mergeKey];
+                    m2mRelations[mergeKey] = mergeObj[mergeKey];
                     delete mergeObj[mergeKey];
                 }
             } else if (virtualFields.hasOwnProperty(mergeKey)) {
                 const field = virtualFields[mergeKey];
                 if (field instanceof ManyToMany) {
                     // field is backward relation
-                    relations[mergeKey] = mergeObj[mergeKey];
+                    m2mRelations[mergeKey] = mergeObj[mergeKey];
                     delete mergeObj[mergeKey];
                 }
             }
         }
 
         this._initFields(Object.assign({}, this._fields, mergeObj));
-        this._refreshMany2Many(relations); // eslint-disable-line no-underscore-dangle
+        this._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
 
         ThisModel.session.applyUpdate({
             action: UPDATE,
