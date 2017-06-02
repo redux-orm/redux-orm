@@ -7,7 +7,7 @@
     "test": "jest --config=jest.conf.json --coverage",
     "prepublish": "npm run build",
     "build": "npm run clean && babel src --out-dir lib && webpack && webpack --mode=build && jsdoc src -d docs -c ./jsdoc.conf.json --verbose",
-    "pub": "npm run build && npm version patch && npm publish && git push origin",
+    "pub": "npm run build && npm version patch && npm publish && git push origin && deploydocs",
     "lint": "eslint src",
     "deploydocs": "npm run build && gulp deploy",
     "clean": "rimraf lib && rimraf dist && rimraf docs"
