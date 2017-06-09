@@ -188,7 +188,6 @@ const Model = class Model {
      */
     _refreshMany2Many(relations) {
         const ThisModel = this.getClass();
-        const This = this;
         const fields = ThisModel.fields;
         const virtualFields = ThisModel.virtualFields;
 
@@ -217,7 +216,7 @@ const Model = class Model {
             }
 
             const currentIds = ThroughModel.filter(through =>
-                through[fromField] === This[ThisModel.idAttribute]
+                through[fromField] === this[ThisModel.idAttribute]
             ).toRefArray().map(ref => ref[toField]);
 
             const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
@@ -226,10 +225,10 @@ const Model = class Model {
                 const idsToDelete = diffActions.delete;
                 const idsToAdd = diffActions.add;
                 if (idsToDelete.length > 0) {
-                    This[name].remove(...idsToDelete);
+                    this[name].remove(...idsToDelete);
                 }
                 if (idsToAdd.length > 0) {
-                    This[name].add(...idsToAdd);
+                    this[name].add(...idsToAdd);
                 }
             }
         });
