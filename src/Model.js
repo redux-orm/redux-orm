@@ -1,5 +1,4 @@
 import forOwn from 'lodash/forOwn';
-import isArray from 'lodash/isArray';
 import uniq from 'lodash/uniq';
 
 import Session from './Session';
@@ -184,6 +183,58 @@ const Model = class Model {
     }
 
     /**
+     * Update many-many relations for model.
+     * @param relations
+     */
+    _refreshMany2Many(relations) {
+        const ThisModel = this.getClass();
+        const fields = ThisModel.fields;
+        const virtualFields = ThisModel.virtualFields;
+
+        Object.keys(relations).forEach((name) => {
+            const reverse = !fields.hasOwnProperty(name);
+            const field = virtualFields[name];
+            const values = relations[name];
+
+            const normalizedNewIds = values.map(normalizeEntity);
+            const uniqueIds = uniq(normalizedNewIds);
+
+            if (normalizedNewIds.length !== uniqueIds.length) {
+                throw new Error(`Found duplicate id(s) when passing "${normalizedNewIds}" to ${ThisModel.modelName}.${name} value`);
+            }
+
+            const throughModelName = field.through || m2mName(ThisModel.modelName, name);
+            const ThroughModel = ThisModel.session[throughModelName];
+
+            let fromField;
+            let toField;
+
+            if (!reverse) {
+                ({ from: fromField, to: toField } = field.throughFields);
+            } else {
+                ({ from: toField, to: fromField } = field.throughFields);
+            }
+
+            const currentIds = ThroughModel.filter(through =>
+                through[fromField] === this[ThisModel.idAttribute]
+            ).toRefArray().map(ref => ref[toField]);
+
+            const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
+
+            if (diffActions) {
+                const idsToDelete = diffActions.delete;
+                const idsToAdd = diffActions.add;
+                if (idsToDelete.length > 0) {
+                    this[name].remove(...idsToDelete);
+                }
+                if (idsToAdd.length > 0) {
+                    this[name].add(...idsToAdd);
+                }
+            }
+        });
+    }
+
+    /**
      * Creates a new record in the database, instantiates a {@link Model} and returns it.
      *
      * If you pass values for many-to-many fields, instances are created on the through
@@ -195,7 +246,7 @@ const Model = class Model {
     static create(userProps) {
         const props = Object.assign({}, userProps);
 
-        const m2mVals = {};
+        const m2mRelations = {};
 
         const declaredFieldNames = Object.keys(this.fields);
         const declaredVirtualFieldNames = Object.keys(this.virtualFields);
@@ -204,33 +255,28 @@ const Model = class Model {
             const field = this.fields[key];
             const valuePassed = userProps.hasOwnProperty(key);
             if (!(field instanceof ManyToMany)) {
-                if (!valuePassed && field.getDefault) {
+                if (valuePassed) {
+                    const value = userProps[key];
+                    props[key] = normalizeEntity(value);
+                } else if (field.getDefault) {
                     props[key] = field.getDefault();
                 }
             } else if (valuePassed) {
-                // forward many-many
-                const value = userProps[key];
-                props[key] = normalizeEntity(value);
-
                 // If a value is supplied for a ManyToMany field,
                 // discard them from props and save for later processing.
-                if (isArray(value)) {
-                    m2mVals[key] = value;
-                    delete props[key];
-                }
+                m2mRelations[key] = userProps[key];
+                delete props[key];
             }
         });
-        declaredVirtualFieldNames.forEach((key) => {
-            const field = this.virtualFields[key];
-            if (userProps.hasOwnProperty(key) && field instanceof ManyToMany) {
-                // backward many-many
-                const value = userProps[key];
-                props[key] = normalizeEntity(value);
 
-                // If a value is supplied for a ManyToMany field,
-                // discard them from props and save for later processing.
-                if (isArray(value)) {
-                    m2mVals[key] = value;
+        // add backward many-many if required
+        declaredVirtualFieldNames.forEach((key) => {
+            if (!m2mRelations.hasOwnProperty(key)) {
+                const field = this.virtualFields[key];
+                if (userProps.hasOwnProperty(key) && field instanceof ManyToMany) {
+                    // If a value is supplied for a ManyToMany field,
+                    // discard them from props and save for later processing.
+                    m2mRelations[key] = userProps[key];
                     delete props[key];
                 }
             }
@@ -244,17 +290,7 @@ const Model = class Model {
 
         const ModelClass = this;
         const instance = new ModelClass(newEntry);
-
-        forOwn(m2mVals, (value, key) => {
-            const ids = value.map(normalizeEntity);
-            const uniqueIds = uniq(ids);
-
-            if (ids.length !== uniqueIds.length) {
-                throw new Error(`Found duplicate id(s) when passing "${ids}" to ${this.modelName}.${key} value on create`);
-            }
-            instance[key].add(...ids);
-        });
-
+        instance._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
         return instance;
     }
 
@@ -440,13 +476,13 @@ const Model = class Model {
 
         const fields = ThisModel.fields;
         const virtualFields = ThisModel.virtualFields;
+        const m2mRelations = {};
 
         // If an array of entities or id's is supplied for a
         // many-to-many related field, clear the old relations
         // and add the new ones.
         for (const mergeKey in mergeObj) { // eslint-disable-line no-restricted-syntax, guard-for-in
             const isRealField = fields.hasOwnProperty(mergeKey);
-            let m2mField;
 
             if (isRealField) {
                 const field = fields[mergeKey];
@@ -454,58 +490,23 @@ const Model = class Model {
                 if (field instanceof ForeignKey || field instanceof OneToOne) {
                     // update one-one/fk relations
                     mergeObj[mergeKey] = normalizeEntity(mergeObj[mergeKey]);
-                    continue; // eslint-disable-line no-continue
                 } else if (field instanceof ManyToMany) {
                     // field is forward relation
-                    m2mField = field;
+                    m2mRelations[mergeKey] = mergeObj[mergeKey];
+                    delete mergeObj[mergeKey];
                 }
-            }
-
-            if (virtualFields.hasOwnProperty(mergeKey)) {
+            } else if (virtualFields.hasOwnProperty(mergeKey)) {
                 const field = virtualFields[mergeKey];
                 if (field instanceof ManyToMany) {
                     // field is backward relation
-                    m2mField = field;
+                    m2mRelations[mergeKey] = mergeObj[mergeKey];
+                    delete mergeObj[mergeKey];
                 }
-            }
-
-            if (m2mField) {
-                // update many-many relations
-                const throughModelName = m2mField.through || m2mName(ThisModel.modelName, mergeKey);
-                const ThroughModel = ThisModel.session[throughModelName];
-
-                let fromField;
-                let toField;
-
-                if (isRealField) {
-                    ({ from: fromField, to: toField } = m2mField.throughFields);
-                } else {
-                    ({ from: toField, to: fromField } = m2mField.throughFields);
-                }
-
-                const currentIds = ThroughModel.filter(through =>
-                    through[fromField] === this[ThisModel.idAttribute]
-                ).toRefArray().map(ref => ref[toField]);
-
-                const normalizedNewIds = mergeObj[mergeKey].map(normalizeEntity);
-                const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
-
-                if (diffActions) {
-                    const idsToDelete = diffActions.delete;
-                    const idsToAdd = diffActions.add;
-                    if (idsToDelete.length > 0) {
-                        this[mergeKey].remove(...idsToDelete);
-                    }
-                    if (idsToAdd.length > 0) {
-                        this[mergeKey].add(...idsToAdd);
-                    }
-                }
-
-                delete mergeObj[mergeKey];
             }
         }
 
         this._initFields(Object.assign({}, this._fields, mergeObj));
+        this._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
 
         ThisModel.session.applyUpdate({
             action: UPDATE,
