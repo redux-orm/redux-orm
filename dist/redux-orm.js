@@ -8204,10 +8204,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _forOwn2 = _interopRequireDefault(_forOwn);
 	
-	var _isArray = __webpack_require__(105);
-	
-	var _isArray2 = _interopRequireDefault(_isArray);
-	
 	var _uniq = __webpack_require__(263);
 	
 	var _uniq2 = _interopRequireDefault(_uniq);
@@ -8384,6 +8380,72 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	
 	    /**
+	     * Update many-many relations for model.
+	     * @param relations
+	     */
+	
+	
+	    Model.prototype._refreshMany2Many = function _refreshMany2Many(relations) {
+	        var _this2 = this;
+	
+	        var ThisModel = this.getClass();
+	        var fields = ThisModel.fields;
+	        var virtualFields = ThisModel.virtualFields;
+	
+	        (0, _keys2.default)(relations).forEach(function (name) {
+	            var reverse = !fields.hasOwnProperty(name);
+	            var field = virtualFields[name];
+	            var values = relations[name];
+	
+	            var normalizedNewIds = values.map(_utils.normalizeEntity);
+	            var uniqueIds = (0, _uniq2.default)(normalizedNewIds);
+	
+	            if (normalizedNewIds.length !== uniqueIds.length) {
+	                throw new Error('Found duplicate id(s) when passing "' + normalizedNewIds + '" to ' + ThisModel.modelName + '.' + name + ' value');
+	            }
+	
+	            var throughModelName = field.through || (0, _utils.m2mName)(ThisModel.modelName, name);
+	            var ThroughModel = ThisModel.session[throughModelName];
+	
+	            var fromField = void 0;
+	            var toField = void 0;
+	
+	            if (!reverse) {
+	                var _field$throughFields = field.throughFields;
+	                fromField = _field$throughFields.from;
+	                toField = _field$throughFields.to;
+	            } else {
+	                var _field$throughFields2 = field.throughFields;
+	                toField = _field$throughFields2.from;
+	                fromField = _field$throughFields2.to;
+	            }
+	
+	            var currentIds = ThroughModel.filter(function (through) {
+	                return through[fromField] === _this2[ThisModel.idAttribute];
+	            }).toRefArray().map(function (ref) {
+	                return ref[toField];
+	            });
+	
+	            var diffActions = (0, _utils.arrayDiffActions)(currentIds, normalizedNewIds);
+	
+	            if (diffActions) {
+	                var idsToDelete = diffActions.delete;
+	                var idsToAdd = diffActions.add;
+	                if (idsToDelete.length > 0) {
+	                    var _name;
+	
+	                    (_name = _this2[name]).remove.apply(_name, (0, _toConsumableArray3.default)(idsToDelete));
+	                }
+	                if (idsToAdd.length > 0) {
+	                    var _name2;
+	
+	                    (_name2 = _this2[name]).add.apply(_name2, (0, _toConsumableArray3.default)(idsToAdd));
+	                }
+	            }
+	        });
+	    };
+	
+	    /**
 	     * Creates a new record in the database, instantiates a {@link Model} and returns it.
 	     *
 	     * If you pass values for many-to-many fields, instances are created on the through
@@ -8395,46 +8457,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	    Model.create = function create(userProps) {
-	        var _this2 = this;
+	        var _this3 = this;
 	
 	        var props = (0, _assign2.default)({}, userProps);
 	
-	        var m2mVals = {};
+	        var m2mRelations = {};
 	
 	        var declaredFieldNames = (0, _keys2.default)(this.fields);
 	        var declaredVirtualFieldNames = (0, _keys2.default)(this.virtualFields);
 	
 	        declaredFieldNames.forEach(function (key) {
-	            var field = _this2.fields[key];
+	            var field = _this3.fields[key];
 	            var valuePassed = userProps.hasOwnProperty(key);
 	            if (!(field instanceof _fields.ManyToMany)) {
-	                if (!valuePassed && field.getDefault) {
+	                if (valuePassed) {
+	                    var value = userProps[key];
+	                    props[key] = (0, _utils.normalizeEntity)(value);
+	                } else if (field.getDefault) {
 	                    props[key] = field.getDefault();
 	                }
 	            } else if (valuePassed) {
-	                // forward many-many
-	                var value = userProps[key];
-	                props[key] = (0, _utils.normalizeEntity)(value);
-	
 	                // If a value is supplied for a ManyToMany field,
 	                // discard them from props and save for later processing.
-	                if ((0, _isArray2.default)(value)) {
-	                    m2mVals[key] = value;
-	                    delete props[key];
-	                }
+	                m2mRelations[key] = userProps[key];
+	                delete props[key];
 	            }
 	        });
-	        declaredVirtualFieldNames.forEach(function (key) {
-	            var field = _this2.virtualFields[key];
-	            if (userProps.hasOwnProperty(key) && field instanceof _fields.ManyToMany) {
-	                // backward many-many
-	                var value = userProps[key];
-	                props[key] = (0, _utils.normalizeEntity)(value);
 	
-	                // If a value is supplied for a ManyToMany field,
-	                // discard them from props and save for later processing.
-	                if ((0, _isArray2.default)(value)) {
-	                    m2mVals[key] = value;
+	        // add backward many-many if required
+	        declaredVirtualFieldNames.forEach(function (key) {
+	            if (!m2mRelations.hasOwnProperty(key)) {
+	                var field = _this3.virtualFields[key];
+	                if (userProps.hasOwnProperty(key) && field instanceof _fields.ManyToMany) {
+	                    // If a value is supplied for a ManyToMany field,
+	                    // discard them from props and save for later processing.
+	                    m2mRelations[key] = userProps[key];
 	                    delete props[key];
 	                }
 	            }
@@ -8448,19 +8505,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	        var ModelClass = this;
 	        var instance = new ModelClass(newEntry);
-	
-	        (0, _forOwn2.default)(m2mVals, function (value, key) {
-	            var _instance$key;
-	
-	            var ids = value.map(_utils.normalizeEntity);
-	            var uniqueIds = (0, _uniq2.default)(ids);
-	
-	            if (ids.length !== uniqueIds.length) {
-	                throw new Error('Found duplicate id(s) when passing "' + ids + '" to ' + _this2.modelName + '.' + key + ' value on create');
-	            }
-	            (_instance$key = instance[key]).add.apply(_instance$key, (0, _toConsumableArray3.default)(ids));
-	        });
-	
+	        instance._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
 	        return instance;
 	    };
 	
@@ -8593,7 +8638,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @return {string} A string representation of this {@link Model} instance.
 	     */
 	    Model.prototype.toString = function toString() {
-	        var _this3 = this;
+	        var _this4 = this;
 	
 	        var ThisModel = this.getClass();
 	        var className = ThisModel.modelName;
@@ -8601,12 +8646,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var fields = fieldNames.map(function (fieldName) {
 	            var field = ThisModel.fields[fieldName];
 	            if (field instanceof _fields.ManyToMany) {
-	                var ids = _this3[fieldName].toModelArray().map(function (model) {
+	                var ids = _this4[fieldName].toModelArray().map(function (model) {
 	                    return model.getId();
 	                });
 	                return fieldName + ': [' + ids.join(', ') + ']';
 	            }
-	            var val = _this3._fields[fieldName];
+	            var val = _this4._fields[fieldName];
 	            return fieldName + ': ' + val;
 	        }).join(', ');
 	        return className + ': {' + fields + '}';
@@ -8650,13 +8695,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	    Model.prototype.update = function update(userMergeObj) {
-	        var _this4 = this;
-	
 	        var ThisModel = this.getClass();
 	        var mergeObj = (0, _assign2.default)({}, userMergeObj);
 	
 	        var fields = ThisModel.fields;
 	        var virtualFields = ThisModel.virtualFields;
+	        var m2mRelations = {};
 	
 	        // If an array of entities or id's is supplied for a
 	        // many-to-many related field, clear the old relations
@@ -8664,7 +8708,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        for (var mergeKey in mergeObj) {
 	            // eslint-disable-line no-restricted-syntax, guard-for-in
 	            var isRealField = fields.hasOwnProperty(mergeKey);
-	            var m2mField = void 0;
 	
 	            if (isRealField) {
 	                var field = fields[mergeKey];
@@ -8672,70 +8715,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	                if (field instanceof _fields.ForeignKey || field instanceof _fields.OneToOne) {
 	                    // update one-one/fk relations
 	                    mergeObj[mergeKey] = (0, _utils.normalizeEntity)(mergeObj[mergeKey]);
-	                    continue; // eslint-disable-line no-continue
 	                } else if (field instanceof _fields.ManyToMany) {
 	                    // field is forward relation
-	                    m2mField = field;
+	                    m2mRelations[mergeKey] = mergeObj[mergeKey];
+	                    delete mergeObj[mergeKey];
 	                }
-	            }
-	
-	            if (virtualFields.hasOwnProperty(mergeKey)) {
+	            } else if (virtualFields.hasOwnProperty(mergeKey)) {
 	                var _field = virtualFields[mergeKey];
 	                if (_field instanceof _fields.ManyToMany) {
 	                    // field is backward relation
-	                    m2mField = _field;
-	                }
-	            }
-	
-	            if (m2mField) {
-	                (function () {
-	                    // update many-many relations
-	                    var throughModelName = m2mField.through || (0, _utils.m2mName)(ThisModel.modelName, mergeKey);
-	                    var ThroughModel = ThisModel.session[throughModelName];
-	
-	                    var fromField = void 0;
-	                    var toField = void 0;
-	
-	                    if (isRealField) {
-	                        var _m2mField$throughFiel = m2mField.throughFields;
-	                        fromField = _m2mField$throughFiel.from;
-	                        toField = _m2mField$throughFiel.to;
-	                    } else {
-	                        var _m2mField$throughFiel2 = m2mField.throughFields;
-	                        toField = _m2mField$throughFiel2.from;
-	                        fromField = _m2mField$throughFiel2.to;
-	                    }
-	
-	                    var currentIds = ThroughModel.filter(function (through) {
-	                        return through[fromField] === _this4[ThisModel.idAttribute];
-	                    }).toRefArray().map(function (ref) {
-	                        return ref[toField];
-	                    });
-	
-	                    var normalizedNewIds = mergeObj[mergeKey].map(_utils.normalizeEntity);
-	                    var diffActions = (0, _utils.arrayDiffActions)(currentIds, normalizedNewIds);
-	
-	                    if (diffActions) {
-	                        var idsToDelete = diffActions.delete;
-	                        var idsToAdd = diffActions.add;
-	                        if (idsToDelete.length > 0) {
-	                            var _mergeKey;
-	
-	                            (_mergeKey = _this4[mergeKey]).remove.apply(_mergeKey, (0, _toConsumableArray3.default)(idsToDelete));
-	                        }
-	                        if (idsToAdd.length > 0) {
-	                            var _mergeKey2;
-	
-	                            (_mergeKey2 = _this4[mergeKey]).add.apply(_mergeKey2, (0, _toConsumableArray3.default)(idsToAdd));
-	                        }
-	                    }
-	
+	                    m2mRelations[mergeKey] = mergeObj[mergeKey];
 	                    delete mergeObj[mergeKey];
-	                })();
+	                }
 	            }
 	        }
 	
 	        this._initFields((0, _assign2.default)({}, this._fields, mergeObj));
+	        this._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
 	
 	        ThisModel.session.applyUpdate({
 	            action: _constants.UPDATE,
