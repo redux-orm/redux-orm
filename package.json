@@ -1,6 +1,6 @@
 {
   "name": "redux-orm",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "Simple ORM to manage and query your state trees",
   "main": "lib/index.js",
   "scripts": {
