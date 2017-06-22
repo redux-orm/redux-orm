@@ -149,5 +149,14 @@ describe('Table', () => {
             const result = table.query(state, clauses);
             expect(result.map(row => row.data)).toEqual(['awesomedata', 'verycooldata!']);
         });
+
+        it('query works with an id filter for a row which is not in the current result set', () => {
+            const clauses = [
+              { type: FILTER, payload: row => row.id !== 1 },
+              { type: FILTER, payload: { id: 1 } },
+            ];
+            const result = table.query(state, clauses);
+            expect(result).toHaveLength(0);
+        });
     });
 });

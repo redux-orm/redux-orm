@@ -103,14 +103,6 @@ const Table = class Table {
         return clauses.reduce((rows, { type, payload }) => {
             switch (type) {
             case FILTER: {
-                if (payload.hasOwnProperty(this.idAttribute) && payload[this.idAttribute]) {
-                    // Payload specified a primary key; Since that is unique, we can directly
-                    // return that.
-                    const id = payload[this.idAttribute];
-                    return this.idExists(branch, id)
-                        ? [this.accessId(branch, payload[this.idAttribute])]
-                        : [];
-                }
                 return filter(rows, payload);
             }
             case EXCLUDE: {
