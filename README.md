@@ -528,9 +528,9 @@ fix for filter/query [#99](https://github.com/tommikaikkonen/redux-orm/issues/99
 fix for many-many updates [#136](https://github.com/tommikaikkonen/redux-orm/issues/136)
 
 ### 0.9.1
-added 'upsert' method to Model (insert or update behaviour)
-major updates for tests
-CI integration
+- added 'upsert' method to Model (insert or update behaviour)
+- major updates for tests
+- CI integration
 
 ### 0.9.0
 
