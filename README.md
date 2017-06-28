@@ -521,6 +521,17 @@ session.Book.create({id: 5, name: 'Refactoring', release_year: 1999});
 
 Minor changes before 1.0.0 can include breaking changes.
 
+### 0.9.4
+fix for filter/query [#99](https://github.com/tommikaikkonen/redux-orm/issues/99)
+
+### 0.9.2 - 0.9.3
+fix for many-many updates [#136](https://github.com/tommikaikkonen/redux-orm/issues/136)
+
+### 0.9.1
+added 'upsert' method to Model (insert or update behaviour)
+major updates for tests
+CI integration
+
 ### 0.9.0
 
 A lot. See [the migration guide](https://github.com/tommikaikkonen/redux-orm/wiki/0.9-Migration-Guide).
