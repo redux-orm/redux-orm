@@ -1,6 +1,7 @@
 import reject from 'lodash/reject';
 import filter from 'lodash/filter';
 import orderBy from 'lodash/orderBy';
+import sortBy from 'lodash/sortBy';
 import ops from 'immutable-ops';
 
 import { FILTER, EXCLUDE, ORDER_BY } from '../constants';
@@ -100,15 +101,29 @@ const Table = class Table {
     }
 
     query(branch, clauses) {
-        return clauses.reduce((rows, { type, payload }) => {
+        const optimizedClauses = sortBy(clauses, ({ type, payload }) => {
+            if (type === FILTER && payload.hasOwnProperty(this.idAttribute)) {
+                return 1;
+            }
+
+            if (type === FILTER || type === EXCLUDE) {
+                return 2;
+            }
+
+            return 3;
+        });
+
+        return optimizedClauses.reduce((rows, { type, payload }, index) => {
             switch (type) {
             case FILTER: {
-                if (payload.hasOwnProperty(this.idAttribute) && payload[this.idAttribute]) {
+                const { idAttribute } = this;
+                const id = payload[idAttribute];
+
+                if (index === 0 && payload.hasOwnProperty(idAttribute) && id !== null && id !== undefined) {
                     // Payload specified a primary key; Since that is unique, we can directly
                     // return that.
-                    const id = payload[this.idAttribute];
                     return this.idExists(branch, id)
-                        ? [this.accessId(branch, payload[this.idAttribute])]
+                        ? [this.accessId(branch, id)]
                         : [];
                 }
                 return filter(rows, payload);
