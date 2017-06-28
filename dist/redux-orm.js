@@ -75,7 +75,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _Session2 = _interopRequireDefault(_Session);
 	
-	var _redux = __webpack_require__(307);
+	var _redux = __webpack_require__(309);
 	
 	var _fields = __webpack_require__(277);
 	
@@ -10217,7 +10217,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _fields = __webpack_require__(277);
 	
-	var _redux = __webpack_require__(307);
+	var _redux = __webpack_require__(309);
 	
 	var _utils = __webpack_require__(200);
 	
@@ -10802,6 +10802,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _orderBy2 = _interopRequireDefault(_orderBy);
 	
+	var _sortBy = __webpack_require__(307);
+	
+	var _sortBy2 = _interopRequireDefault(_sortBy);
+	
 	var _immutableOps = __webpack_require__(224);
 	
 	var _immutableOps2 = _interopRequireDefault(_immutableOps);
@@ -10913,18 +10917,36 @@ return /******/ (function(modules) { // webpackBootstrap
 	    Table.prototype.query = function query(branch, clauses) {
 	        var _this2 = this;
 	
-	        return clauses.reduce(function (rows, _ref) {
+	        var optimizedClauses = (0, _sortBy2.default)(clauses, function (_ref) {
 	            var type = _ref.type,
 	                payload = _ref.payload;
+	
+	            if (type === _constants.FILTER && payload.hasOwnProperty(_this2.idAttribute)) {
+	                return 1;
+	            }
+	
+	            if (type === _constants.FILTER || type === _constants.EXCLUDE) {
+	                return 2;
+	            }
+	
+	            return 3;
+	        });
+	
+	        return optimizedClauses.reduce(function (rows, _ref2, index) {
+	            var type = _ref2.type,
+	                payload = _ref2.payload;
 	
 	            switch (type) {
 	                case _constants.FILTER:
 	                    {
-	                        if (payload.hasOwnProperty(_this2.idAttribute) && payload[_this2.idAttribute]) {
+	                        var idAttribute = _this2.idAttribute;
+	
+	                        var id = payload[idAttribute];
+	
+	                        if (index === 0 && payload.hasOwnProperty(idAttribute) && id !== null && id !== undefined) {
 	                            // Payload specified a primary key; Since that is unique, we can directly
 	                            // return that.
-	                            var id = payload[_this2.idAttribute];
-	                            return _this2.idExists(branch, id) ? [_this2.accessId(branch, payload[_this2.idAttribute])] : [];
+	                            return _this2.idExists(branch, id) ? [_this2.accessId(branch, id)] : [];
 	                        }
 	                        return (0, _filter2.default)(rows, payload);
 	                    }
@@ -10953,9 +10975,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	
 	    Table.prototype.getEmptyState = function getEmptyState() {
-	        var _ref2;
+	        var _ref3;
 	
-	        return _ref2 = {}, (0, _defineProperty3.default)(_ref2, this.arrName, []), (0, _defineProperty3.default)(_ref2, this.mapName, {}), (0, _defineProperty3.default)(_ref2, 'meta', {}), _ref2;
+	        return _ref3 = {}, (0, _defineProperty3.default)(_ref3, this.arrName, []), (0, _defineProperty3.default)(_ref3, this.mapName, {}), (0, _defineProperty3.default)(_ref3, 'meta', {}), _ref3;
 	    };
 	
 	    Table.prototype.setMeta = function setMeta(tx, branch, key, value) {
@@ -11589,6 +11611,96 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 307 */
 /***/ (function(module, exports, __webpack_require__) {
 
+	var baseFlatten = __webpack_require__(258),
+	    baseOrderBy = __webpack_require__(302),
+	    baseRest = __webpack_require__(247),
+	    isIterateeCall = __webpack_require__(308);
+	
+	/**
+	 * Creates an array of elements, sorted in ascending order by the results of
+	 * running each element in a collection thru each iteratee. This method
+	 * performs a stable sort, that is, it preserves the original sort order of
+	 * equal elements. The iteratees are invoked with one argument: (value).
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.1.0
+	 * @category Collection
+	 * @param {Array|Object} collection The collection to iterate over.
+	 * @param {...(Function|Function[])} [iteratees=[_.identity]]
+	 *  The iteratees to sort by.
+	 * @returns {Array} Returns the new sorted array.
+	 * @example
+	 *
+	 * var users = [
+	 *   { 'user': 'fred',   'age': 48 },
+	 *   { 'user': 'barney', 'age': 36 },
+	 *   { 'user': 'fred',   'age': 40 },
+	 *   { 'user': 'barney', 'age': 34 }
+	 * ];
+	 *
+	 * _.sortBy(users, [function(o) { return o.user; }]);
+	 * // => objects for [['barney', 36], ['barney', 34], ['fred', 48], ['fred', 40]]
+	 *
+	 * _.sortBy(users, ['user', 'age']);
+	 * // => objects for [['barney', 34], ['barney', 36], ['fred', 40], ['fred', 48]]
+	 */
+	var sortBy = baseRest(function(collection, iteratees) {
+	  if (collection == null) {
+	    return [];
+	  }
+	  var length = iteratees.length;
+	  if (length > 1 && isIterateeCall(collection, iteratees[0], iteratees[1])) {
+	    iteratees = [];
+	  } else if (length > 2 && isIterateeCall(iteratees[0], iteratees[1], iteratees[2])) {
+	    iteratees = [iteratees[0]];
+	  }
+	  return baseOrderBy(collection, baseFlatten(iteratees, 1), []);
+	});
+	
+	module.exports = sortBy;
+
+
+/***/ }),
+/* 308 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var eq = __webpack_require__(128),
+	    isArrayLike = __webpack_require__(119),
+	    isIndex = __webpack_require__(109),
+	    isObject = __webpack_require__(91);
+	
+	/**
+	 * Checks if the given arguments are from an iteratee call.
+	 *
+	 * @private
+	 * @param {*} value The potential iteratee value argument.
+	 * @param {*} index The potential iteratee index or key argument.
+	 * @param {*} object The potential iteratee object argument.
+	 * @returns {boolean} Returns `true` if the arguments are from an iteratee call,
+	 *  else `false`.
+	 */
+	function isIterateeCall(value, index, object) {
+	  if (!isObject(object)) {
+	    return false;
+	  }
+	  var type = typeof index;
+	  if (type == 'number'
+	        ? (isArrayLike(object) && isIndex(index, object.length))
+	        : (type == 'string' && index in object)
+	      ) {
+	    return eq(object[index], value);
+	  }
+	  return false;
+	}
+	
+	module.exports = isIterateeCall;
+
+
+/***/ }),
+/* 309 */
+/***/ (function(module, exports, __webpack_require__) {
+
 	'use strict';
 	
 	Object.defineProperty(exports, "__esModule", {
@@ -11598,9 +11710,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	exports.defaultUpdater = defaultUpdater;
 	exports.createSelector = createSelector;
 	
-	var _reselect = __webpack_require__(308);
+	var _reselect = __webpack_require__(310);
 	
-	var _memoize = __webpack_require__(309);
+	var _memoize = __webpack_require__(311);
 	
 	function defaultUpdater(session, action) {
 	    session.sessionBoundModels.forEach(function (modelClass) {
@@ -11674,7 +11786,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ }),
-/* 308 */
+/* 310 */
 /***/ (function(module, exports) {
 
 	'use strict';
@@ -11790,7 +11902,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ }),
-/* 309 */
+/* 311 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
