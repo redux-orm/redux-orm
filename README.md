@@ -295,7 +295,7 @@ class App extends PureComponent {
 
 function mapStateToProps(state) {
     return {
-        authors: authorSelector(state.orm),
+        authors: authorSelector(state.db),
     };
 }
 
