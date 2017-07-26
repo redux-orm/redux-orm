@@ -78,6 +78,48 @@ describe('Table', () => {
             });
         });
 
+
+        it("correctly inserts multiple entries with the same ID immutably", () => {
+            const firstEntry = {
+                id: 3,
+                name: 'Dan #1',
+                age : 24
+            };
+
+            const secondEntry = {
+                id: 3,
+                name: 'Dan #2',
+                location : "London"
+            };
+
+            const {state : firstState, created : firstCreated} = table.insert(txInfo, state, firstEntry);
+            const {state : secondState, created : secondCreated} = table.insert(txInfo, firstState, secondEntry);
+
+            expect(secondState).to.not.equal(state);
+            expect(secondState.items).to.deep.equal([0, 1, 2, 3]);
+            expect(secondState.itemsById).to.deep.equal({
+                0: {
+                    id: 0,
+                    data: 'cooldata',
+                },
+                1: {
+                    id: 1,
+                    data: 'verycooldata!',
+                },
+                2: {
+                    id: 2,
+                    data: 'awesomedata',
+                },
+                3: {
+                    id: 3,
+                    name: 'Dan #2',
+                    age : 24,
+                    location : "London"
+                },
+            });
+        });
+
+
         it('correctly updates entries with a merging object', () => {
             const toMergeObj = { data: 'modifiedData' };
             const rowsToUpdate = [state.itemsById[1], state.itemsById[2]];
