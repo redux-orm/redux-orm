@@ -235,8 +235,8 @@ Use memoized selectors to make queries into the state. `redux-orm` uses smart me
 
 ```javascript
 // selectors.js
-import schema from './schema';
-const authorSelector = schema.createSelector(session => {
+import orm from './orm';
+const authorSelector = createSelector(orm, session => {
     return session.Author.map(author => {
 
         // Returns a reference to the raw object in the store,
@@ -407,6 +407,7 @@ See the full documentation for `Model` [here](http://tommikaikkonen.github.io/re
 - `hasId(id)`: returns a boolean indicating if entity with id `id` exists in the state.
 - `withId(id)`: gets the Model instance with id `id`.
 - `get(matchObj)`: to get a Model instance based on matching properties in `matchObj`,
+- `hasProps(matchObj)`: returns a boolean indictating if entity with given props `matchObj` exists in the state.
 - `create(props)`: to create a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`.
 - `upsert(props)`: to create a new Model instance with `props` or to update a existing Model with same `id` - by other words its **create or update** behaviour.
 

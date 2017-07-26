@@ -345,6 +345,18 @@ const Model = class Model {
         return rows.length === 1;
     }
 
+    /**
+    * Returns a boolean indictating if an entity has all the properties
+    * given in the `lookupObj`
+    *
+    * @param  {Object} lookupObj - the properties used to match a single entity.
+    * @return {Boolean} a boolean indicating if entity with `id` exists in the state
+    */
+    static hasProps(lookupObj) {
+        const rows = this._findDatabaseRows(lookupObj);
+        return rows.length === 1;
+    }
+
     static _findDatabaseRows(lookupObj) {
         const ModelClass = this;
         return ModelClass

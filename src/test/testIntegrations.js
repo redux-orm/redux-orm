@@ -59,6 +59,13 @@ describe('Integration', () => {
             expect(Book.hasId()).toBe(false);
         });
 
+        it('Models correctly indictage on matching properties', () => {
+            const { Book } = session;
+            expect(Book.hasProps({ name: 'Tommi Kaikkonen - an Autobiography' })).to.be.true;
+            expect(Book.hasProps({ name: 'Clean Code' })).to.be.true;
+            expect(Book.hasProps({ name: 'Ember Data - a Framework Better Than Redux' })).to.be.false;
+        });
+
         it('Models correctly create new instances', () => {
             const { Book } = session;
             const book = Book.create({
