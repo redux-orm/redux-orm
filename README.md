@@ -126,7 +126,8 @@ const updatedDBState = session.state;
 To integrate Redux-ORM with Redux at the most basic level, you can define a reducer that instantiates a session from the database state held in the Redux atom, then when you've applied all of your updates, you can return the next state from the session.
 
 ```javascript
-import { orm } from './models';
+import orm from './orm';
+
 function ormReducer(dbState, action) {
     const sess = orm.session(dbState);
 
@@ -202,7 +203,7 @@ To get a reducer for Redux that calls these `reducer` methods:
 
 ```javascript
 import { createReducer } from 'redux-orm';
-import { orm } from './models';
+import orm from './orm';
 
 const reducer = createReducer(orm);
 ```
@@ -235,20 +236,32 @@ Use memoized selectors to make queries into the state. `redux-orm` uses smart me
 
 ```javascript
 // selectors.js
-import schema from './schema';
-const authorSelector = schema.createSelector(session => {
-    return session.Author.map(author => {
+import { createSelector } from 'redux-orm';
+import orm from './orm';
 
-        // Returns a reference to the raw object in the store,
-        // so it doesn't include any reverse or m2m fields.
-        const obj = author.ref;
-        // Object.keys(obj) === ['id', 'name']
+const dbStateSelector = state => state.db;
 
-        return Object.assign({}, obj, {
-            books: author.books.withRefs.map(book => book.name),
+const authorSelector = createSelector(
+    orm,
+    // The first input selector should always select the db-state.
+    // Behind the scenes, `createSelector` begins a Redux-ORM session
+    // with the value returned by `dbStateSelector` and passes
+    // that Session instance as an argument instead.
+    dbStateSelector,
+    session => {
+        return session.Author.all().toModelArray().map(author => {
+
+            // Returns a reference to the raw object in the store,
+            // so it doesn't include any reverse or m2m fields.
+            const obj = author.ref;
+            // Object.keys(obj) === ['id', 'name']
+
+            return Object.assign({}, obj, {
+                books: author.books.toRefArray().map(book => book.name),
+            });
         });
-    });
-});
+    }
+);
 
 // Will result in something like this when run:
 // [
@@ -295,7 +308,7 @@ class App extends PureComponent {
 
 function mapStateToProps(state) {
     return {
-        authors: authorSelector(state.db),
+        authors: authorSelector(state),
     };
 }
 
@@ -394,7 +407,7 @@ Instance methods:
 ### Redux Integration
 
 - `createReducer(orm: ORM)`: returns a reducer function that can be plugged into Redux. The reducer will return the next state of the database given the provided action. You need to register your models before calling this.
-- `createSelector(orm: ORM, [...inputSelectors], selectorFunc)`: returns a memoized selector function for `selectorFunc`. `selectorFunc` receives `session` as the first argument, followed by any inputs from `inputSelectors`. Read the full documentation for details.
+- `createSelector(orm: ORM, [...inputSelectors], selectorFunc)`: returns a memoized selector function for `selectorFunc`. `selectorFunc` receives `session` as the first argument, followed by any inputs from `inputSelectors`. Note that the first inputSelector must return the db-state to create a session from. Read the full documentation for details.
 
 ### Model
 
