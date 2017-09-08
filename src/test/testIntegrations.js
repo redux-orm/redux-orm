@@ -800,4 +800,24 @@ describe('Big Data Test', () => {
         console.log(`Creating ${amount} objects took ${tookSeconds}s`);
         expect(tookSeconds).toBeLessThanOrEqual(3);
     });
+
+    it('looks up items by id in a large table in acceptable time', () => {
+        const session = orm.session(orm.getEmptyState());
+
+        const rowCount = 20000;
+        for (let i = 0; i < rowCount; i++) {
+            session.Item.create({ id: i, name: 'TestItem' });
+        }
+
+        const lookupCount = 10000;
+        const maxId = rowCount - 1;
+        const start = new Date().getTime();
+        for (let j = maxId; j > maxId - lookupCount; j--) {
+            session.Item.withId(j);
+        }
+        const end = new Date().getTime();
+        const tookSeconds = (end - start) / 1000;
+        console.log(`Looking up ${lookupCount} objects by id took ${tookSeconds}s`);
+        expect(tookSeconds).toBeLessThanOrEqual(3);
+    });
 });
