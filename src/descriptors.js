@@ -115,8 +115,8 @@ function manyToManyDescriptor(
             const toIds = throughQs.toRefArray().map(obj => obj[reverse ? fromFieldName : toFieldName]);
 
             const qsFromModel = reverse ? declaredFromModel : declaredToModel;
-            if (qsFromModel.idAttribute == 'name') {
-                throw new Error('"idAttribute" of Model ' + qsFromModel.modelName + ' can not be configured as "name"');
+            if (qsFromModel.idAttribute === 'name') {
+                throw new Error(`"idAttribute" of Model ${qsFromModel.modelName} can not be configured as "name"`);
             }
             const qs = qsFromModel.filter(attrs =>
                 includes(toIds, attrs[qsFromModel.idAttribute])
