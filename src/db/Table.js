@@ -119,7 +119,7 @@ const Table = class Table {
                 const { idAttribute } = this;
                 const id = payload[idAttribute];
 
-                if (index === 0 && payload.hasOwnProperty(idAttribute) && id !== null && id !== undefined && id !== "") {
+                if (index === 0 && payload.hasOwnProperty(idAttribute) && id !== null && id !== undefined && id !== '') {
                     // Payload specified a primary key; Since that is unique, we can directly
                     // return that.
                     return this.idExists(branch, id)

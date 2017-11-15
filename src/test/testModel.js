@@ -91,7 +91,7 @@ describe('Model', () => {
             };
             Tag.fields = {
                 name: attr(),
-            }
+            };
 
             const orm = new ORM();
             orm.register(Todo, Tag);
@@ -101,19 +101,18 @@ describe('Model', () => {
 
 
         it('idAttribute is name works correctly', () => {
+            const { Todo: TodoModel, Tag: TagModel } = sessionMock;
 
-            const { Todo, Tag } = sessionMock;
+            const work = TagModel.create({ name: 'work' });
+            const personal = TagModel.create({ name: 'personal' });
+            const urgent = TagModel.create({ name: 'urgent' });
 
-            const work = Tag.create({ name: 'work' });
-            const personal = Tag.create({ name: 'personal' });
-            const urgent = Tag.create({ name: 'urgent' });
-
-            const groceries = Todo.create({
+            const groceries = TodoModel.create({
                 id: 0,
                 text: 'Buy groceries',
                 tags: [work]
             });
-            const meeting = Todo.create({
+            const meeting = TodoModel.create({
                 id: 1,
                 text: 'Attend meeting',
                 tags: [work, personal, urgent]
