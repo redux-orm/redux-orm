@@ -73,7 +73,7 @@ describe('Model', () => {
         let sessionMock;
 
         beforeEach(() => {
-            Todo = class Todo extends BaseModel { };
+            Todo = class TodoModel extends BaseModel { };
             Todo.modelName = 'Todo';
             Todo.fields = {
                 id: attr(),
@@ -84,7 +84,7 @@ describe('Model', () => {
                 }),
             };
 
-            Tag = class Tag extends BaseModel { };
+            Tag = class TagModel extends BaseModel { };
             Tag.modelName = 'Tag';
             Tag.options = {
                 idAttribute: 'name',
