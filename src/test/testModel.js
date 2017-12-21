@@ -8,7 +8,7 @@ describe('Model', () => {
             // Get a fresh copy
             // of Model, so our manipulations
             // won't survive longer than each test.
-            Model = class TestModel extends BaseModel {};
+            Model = class TestModel extends BaseModel { };
             Model.modelName = 'Model';
 
             const orm = new ORM();
@@ -45,7 +45,7 @@ describe('Model', () => {
         let instance;
 
         beforeEach(() => {
-            Model = class TestModel extends BaseModel {};
+            Model = class TestModel extends BaseModel { };
             Model.modelName = 'Model';
             Model.fields = {
                 id: attr(),
@@ -64,6 +64,63 @@ describe('Model', () => {
 
         it('getClass works correctly', () => {
             expect(instance.getClass()).toBe(Model);
+        });
+    });
+
+    describe("Model options's idAttribute is 'name'", () => {
+        let Todo;
+        let Tag;
+        let sessionMock;
+
+        beforeEach(() => {
+            Todo = class TodoModel extends BaseModel { };
+            Todo.modelName = 'Todo';
+            Todo.fields = {
+                id: attr(),
+                name: attr(),
+                tags: new ManyToMany({
+                    to: 'Tag',
+                    relatedName: 'todos'
+                }),
+            };
+
+            Tag = class TagModel extends BaseModel { };
+            Tag.modelName = 'Tag';
+            Tag.options = {
+                idAttribute: 'name',
+            };
+            Tag.fields = {
+                name: attr(),
+            };
+
+            const orm = new ORM();
+            orm.register(Todo, Tag);
+            const state = orm.getEmptyState();
+            sessionMock = orm.mutableSession(state);
+        });
+
+
+        it('idAttribute is name works correctly', () => {
+            const { Todo: TodoModel, Tag: TagModel } = sessionMock;
+
+            const work = TagModel.create({ name: 'work' });
+            const personal = TagModel.create({ name: 'personal' });
+            const urgent = TagModel.create({ name: 'urgent' });
+
+            const groceries = TodoModel.create({
+                id: 0,
+                text: 'Buy groceries',
+                tags: [work]
+            });
+            const meeting = TodoModel.create({
+                id: 1,
+                text: 'Attend meeting',
+                tags: [work, personal, urgent]
+            });
+            expect(groceries.tags.toRefArray().length).toEqual(1);
+            expect(groceries.tags.toRefArray().map(tag => tag.name)).toEqual(['work']);
+            expect(meeting.tags.toRefArray().length).toEqual(3);
+            expect(meeting.tags.toRefArray().map(tag => tag.name)).toEqual(['work', 'personal', 'urgent']);
         });
     });
 });
