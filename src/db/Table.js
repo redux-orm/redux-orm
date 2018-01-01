@@ -101,31 +101,42 @@ const Table = class Table {
     }
 
     query(branch, clauses) {
-        const optimizedClauses = sortBy(clauses, ({ type, payload }) => {
-            if (type === FILTER && payload.hasOwnProperty(this.idAttribute)) {
+        if (clauses.length === 0) {
+            return this.accessList(branch);
+        }
+
+        const optimallyOrderedClauses = sortBy(clauses, (clause) => {
+            if (this._willClauseUseIndexedAttribute(clause)) {
                 return 1;
             }
 
-            if (type === FILTER || type === EXCLUDE) {
+            if (this._willClauseReduceResultSetSize(clause)) {
                 return 2;
             }
 
             return 3;
         });
 
-        return optimizedClauses.reduce((rows, { type, payload }, index) => {
+        const { idAttribute } = this;
+        const reducer = (rows, clause) => {
+            const { type, payload } = clause;
+            if (!rows) {
+                if (type === FILTER && payload.hasOwnProperty(idAttribute)) {
+                    const id = payload[idAttribute];
+                    if (id !== null && id !== undefined) {
+                        // Payload specified a primary key; Since that is
+                        // unique, we can directly return that.
+                        return this.idExists(branch, id)
+                            ? [this.accessId(branch, id)]
+                            : [];
+                    }
+                }
+
+                return reducer(this.accessList(branch), clause);
+            }
+
             switch (type) {
             case FILTER: {
-                const { idAttribute } = this;
-                const id = payload[idAttribute];
-
-                if (index === 0 && payload.hasOwnProperty(idAttribute) && id !== null && id !== undefined) {
-                    // Payload specified a primary key; Since that is unique, we can directly
-                    // return that.
-                    return this.idExists(branch, id)
-                        ? [this.accessId(branch, id)]
-                        : [];
-                }
                 return filter(rows, payload);
             }
             case EXCLUDE: {
@@ -138,7 +149,18 @@ const Table = class Table {
             default:
                 return rows;
             }
-        }, this.accessList(branch));
+        };
+
+        return optimallyOrderedClauses.reduce(reducer, undefined);
+    }
+
+    _willClauseUseIndexedAttribute(clause) {
+        return clause.type === FILTER &&
+          clause.payload.hasOwnProperty(this.idAttribute);
+    }
+
+    _willClauseReduceResultSetSize({ type }) {
+        return type === FILTER || type === EXCLUDE;
     }
 
     /**
