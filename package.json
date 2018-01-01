@@ -44,7 +44,7 @@
     "gulp-gh-pages": "^0.5.4",
     "gulp-rename": "^1.2.2",
     "jest": "^20.0.1",
-    "jsdoc": "^3.4.1",
+    "jsdoc": "^3.5.5",
     "rimraf": "^2.6.1",
     "typescript-babel-jest": "^1.0.3",
     "webpack": "^1.13.2",
