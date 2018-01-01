@@ -35,6 +35,10 @@ Or with a script tag
 - [Browser build following master](https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.js)
 - [Browser build following master (minimized)](https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.min.js)
 
+### Polyfill
+
+`redux-orm` uses some ES2015 features, such as `Set`. If you are using `redux-orm` in a pre-ES2015 environment, you should load a polyfill like [`babel-polyfill`](https://babeljs.io/docs/usage/polyfill/) before using `redux-orm`.
+
 ## Usage
 
 ### Declare Your Models
