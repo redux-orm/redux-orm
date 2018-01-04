@@ -27,8 +27,10 @@ describe('Integration', () => {
                     Book: expect.anything(),
                     Cover: expect.anything(),
                     Genre: expect.anything(),
+                    Tag: expect.anything(),
                     Author: expect.anything(),
                     BookGenres: expect.anything(),
+                    BookTags: expect.anything(),
                     Publisher: expect.anything()
                 })
             );
@@ -44,6 +46,12 @@ describe('Integration', () => {
 
             expect(state.BookGenres.items).toHaveLength(5);
             expect(Object.keys(state.BookGenres.itemsById)).toHaveLength(5);
+
+            expect(state.Tag.items).toHaveLength(4);
+            expect(Object.keys(state.Tag.itemsById)).toHaveLength(4);
+
+            expect(state.BookTags.items).toHaveLength(5);
+            expect(Object.keys(state.BookTags.itemsById)).toHaveLength(5);
 
             expect(state.Author.items).toHaveLength(3);
             expect(Object.keys(state.Author.itemsById)).toHaveLength(3);
@@ -111,7 +119,7 @@ describe('Integration', () => {
             const { Book } = session;
             const book = Book.first();
             expect(book.toString()).toBe('Book: {id: 0, name: Tommi Kaikkonen - an Autobiography, ' +
-            'releaseYear: 2050, author: 0, cover: 0, genres: [0, 1], publisher: 1}');
+            'releaseYear: 2050, author: 0, cover: 0, genres: [0, 1], tags: [Technology, Literary], publisher: 1}');
         });
 
         it('withId throws if model instance not found', () => {
@@ -161,6 +169,7 @@ describe('Integration', () => {
             const {
                 Book,
                 Genre,
+                Tag,
             } = session;
 
             // Forward (from many-to-many field declaration)
@@ -175,6 +184,18 @@ describe('Integration', () => {
             const relatedBooks = genre.books;
             expect(relatedBooks).toBeInstanceOf(QuerySet);
             expect(relatedBooks.modelClass).toBe(Book);
+
+            // Forward (from many-to-many field declaration with idAttribute is name)
+            const relatedTags = book.tags;
+            expect(relatedTags).toBeInstanceOf(QuerySet);
+            expect(relatedTags.modelClass).toBe(Tag);
+            expect(relatedTags.count()).toBe(2);
+
+            // Backward
+            const tag = Tag.first();
+            const tagRelatedBooks = tag.books;
+            expect(tagRelatedBooks).toBeInstanceOf(QuerySet);
+            expect(tagRelatedBooks.modelClass).toBe(Book);
         });
 
         it('many-to-many relationship descriptors work with a custom through model', () => {

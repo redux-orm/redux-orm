@@ -48,12 +48,28 @@ const GENRES_INITIAL = [
     },
 ];
 
+const TAGS_INITIAL = [
+    {
+        name: 'Technology',
+    },
+    {
+        name: 'Literary',
+    },
+    {
+        name: 'Natural',
+    },
+    {
+        name: 'Redux',
+    },
+];
+
 const BOOKS_INITIAL = [
     {
         name: 'Tommi Kaikkonen - an Autobiography',
         author: 0,
         cover: 0,
         genres: [0, 1],
+        tags: ['Technology', 'Literary'],
         releaseYear: 2050,
         publisher: 1,
     },
@@ -62,6 +78,7 @@ const BOOKS_INITIAL = [
         author: 1,
         cover: 1,
         genres: [2],
+        tags: ['Technology'],
         releaseYear: 2008,
         publisher: 0,
     },
@@ -70,6 +87,7 @@ const BOOKS_INITIAL = [
         author: 2,
         cover: 2,
         genres: [2, 3],
+        tags: ['Technology', 'Redux'],
         releaseYear: 2015,
         publisher: 0,
     },
@@ -94,6 +112,7 @@ export function createTestModels() {
                 author: fk('Author', 'books'),
                 cover: oneToOne('Cover'),
                 genres: many('Genre', 'books'),
+                tags: many('Tag', 'books'),
                 publisher: fk('Publisher', 'books'),
             };
         }
@@ -130,6 +149,15 @@ export function createTestModels() {
         name: attr(),
     };
 
+    const Tag = class TagModel extends Model {};
+    Tag.modelName = 'Tag';
+    Tag.options = {
+        idAttribute: 'name',
+    };
+    Tag.fields = {
+        name: attr(),
+    };
+
     const Publisher = class PublisherModel extends Model {};
     Publisher.modelName = 'Publisher';
     Publisher.fields = {
@@ -142,6 +170,7 @@ export function createTestModels() {
         Author,
         Cover,
         Genre,
+        Tag,
         Publisher,
     };
 }
@@ -153,11 +182,12 @@ export function createTestORM(customModels) {
         Author,
         Cover,
         Genre,
+        Tag,
         Publisher,
     } = models;
 
     const orm = new ORM();
-    orm.register(Book, Author, Cover, Genre, Publisher);
+    orm.register(Book, Author, Cover, Genre, Tag, Publisher);
     return orm;
 }
 
@@ -169,11 +199,12 @@ export function createTestSession() {
 export function createTestSessionWithData(customORM) {
     const orm = customORM || createTestORM();
     const state = orm.getEmptyState();
-    const { Author, Cover, Genre, Book, Publisher } = orm.mutableSession(state);
+    const { Author, Cover, Genre, Tag, Book, Publisher } = orm.mutableSession(state);
 
     AUTHORS_INITIAL.forEach(props => Author.create(props));
     COVERS_INITIAL.forEach(props => Cover.create(props));
     GENRES_INITIAL.forEach(props => Genre.create(props));
+    TAGS_INITIAL.forEach(props => Tag.create(props));
     BOOKS_INITIAL.forEach(props => Book.create(props));
     PUBLISHERS_INITIAL.forEach(props => Publisher.create(props));
 

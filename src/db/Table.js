@@ -121,7 +121,7 @@ const Table = class Table {
         const reducer = (rows, clause) => {
             const { type, payload } = clause;
             if (!rows) {
-                if (type === FILTER && payload.hasOwnProperty(idAttribute)) {
+                if (type === FILTER && typeof payload === 'object' && payload.hasOwnProperty(idAttribute)) {
                     const id = payload[idAttribute];
                     if (id !== null && id !== undefined) {
                         // Payload specified a primary key; Since that is

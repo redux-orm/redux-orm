@@ -122,6 +122,30 @@ describe('Table', () => {
             expect(result[0]).toBe(state.itemsById[1]);
         });
 
+        it('filter works correctly with "idAttribute" is "name" and filter argument is a function', () => {
+            state = deepFreeze({
+                items: ['work', 'personal', 'urgent'],
+                itemsById: {
+                    work: {
+                        name: 'work',
+                    },
+                    personal: {
+                        name: 'personal',
+                    },
+                    urgent: {
+                        name: 'urgent',
+                    },
+                },
+                meta: {},
+            });
+            table = new Table({ idAttribute: 'name' });
+            const clauses = [{ type: FILTER, payload: (attrs) => ['work', 'urgent'].indexOf(attrs[table.idAttribute]) > -1 }];
+            const result = table.query(state, clauses);
+            expect(result.length).toBe(2);
+            expect(result[0]).toBe(state.itemsById.work);
+            expect(result[1]).toBe(state.itemsById.urgent);
+        });
+
         it('orderBy works correctly with prop argument', () => {
             const clauses = [{ type: ORDER_BY, payload: [['data'], ['inc']] }];
             const result = table.query(state, clauses);
@@ -152,8 +176,8 @@ describe('Table', () => {
 
         it('query works with an id filter for a row which is not in the current result set', () => {
             const clauses = [
-              { type: FILTER, payload: row => row.id !== 1 },
-              { type: FILTER, payload: { id: 1 } },
+                { type: FILTER, payload: row => row.id !== 1 },
+                { type: FILTER, payload: { id: 1 } },
             ];
             const result = table.query(state, clauses);
             expect(result).toHaveLength(0);

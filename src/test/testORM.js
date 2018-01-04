@@ -59,6 +59,7 @@ describe('ORM', () => {
         let Author;
         let Cover;
         let Genre;
+        let Tag;
         let Publisher;
         beforeEach(() => {
             ({
@@ -66,6 +67,7 @@ describe('ORM', () => {
                 Author,
                 Cover,
                 Genre,
+                Tag,
                 Publisher,
             } = createTestModels());
 
@@ -99,7 +101,7 @@ describe('ORM', () => {
         });
 
         it('correctly sets model prototypes', () => {
-            orm.register(Book, Author, Cover, Genre, Publisher);
+            orm.register(Book, Author, Cover, Genre, Tag, Publisher);
             expect(Book.isSetUp).toBeFalsy();
 
             let coverDescriptor = Object.getOwnPropertyDescriptor(
@@ -117,6 +119,12 @@ describe('ORM', () => {
                 'genres'
             );
             expect(genresDescriptor).toBeUndefined();
+
+            let tagsDescriptor = Object.getOwnPropertyDescriptor(
+                Book.prototype,
+                'tags'
+            );
+            expect(tagsDescriptor).toBeUndefined();
 
             let publisherDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
@@ -150,6 +158,13 @@ describe('ORM', () => {
             expect(typeof genresDescriptor.get).toBe('function');
             expect(typeof genresDescriptor.set).toBe('function');
 
+            tagsDescriptor = Object.getOwnPropertyDescriptor(
+                Book.prototype,
+                'tags'
+            );
+            expect(typeof tagsDescriptor.get).toBe('function');
+            expect(typeof tagsDescriptor.set).toBe('function');
+
             publisherDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
                 'publisher'
@@ -159,7 +174,7 @@ describe('ORM', () => {
         });
 
         it('correctly gets the default state', () => {
-            orm.register(Book, Author, Cover, Genre, Publisher);
+            orm.register(Book, Author, Cover, Genre, Tag, Publisher);
             const defaultState = orm.getEmptyState();
 
             expect(defaultState).toEqual({
@@ -169,6 +184,11 @@ describe('ORM', () => {
                     meta: {},
                 },
                 BookGenres: {
+                    items: [],
+                    itemsById: {},
+                    meta: {},
+                },
+                BookTags: {
                     items: [],
                     itemsById: {},
                     meta: {},
@@ -188,6 +208,11 @@ describe('ORM', () => {
                     itemsById: {},
                     meta: {},
                 },
+                Tag: {
+                    items: [],
+                    itemsById: {},
+                    meta: {},
+                },
                 Publisher: {
                     items: [],
                     itemsById: {},
@@ -197,7 +222,7 @@ describe('ORM', () => {
         });
 
         it('correctly starts a mutating session', () => {
-            orm.register(Book, Author, Cover, Genre, Publisher);
+            orm.register(Book, Author, Cover, Genre, Tag, Publisher);
             const initialState = orm.getEmptyState();
             const session = orm.mutableSession(initialState);
             expect(session).toBeInstanceOf(Session);
