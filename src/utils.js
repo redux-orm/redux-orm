@@ -175,6 +175,15 @@ const { getBatchToken } = ops;
 function clauseFiltersByAttribute({ type, payload }, attribute) {
     if (type !== FILTER) return false;
 
+    if (typeof payload !== 'object') {
+        /**
+         * payload could also be a function in which case
+         * we would have no way of knowing what it does,
+         * so we default to false for non-objects
+         */
+        return false;
+    }
+
     if (!payload.hasOwnProperty(attribute)) return false;
     const attributeValue = payload[attribute];
     if (attributeValue === null) return false;
