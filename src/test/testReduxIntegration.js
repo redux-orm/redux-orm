@@ -6,6 +6,7 @@ describe('Redux integration', () => {
     let Book;
     let Cover;
     let Genre;
+    let Tag;
     let Author;
     let Publisher;
     let defaultState;
@@ -14,11 +15,12 @@ describe('Redux integration', () => {
             Book,
             Cover,
             Genre,
+            Tag,
             Author,
             Publisher,
         } = createTestModels());
         orm = new ORM();
-        orm.register(Book, Cover, Genre, Author, Publisher);
+        orm.register(Book, Cover, Genre, Tag, Author, Publisher);
         defaultState = orm.getEmptyState();
     });
 
@@ -27,6 +29,7 @@ describe('Redux integration', () => {
         Book.reducer = jest.fn();
         Cover.reducer = jest.fn();
         Genre.reducer = jest.fn();
+        Tag.reducer = jest.fn();
         Publisher.reducer = jest.fn();
 
         const reducer = createReducer(orm);
@@ -39,6 +42,7 @@ describe('Redux integration', () => {
         expect(Book.reducer).toHaveBeenCalledTimes(1);
         expect(Cover.reducer).toHaveBeenCalledTimes(1);
         expect(Genre.reducer).toHaveBeenCalledTimes(1);
+        expect(Tag.reducer).toHaveBeenCalledTimes(1);
         expect(Publisher.reducer).toHaveBeenCalledTimes(1);
     });
 
