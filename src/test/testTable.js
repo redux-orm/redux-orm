@@ -142,8 +142,8 @@ describe('Table', () => {
             const clauses = [{ type: FILTER, payload: (attrs) => ['work', 'urgent'].indexOf(attrs[table.idAttribute]) > -1 }];
             const result = table.query(state, clauses);
             expect(result.length).toBe(2);
-            expect(result[0]).toBe(state.itemsById['work']);
-            expect(result[1]).toBe(state.itemsById['urgent']);
+            expect(result[0]).toBe(state.itemsById.work);
+            expect(result[1]).toBe(state.itemsById.urgent);
         });
 
         it('orderBy works correctly with prop argument', () => {
