@@ -5,15 +5,18 @@ describe('QuerySet tests', () => {
     let session;
     let bookQs;
     let genreQs;
+    let tagQs;
     beforeEach(() => {
         ({ session } = createTestSessionWithData());
         bookQs = session.Book.getQuerySet();
         genreQs = session.Genre.getQuerySet();
+        tagQs = session.Tag.getQuerySet();
     });
 
     it('count works correctly', () => {
         expect(bookQs.count()).toBe(3);
         expect(genreQs.count()).toBe(4);
+        expect(tagQs.count()).toBe(4);
     });
 
     it('exists works correctly', () => {
@@ -109,6 +112,7 @@ describe('QuerySet tests', () => {
         const {
             Book,
             Genre,
+            Tag,
             Cover,
             Author,
             Publisher,
@@ -125,7 +129,7 @@ describe('QuerySet tests', () => {
         Book.querySetClass = CustomQuerySet;
 
         const orm = new ORM();
-        orm.register(Book, Genre, Cover, Author, Publisher);
+        orm.register(Book, Genre, Tag, Cover, Author, Publisher);
         const { session: sess } = createTestSessionWithData(orm);
 
         const customQs = sess.Book.getQuerySet();

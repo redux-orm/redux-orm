@@ -7,6 +7,7 @@ describe('Session', () => {
     let Book;
     let Cover;
     let Genre;
+    let Tag;
     let Author;
     let Publisher;
     let emptyState;
@@ -15,11 +16,12 @@ describe('Session', () => {
             Book,
             Cover,
             Genre,
+            Tag,
             Author,
             Publisher,
         } = createTestModels());
         orm = new ORM();
-        orm.register(Book, Cover, Genre, Author, Publisher);
+        orm.register(Book, Cover, Genre, Tag, Author, Publisher);
         emptyState = orm.getEmptyState();
     });
 
@@ -27,6 +29,7 @@ describe('Session', () => {
         expect(Book.session).toBeUndefined();
         expect(Cover.session).toBeUndefined();
         expect(Genre.session).toBeUndefined();
+        expect(Tag.session).toBeUndefined();
         expect(Cover.session).toBeUndefined();
         expect(Publisher.session).toBeUndefined();
 
@@ -35,6 +38,7 @@ describe('Session', () => {
         expect(session.Book.session).toBe(session);
         expect(session.Cover.session).toBe(session);
         expect(session.Genre.session).toBe(session);
+        expect(session.Tag.session).toBe(session);
         expect(session.Cover.session).toBe(session);
         expect(session.Publisher.session).toBe(session);
     });
@@ -45,6 +49,7 @@ describe('Session', () => {
         expect(isSubclass(session.Author, Author)).toBe(true);
         expect(isSubclass(session.Cover, Cover)).toBe(true);
         expect(isSubclass(session.Genre, Genre)).toBe(true);
+        expect(isSubclass(session.Tag, Tag)).toBe(true);
         expect(isSubclass(session.Publisher, Publisher)).toBe(true);
     });
 
@@ -110,6 +115,7 @@ describe('Session', () => {
             expect(nextState[Book.modelName]).toBe(emptyState[Book.modelName]);
             expect(nextState[Cover.modelName]).toBe(emptyState[Cover.modelName]);
             expect(nextState[Genre.modelName]).toBe(emptyState[Genre.modelName]);
+            expect(nextState[Tag.modelName]).toBe(emptyState[Tag.modelName]);
             expect(nextState[Publisher.modelName]).toBe(emptyState[Publisher.modelName]);
         });
     });
@@ -120,11 +126,12 @@ describe('Session', () => {
         const firstSession = orm.session(emptyState);
         const secondSession = orm.session(otherState);
 
-        expect(firstSession.sessionBoundModels).toHaveLength(6);
+        expect(firstSession.sessionBoundModels).toHaveLength(8);
 
         expect(firstSession.Book).not.toBe(secondSession.Book);
         expect(firstSession.Author).not.toBe(secondSession.Author);
         expect(firstSession.Genre).not.toBe(secondSession.Genre);
+        expect(firstSession.Tag).not.toBe(secondSession.Tag);
         expect(firstSession.Cover).not.toBe(secondSession.Cover);
         expect(firstSession.Publisher).not.toBe(secondSession.Publisher);
     });
