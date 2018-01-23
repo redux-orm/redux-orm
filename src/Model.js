@@ -124,8 +124,8 @@ const Model = class Model {
         return this.session.getDataForModel(this.modelName);
     }
 
-    static markAccessed() {
-        this.session.markAccessed(this);
+    static markAccessed(id) {
+        this.session.markAccessed(this.modelName, id);
     }
 
     /**

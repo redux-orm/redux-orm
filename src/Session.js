@@ -38,15 +38,25 @@ const Session = class Session {
         });
     }
 
-    markAccessed(modelName) {
-        this.getDataForModel(modelName).accessed = true;
-    }
+	markAccessed(modelName, modelIds) {
+		const data = this.getDataForModel(modelName);
+		if (!data.accessed) {
+			data.accessed = [];
+		}
+		data.accessed.push(...modelIds);
+	}
 
-    get accessedModels() {
-        return this.sessionBoundModels
-            .filter(model => !!this.getDataForModel(model.modelName).accessed)
-            .map(model => model.modelName);
-    }
+	get accessedModels() {
+		return this.sessionBoundModels
+			.filter(model => !!this.getDataForModel(model.modelName).accessed)
+			.reduce(
+				(result, model) => ({
+					...result,
+					[model.modelName]: this.getDataForModel(model.modelName).accessed
+				}),
+				{}
+			);
+	}
 
     getDataForModel(modelName) {
         if (!this.modelData[modelName]) {
@@ -79,8 +89,9 @@ const Session = class Session {
 
     query(querySpec) {
         const { table } = querySpec;
-        this.markAccessed(table);
-        return this.db.query(querySpec, this.state);
+        const result = this.db.query(querySpec, this.state);
+        this.markAccessed(table, result.rows.map(r => r.id));
+        return result;
     }
 
     // DEPRECATED AND REMOVED METHODS
