@@ -38,25 +38,25 @@ const Session = class Session {
         });
     }
 
-	markAccessed(modelName, modelIds) {
-		const data = this.getDataForModel(modelName);
-		if (!data.accessed) {
-			data.accessed = [];
-		}
-		data.accessed.push(...modelIds);
-	}
+    markAccessed(modelName, modelIds) {
+        const data = this.getDataForModel(modelName);
+        if (!data.accessed) {
+            data.accessed = [];
+        }
+        data.accessed.push(...modelIds);
+    }
 
-	get accessedModels() {
-		return this.sessionBoundModels
-			.filter(model => !!this.getDataForModel(model.modelName).accessed)
-			.reduce(
-				(result, model) => ({
-					...result,
-					[model.modelName]: this.getDataForModel(model.modelName).accessed
-				}),
-				{}
-			);
-	}
+    get accessedModels() {
+        return this.sessionBoundModels
+            .filter(model => !!this.getDataForModel(model.modelName).accessed)
+            .reduce(
+                (result, model) => ({
+                    ...result,
+                    [model.modelName]: this.getDataForModel(model.modelName).accessed,
+                }),
+                {}
+            );
+    }
 
     getDataForModel(modelName) {
         if (!this.modelData[modelName]) {

@@ -48,21 +48,21 @@ describe('Session', () => {
         expect(isSubclass(session.Publisher, Publisher)).toBe(true);
     });
 
-	it("marks accessed models", () => {
-		const session = orm.session(emptyState);
-		expect(session.accessedModels).toEqual({});
+    it('marks accessed models', () => {
+        const session = orm.session(emptyState);
+        expect(session.accessedModels).toEqual({});
 
-		session.markAccessed(Book.modelName, [0]);
+        session.markAccessed(Book.modelName, [0]);
 
-		expect(session.accessedModels).toEqual({
-			Book: [0]
-		});
+        expect(session.accessedModels).toEqual({
+            Book: [0]
+        });
 
-		session.markAccessed(Book.modelName, [1]);
-		expect(session.accessedModels).toEqual({
-			Book: [0, 1]
-		});
-	});
+        session.markAccessed(Book.modelName, [1]);
+        expect(session.accessedModels).toEqual({
+            Book: [0, 1]
+        });
+    });
 
     describe('gets the next state', () => {
         it('without any updates, the same state is returned', () => {
