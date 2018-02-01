@@ -90,9 +90,7 @@ const Session = class Session {
     query(querySpec) {
         const { table } = querySpec;
         const result = this.db.query(querySpec, this.state);
-        const { idAttribute } = this[table];
-        const modelIds = result.rows.map(r => r[idAttribute]);
-        this.markAccessed(table, modelIds);
+        this.markAccessed(table, result.rows.map(r => r[this[table].idAttribute]));
         return result;
     }
 
