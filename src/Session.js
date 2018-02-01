@@ -38,12 +38,12 @@ const Session = class Session {
         });
     }
 
-    markAccessed(modelName, modelIds) {
+    markAccessed(modelName, modelIds = []) {
         const data = this.getDataForModel(modelName);
         if (!data.accessed) {
-            data.accessed = [];
+            data.accessed = {};
         }
-        data.accessed.push(...modelIds);
+        modelIds.forEach((id) => { data.accessed[id] = true; });
     }
 
     get accessedModels() {
@@ -90,7 +90,9 @@ const Session = class Session {
     query(querySpec) {
         const { table } = querySpec;
         const result = this.db.query(querySpec, this.state);
-        this.markAccessed(table, result.rows.map(r => r.id));
+        const { idAttribute } = this[table];
+        const modelIds = result.rows.map(r => r[idAttribute]);
+        this.markAccessed(table, modelIds);
         return result;
     }
 

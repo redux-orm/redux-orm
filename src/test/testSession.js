@@ -55,12 +55,17 @@ describe('Session', () => {
         session.markAccessed(Book.modelName, [0]);
 
         expect(session.accessedModels).toEqual({
-            Book: [0]
+            Book: {
+                0: true
+            }
         });
 
         session.markAccessed(Book.modelName, [1]);
         expect(session.accessedModels).toEqual({
-            Book: [0, 1]
+            Book: {
+                0: true,
+                1: true
+            }
         });
     });
 
