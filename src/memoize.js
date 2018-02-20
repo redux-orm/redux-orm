@@ -1,11 +1,21 @@
-import values from 'lodash/values';
+import every from 'lodash/every';
 
-export function eqCheck(a, b) {
-    return a === b;
+function defaultEqualityCheck(a, b) { return a === b; }
+export const eqCheck = defaultEqualityCheck;
+
+function compareArgs(a, b, equalityCheck) {
+    return b.every((value, index) => equalityCheck(value, a[index]));
 }
 
-function shouldRun(invalidatorMap, state) {
-    return values(invalidatorMap).some(invalidate => invalidate(state));
+function accessedModelInstancesAreEqual(accessedModels, lastOrmState, nextOrmState) {
+    if (lastOrmState === null) return false;
+    return every(Object.keys(accessedModels), (modelName) => {
+        if (lastOrmState[modelName] === nextOrmState[modelName]) {
+            return true;
+        }
+        return Object.keys(accessedModels[modelName])
+            .every(id => lastOrmState[modelName].itemsById[id] === nextOrmState[modelName].itemsById[id]);
+    });
 }
 
 /**
@@ -28,7 +38,7 @@ function shouldRun(invalidatorMap, state) {
  * 3. Is the ORM state referentially equal to the previous ORM state the selector
  *    was called with? If yes, return the previous result.
  *
- * 4. Check which Model's states the selector has accessed on previous runs.
+ * 4. Check which Model's instances the selector has accessed on previous runs.
  *    Check for equality with each of those states versus their states in the
  *    previous ORM state. If all of them are equal, return the previous result.
  *
@@ -46,45 +56,33 @@ function shouldRun(invalidatorMap, state) {
  * @param  {ORM} orm - a redux-orm ORM instance
  * @return {Function} `func` memoized.
  */
-export function memoize(func, equalityCheck = eqCheck, orm) {
+export function memoize(func, equalityCheck = defaultEqualityCheck, orm) {
     let lastOrmState = null;
-    let lastResult = null;
     let lastArgs = null;
-    const modelNameToInvalidatorMap = {};
+    let lastResult = null;
+    let allAccessedModels = {};
 
     return (...args) => {
-        const [dbState, ...otherArgs] = args;
+        const [nextOrmState, ...otherArgs] = args;
 
-        const dbIsEqual = lastOrmState === dbState ||
-                           !shouldRun(modelNameToInvalidatorMap, dbState);
-
-        const argsAreEqual = lastArgs && otherArgs.every(
-            (value, index) => equalityCheck(value, lastArgs[index])
-        );
-
+        const dbIsEqual = lastOrmState === nextOrmState || accessedModelInstancesAreEqual(allAccessedModels, lastOrmState, nextOrmState);
+        const argsAreEqual = lastArgs && compareArgs(lastArgs, otherArgs, equalityCheck);
         if (dbIsEqual && argsAreEqual) {
             return lastResult;
         }
 
-        const session = orm.session(dbState);
+        const session = orm.session(nextOrmState);
         const newArgs = [session, ...otherArgs];
         const result = func(...newArgs);
 
-        // If a selector has control flow branching, different
-        // input arguments might result in a different set of
-        // accessed models. On each run, we check if any new
-        // models are accessed and add their invalidator functions.
-        Object.keys(session.accessedModels).forEach((modelName) => {
-            if (!modelNameToInvalidatorMap.hasOwnProperty(modelName)) {
-                modelNameToInvalidatorMap[modelName] = nextState =>
-                    lastOrmState[modelName] !== nextState[modelName];
-            }
-        });
-
         lastResult = result;
-        lastOrmState = dbState;
+        lastOrmState = nextOrmState;
         lastArgs = otherArgs;
 
+        allAccessedModels = {
+            ...allAccessedModels,
+            ...session.accessedModels,
+        };
         return lastResult;
     };
 }
