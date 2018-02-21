@@ -8,11 +8,11 @@ function compareArgs(a, b, equalityCheck) {
 }
 
 function accessedModelInstancesAreEqual(accessedModels, lastOrmState, nextOrmState) {
-    if (lastOrmState === null) return false;
     return every(Object.keys(accessedModels), (modelName) => {
-        if (lastOrmState[modelName] === nextOrmState[modelName]) {
-            return true;
-        }
+        const last = lastOrmState[modelName]
+        const next = nextOrmState[modelName]
+        if (last === next) return true;
+        if (last.items !== next.items) return false;
         return Object.keys(accessedModels[modelName])
             .every(id => lastOrmState[modelName].itemsById[id] === nextOrmState[modelName].itemsById[id]);
     });
@@ -65,7 +65,10 @@ export function memoize(func, equalityCheck = defaultEqualityCheck, orm) {
     return (...args) => {
         const [nextOrmState, ...otherArgs] = args;
 
-        const dbIsEqual = lastOrmState === nextOrmState || accessedModelInstancesAreEqual(allAccessedModels, lastOrmState, nextOrmState);
+        const dbIsEqual = lastOrmState &&
+            (lastOrmState === nextOrmState
+                || accessedModelInstancesAreEqual(allAccessedModels, lastOrmState, nextOrmState)
+            );
         const argsAreEqual = lastArgs && compareArgs(lastArgs, otherArgs, equalityCheck);
         if (dbIsEqual && argsAreEqual) {
             return lastResult;
