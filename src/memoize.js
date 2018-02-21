@@ -9,8 +9,8 @@ function compareArgs(a, b, equalityCheck) {
 
 function accessedModelInstancesAreEqual(accessedModels, lastOrmState, nextOrmState) {
     return every(Object.keys(accessedModels), (modelName) => {
-        const last = lastOrmState[modelName]
-        const next = nextOrmState[modelName]
+        const last = lastOrmState[modelName];
+        const next = nextOrmState[modelName];
         if (last === next) return true;
         if (last.items !== next.items) return false;
         return Object.keys(accessedModels[modelName])
