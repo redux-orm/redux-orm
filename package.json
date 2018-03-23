@@ -3,6 +3,7 @@
   "version": "0.9.4",
   "description": "Simple ORM to manage and query your state trees",
   "main": "lib/index.js",
+  "module": "src/index.js",
   "scripts": {
     "test": "jest --coverage",
     "prepublish": "npm run build",
