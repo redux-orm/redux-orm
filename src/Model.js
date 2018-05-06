@@ -128,6 +128,10 @@ const Model = class Model {
         this.session.markAccessed(this.modelName, ids);
     }
 
+    static markFullTableScanned() {
+        this.session.markFullTableScanned(this.modelName);
+    }
+
     /**
      * Returns the id attribute of this {@link Model}.
      *

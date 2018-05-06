@@ -1,22 +1,52 @@
 import every from 'lodash/every';
 
-function defaultEqualityCheck(a, b) { return a === b; }
+const defaultEqualityCheck = (a, b) => a === b;
 export const eqCheck = defaultEqualityCheck;
 
-function compareArgs(a, b, equalityCheck) {
-    return b.every((value, index) => equalityCheck(value, a[index]));
-}
+const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (
+    nextArgs.every((arg, index) =>
+        equalityCheck(arg, lastArgs[index])
+    )
+);
 
-function accessedModelInstancesAreEqual(accessedModels, lastOrmState, nextOrmState) {
-    return every(Object.keys(accessedModels), (modelName) => {
-        const last = lastOrmState[modelName];
-        const next = nextOrmState[modelName];
-        if (last === next) return true;
-        if (last.items !== next.items) return false;
-        return Object.keys(accessedModels[modelName])
-            .every(id => lastOrmState[modelName].itemsById[id] === nextOrmState[modelName].itemsById[id]);
+const modelInstancesAreEqual = (ids, modelsA, modelsB) => (
+    ids.every(
+        id => modelsA[id] === modelsB[id]
+    )
+);
+
+const allModelInstancesAreEqual = (lastModels, nextModels) => {
+    if (lastModels.length !== nextModels.length) return false;
+
+    const lastModelIds = Object.keys(lastModels);
+    const nextModelIds = Object.keys(nextModels);
+
+    return modelInstancesAreEqual(lastModelIds, lastModels, nextModels) &&
+        modelInstancesAreEqual(nextModelIds, lastModels, nextModels);
+};
+
+const accessedModelInstancesAreEqual = (previous, nextOrmState) => {
+    const {
+        fullTableScannedModels,
+        accessedModelInstances,
+        ormState,
+    } = previous;
+    return every(accessedModelInstances, (accessedInstances, modelName) => {
+        const { itemsById: lastModels } = ormState[modelName];
+        const { itemsById: nextModels } = nextOrmState[modelName];
+
+        if (fullTableScannedModels.includes(modelName)) {
+            /**
+             * all of this model's instances were checked against some condition
+             * invalidate them unless none of them have changed
+             */
+            return allModelInstancesAreEqual(lastModels, nextModels);
+        }
+
+        const accessedIds = Object.keys(accessedInstances);
+        return modelInstancesAreEqual(accessedIds, lastModels, nextModels);
     });
-}
+};
 
 /**
  * A memoizer to use with redux-orm
@@ -51,41 +81,61 @@ function accessedModelInstancesAreEqual(accessedModels, lastOrmState, nextOrmSta
  *
  * @private
  * @param  {Function} func - function to memoize
- * @param  {Function} equalityCheck - equality check function to use with normal
- *                                  selector args
+ * @param  {Function} argEqualityCheck - equality check function to use with normal
+ *                                       selector args
  * @param  {ORM} orm - a redux-orm ORM instance
  * @return {Function} `func` memoized.
  */
-export function memoize(func, equalityCheck = defaultEqualityCheck, orm) {
-    let lastOrmState = null;
-    let lastArgs = null;
-    let lastResult = null;
-    let allAccessedModels = {};
+export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
+    const previous = {
+        /* result of previous function call */
+        result: null,
+        /* arguments to previous function call (excluding ORM state) */
+        args: null,
+        /* previous ORM state for evaluating whether or not to invalidate cache */
+        ormState: null,
+        /**
+        * array of names of models whose tables have been scanned completely
+        * during previous function call (contains only model names)
+        * format (e.g.): ["Book"]
+        */
+        fullTableScannedModels: [],
+        /**
+        * map of which model instances have been accessed
+        * during previous function call (contains only IDs of accessed instances)
+        * format (e.g.): { Book: { 1: true, 3: true } }
+        */
+        accessedModelInstances: {},
+    };
 
     return (...args) => {
         const [nextOrmState, ...otherArgs] = args;
 
-        const dbIsEqual = lastOrmState &&
-            (lastOrmState === nextOrmState
-                || accessedModelInstancesAreEqual(allAccessedModels, lastOrmState, nextOrmState)
-            );
-        const argsAreEqual = lastArgs && compareArgs(lastArgs, otherArgs, equalityCheck);
-        if (dbIsEqual && argsAreEqual) {
-            return lastResult;
+        if (previous.args &&
+            previous.ormState &&
+            argsAreEqual(previous.args, otherArgs, argEqualityCheck) &&
+            accessedModelInstancesAreEqual(previous, nextOrmState)) {
+            /**
+             * the instances that were accessed as well as
+             * the arguments that were passed to func the previous time that
+             * func was called have not changed
+             */
+            return previous.result;
         }
 
+        /* previous result is no longer valid, update cached values */
         const session = orm.session(nextOrmState);
-        const newArgs = [session, ...otherArgs];
-        const result = func(...newArgs);
+        /* this is where we call the actual function */
+        const result = func(...[session, ...otherArgs]);
 
-        lastResult = result;
-        lastOrmState = nextOrmState;
-        lastArgs = otherArgs;
+        previous.result = result;
 
-        allAccessedModels = {
-            ...allAccessedModels,
-            ...session.accessedModels,
-        };
-        return lastResult;
+        previous.ormState = nextOrmState;
+        previous.args = otherArgs;
+
+        previous.accessedModelInstances = session.accessedModelInstances;
+
+        previous.fullTableScannedModels = [...session.fullTableScannedModels];
+        return result;
     };
 }

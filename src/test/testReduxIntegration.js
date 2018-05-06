@@ -42,7 +42,7 @@ describe('Redux integration', () => {
         expect(Publisher.reducer).toHaveBeenCalledTimes(1);
     });
 
-    it('correctly creates a selector', () => {
+    it('correctly creates a basic selector', () => {
         let selectorTimesRun = 0;
         const selector = createSelector(orm, () => selectorTimesRun++);
         expect(typeof selector).toBe('function');
@@ -55,6 +55,101 @@ describe('Redux integration', () => {
         expect(selectorTimesRun).toBe(1);
         selector(orm.getEmptyState());
         expect(selectorTimesRun).toBe(1);
+    });
+
+    it('correctly creates a selector that works with filters', () => {
+        const session = orm.session(defaultState);
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, (ormSession) => {
+            selectorTimesRun++;
+            return ormSession.Book.all()
+                .filter({ name: 'Getting started with filters' })
+                .toRefArray();
+        });
+        expect(typeof selector).toBe('function');
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        session.Book.create({
+            name: 'Getting started with filters',
+        });
+        selector(session.state);
+        expect(selectorTimesRun).toBe(2);
+    });
+
+    it('correctly creates a selector that works with id lookups', () => {
+        const session = orm.session(defaultState);
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, (ormSession) => {
+            selectorTimesRun++;
+            try {
+                return ormSession.Book.withId(0);
+            } catch (e) { }
+        });
+        expect(typeof selector).toBe('function');
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        session.Book.create({
+            name: 'Getting started with filters',
+        });
+        selector(session.state);
+        expect(selectorTimesRun).toBe(2);
+    });
+
+    it('correctly creates a selector that works with creates', () => {
+        const session = orm.session(defaultState);
+
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, (ormSession) => {
+            selectorTimesRun++;
+            try {
+                return ormSession.Book.get({name: 'Name after creation'});
+            } catch (e) { }
+        });
+        expect(typeof selector).toBe('function');
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+
+        const book = session.Book.create({
+            name: 'Name after creation',
+        });
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(2);
+    });
+
+    it('correctly creates a selector that works with updates', () => {
+        const session = orm.session(defaultState);
+
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, (ormSession) => {
+            selectorTimesRun++;
+            try {
+                return ormSession.Book.get({name: 'Updated name'});
+            } catch (e) { }
+        });
+        expect(typeof selector).toBe('function');
+
+        const book = session.Book.create({
+            name: 'Name after creation',
+        });
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+
+        book.name = 'Updated name';
+        selector(session.state);
+        expect(selectorTimesRun).toBe(2);
     });
 
     it('correctly creates a selector with input selectors', () => {

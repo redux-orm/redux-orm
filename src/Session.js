@@ -1,6 +1,6 @@
 import { getBatchToken } from 'immutable-ops';
 
-import { SUCCESS } from './constants';
+import { SUCCESS, FILTER, EXCLUDE, ORDER_BY } from './constants';
 import { warnDeprecated } from './utils';
 
 const Session = class Session {
@@ -22,7 +22,6 @@ const Session = class Session {
         this.withMutations = !!withMutations;
         this.batchToken = batchToken || getBatchToken();
 
-        this._accessedModels = {};
         this.modelData = {};
 
         this.models = schema.getModelClasses();
@@ -40,19 +39,32 @@ const Session = class Session {
 
     markAccessed(modelName, modelIds = []) {
         const data = this.getDataForModel(modelName);
-        if (!data.accessed) {
-            data.accessed = {};
+        if (!data.accessedInstances) {
+            data.accessedInstances = {};
         }
-        modelIds.forEach((id) => { data.accessed[id] = true; });
+        modelIds.forEach((id) => {
+            data.accessedInstances[id] = true;
+        });
     }
 
-    get accessedModels() {
+    markFullTableScanned(modelName) {
+        const data = this.getDataForModel(modelName);
+        data.fullTableScanned = true;
+    }
+
+    get fullTableScannedModels() {
         return this.sessionBoundModels
-            .filter(model => !!this.getDataForModel(model.modelName).accessed)
+            .filter(({ modelName }) => !!this.getDataForModel(modelName).fullTableScanned)
+            .map(({ modelName }) => modelName);
+    }
+
+    get accessedModelInstances() {
+        return this.sessionBoundModels
+            .filter(({ modelName }) => !!this.getDataForModel(modelName).accessedInstances)
             .reduce(
-                (result, model) => ({
+                (result, { modelName }) => ({
                     ...result,
-                    [model.modelName]: this.getDataForModel(model.modelName).accessed,
+                    [modelName]: this.getDataForModel(modelName).accessedInstances,
                 }),
                 {}
             );
@@ -76,22 +88,55 @@ const Session = class Session {
         const { batchToken, withMutations } = this;
         const tx = { batchToken, withMutations };
         const result = this.db.update(updateSpec, tx, this.state);
-        const { status, state } = result;
+        const { status, state, payload } = result;
 
-        if (status === SUCCESS) {
-            this.state = state;
-        } else {
+        if (status !== SUCCESS) {
             throw new Error(`Applying update failed: ${result.toString()}`);
         }
 
-        return result.payload;
+        this.state = state;
+
+        return payload;
     }
 
     query(querySpec) {
         const { table } = querySpec;
         const result = this.db.query(querySpec, this.state);
-        this.markAccessed(table, result.rows.map(r => r[this[table].idAttribute]));
+
+        this._markAccessedByQuery(querySpec, result);
+
         return result;
+    }
+
+    _markAccessedByQuery(querySpec, result) {
+        const { table, clauses } = querySpec;
+        const { rows } = result;
+        let neededFullTableScan = false;
+
+        const idAttribute = this[table].idAttribute;
+        const accessedIds = new Set(rows.map(
+            row => row[this[table].idAttribute]
+        ));
+
+        clauses.forEach(({ type, payload }) => {
+            if ([ORDER_BY, EXCLUDE].includes(type)) {
+                neededFullTableScan = true;
+                return;
+            }
+            if (type === FILTER) {
+                const id = payload[idAttribute];
+                if (id !== null && id !== undefined) {
+                    accessedIds.add(id);
+                } else {
+                    neededFullTableScan = true;
+                }
+            }
+        });
+
+        this.markAccessed(table, accessedIds);
+        if (neededFullTableScan) {
+            this.markFullTableScanned(table);
+        };
     }
 
     // DEPRECATED AND REMOVED METHODS
