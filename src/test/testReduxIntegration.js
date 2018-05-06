@@ -86,7 +86,9 @@ describe('Redux integration', () => {
             selectorTimesRun++;
             try {
                 return ormSession.Book.withId(0);
-            } catch (e) { }
+            } catch (e) {
+                return null;
+            }
         });
         expect(typeof selector).toBe('function');
 
@@ -95,7 +97,7 @@ describe('Redux integration', () => {
         selector(session.state);
         expect(selectorTimesRun).toBe(1);
         session.Book.create({
-            name: 'Getting started with filters',
+            name: 'Getting started with id lookups',
         });
         selector(session.state);
         expect(selectorTimesRun).toBe(2);
@@ -108,8 +110,10 @@ describe('Redux integration', () => {
         const selector = createSelector(orm, (ormSession) => {
             selectorTimesRun++;
             try {
-                return ormSession.Book.get({name: 'Name after creation'});
-            } catch (e) { }
+                return ormSession.Book.get({ name: 'Name after creation' });
+            } catch (e) {
+                return null;
+            }
         });
         expect(typeof selector).toBe('function');
 
@@ -133,8 +137,10 @@ describe('Redux integration', () => {
         const selector = createSelector(orm, (ormSession) => {
             selectorTimesRun++;
             try {
-                return ormSession.Book.get({name: 'Updated name'});
-            } catch (e) { }
+                return ormSession.Book.get({ name: 'Updated name' });
+            } catch (e) {
+                return null;
+            }
         });
         expect(typeof selector).toBe('function');
 

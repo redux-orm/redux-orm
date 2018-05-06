@@ -100,7 +100,6 @@ const Session = class Session {
     }
 
     query(querySpec) {
-        const { table } = querySpec;
         const result = this.db.query(querySpec, this.state);
 
         this._markAccessedByQuery(querySpec, result);
@@ -136,7 +135,7 @@ const Session = class Session {
         this.markAccessed(table, accessedIds);
         if (neededFullTableScan) {
             this.markFullTableScanned(table);
-        };
+        }
     }
 
     // DEPRECATED AND REMOVED METHODS
