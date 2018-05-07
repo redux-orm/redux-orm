@@ -1,6 +1,6 @@
 import { getBatchToken } from 'immutable-ops';
 
-import { SUCCESS, FILTER, EXCLUDE, ORDER_BY } from './constants';
+import { SUCCESS, FILTER, EXCLUDE, ORDER_BY, UPDATE } from './constants';
 import { warnDeprecated } from './utils';
 
 const Session = class Session {
@@ -85,8 +85,7 @@ const Session = class Session {
      *                          `type`, `payload`.
      */
     applyUpdate(updateSpec) {
-        const { batchToken, withMutations } = this;
-        const tx = { batchToken, withMutations };
+        const tx = this._getTransaction(updateSpec);
         const result = this.db.update(updateSpec, tx, this.state);
         const { status, state, payload } = result;
 
@@ -105,6 +104,15 @@ const Session = class Session {
         this._markAccessedByQuery(querySpec, result);
 
         return result;
+    }
+
+    _getTransaction(updateSpec) {
+        const { withMutations } = this;
+        let batchToken = this.batchToken;
+        if (updateSpec.action === UPDATE) {
+            batchToken = getBatchToken();
+        }
+        return { batchToken, withMutations };
     }
 
     _markAccessedByQuery(querySpec, result) {
