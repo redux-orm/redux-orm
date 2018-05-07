@@ -798,7 +798,7 @@ describe('Big Data Test', () => {
         const end = new Date().getTime();
         const tookSeconds = (end - start) / 1000;
         console.log(`Creating ${amount} objects took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(3);
+        expect(tookSeconds).toBeLessThanOrEqual(0.5);
     });
 
     it('looks up items by id in a large table in acceptable time', () => {
@@ -818,7 +818,7 @@ describe('Big Data Test', () => {
         const end = new Date().getTime();
         const tookSeconds = (end - start) / 1000;
         console.log(`Looking up ${lookupCount} objects by id took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(3);
+        expect(tookSeconds).toBeLessThanOrEqual(0.5);
     });
 });
 
@@ -861,7 +861,7 @@ describe('Many-to-many relationship performance', () => {
         const end = new Date().getTime();
         const tookSeconds = (end - start) / 1000;
         console.log(`Adding ${childAmount} relations took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 10 : 3);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 13.5 : 3.5);
     });
 
     it('queries many-to-many relationships in acceptable time', () => {
@@ -887,7 +887,7 @@ describe('Many-to-many relationship performance', () => {
         const end = new Date().getTime();
         const tookSeconds = (end - start) / 1000;
         console.log(`Performing ${queryCount} queries took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 10 : 3);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 11.5 : 3.5);
     });
 
     it('removes many-to-many relationships in acceptable time', () => {
