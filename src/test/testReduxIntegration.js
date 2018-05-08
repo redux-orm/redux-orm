@@ -8,7 +8,7 @@ describe('Redux integration', () => {
     let Genre;
     let Author;
     let Publisher;
-    let defaultState;
+    let emptyState;
     beforeEach(() => {
         ({
             Book,
@@ -19,7 +19,7 @@ describe('Redux integration', () => {
         } = createTestModels());
         orm = new ORM();
         orm.register(Book, Cover, Genre, Author, Publisher);
-        defaultState = orm.getEmptyState();
+        emptyState = orm.getEmptyState();
     });
 
     it('runs reducers if explicitly specified', () => {
@@ -31,7 +31,7 @@ describe('Redux integration', () => {
 
         const reducer = createReducer(orm);
         const mockAction = {};
-        const nextState = reducer(defaultState, mockAction);
+        const nextState = reducer(emptyState, mockAction);
 
         expect(nextState).not.toBeUndefined();
 
@@ -58,11 +58,11 @@ describe('Redux integration', () => {
     });
 
     it('correctly creates a selector that works with filters', () => {
-        const session = orm.session(defaultState);
+        const session = orm.session(emptyState);
         let selectorTimesRun = 0;
-        const selector = createSelector(orm, (ormSession) => {
+        const selector = createSelector(orm, (memoizeSession) => {
             selectorTimesRun++;
-            return ormSession.Book.all()
+            return memoizeSession.Book.all()
                 .filter({ name: 'Getting started with filters' })
                 .toRefArray();
         });
@@ -80,12 +80,12 @@ describe('Redux integration', () => {
     });
 
     it('correctly creates a selector that works with id lookups', () => {
-        const session = orm.session(defaultState);
+        const session = orm.session(emptyState);
         let selectorTimesRun = 0;
-        const selector = createSelector(orm, (ormSession) => {
+        const selector = createSelector(orm, (memoizeSession) => {
             selectorTimesRun++;
             try {
-                return ormSession.Book.withId(0);
+                return memoizeSession.Book.withId(0);
             } catch (e) {
                 return null;
             }
@@ -103,14 +103,14 @@ describe('Redux integration', () => {
         expect(selectorTimesRun).toBe(2);
     });
 
-    it('correctly creates a selector that works with creates', () => {
-        const session = orm.session(defaultState);
+    it('correctly creates a selector that works with other sessions\' creates', () => {
+        const session = orm.session(emptyState);
 
         let selectorTimesRun = 0;
-        const selector = createSelector(orm, (ormSession) => {
+        const selector = createSelector(orm, (memoizeSession) => {
             selectorTimesRun++;
             try {
-                return ormSession.Book.get({ name: 'Name after creation' });
+                return memoizeSession.Book.withId(0);
             } catch (e) {
                 return null;
             }
@@ -130,14 +130,14 @@ describe('Redux integration', () => {
         expect(selectorTimesRun).toBe(2);
     });
 
-    it('correctly creates a selector that works with updates', () => {
-        const session = orm.session(defaultState);
+    it('correctly creates a selector that works with other session\'s insertions', () => {
+        const session = orm.session(emptyState);
 
         let selectorTimesRun = 0;
-        const selector = createSelector(orm, (ormSession) => {
+        const selector = createSelector(orm, (memoizeSession) => {
             selectorTimesRun++;
             try {
-                return ormSession.Book.get({ name: 'Updated name' });
+                return memoizeSession.Book.withId(0);
             } catch (e) {
                 return null;
             }
