@@ -18,21 +18,30 @@ const modelInstancesAreEqual = (ids, modelsA, modelsB) => (
 const allModelInstancesAreEqual = (lastModels, nextModels) => {
     const lastModelIds = Object.keys(lastModels);
     const nextModelIds = Object.keys(nextModels);
-    if (lastModelIds.length !== nextModelIds.length) return false;
 
-    return modelInstancesAreEqual(lastModelIds, lastModels, nextModels) &&
-        modelInstancesAreEqual(nextModelIds, lastModels, nextModels);
+    if (lastModelIds.length !== nextModelIds.length) {
+        /**
+         * the table contains new rows or old ones were removed
+         * this immediately means the table has been updated
+         */
+        return false;
+    }
+
+    return (
+        modelInstancesAreEqual(lastModelIds, lastModels, nextModels) &&
+        modelInstancesAreEqual(nextModelIds, lastModels, nextModels)
+    );
 };
 
-const accessedModelInstancesAreEqual = (previous, nextOrmState) => {
+const accessedModelInstancesAreEqual = (previous, ormState) => {
     const {
-        fullTableScannedModels,
         accessedModelInstances,
-        ormState,
+        fullTableScannedModels,
     } = previous;
+
     return every(accessedModelInstances, (accessedInstances, modelName) => {
-        const { itemsById: lastModels } = ormState[modelName];
-        const { itemsById: nextModels } = nextOrmState[modelName];
+        const { itemsById: lastModels } = previous.ormState[modelName];
+        const { itemsById: nextModels } = ormState[modelName];
 
         if (fullTableScannedModels.includes(modelName)) {
             /**
@@ -91,7 +100,10 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
         result: null,
         /* arguments to previous function call (excluding ORM state) */
         args: null,
-        /* previous ORM state for evaluating whether or not to invalidate cache */
+        /**
+         * lets us know how the models looked like
+         * after the previous function call
+         */
         ormState: null,
         /**
         * array of names of models whose tables have been scanned completely
@@ -108,12 +120,16 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
     };
 
     return (...stateAndArgs) => {
-        const [nextOrmState, ...args] = stateAndArgs;
+        const [ormState, ...args] = stateAndArgs;
 
-        if (previous.args &&
-            previous.ormState &&
+        const selectorWasCalledBefore = (
+            previous.args &&
+            previous.ormState
+        );
+
+        if (selectorWasCalledBefore &&
             argsAreEqual(previous.args, args, argEqualityCheck) &&
-            accessedModelInstancesAreEqual(previous, nextOrmState)) {
+            accessedModelInstancesAreEqual(previous, ormState)) {
             /**
              * the instances that were accessed as well as
              * the arguments that were passed to func the previous time that
@@ -123,18 +139,20 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
         }
 
         /* previous result is no longer valid, update cached values */
-        const session = orm.session(nextOrmState);
-        /* this is where we call the actual function */
-        const result = func(...[session, ...args]);
-
-        previous.result = result;
-
-        previous.ormState = nextOrmState;
         previous.args = args;
 
-        previous.accessedModelInstances = session.accessedModelInstances;
+        const session = orm.session(ormState);
+        previous.ormState = ormState;
 
+        /* this is where we call the actual function */
+        const result = func(...[session, ...args]);
+        previous.result = result;
+
+        /* rows retrieved during function call */
+        previous.accessedModelInstances = session.accessedModelInstances;
+        /* tables that had to be scanned completely during function call */
         previous.fullTableScannedModels = [...session.fullTableScannedModels];
+
         return result;
     };
 }
