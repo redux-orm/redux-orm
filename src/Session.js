@@ -37,6 +37,13 @@ const Session = class Session {
         });
     }
 
+    getDataForModel(modelName) {
+        if (!this.modelData[modelName]) {
+            this.modelData[modelName] = {};
+        }
+        return this.modelData[modelName];
+    }
+
     markAccessed(modelName, modelIds = []) {
         const data = this.getDataForModel(modelName);
         if (!data.accessedInstances) {
@@ -45,17 +52,6 @@ const Session = class Session {
         modelIds.forEach((id) => {
             data.accessedInstances[id] = true;
         });
-    }
-
-    markFullTableScanned(modelName) {
-        const data = this.getDataForModel(modelName);
-        data.fullTableScanned = true;
-    }
-
-    get fullTableScannedModels() {
-        return this.sessionBoundModels
-            .filter(({ modelName }) => !!this.getDataForModel(modelName).fullTableScanned)
-            .map(({ modelName }) => modelName);
     }
 
     get accessedModelInstances() {
@@ -70,11 +66,15 @@ const Session = class Session {
             );
     }
 
-    getDataForModel(modelName) {
-        if (!this.modelData[modelName]) {
-            this.modelData[modelName] = {};
-        }
-        return this.modelData[modelName];
+    markFullTableScanned(modelName) {
+        const data = this.getDataForModel(modelName);
+        data.fullTableScanned = true;
+    }
+
+    get fullTableScannedModels() {
+        return this.sessionBoundModels
+            .filter(({ modelName }) => !!this.getDataForModel(modelName).fullTableScanned)
+            .map(({ modelName }) => modelName);
     }
 
     /**
