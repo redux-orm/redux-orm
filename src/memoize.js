@@ -150,8 +150,8 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
 
         /* rows retrieved during function call */
         previous.accessedModelInstances = session.accessedModelInstances;
-        /* tables that had to be scanned completely during function call */
-        previous.fullTableScannedModels = [...session.fullTableScannedModels];
+        /* tables that had to be scanned completely */
+        previous.fullTableScannedModels = session.fullTableScannedModels;
 
         return result;
     };
