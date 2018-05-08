@@ -16,10 +16,9 @@ const modelInstancesAreEqual = (ids, modelsA, modelsB) => (
 );
 
 const allModelInstancesAreEqual = (lastModels, nextModels) => {
-    if (lastModels.length !== nextModels.length) return false;
-
     const lastModelIds = Object.keys(lastModels);
     const nextModelIds = Object.keys(nextModels);
+    if (lastModelIds.length !== nextModelIds.length) return false;
 
     return modelInstancesAreEqual(lastModelIds, lastModels, nextModels) &&
         modelInstancesAreEqual(nextModelIds, lastModels, nextModels);
@@ -97,7 +96,7 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
         /**
         * array of names of models whose tables have been scanned completely
         * during previous function call (contains only model names)
-        * format (e.g.): ["Book"]
+        * format (e.g.): ['Book']
         */
         fullTableScannedModels: [],
         /**
@@ -108,12 +107,12 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
         accessedModelInstances: {},
     };
 
-    return (...args) => {
-        const [nextOrmState, ...otherArgs] = args;
+    return (...stateAndArgs) => {
+        const [nextOrmState, ...args] = stateAndArgs;
 
         if (previous.args &&
             previous.ormState &&
-            argsAreEqual(previous.args, otherArgs, argEqualityCheck) &&
+            argsAreEqual(previous.args, args, argEqualityCheck) &&
             accessedModelInstancesAreEqual(previous, nextOrmState)) {
             /**
              * the instances that were accessed as well as
@@ -126,12 +125,12 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
         /* previous result is no longer valid, update cached values */
         const session = orm.session(nextOrmState);
         /* this is where we call the actual function */
-        const result = func(...[session, ...otherArgs]);
+        const result = func(...[session, ...args]);
 
         previous.result = result;
 
         previous.ormState = nextOrmState;
-        previous.args = otherArgs;
+        previous.args = args;
 
         previous.accessedModelInstances = session.accessedModelInstances;
 
