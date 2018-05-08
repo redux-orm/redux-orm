@@ -1,6 +1,6 @@
 import { getBatchToken } from 'immutable-ops';
 
-import { SUCCESS, FILTER, EXCLUDE, ORDER_BY, UPDATE } from './constants';
+import { SUCCESS, FILTER, EXCLUDE, ORDER_BY, UPDATE, DELETE } from './constants';
 import { warnDeprecated } from './utils';
 
 const Session = class Session {
@@ -108,8 +108,9 @@ const Session = class Session {
 
     _getTransaction(updateSpec) {
         const { withMutations } = this;
+        const { action } = updateSpec;
         let batchToken = this.batchToken;
-        if (updateSpec.action === UPDATE) {
+        if ([UPDATE, DELETE].includes(action)) {
             batchToken = getBatchToken();
         }
         return { batchToken, withMutations };

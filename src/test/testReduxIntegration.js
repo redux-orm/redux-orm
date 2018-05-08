@@ -103,7 +103,7 @@ describe('Redux integration', () => {
         expect(selectorTimesRun).toBe(2);
     });
 
-    it('correctly creates a selector that works with other sessions\' creates', () => {
+    it('correctly creates a selector that works with other sessions\' insertions', () => {
         const session = orm.session(emptyState);
 
         let selectorTimesRun = 0;
@@ -130,7 +130,7 @@ describe('Redux integration', () => {
         expect(selectorTimesRun).toBe(2);
     });
 
-    it('correctly creates a selector that works with other session\'s insertions', () => {
+    it('correctly creates a selector that works with other sessions\' updates', () => {
         const session = orm.session(emptyState);
 
         let selectorTimesRun = 0;
@@ -154,6 +154,35 @@ describe('Redux integration', () => {
         expect(selectorTimesRun).toBe(1);
 
         book.name = 'Updated name';
+        selector(session.state);
+        expect(selectorTimesRun).toBe(2);
+    });
+
+    it('correctly creates a selector that works with other sessions\' deletions', () => {
+        const session = orm.session(emptyState);
+
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, (memoizeSession) => {
+            selectorTimesRun++;
+            try {
+                return memoizeSession.Book.withId(0);
+            } catch (e) {
+                return null;
+            }
+        });
+        expect(typeof selector).toBe('function');
+
+        const book = session.Book.create({
+            name: 'Name after creation',
+        });
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+
+        book.delete();
+
         selector(session.state);
         expect(selectorTimesRun).toBe(2);
     });
