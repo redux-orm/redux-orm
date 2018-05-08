@@ -32,7 +32,7 @@ export const createReducer = (orm, updater = defaultUpdater) =>
  *
  * When you use this method to create a selector, the returned selector
  * expects the whole `redux-orm` state branch as input. In the selector
- * function that you pass as the last argument, you will receive
+ * function that you pass as the last argument, you will receive a
  * `session` argument (a `Session` instance) followed by any
  * input arguments, like in `reselect`.
  *
@@ -51,11 +51,19 @@ export const createReducer = (orm, updater = defaultUpdater) =>
  * ```
  *
  * redux-orm uses a special memoization function to avoid recomputations.
- * When a selector runs for the first time, it checks which Models' state
- * branches were accessed. On subsequent runs, the selector first checks
- * if those branches have changed -- if not, it just returns the previous
- * result. This way you can use the `PureRenderMixin` in your React
- * components for performance gains.
+ *
+ * Everytime a selector runs, this function records which instances
+ * of your `Model`s were accessed.<br>
+ * On subsequent runs, the selector first checks if the previously
+ * accessed instances or `args` have changed in any way:
+ * <ul>
+ *     <li>If yes, the selector calls the function you passed to it.</li>
+ *     <li>If not, it just returns the previous result
+ *         (unless you call it for the first time).</li>
+ * </ul>
+ *
+ * This way you can use the `PureRenderMixin` in your React components
+ * for performance gains.
  *
  * @param {ORM} orm - the ORM instance
  * @param  {...Function} args - zero or more input selectors

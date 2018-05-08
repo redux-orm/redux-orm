@@ -96,13 +96,13 @@ const accessedModelInstancesAreEqual = (previous, ormState) => {
  */
 export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
     const previous = {
-        /* result of previous function call */
+        /* result of the previous function call */
         result: null,
-        /* arguments to previous function call (excluding ORM state) */
+        /* arguments to the previous function call (excluding ORM state) */
         args: null,
         /**
          * lets us know how the models looked like
-         * after the previous function call
+         * during the previous function call
          */
         ormState: null,
         /**
