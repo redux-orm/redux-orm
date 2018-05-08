@@ -9,17 +9,17 @@ const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (
     )
 );
 
-const modelInstancesAreEqual = (ids, modelsA, modelsB) => (
+const rowsAreEqual = (ids, rowsA, rowsB) => (
     ids.every(
-        id => modelsA[id] === modelsB[id]
+        id => rowsA[id] === rowsB[id]
     )
 );
 
-const allModelInstancesAreEqual = (lastModels, nextModels) => {
-    const lastModelIds = Object.keys(lastModels);
-    const nextModelIds = Object.keys(nextModels);
+const tablesAreEqual = (rowsA, rowsB) => {
+    const rowIdsA = Object.keys(rowsA);
+    const rowIdsB = Object.keys(rowsB);
 
-    if (lastModelIds.length !== nextModelIds.length) {
+    if (rowIdsA.length !== rowIdsB.length) {
         /**
          * the table contains new rows or old ones were removed
          * this immediately means the table has been updated
@@ -28,8 +28,8 @@ const allModelInstancesAreEqual = (lastModels, nextModels) => {
     }
 
     return (
-        modelInstancesAreEqual(lastModelIds, lastModels, nextModels) &&
-        modelInstancesAreEqual(nextModelIds, lastModels, nextModels)
+        rowsAreEqual(rowIdsA, rowsA, rowsB) &&
+        rowsAreEqual(rowIdsB, rowsA, rowsB)
     );
 };
 
@@ -40,19 +40,19 @@ const accessedModelInstancesAreEqual = (previous, ormState) => {
     } = previous;
 
     return every(accessedModelInstances, (accessedInstances, modelName) => {
-        const { itemsById: lastModels } = previous.ormState[modelName];
-        const { itemsById: nextModels } = ormState[modelName];
+        const { itemsById: previousRows } = previous.ormState[modelName];
+        const { itemsById: rows } = ormState[modelName];
 
         if (fullTableScannedModels.includes(modelName)) {
             /**
              * all of this model's instances were checked against some condition
              * invalidate them unless none of them have changed
              */
-            return allModelInstancesAreEqual(lastModels, nextModels);
+            return tablesAreEqual(previousRows, rows);
         }
 
         const accessedIds = Object.keys(accessedInstances);
-        return modelInstancesAreEqual(accessedIds, lastModels, nextModels);
+        return rowsAreEqual(accessedIds, previousRows, rows);
     });
 };
 
