@@ -103,6 +103,26 @@ describe('Redux integration', () => {
         expect(selectorTimesRun).toBe(2);
     });
 
+    it('correctly creates a selector that works with empty QuerySets', () => {
+        const session = orm.session(emptyState);
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, (memoizeSession) => {
+            selectorTimesRun++;
+            return memoizeSession.Book.all().toModelArray();
+        });
+        expect(typeof selector).toBe('function');
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        session.Book.create({
+            name: 'Getting started with empty query sets',
+        });
+        selector(session.state);
+        expect(selectorTimesRun).toBe(2);
+    });
+
     it('correctly creates a selector that works with other sessions\' insertions', () => {
         const session = orm.session(emptyState);
 

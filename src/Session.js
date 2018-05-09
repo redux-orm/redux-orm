@@ -119,7 +119,11 @@ const Session = class Session {
     _markAccessedByQuery(querySpec, result) {
         const { table, clauses } = querySpec;
         const { rows } = result;
-        let neededFullTableScan = false;
+        /**
+         * an empty clauses array caused the database to
+         * retrieve the entire table specified
+         */
+        let neededFullTableScan = (clauses.length === 0);
 
         const idAttribute = this[table].idAttribute;
         const accessedIds = new Set(rows.map(
@@ -134,6 +138,10 @@ const Session = class Session {
             if (type === FILTER) {
                 const id = payload[idAttribute];
                 if (id !== null && id !== undefined) {
+                    /**
+                     * we already knew which rows we wanted to
+                     * retrieve, no need to scan the entire table
+                     */
                     accessedIds.add(id);
                 } else {
                     neededFullTableScan = true;
