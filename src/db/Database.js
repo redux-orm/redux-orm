@@ -41,7 +41,7 @@ function update(tables, updateSpec, tx, state) {
         nextTableState = result.state;
         resultPayload = result.created;
     } else {
-        const { query: querySpec } = updateSpec;
+        const { query: querySpec, rowMerger } = updateSpec;
         ({ table: tableName } = querySpec);
         const { rows } = query(tables, querySpec, state);
 
@@ -49,7 +49,7 @@ function update(tables, updateSpec, tx, state) {
         const currTableState = state[tableName];
 
         if (action === UPDATE) {
-            nextTableState = table.update(tx, currTableState, rows, payload);
+            nextTableState = table.update(tx, currTableState, rows, payload, rowMerger);
         } else if (action === DELETE) {
             nextTableState = table.delete(tx, currTableState, rows);
         } else {
