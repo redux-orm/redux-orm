@@ -273,7 +273,7 @@ export class ORM {
             'ORM.prototype.define is removed. Please define a Model class.'
         );
     }
-};
+}
 
 export function DeprecatedSchema() {
     throw new Error(
