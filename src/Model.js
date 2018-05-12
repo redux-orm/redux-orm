@@ -565,12 +565,15 @@ const Model = class Model {
 
     /**
      * Determines the default properties that specifications
-     * passed to {@link session.applyUpdate} will receive.
+     * passed to {@link Session#applyUpdate} will receive.
      *
      * Can be used for overriding the row merging function to be
-     * used during row updates in {@link Table.update}.
+     * used during row updates in {@link Table#update}.
+     * To do that, return an object containing the field `rowMerger`.
+     * Its first argument is `tx.batchToken`, second is the object
+     * to be merged in, third is the row before merging.
      *
-     * @return {Object} default values for {@link session.applyUpdate} specifications
+     * @return {Object} default values for {@link Session#applyUpdate} specifications
      */
     static get defaultUpdateSpec() {
         return {};
