@@ -227,6 +227,7 @@ const QuerySet = class QuerySet {
      */
     update(mergeObj) {
         this.modelClass.session.applyUpdate({
+            ...this.modelClass.defaultUpdateSpec,
             action: UPDATE,
             query: {
                 table: this.modelClass.modelName,
@@ -246,6 +247,7 @@ const QuerySet = class QuerySet {
         this.toModelArray().forEach(model => model._onDelete());
 
         this.modelClass.session.applyUpdate({
+            ...this.modelClass.defaultUpdateSpec,
             action: DELETE,
             query: {
                 table: this.modelClass.modelName,

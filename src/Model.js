@@ -283,6 +283,7 @@ const Model = class Model {
         });
 
         const newEntry = this.session.applyUpdate({
+            ...this.defaultUpdateSpec,
             action: CREATE,
             table: this.modelName,
             payload: props,
@@ -509,6 +510,7 @@ const Model = class Model {
         this._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
 
         ThisModel.session.applyUpdate({
+            ...ThisModel.defaultUpdateSpec,
             action: UPDATE,
             query: getByIdQuery(this),
             payload: mergeObj,
@@ -533,6 +535,7 @@ const Model = class Model {
     delete() {
         this._onDelete();
         this.getClass().session.applyUpdate({
+            ...this.getClass().defaultUpdateSpec,
             action: DELETE,
             query: getByIdQuery(this),
         });
@@ -558,6 +561,19 @@ const Model = class Model {
                 }
             }
         }
+    }
+
+    /**
+     * Determines the default properties that specifications
+     * passed to {@link session.applyUpdate} will receive.
+     *
+     * Can be used for overriding the row merging function to be
+     * used during row updates in {@link Table.update}.
+     *
+     * @return {Object} default values for {@link session.applyUpdate} specifications
+     */
+    static get defaultUpdateSpec() {
+        return {};
     }
 
     // DEPRECATED AND REMOVED METHODS
