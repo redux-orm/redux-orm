@@ -40,7 +40,7 @@ const ORM_DEFAULTS = {
  * Internally, this class handles generating a schema specification from models
  * to the database.
  */
-export const ORM = class ORM {
+export class ORM {
     /**
      * Creates a new ORM instance.
      */
@@ -209,6 +209,9 @@ export const ORM = class ORM {
 
     // DEPRECATED AND REMOVED METHODS
 
+    /**
+     * @deprecated Use {@link ORM#mutableSession} instead.
+     */
     withMutations(state) {
         warnDeprecated(
             'ORM.prototype.withMutations is deprecated. ' +
@@ -218,6 +221,9 @@ export const ORM = class ORM {
         return this.mutableSession(state);
     }
 
+    /**
+     * @deprecated Use {@link ORM#session} instead.
+     */
     from(state) {
         warnDeprecated(
             'ORM.prototype.from function is deprecated. ' +
@@ -226,6 +232,9 @@ export const ORM = class ORM {
         return this.session(state);
     }
 
+    /**
+     * @deprecated Access {@link Session#state} instead.
+     */
     reducer() {
         warnDeprecated(
             'ORM.prototype.reducer is deprecated. Access ' +
@@ -234,6 +243,9 @@ export const ORM = class ORM {
         return createReducer(this);
     }
 
+    /**
+     * @deprecated Use `import { createSelector } from "redux-orm"` instead.
+     */
     createSelector(...args) {
         warnDeprecated(
             'ORM.prototype.createSelector is deprecated. ' +
@@ -242,6 +254,9 @@ export const ORM = class ORM {
         return createSelector(this, ...args);
     }
 
+    /**
+     * @deprecated Use {@link ORM#getEmptyState} instead.
+     */
     getDefaultState() {
         warnDeprecated(
             'ORM.prototype.getDefaultState is deprecated. Use ' +
@@ -250,6 +265,9 @@ export const ORM = class ORM {
         return this.getEmptyState();
     }
 
+    /**
+     * @deprecated Define a Model class instead.
+     */
     define() {
         throw new Error(
             'ORM.prototype.define is removed. Please define a Model class.'

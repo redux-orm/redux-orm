@@ -258,6 +258,11 @@ const QuerySet = class QuerySet {
 
     // DEPRECATED AND REMOVED METHODS
 
+    /**
+     * @deprecated
+     * Use {@link QuerySet#toModelArray} or predicate functions that
+     * instantiate Models from refs, e.g. `new Model(ref)`.
+     */
     get withModels() {
         throw new Error(
             'QuerySet.prototype.withModels is removed. ' +
@@ -266,6 +271,9 @@ const QuerySet = class QuerySet {
         );
     }
 
+    /**
+     * @deprecated Query building operates on refs only now.
+     */
     get withRefs() {
         warnDeprecated(
             'QuerySet.prototype.withRefs is deprecated. ' +
@@ -273,6 +281,10 @@ const QuerySet = class QuerySet {
         );
     }
 
+    /**
+     * @deprecated
+     * Call {@link QuerySet#toModelArray} or {@link QuerySet#toRefArray} first to map.
+     */
     map() {
         throw new Error(
             'QuerySet.prototype.map is removed. ' +
@@ -280,6 +292,10 @@ const QuerySet = class QuerySet {
         );
     }
 
+    /**
+     * @deprecated
+     * Call {@link QuerySet#toModelArray} or {@link QuerySet#toRefArray} first to iterate.
+     */
     forEach() {
         throw new Error(
             'QuerySet.prototype.forEach is removed. ' +
