@@ -241,26 +241,31 @@ const Table = class Table {
      * @param  {Object} branch - the data structure state
      * @param  {Object[]} rows - rows to update
      * @param  {Object} mergeObj - The object to merge with each row.
+     * @param  {Function} rowMerger - The function to use when merging `mergeObj` into rows.
+     *                                First argument is `tx.batchToken`, second is `mergeObj`,
+     *                                third is the row before merging.
      * @return {Object}
      */
-    update(tx, branch, rows, mergeObj) {
+    update(tx, branch, rows, mergeObj, rowMerger) {
         const { batchToken, withMutations } = tx;
 
         const {
             mapName,
+            idAttribute,
         } = this;
 
-        const mapFunction = (row) => {
-            const merge = withMutations ? ops.mutable.merge : ops.batch.merge(batchToken);
-            return merge(mergeObj, row);
-        };
-
+        const merge = withMutations ? ops.mutable.merge : ops.batch.merge(batchToken);
         const set = withMutations ? ops.mutable.set : ops.batch.set(batchToken);
 
-        const newMap = rows.reduce((map, row) => {
-            const result = mapFunction(row);
-            return set(result[this.idAttribute], result, map);
-        }, branch[mapName]);
+        const mapFunction = rowMerger
+            ? ((rowMergeObj, row) => rowMerger(batchToken, rowMergeObj, row))
+            : merge;
+
+        const newMap = rows
+            .map(row => mapFunction(mergeObj, row))
+            .reduce((map, mergedRow) => (
+                set(mergedRow[idAttribute], mergedRow, map)
+            ), branch[mapName]);
         return ops.batch.set(batchToken, mapName, newMap, branch);
     }
 
