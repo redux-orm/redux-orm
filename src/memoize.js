@@ -36,23 +36,31 @@ const tablesAreEqual = (rowsA, rowsB) => {
 const accessedModelInstancesAreEqual = (previous, ormState) => {
     const {
         accessedModelInstances,
-        fullTableScannedModels,
     } = previous;
 
     return every(accessedModelInstances, (accessedInstances, modelName) => {
         const { itemsById: previousRows } = previous.ormState[modelName];
         const { itemsById: rows } = ormState[modelName];
 
-        if (fullTableScannedModels.includes(modelName)) {
-            /**
-             * all of this model's instances were checked against some condition
-             * invalidate them unless none of them have changed
-             */
-            return tablesAreEqual(previousRows, rows);
-        }
-
         const accessedIds = Object.keys(accessedInstances);
         return rowsAreEqual(accessedIds, previousRows, rows);
+    });
+};
+
+const fullTableScannedModelsAreEqual = (previous, ormState) => {
+    const {
+        fullTableScannedModels,
+    } = previous;
+
+    return fullTableScannedModels.every((modelName) => {
+        const { itemsById: previousRows } = previous.ormState[modelName];
+        const { itemsById: rows } = ormState[modelName];
+
+        /**
+         * all of this model's instances were checked against some condition
+         * invalidate them unless none of them have changed
+         */
+        return tablesAreEqual(previousRows, rows);
     });
 };
 
@@ -129,7 +137,9 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
 
         if (selectorWasCalledBefore &&
             argsAreEqual(previous.args, args, argEqualityCheck) &&
-            accessedModelInstancesAreEqual(previous, ormState)) {
+            accessedModelInstancesAreEqual(previous, ormState) &&
+            fullTableScannedModelsAreEqual(previous, ormState)
+        ) {
             /**
              * the instances that were accessed as well as
              * the arguments that were passed to func the previous time that

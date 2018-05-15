@@ -1,7 +1,7 @@
 import { getBatchToken } from 'immutable-ops';
 
-import { SUCCESS, FILTER, EXCLUDE, ORDER_BY, UPDATE, DELETE } from './constants';
-import { warnDeprecated } from './utils';
+import { SUCCESS, UPDATE, DELETE } from './constants';
+import { warnDeprecated, clauseFiltersByAttribute } from './utils';
 
 const Session = class Session {
     /**
@@ -119,38 +119,37 @@ const Session = class Session {
     _markAccessedByQuery(querySpec, result) {
         const { table, clauses } = querySpec;
         const { rows } = result;
-        /**
-         * an empty clauses array caused the database to
-         * retrieve the entire table specified
-         */
-        let neededFullTableScan = (clauses.length === 0);
 
         const idAttribute = this[table].idAttribute;
         const accessedIds = new Set(rows.map(
-            row => row[this[table].idAttribute]
+            row => row[idAttribute]
         ));
 
-        clauses.forEach(({ type, payload }) => {
-            if ([ORDER_BY, EXCLUDE].includes(type)) {
-                neededFullTableScan = true;
-                return;
+        const anyClauseFilteredById = clauses.some((clause) => {
+            if (!clauseFiltersByAttribute(clause, idAttribute)) {
+                return false;
             }
-            if (type === FILTER) {
-                const id = payload[idAttribute];
-                if (id !== null && id !== undefined) {
-                    /**
-                     * we already knew which rows we wanted to
-                     * retrieve, no need to scan the entire table
-                     */
-                    accessedIds.add(id);
-                } else {
-                    neededFullTableScan = true;
-                }
-            }
+            /**
+             * we previously knew which row we wanted to access,
+             * so there was no need to scan the entire table
+             */
+            const id = clause.payload[idAttribute];
+            accessedIds.add(id);
+            return true;
         });
 
-        this.markAccessed(table, accessedIds);
-        if (neededFullTableScan) {
+        if (anyClauseFilteredById) {
+            /**
+             * clauses have been ordered so that an indexed one was
+             * the first to be evaluated, and thus only the row
+             * with the specified id has actually been accessed
+             */
+            this.markAccessed(table, accessedIds);
+        } else {
+            /**
+             * any other clause would have caused a full table scan,
+             * even if we specified an empty clauses array
+             */
             this.markFullTableScanned(table);
         }
     }

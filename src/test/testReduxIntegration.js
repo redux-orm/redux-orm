@@ -57,7 +57,7 @@ describe('Redux integration', () => {
         expect(selectorTimesRun).toBe(1);
     });
 
-    it('correctly creates a selector that works with filters', () => {
+    it('correctly creates a selector that works with arbitrary filters', () => {
         const session = orm.session(emptyState);
         let selectorTimesRun = 0;
         const selector = createSelector(orm, (memoizeSession) => {
