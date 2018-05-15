@@ -798,7 +798,7 @@ describe('Big Data Test', () => {
         const end = new Date().getTime();
         const tookSeconds = (end - start) / 1000;
         console.log(`Creating ${amount} objects took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(0.5);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 1 : 0.5);
     });
 
     it('looks up items by id in a large table in acceptable time', () => {
@@ -818,7 +818,7 @@ describe('Big Data Test', () => {
         const end = new Date().getTime();
         const tookSeconds = (end - start) / 1000;
         console.log(`Looking up ${lookupCount} objects by id took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(0.5);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 1 : 0.5);
     });
 });
 
