@@ -3,7 +3,7 @@ import includes from 'lodash/includes';
 import ops from 'immutable-ops';
 import intersection from 'lodash/intersection';
 import difference from 'lodash/difference';
-
+import { FILTER, EXCLUDE } from './constants';
 
 function warnDeprecated(msg) {
     const logger = typeof console.warn === 'function'
@@ -172,6 +172,21 @@ function arrayDiffActions(sourceArr, targetArr) {
 
 const { getBatchToken } = ops;
 
+function clauseFiltersByAttribute({ type, payload }, attribute) {
+    if (type !== FILTER) return false;
+
+    if (!payload.hasOwnProperty(attribute)) return false;
+    const attributeValue = payload[attribute];
+    if (attributeValue === null) return false;
+    if (attributeValue === undefined) return false;
+
+    return true;
+}
+
+function clauseReducesResultSetSize({ type }) {
+    return [FILTER, EXCLUDE].includes(type);
+}
+
 export {
     attachQuerySetMethods,
     m2mName,
@@ -185,5 +200,7 @@ export {
     includes,
     arrayDiffActions,
     getBatchToken,
+    clauseFiltersByAttribute,
+    clauseReducesResultSetSize,
     warnDeprecated,
 };
