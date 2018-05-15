@@ -135,7 +135,8 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
             previous.ormState
         );
 
-        if (selectorWasCalledBefore &&
+        if (
+            selectorWasCalledBefore &&
             argsAreEqual(previous.args, args, argEqualityCheck) &&
             accessedModelInstancesAreEqual(previous, ormState) &&
             fullTableScannedModelsAreEqual(previous, ormState)
