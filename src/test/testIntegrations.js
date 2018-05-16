@@ -1,6 +1,6 @@
 import deepFreeze from 'deep-freeze';
 import { Model, QuerySet, ORM, attr, many, fk } from '../';
-import { createTestSessionWithData } from './utils';
+import { createTestSessionWithData, measureMs } from './utils';
 
 describe('Integration', () => {
     let session;
@@ -911,9 +911,3 @@ describe('Many-to-many relationship performance', () => {
         expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 15 : 4);
     });
 });
-
-function measureMs(start) {
-    if (!start) return process.hrtime();
-    const end = process.hrtime(start);
-    return Math.round((end[0] * 1000) + (end[1] / 1000000));
-}
