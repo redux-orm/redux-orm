@@ -65,7 +65,7 @@ Book.fields = {
     publisher: fk('Publisher', 'books'),
 };
 
-export default Book
+export default Book;
 ```
 
 ### Register Models and Generate an Empty Database State
