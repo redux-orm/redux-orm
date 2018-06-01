@@ -446,6 +446,10 @@ const Model = class Model {
      * Returns a boolean indicating if `otherModel` equals this {@link Model} instance.
      * Equality is determined by shallow comparing their attributes.
      *
+     * This equality is used when you call {@link Model#update}.
+     * You can prevent model updates by returning `true` here.
+     * However, a model will always be updated if its relationships are changed.
+     *
      * @param  {Model} otherModel - a {@link Model} instance to compare
      * @return {Boolean} a boolean indicating if the {@link Model} instance's are equal.
      */
