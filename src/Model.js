@@ -474,10 +474,11 @@ const Model = class Model {
      * @return {undefined}
      */
     update(userMergeObj) {
-        const ThisModel = this.getClass();
         const mergeObj = Object.assign({}, userMergeObj);
 
+        const ThisModel = this.getClass();
         const { fields, virtualFields } = ThisModel;
+
         const m2mRelations = {};
 
         // If an array of entities or id's is supplied for a
@@ -507,7 +508,28 @@ const Model = class Model {
             }
         }
 
-        this._initFields(Object.assign({}, this._fields, mergeObj));
+        const mergedFields = {
+            ...this._fields,
+            ...mergeObj,
+        };
+
+        const updatedModel = new ThisModel(mergedFields);
+
+        // determine if model would have different related models after update
+        updatedModel._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
+        let relationsEqual = true;
+        Object.keys(m2mRelations).some((name) => {
+            if (arrayDiffActions(this[name], m2mRelations[name])) {
+                relationsEqual = false;
+                return true;
+            }
+            return false;
+        });
+
+        // do not apply updates if relations and fields are equal
+        if (relationsEqual && this.equals(updatedModel)) return;
+
+        this._initFields(mergedFields);
         this._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
 
         ThisModel.session.applyUpdate({
