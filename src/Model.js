@@ -509,7 +509,7 @@ const Model = class Model {
         }
 
         const updatedModel = new ThisModel(this._fields);
-        updatedModel._initFields(mergeObj);
+        updatedModel._initFields(mergeObj); // eslint-disable-line no-underscore-dangle
 
         // determine if model would have different related models after update
         updatedModel._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
