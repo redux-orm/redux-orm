@@ -508,8 +508,13 @@ const Model = class Model {
             }
         }
 
+        const mergedFields = {
+            ...this._fields,
+            ...mergeObj,
+        };
+
         const updatedModel = new ThisModel(this._fields);
-        updatedModel._initFields(mergeObj); // eslint-disable-line no-underscore-dangle
+        updatedModel._initFields(mergedFields); // eslint-disable-line no-underscore-dangle
 
         // determine if model would have different related models after update
         updatedModel._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
@@ -520,7 +525,7 @@ const Model = class Model {
         // do not apply updates if relations and fields are equal
         if (relationsEqual && this.equals(updatedModel)) return;
 
-        this._initFields(mergeObj);
+        this._initFields(mergedFields);
         this._refreshMany2Many(m2mRelations);
 
         ThisModel.session.applyUpdate({
