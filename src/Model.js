@@ -517,14 +517,9 @@ const Model = class Model {
 
         // determine if model would have different related models after update
         updatedModel._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
-        let relationsEqual = true;
-        Object.keys(m2mRelations).some((name) => {
-            if (arrayDiffActions(this[name], m2mRelations[name])) {
-                relationsEqual = false;
-                return true;
-            }
-            return false;
-        });
+        const relationsEqual = Object.keys(m2mRelations).every(name =>
+            !arrayDiffActions(this[name], updatedModel[name])
+        );
 
         // do not apply updates if relations and fields are equal
         if (relationsEqual && this.equals(updatedModel)) return;
