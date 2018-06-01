@@ -67,7 +67,7 @@ const Model = class Model {
     }
 
     _initFields(props) {
-        this._fields = Object.assign({}, props);
+        this._fields = { ...props };
 
         forOwn(props, (fieldValue, fieldName) => {
             // In this case, we got a prop that wasn't defined as a field.
@@ -247,7 +247,7 @@ const Model = class Model {
      * @return {Model} a new {@link Model} instance.
      */
     static create(userProps) {
-        const props = Object.assign({}, userProps);
+        const props = { ...userProps };
 
         const m2mRelations = {};
 
@@ -474,7 +474,7 @@ const Model = class Model {
      * @return {undefined}
      */
     update(userMergeObj) {
-        const mergeObj = Object.assign({}, userMergeObj);
+        const mergeObj = { ...userMergeObj };
 
         const ThisModel = this.getClass();
         const { fields, virtualFields } = ThisModel;
@@ -508,12 +508,8 @@ const Model = class Model {
             }
         }
 
-        const mergedFields = {
-            ...this._fields,
-            ...mergeObj,
-        };
-
-        const updatedModel = new ThisModel(mergedFields);
+        const updatedModel = new ThisModel(this._fields);
+        updatedModel._initFields(mergeObj);
 
         // determine if model would have different related models after update
         updatedModel._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
@@ -524,8 +520,8 @@ const Model = class Model {
         // do not apply updates if relations and fields are equal
         if (relationsEqual && this.equals(updatedModel)) return;
 
-        this._initFields(mergedFields);
-        this._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
+        this._initFields(mergeObj);
+        this._refreshMany2Many(m2mRelations);
 
         ThisModel.session.applyUpdate({
             action: UPDATE,
