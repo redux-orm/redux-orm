@@ -31,7 +31,7 @@ describe('Integration', () => {
                     Author: expect.anything(),
                     BookGenres: expect.anything(),
                     BookTags: expect.anything(),
-                    Publisher: expect.anything()
+                    Movie: expect.anything(),
                 })
             );
 
@@ -58,6 +58,9 @@ describe('Integration', () => {
 
             expect(state.Publisher.items).toHaveLength(2);
             expect(Object.keys(state.Publisher.itemsById)).toHaveLength(2);
+
+            expect(state.Movie.items).toHaveLength(1);
+            expect(Object.keys(state.Movie.itemsById)).toHaveLength(1);
         });
 
         it('Models correctly indicate if id exists', () => {
@@ -163,6 +166,78 @@ describe('Integration', () => {
             expect(session.Book.last().releaseYear).toBe(2016);
             expect(book.ref).toBe(nextBook.ref);
             expect(nextBook).toBeInstanceOf(Book);
+        });
+
+        it('Model updates preserve instance reference if fields are referentially equal', () => {
+            const { Book } = session;
+
+            const book = Book.first();
+            const { name, characters, meta } = book;
+            const oldRef = book.ref;
+
+            book.update({ name });
+            expect(oldRef).toBe(book.ref);
+
+            book.update({ meta });
+            expect(oldRef).toBe(book.ref);
+
+            book.update({ characters });
+            expect(oldRef).toBe(book.ref);
+        });
+
+        it('Model updates change instance reference if string field changes', () => {
+            const { Book } = session;
+
+            const book = Book.first();
+            const oldRef = book.ref;
+
+            book.update({ name: 'New name' });
+            expect(oldRef).not.toBe(book.ref);
+        });
+
+        it('Model updates change instance reference if object field changes reference', () => {
+            const { Book } = session;
+
+            const book = Book.first();
+            const oldRef = book.ref;
+
+            book.update({ meta: {} });
+            expect(oldRef).not.toBe(book.ref);
+        });
+
+        it('Model updates only change instance reference if equals returns false', () => {
+            const { Book } = session;
+
+            let book = Book.first();
+            let oldRef = book.ref;
+
+            book.equals = (otherModel) => true;
+            book.update({
+                id: 6,
+                name: 'New name',
+                rating: 10,
+                hasPremiered: false,
+                characters: [],
+                meta: {},
+            });
+            expect(oldRef).toBe(book.ref);
+
+            book = Book.create({
+                id: 2,
+                characters: [],
+            });
+            oldRef = book.ref;
+
+            book.equals = function charactersEqual(otherModel) {
+                return (
+                    this._fields.characters.length ===
+                    otherModel._fields.characters.length
+                );
+            };
+            book.update({ characters: [] });
+            expect(oldRef).toBe(book.ref);
+            book.update({ characters: [1] });
+            expect(oldRef).not.toBe(book.ref);
         });
 
         it('many-to-many relationship descriptors work', () => {

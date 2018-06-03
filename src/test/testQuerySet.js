@@ -116,6 +116,7 @@ describe('QuerySet tests', () => {
             Cover,
             Author,
             Publisher,
+            Movie,
         } = createTestModels();
 
         const currentYear = 2015;
@@ -129,7 +130,7 @@ describe('QuerySet tests', () => {
         Book.querySetClass = CustomQuerySet;
 
         const orm = new ORM();
-        orm.register(Book, Genre, Tag, Cover, Author, Publisher);
+        orm.register(Book, Genre, Tag, Cover, Author, Publisher, Movie);
         const { session: sess } = createTestSessionWithData(orm);
 
         const customQs = sess.Book.getQuerySet();

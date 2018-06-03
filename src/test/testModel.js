@@ -42,7 +42,7 @@ describe('Model', () => {
 
     describe('Instance methods', () => {
         let Model;
-        let instance;
+        let session;
 
         beforeEach(() => {
             Model = class TestModel extends BaseModel {};
@@ -50,20 +50,62 @@ describe('Model', () => {
             Model.fields = {
                 id: attr(),
                 name: attr(),
-                tags: new ManyToMany('_'),
+                number: attr(),
+                boolean: attr(),
+                array: attr(),
+                object: attr(),
             };
 
-            instance = new Model({ id: 0, name: 'Tommi' });
-        });
-
-
-        it('equals works correctly', () => {
-            const anotherInstance = new Model({ id: 0, name: 'Tommi' });
-            expect(instance.equals(anotherInstance)).toBeTruthy();
+            const orm = new ORM();
+            orm.register(Model);
+            session = orm.session();
         });
 
         it('getClass works correctly', () => {
+            const instance = new Model({
+                id: 0,
+                name: 'Tommi',
+                array: [],
+                object: {},
+                number: 123,
+                boolean: false,
+            });
             expect(instance.getClass()).toBe(Model);
+        });
+
+        it('equals compares primitive types correctly', () => {
+            const instance1 = new Model({
+                id: 0,
+                name: 'Tommi',
+                number: 123,
+                boolean: true,
+            });
+            const instance2 = new Model({
+                id: 0,
+                name: 'Tommi',
+                number: 123,
+                boolean: true,
+            });
+            expect(instance1.equals(instance2)).toBeTruthy();
+            const instance3 = new Model({
+                id: 0,
+                name: 'Tommi',
+                number: 123,
+                boolean: false,
+            });
+            expect(instance1.equals(instance3)).toBeFalsy();
+        });
+
+        it('equals does not deeply compare array fields', () => {
+            const instance1 = new Model({ id: 0, array: [] });
+            const instance2 = new Model({ id: 0, array: [] });
+            expect(instance1.equals(instance2)).toBeFalsy();
+        });
+
+        it('equals does not deeply compare object fields', () => {
+            const instance1 = new Model({ id: 0, object: {} });
+            const instance2 = new Model({ id: 0, object: {} });
+            expect(instance1.equals(instance2)).toBeFalsy();
         });
     });
 });
