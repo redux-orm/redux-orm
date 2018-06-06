@@ -566,6 +566,9 @@ const Model = class Model {
 
     // DEPRECATED AND REMOVED METHODS
 
+    /**
+     * @deprecated See the 0.9 migration guide on the GitHub repo.
+     */
     getNextState() {
         throw new Error(
             'Model.prototype.getNextState is removed. See the 0.9 ' +

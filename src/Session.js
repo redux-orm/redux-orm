@@ -156,6 +156,9 @@ const Session = class Session {
 
     // DEPRECATED AND REMOVED METHODS
 
+    /**
+     * @deprecated Access {@link Session#state} instead.
+     */
     getNextState() {
         warnDeprecated(
             'Session.prototype.getNextState function is deprecated. Access ' +
@@ -164,6 +167,11 @@ const Session = class Session {
         return this.state;
     }
 
+    /**
+     * @deprecated
+     * The Redux integration API is now decoupled from ORM and Session.<br>
+     * See the 0.9 migration guide in the GitHub repo.
+     */
     reduce() {
         throw new Error(
             'Session.prototype.reduce is removed. The Redux integration API ' +
