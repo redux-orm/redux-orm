@@ -64,6 +64,8 @@ Book.fields = {
     authors: many('Author', 'books'),
     publisher: fk('Publisher', 'books'),
 };
+
+export default Book;
 ```
 
 ### Register Models and Generate an Empty Database State
