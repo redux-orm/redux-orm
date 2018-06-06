@@ -858,7 +858,7 @@ describe('Many-to-many relationship performance', () => {
 
         const tookSeconds = measureMs(start) / 1000;
         console.log(`Adding ${childAmount} relations took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 20 : 4);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 13.5 : 4);
     });
 
     it('queries many-to-many relationships in acceptable time', () => {
@@ -883,7 +883,7 @@ describe('Many-to-many relationship performance', () => {
 
         const tookSeconds = measureMs(start) / 1000;
         console.log(`Performing ${queryCount} queries took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 20 : 4);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 15 : 4);
     });
 
     it('removes many-to-many relationships in acceptable time', () => {
@@ -908,6 +908,6 @@ describe('Many-to-many relationship performance', () => {
 
         const tookSeconds = measureMs(start) / 1000;
         console.log(`Removing ${removeCount} relations took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 25 : 4);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 15 : 4);
     });
 });
