@@ -10,7 +10,7 @@ A small, simple and immutable ORM to manage relational data in your Redux store.
 
 See a [a guide to creating a simple app with Redux-ORM](https://github.com/tommikaikkonen/redux-orm-primer) (includes the source). Its README is not updated for 0.9 yet but the [code has a branch for it](https://github.com/tommikaikkonen/redux-orm-primer/tree/migrate_to_0_9).
 
-**The 0.9 which is in the release candidate stage, brings big breaking changes to the API. Please look at the [migration guide](https://github.com/tommikaikkonen/redux-orm/wiki/0.9-Migration-Guide) if you're migrating from earlier versions.**
+**The 0.9.* versions bring big breaking changes to the API. Please look at the [migration guide](https://github.com/tommikaikkonen/redux-orm/wiki/0.9-Migration-Guide) if you're migrating from earlier versions.**
 
 Looking for the 0.8 docs? Read the [old README.md in the repo](https://github.com/tommikaikkonen/redux-orm/tree/3c36fa804d2810b2aaaad89ff1d99534b847ea35). For the API reference, clone the repo, `npm install`, `make build` and open up `index.html` in your browser. Sorry for the inconvenience.
 
@@ -540,6 +540,16 @@ session.Book.create({id: 5, name: 'Refactoring', release_year: 1999});
 
 Minor changes before 1.0.0 can include breaking changes.
 
+### 0.10.0
+
+- Added memoization by instance. Prevents unnecessary full table scans when not interested in unchanged records. [#185](https://github.com/tommikaikkonen/redux-orm/pull/185)
+- Improved performance of many-to-many descriptors. [#165](https://github.com/tommikaikkonen/redux-orm/pull/165)
+- Faster model lookups by primary key (id). [#158](https://github.com/tommikaikkonen/redux-orm/pull/158)
+- Added `@deprecated` JSDoc tag to deprecated members and functions. [#201](https://github.com/tommikaikkonen/redux-orm/pull/201)
+- Added `pkg.module` path to `package.json` indicating path for ES6 module. May fix [#53](https://github.com/tommikaikkonen/redux-orm/issues/53) for some people. [#192](https://github.com/tommikaikkonen/redux-orm/pull/192)
+- Introduced dependency on ES2015 `Set`. See [Polyfill](https://github.com/tommikaikkonen/redux-orm#polyfill).
+- Added performance regression tests.
+
 ### 0.9.4
 fix for filter/query [#99](https://github.com/tommikaikkonen/redux-orm/issues/99)
 
@@ -547,8 +557,8 @@ fix for filter/query [#99](https://github.com/tommikaikkonen/redux-orm/issues/99
 fix for many-many updates [#136](https://github.com/tommikaikkonen/redux-orm/issues/136)
 
 ### 0.9.1
-- added 'upsert' method to Model (insert or update behaviour)
-- major updates for tests
+- Added 'upsert' method to Model (insert or update behaviour)
+- Major updates for tests
 - CI integration
 
 ### 0.9.0
