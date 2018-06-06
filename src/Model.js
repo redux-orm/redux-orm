@@ -525,18 +525,26 @@ const Model = class Model {
         const relationsEqual = Object.keys(m2mRelations).every(name =>
             !arrayDiffActions(this[name], updatedModel[name])
         );
+        const fieldsEqual = this.equals(updatedModel);
 
-        // do not apply updates if relations and fields are equal
-        if (relationsEqual && this.equals(updatedModel)) return;
+        // only update fields if they have changed (referentially)
+        if (!fieldsEqual) {
+            this._initFields(mergedFields);
+        }
 
-        this._initFields(mergedFields);
-        this._refreshMany2Many(m2mRelations);
+        // only update many-to-many relationships if any reference has changed
+        if (!relationsEqual) {
+            this._refreshMany2Many(m2mRelations);
+        }
 
-        ThisModel.session.applyUpdate({
-            action: UPDATE,
-            query: getByIdQuery(this),
-            payload: mergeObj,
-        });
+        // only apply the update if a field or relationship has changed
+        if (!fieldsEqual || !relationsEqual) {
+            ThisModel.session.applyUpdate({
+                action: UPDATE,
+                query: getByIdQuery(this),
+                payload: mergeObj,
+            });
+        }
     }
 
     /**
