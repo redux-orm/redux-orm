@@ -50,8 +50,12 @@ function update(tables, updateSpec, tx, state) {
 
         if (action === UPDATE) {
             nextTableState = table.update(tx, currTableState, rows, payload);
+            // return updated rows
+            resultPayload = query(tables, querySpec, state).rows;
         } else if (action === DELETE) {
             nextTableState = table.delete(tx, currTableState, rows);
+            // return original rows that we just deleted
+            resultPayload = rows;
         } else {
             throw new Error(`Database received unknown update type: ${action}`);
         }

@@ -124,8 +124,12 @@ const Model = class Model {
         return this.session.getDataForModel(this.modelName);
     }
 
-    static markAccessed() {
-        this.session.markAccessed(this);
+    static markAccessed(ids) {
+        this.session.markAccessed(this.modelName, ids);
+    }
+
+    static markFullTableScanned() {
+        this.session.markFullTableScanned(this.modelName);
     }
 
     /**

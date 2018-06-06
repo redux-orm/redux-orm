@@ -1,6 +1,6 @@
 import deepFreeze from 'deep-freeze';
 import { Model, QuerySet, ORM, attr, many, fk } from '../';
-import { createTestSessionWithData } from './utils';
+import { createTestSessionWithData, measureMs } from './utils';
 
 describe('Integration', () => {
     let session;
@@ -789,16 +789,15 @@ describe('Big Data Test', () => {
 
     it('adds a big amount of items in acceptable time', () => {
         const session = orm.session(orm.getEmptyState());
-        const start = new Date().getTime();
+        const start = measureMs();
 
         const amount = 10000;
         for (let i = 0; i < amount; i++) {
             session.Item.create({ id: i, name: 'TestItem' });
         }
-        const end = new Date().getTime();
-        const tookSeconds = (end - start) / 1000;
+        const tookSeconds = measureMs(start) / 1000;
         console.log(`Creating ${amount} objects took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(3);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 1 : 0.5);
     });
 
     it('looks up items by id in a large table in acceptable time', () => {
@@ -811,14 +810,13 @@ describe('Big Data Test', () => {
 
         const lookupCount = 10000;
         const maxId = rowCount - 1;
-        const start = new Date().getTime();
+        const start = measureMs();
         for (let j = maxId; j > maxId - lookupCount; j--) {
             session.Item.withId(j);
         }
-        const end = new Date().getTime();
-        const tookSeconds = (end - start) / 1000;
+        const tookSeconds = measureMs(start) / 1000;
         console.log(`Looking up ${lookupCount} objects by id took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(3);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 1 : 0.5);
     });
 });
 
@@ -852,16 +850,15 @@ describe('Many-to-many relationship performance', () => {
         }
 
         const parent = session.Parent.create({});
-        const start = new Date().getTime();
+        const start = measureMs();
         const childAmount = 2500;
         for (let i = 0; i < childAmount; i++) {
             parent.children.add(i);
         }
 
-        const end = new Date().getTime();
-        const tookSeconds = (end - start) / 1000;
+        const tookSeconds = measureMs(start) / 1000;
         console.log(`Adding ${childAmount} relations took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 10 : 3);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 13.5 : 4);
     });
 
     it('queries many-to-many relationships in acceptable time', () => {
@@ -878,16 +875,15 @@ describe('Many-to-many relationship performance', () => {
             parent.children.add(i);
         }
 
-        const start = new Date().getTime();
+        const start = measureMs();
         const queryCount = 500;
         for (let j = 0; j < queryCount; j++) {
             parent.children.count();
         }
 
-        const end = new Date().getTime();
-        const tookSeconds = (end - start) / 1000;
+        const tookSeconds = measureMs(start) / 1000;
         console.log(`Performing ${queryCount} queries took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 10 : 3);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 15 : 4);
     });
 
     it('removes many-to-many relationships in acceptable time', () => {
@@ -905,14 +901,13 @@ describe('Many-to-many relationship performance', () => {
         }
 
         const removeCount = 1000;
-        const start = new Date().getTime();
+        const start = measureMs();
         for (let j = 0; j < removeCount; j++) {
             parent.children.remove(j);
         }
 
-        const end = new Date().getTime();
-        const tookSeconds = (end - start) / 1000;
+        const tookSeconds = measureMs(start) / 1000;
         console.log(`Removing ${removeCount} relations took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 10 : 3);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 15 : 4);
     });
 });

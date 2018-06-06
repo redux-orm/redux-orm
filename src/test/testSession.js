@@ -48,17 +48,38 @@ describe('Session', () => {
         expect(isSubclass(session.Publisher, Publisher)).toBe(true);
     });
 
-    it('marks accessed models', () => {
+    it('marks models when full table scan has been performed', () => {
         const session = orm.session(emptyState);
-        expect(session.accessedModels).toHaveLength(0);
+        expect(session.fullTableScannedModels).toHaveLength(0);
 
-        session.markAccessed(Book.modelName);
-        expect(session.accessedModels).toHaveLength(1);
-        expect(session.accessedModels[0]).toBe('Book');
+        session.markFullTableScanned(Book.modelName);
+        expect(session.fullTableScannedModels).toHaveLength(1);
+        expect(session.fullTableScannedModels[0]).toBe('Book');
 
-        session.markAccessed(Book.modelName);
+        session.markFullTableScanned(Book.modelName);
 
-        expect(session.accessedModels[0]).toBe('Book');
+        expect(session.fullTableScannedModels[0]).toBe('Book');
+    });
+
+    it('marks accessed model instances', () => {
+        const session = orm.session(emptyState);
+        expect(session.accessedModelInstances).toEqual({});
+
+        session.markAccessed(Book.modelName, [0]);
+
+        expect(session.accessedModelInstances).toEqual({
+            Book: {
+                0: true
+            }
+        });
+
+        session.markAccessed(Book.modelName, [1]);
+        expect(session.accessedModelInstances).toEqual({
+            Book: {
+                0: true,
+                1: true
+            }
+        });
     });
 
     describe('gets the next state', () => {

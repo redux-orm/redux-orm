@@ -1,12 +1,68 @@
-import values from 'lodash/values';
+import every from 'lodash/every';
 
-export function eqCheck(a, b) {
-    return a === b;
-}
+const defaultEqualityCheck = (a, b) => a === b;
+export const eqCheck = defaultEqualityCheck;
 
-function shouldRun(invalidatorMap, state) {
-    return values(invalidatorMap).some(invalidate => invalidate(state));
-}
+const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (
+    nextArgs.every((arg, index) =>
+        equalityCheck(arg, lastArgs[index])
+    )
+);
+
+const rowsAreEqual = (ids, rowsA, rowsB) => (
+    ids.every(
+        id => rowsA[id] === rowsB[id]
+    )
+);
+
+const tablesAreEqual = (rowsA, rowsB) => {
+    const rowIdsA = Object.keys(rowsA);
+    const rowIdsB = Object.keys(rowsB);
+
+    if (rowIdsA.length !== rowIdsB.length) {
+        /**
+         * the table contains new rows or old ones were removed
+         * this immediately means the table has been updated
+         */
+        return false;
+    }
+
+    return (
+        rowsAreEqual(rowIdsA, rowsA, rowsB) &&
+        rowsAreEqual(rowIdsB, rowsA, rowsB)
+    );
+};
+
+const accessedModelInstancesAreEqual = (previous, ormState) => {
+    const {
+        accessedModelInstances,
+    } = previous;
+
+    return every(accessedModelInstances, (accessedInstances, modelName) => {
+        const { itemsById: previousRows } = previous.ormState[modelName];
+        const { itemsById: rows } = ormState[modelName];
+
+        const accessedIds = Object.keys(accessedInstances);
+        return rowsAreEqual(accessedIds, previousRows, rows);
+    });
+};
+
+const fullTableScannedModelsAreEqual = (previous, ormState) => {
+    const {
+        fullTableScannedModels,
+    } = previous;
+
+    return fullTableScannedModels.every((modelName) => {
+        const { itemsById: previousRows } = previous.ormState[modelName];
+        const { itemsById: rows } = ormState[modelName];
+
+        /**
+         * all of this model's instances were checked against some condition
+         * invalidate them unless none of them have changed
+         */
+        return tablesAreEqual(previousRows, rows);
+    });
+};
 
 /**
  * A memoizer to use with redux-orm
@@ -28,7 +84,7 @@ function shouldRun(invalidatorMap, state) {
  * 3. Is the ORM state referentially equal to the previous ORM state the selector
  *    was called with? If yes, return the previous result.
  *
- * 4. Check which Model's states the selector has accessed on previous runs.
+ * 4. Check which Model's instances the selector has accessed on previous runs.
  *    Check for equality with each of those states versus their states in the
  *    previous ORM state. If all of them are equal, return the previous result.
  *
@@ -41,50 +97,73 @@ function shouldRun(invalidatorMap, state) {
  *
  * @private
  * @param  {Function} func - function to memoize
- * @param  {Function} equalityCheck - equality check function to use with normal
- *                                  selector args
+ * @param  {Function} argEqualityCheck - equality check function to use with normal
+ *                                       selector args
  * @param  {ORM} orm - a redux-orm ORM instance
  * @return {Function} `func` memoized.
  */
-export function memoize(func, equalityCheck = eqCheck, orm) {
-    let lastOrmState = null;
-    let lastResult = null;
-    let lastArgs = null;
-    const modelNameToInvalidatorMap = {};
+export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
+    const previous = {
+        /* result of the previous function call */
+        result: null,
+        /* arguments to the previous function call (excluding ORM state) */
+        args: null,
+        /**
+         * lets us know how the models looked like
+         * during the previous function call
+         */
+        ormState: null,
+        /**
+        * array of names of models whose tables have been scanned completely
+        * during previous function call (contains only model names)
+        * format (e.g.): ['Book']
+        */
+        fullTableScannedModels: [],
+        /**
+        * map of which model instances have been accessed
+        * during previous function call (contains only IDs of accessed instances)
+        * format (e.g.): { Book: { 1: true, 3: true } }
+        */
+        accessedModelInstances: {},
+    };
 
-    return (...args) => {
-        const [dbState, ...otherArgs] = args;
+    return (...stateAndArgs) => {
+        const [ormState, ...args] = stateAndArgs;
 
-        const dbIsEqual = lastOrmState === dbState ||
-                           !shouldRun(modelNameToInvalidatorMap, dbState);
-
-        const argsAreEqual = lastArgs && otherArgs.every(
-            (value, index) => equalityCheck(value, lastArgs[index])
+        const selectorWasCalledBefore = (
+            previous.args &&
+            previous.ormState
         );
 
-        if (dbIsEqual && argsAreEqual) {
-            return lastResult;
+        if (
+            selectorWasCalledBefore &&
+            argsAreEqual(previous.args, args, argEqualityCheck) &&
+            accessedModelInstancesAreEqual(previous, ormState) &&
+            fullTableScannedModelsAreEqual(previous, ormState)
+        ) {
+            /**
+             * the instances that were accessed as well as
+             * the arguments that were passed to func the previous time that
+             * func was called have not changed
+             */
+            return previous.result;
         }
 
-        const session = orm.session(dbState);
-        const newArgs = [session, ...otherArgs];
-        const result = func(...newArgs);
+        /* previous result is no longer valid, update cached values */
+        previous.args = args;
 
-        // If a selector has control flow branching, different
-        // input arguments might result in a different set of
-        // accessed models. On each run, we check if any new
-        // models are accessed and add their invalidator functions.
-        session.accessedModels.forEach((modelName) => {
-            if (!modelNameToInvalidatorMap.hasOwnProperty(modelName)) {
-                modelNameToInvalidatorMap[modelName] = nextState =>
-                    lastOrmState[modelName] !== nextState[modelName];
-            }
-        });
+        const session = orm.session(ormState);
+        previous.ormState = ormState;
 
-        lastResult = result;
-        lastOrmState = dbState;
-        lastArgs = otherArgs;
+        /* this is where we call the actual function */
+        const result = func(...[session, ...args]);
+        previous.result = result;
 
-        return lastResult;
+        /* rows retrieved during function call */
+        previous.accessedModelInstances = session.accessedModelInstances;
+        /* tables that had to be scanned completely */
+        previous.fullTableScannedModels = session.fullTableScannedModels;
+
+        return result;
     };
 }

@@ -8,7 +8,7 @@ describe('Redux integration', () => {
     let Genre;
     let Author;
     let Publisher;
-    let defaultState;
+    let emptyState;
     beforeEach(() => {
         ({
             Book,
@@ -19,7 +19,7 @@ describe('Redux integration', () => {
         } = createTestModels());
         orm = new ORM();
         orm.register(Book, Cover, Genre, Author, Publisher);
-        defaultState = orm.getEmptyState();
+        emptyState = orm.getEmptyState();
     });
 
     it('runs reducers if explicitly specified', () => {
@@ -31,7 +31,7 @@ describe('Redux integration', () => {
 
         const reducer = createReducer(orm);
         const mockAction = {};
-        const nextState = reducer(defaultState, mockAction);
+        const nextState = reducer(emptyState, mockAction);
 
         expect(nextState).not.toBeUndefined();
 
@@ -42,7 +42,7 @@ describe('Redux integration', () => {
         expect(Publisher.reducer).toHaveBeenCalledTimes(1);
     });
 
-    it('correctly creates a selector', () => {
+    it('correctly creates a basic selector', () => {
         let selectorTimesRun = 0;
         const selector = createSelector(orm, () => selectorTimesRun++);
         expect(typeof selector).toBe('function');
@@ -55,6 +55,156 @@ describe('Redux integration', () => {
         expect(selectorTimesRun).toBe(1);
         selector(orm.getEmptyState());
         expect(selectorTimesRun).toBe(1);
+    });
+
+    it('correctly creates a selector that works with arbitrary filters', () => {
+        const session = orm.session(emptyState);
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, (memoizeSession) => {
+            selectorTimesRun++;
+            return memoizeSession.Book.all()
+                .filter({ name: 'Getting started with filters' })
+                .toRefArray();
+        });
+        expect(typeof selector).toBe('function');
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        session.Book.create({
+            name: 'Getting started with filters',
+        });
+        selector(session.state);
+        expect(selectorTimesRun).toBe(2);
+    });
+
+    it('correctly creates a selector that works with id lookups', () => {
+        const session = orm.session(emptyState);
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, (memoizeSession) => {
+            selectorTimesRun++;
+            try {
+                return memoizeSession.Book.withId(0);
+            } catch (e) {
+                return null;
+            }
+        });
+        expect(typeof selector).toBe('function');
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        session.Book.create({
+            name: 'Getting started with id lookups',
+        });
+        selector(session.state);
+        expect(selectorTimesRun).toBe(2);
+    });
+
+    it('correctly creates a selector that works with empty QuerySets', () => {
+        const session = orm.session(emptyState);
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, (memoizeSession) => {
+            selectorTimesRun++;
+            return memoizeSession.Book.all().toModelArray();
+        });
+        expect(typeof selector).toBe('function');
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        session.Book.create({
+            name: 'Getting started with empty query sets',
+        });
+        selector(session.state);
+        expect(selectorTimesRun).toBe(2);
+    });
+
+    it('correctly creates a selector that works with other sessions\' insertions', () => {
+        const session = orm.session(emptyState);
+
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, (memoizeSession) => {
+            selectorTimesRun++;
+            try {
+                return memoizeSession.Book.withId(0);
+            } catch (e) {
+                return null;
+            }
+        });
+        expect(typeof selector).toBe('function');
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+
+        const book = session.Book.create({
+            name: 'Name after creation',
+        });
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(2);
+    });
+
+    it('correctly creates a selector that works with other sessions\' updates', () => {
+        const session = orm.session(emptyState);
+
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, (memoizeSession) => {
+            selectorTimesRun++;
+            try {
+                return memoizeSession.Book.withId(0);
+            } catch (e) {
+                return null;
+            }
+        });
+        expect(typeof selector).toBe('function');
+
+        const book = session.Book.create({
+            name: 'Name after creation',
+        });
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+
+        book.name = 'Updated name';
+        selector(session.state);
+        expect(selectorTimesRun).toBe(2);
+    });
+
+    it('correctly creates a selector that works with other sessions\' deletions', () => {
+        const session = orm.session(emptyState);
+
+        let selectorTimesRun = 0;
+        const selector = createSelector(orm, (memoizeSession) => {
+            selectorTimesRun++;
+            try {
+                return memoizeSession.Book.withId(0);
+            } catch (e) {
+                return null;
+            }
+        });
+        expect(typeof selector).toBe('function');
+
+        const book = session.Book.create({
+            name: 'Name after creation',
+        });
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+        selector(session.state);
+        expect(selectorTimesRun).toBe(1);
+
+        book.delete();
+
+        selector(session.state);
+        expect(selectorTimesRun).toBe(2);
     });
 
     it('correctly creates a selector with input selectors', () => {

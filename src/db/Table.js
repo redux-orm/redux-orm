@@ -5,7 +5,7 @@ import sortBy from 'lodash/sortBy';
 import ops from 'immutable-ops';
 
 import { FILTER, EXCLUDE, ORDER_BY } from '../constants';
-import { includes } from '../utils';
+import { includes, clauseFiltersByAttribute, clauseReducesResultSetSize } from '../utils';
 
 
 const DEFAULT_OPTS = {
@@ -105,31 +105,30 @@ const Table = class Table {
             return this.accessList(branch);
         }
 
+        const { idAttribute } = this;
+
         const optimallyOrderedClauses = sortBy(clauses, (clause) => {
-            if (this._willClauseUseIndexedAttribute(clause)) {
+            if (clauseFiltersByAttribute(clause, idAttribute)) {
                 return 1;
             }
 
-            if (this._willClauseReduceResultSetSize(clause)) {
+            if (clauseReducesResultSetSize(clause)) {
                 return 2;
             }
 
             return 3;
         });
 
-        const { idAttribute } = this;
         const reducer = (rows, clause) => {
             const { type, payload } = clause;
             if (!rows) {
-                if (type === FILTER && payload.hasOwnProperty(idAttribute)) {
+                if (clauseFiltersByAttribute(clause, idAttribute)) {
                     const id = payload[idAttribute];
-                    if (id !== null && id !== undefined) {
-                        // Payload specified a primary key; Since that is
-                        // unique, we can directly return that.
-                        return this.idExists(branch, id)
-                            ? [this.accessId(branch, id)]
-                            : [];
-                    }
+                    // Payload specified a primary key; Since that is
+                    // unique, we can directly return that.
+                    return this.idExists(branch, id)
+                        ? [this.accessId(branch, id)]
+                        : [];
                 }
 
                 return reducer(this.accessList(branch), clause);
@@ -152,15 +151,6 @@ const Table = class Table {
         };
 
         return optimallyOrderedClauses.reduce(reducer, undefined);
-    }
-
-    _willClauseUseIndexedAttribute(clause) {
-        return clause.type === FILTER &&
-          clause.payload.hasOwnProperty(this.idAttribute);
-    }
-
-    _willClauseReduceResultSetSize({ type }) {
-        return type === FILTER || type === EXCLUDE;
     }
 
     /**
