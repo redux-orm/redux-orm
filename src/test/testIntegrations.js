@@ -252,32 +252,32 @@ describe('Integration', () => {
         it('Model updates preserve relations if only other fields are changed', () => {
             const { Book } = session;
 
-            const genres = [1,2];
+            const genres = [1, 2];
             const book = Book.create({
                 name: 'Book name',
                 genres,
             });
             expect(
                 book.genres.all().toRefArray().map(genre => genre.id)
-            ).toEqual([1,2]);
+            ).toEqual([1, 2]);
             // update with same string, expect relations to be preserved
             book.update({ name: 'Updated Book name' });
             expect(
                 book.genres.all().toRefArray().map(genre => genre.id)
-            ).toEqual([1,2]);
+            ).toEqual([1, 2]);
         });
 
         it('Model updates change relations if only relations are updated', () => {
             const { Book } = session;
 
-            const genres = [1,2];
+            const genres = [1, 2];
             const book = Book.create({
                 name: 'New Book',
                 genres,
             });
             expect(
                 book.genres.all().toRefArray().map(genre => genre.id)
-            ).toEqual([1,2]);
+            ).toEqual([1, 2]);
 
             // mutate array by appending element without changing reference
             genres.push(3);
@@ -289,7 +289,7 @@ describe('Integration', () => {
              */
             expect(
                 book.genres.all().toRefArray().map(genre => genre.id)
-            ).toEqual([1,2,3]);
+            ).toEqual([1, 2, 3]);
         });
 
         it('many-to-many relationship descriptors work', () => {
