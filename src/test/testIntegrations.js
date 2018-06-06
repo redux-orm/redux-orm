@@ -234,6 +234,7 @@ describe('Integration', () => {
             const oldRef2 = movie2.ref;
             movie2.equals = charactersEqual;
 
+            // length of characters array is equal, should not cause change of reference
             movie2.update({ characters: ['Mickey Mouse'] });
             expect(oldRef2).toBe(movie2.ref);
 
@@ -243,16 +244,35 @@ describe('Integration', () => {
             const oldRef3 = movie3.ref;
             movie3.equals = charactersEqual;
 
+            // length of characters array has changed, should cause change of reference
             movie3.update({ characters: ['Joker', 'Mickey Mouse'] });
             expect(oldRef).not.toBe(movie3.ref);
         });
 
+        it('Model updates preserve relations if only other fields are changed', () => {
+            const { Book } = session;
+
+            const genres = [1,2];
+            const book = Book.create({
+                name: 'Book name',
+                genres,
+            });
+            expect(
+                book.genres.all().toRefArray().map(genre => genre.id)
+            ).toEqual([1,2]);
+            // update with same string, expect relations to be preserved
+            book.update({ name: 'Updated Book name' });
+            expect(
+                book.genres.all().toRefArray().map(genre => genre.id)
+            ).toEqual([1,2]);
+        });
 
         it('Model updates change relations if only relations are updated', () => {
             const { Book } = session;
 
             const genres = [1,2];
             const book = Book.create({
+                name: 'New Book',
                 genres,
             });
             expect(
