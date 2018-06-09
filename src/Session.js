@@ -121,7 +121,9 @@ const Session = class Session {
         const { rows } = result;
 
         const { idAttribute } = this[table];
-        const accessedIds = new Set(rows.map(row => row[idAttribute]));
+        const accessedIds = new Set(rows.map(
+            row => row[idAttribute]
+        ));
 
         const anyClauseFilteredById = clauses.some((clause) => {
             if (!clauseFiltersByAttribute(clause, idAttribute)) {
