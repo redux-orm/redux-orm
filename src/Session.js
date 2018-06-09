@@ -109,7 +109,7 @@ const Session = class Session {
     _getTransaction(updateSpec) {
         const { withMutations } = this;
         const { action } = updateSpec;
-        let batchToken = this.batchToken;
+        let { batchToken } = this;
         if ([UPDATE, DELETE].includes(action)) {
             batchToken = getBatchToken();
         }
@@ -120,10 +120,8 @@ const Session = class Session {
         const { table, clauses } = querySpec;
         const { rows } = result;
 
-        const idAttribute = this[table].idAttribute;
-        const accessedIds = new Set(rows.map(
-            row => row[idAttribute]
-        ));
+        const { idAttribute } = this[table];
+        const accessedIds = new Set(rows.map(row => row[idAttribute]));
 
         const anyClauseFilteredById = clauses.some((clause) => {
             if (!clauseFiltersByAttribute(clause, idAttribute)) {
@@ -160,10 +158,8 @@ const Session = class Session {
      * @deprecated Access {@link Session#state} instead.
      */
     getNextState() {
-        warnDeprecated(
-            'Session.prototype.getNextState function is deprecated. Access ' +
-            'the Session.prototype.state property instead.'
-        );
+        warnDeprecated('Session.prototype.getNextState function is deprecated. Access ' +
+            'the Session.prototype.state property instead.');
         return this.state;
     }
 
@@ -173,11 +169,9 @@ const Session = class Session {
      * See the 0.9 migration guide in the GitHub repo.
      */
     reduce() {
-        throw new Error(
-            'Session.prototype.reduce is removed. The Redux integration API ' +
+        throw new Error('Session.prototype.reduce is removed. The Redux integration API ' +
             'is now decoupled from ORM and Session - see the 0.9 migration guide ' +
-            'in the GitHub repo.'
-        );
+            'in the GitHub repo.');
     }
 };
 

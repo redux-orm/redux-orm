@@ -192,8 +192,7 @@ const Model = class Model {
      */
     _refreshMany2Many(relations) {
         const ThisModel = this.getClass();
-        const fields = ThisModel.fields;
-        const virtualFields = ThisModel.virtualFields;
+        const { fields, virtualFields } = ThisModel;
 
         Object.keys(relations).forEach((name) => {
             const reverse = !fields.hasOwnProperty(name);
@@ -220,8 +219,7 @@ const Model = class Model {
             }
 
             const currentIds = ThroughModel.filter(through =>
-                through[fromField] === this[ThisModel.idAttribute]
-            ).toRefArray().map(ref => ref[toField]);
+                through[fromField] === this[ThisModel.idAttribute]).toRefArray().map(ref => ref[toField]);
 
             const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
 
@@ -432,9 +430,7 @@ const Model = class Model {
         const fields = fieldNames.map((fieldName) => {
             const field = ThisModel.fields[fieldName];
             if (field instanceof ManyToMany) {
-                const ids = this[fieldName].toModelArray().map(
-                    model => model.getId()
-                );
+                const ids = this[fieldName].toModelArray().map(model => model.getId());
                 return `${fieldName}: [${ids.join(', ')}]`;
             }
             const val = this._fields[fieldName];
@@ -478,8 +474,7 @@ const Model = class Model {
         const ThisModel = this.getClass();
         const mergeObj = Object.assign({}, userMergeObj);
 
-        const fields = ThisModel.fields;
-        const virtualFields = ThisModel.virtualFields;
+        const { fields, virtualFields } = ThisModel;
         const m2mRelations = {};
 
         // If an array of entities or id's is supplied for a
@@ -543,7 +538,7 @@ const Model = class Model {
     }
 
     _onDelete() {
-        const virtualFields = this.getClass().virtualFields;
+        const { virtualFields } = this.getClass();
         for (const key in virtualFields) { // eslint-disable-line
             const field = virtualFields[key];
             if (field instanceof ManyToMany) {
@@ -570,10 +565,8 @@ const Model = class Model {
      * @deprecated See the 0.9 migration guide on the GitHub repo.
      */
     getNextState() {
-        throw new Error(
-            'Model.prototype.getNextState is removed. See the 0.9 ' +
-            'migration guide on the GitHub repo.'
-        );
+        throw new Error('Model.prototype.getNextState is removed. See the 0.9 ' +
+            'migration guide on the GitHub repo.');
     }
 };
 

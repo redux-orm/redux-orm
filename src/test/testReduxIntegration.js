@@ -231,7 +231,7 @@ describe('Redux integration', () => {
         expect(typeof selector).toBe('function');
 
         selector(appState);
-        expect(_selectorFunc.mock.calls.length).toBe(1);
+        expect(_selectorFunc.mock.calls).toHaveLength(1);
 
         const lastCall = _selectorFunc.mock.calls[_selectorFunc.mock.calls.length - 1];
         expect(lastCall[0]).toBeInstanceOf(Session);
@@ -239,12 +239,12 @@ describe('Redux integration', () => {
         expect(lastCall[1]).toBe(5);
 
         selector(appState);
-        expect(_selectorFunc.mock.calls.length).toBe(1);
+        expect(_selectorFunc.mock.calls).toHaveLength(1);
 
         const otherUserState = Object.assign({}, appState, { selectedUser: 0 });
 
         selector(otherUserState);
-        expect(_selectorFunc.mock.calls.length).toBe(2);
+        expect(_selectorFunc.mock.calls).toHaveLength(2);
     });
 
     it('calling reducer with undefined state doesn\'t throw', () => {

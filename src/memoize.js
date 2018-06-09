@@ -5,14 +5,11 @@ export const eqCheck = defaultEqualityCheck;
 
 const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (
     nextArgs.every((arg, index) =>
-        equalityCheck(arg, lastArgs[index])
-    )
+        equalityCheck(arg, lastArgs[index]))
 );
 
 const rowsAreEqual = (ids, rowsA, rowsB) => (
-    ids.every(
-        id => rowsA[id] === rowsB[id]
-    )
+    ids.every(id => rowsA[id] === rowsB[id])
 );
 
 const tablesAreEqual = (rowsA, rowsB) => {

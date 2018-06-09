@@ -72,7 +72,7 @@ export class ORM {
     }
 
     registerManyToManyModelsFor(model) {
-        const fields = model.fields;
+        const { fields } = model;
         const thisModelName = model.modelName;
 
         forOwn(fields, (fieldInstance, fieldName) => {
@@ -81,7 +81,7 @@ export class ORM {
                 if (fieldInstance.toModelName === 'this') {
                     toModelName = thisModelName;
                 } else {
-                    toModelName = fieldInstance.toModelName;
+                    toModelName = fieldInstance.toModelName; // eslint-disable-line prefer-destructuring
                 }
 
                 const fromFieldName = m2mFromFieldName(thisModelName);
@@ -148,7 +148,7 @@ export class ORM {
     _setupModelPrototypes(models) {
         models.forEach((model) => {
             if (!model.isSetUp) {
-                const fields = model.fields;
+                const { fields } = model;
                 forOwn(fields, (fieldInstance, fieldName) => {
                     if (!this.isFieldInstalled(model.modelName, fieldName)) {
                         fieldInstance.install(model, fieldName, this);
@@ -213,10 +213,8 @@ export class ORM {
      * @deprecated Use {@link ORM#mutableSession} instead.
      */
     withMutations(state) {
-        warnDeprecated(
-            'ORM.prototype.withMutations is deprecated. ' +
-            'Use ORM.prototype.mutableSession instead.'
-        );
+        warnDeprecated('ORM.prototype.withMutations is deprecated. ' +
+            'Use ORM.prototype.mutableSession instead.');
 
         return this.mutableSession(state);
     }
@@ -225,10 +223,8 @@ export class ORM {
      * @deprecated Use {@link ORM#session} instead.
      */
     from(state) {
-        warnDeprecated(
-            'ORM.prototype.from function is deprecated. ' +
-            'Use ORM.prototype.session instead.'
-        );
+        warnDeprecated('ORM.prototype.from function is deprecated. ' +
+            'Use ORM.prototype.session instead.');
         return this.session(state);
     }
 
@@ -236,10 +232,8 @@ export class ORM {
      * @deprecated Access {@link Session#state} instead.
      */
     reducer() {
-        warnDeprecated(
-            'ORM.prototype.reducer is deprecated. Access ' +
-            'the Session.prototype.state property instead.'
-        );
+        warnDeprecated('ORM.prototype.reducer is deprecated. Access ' +
+            'the Session.prototype.state property instead.');
         return createReducer(this);
     }
 
@@ -247,10 +241,8 @@ export class ORM {
      * @deprecated Use `import { createSelector } from "redux-orm"` instead.
      */
     createSelector(...args) {
-        warnDeprecated(
-            'ORM.prototype.createSelector is deprecated. ' +
-            'Import `createSelector` from Redux-ORM instead.'
-        );
+        warnDeprecated('ORM.prototype.createSelector is deprecated. ' +
+            'Import `createSelector` from Redux-ORM instead.');
         return createSelector(this, ...args);
     }
 
@@ -258,10 +250,8 @@ export class ORM {
      * @deprecated Use {@link ORM#getEmptyState} instead.
      */
     getDefaultState() {
-        warnDeprecated(
-            'ORM.prototype.getDefaultState is deprecated. Use ' +
-            'the ORM.prototype.getEmptyState instead.'
-        );
+        warnDeprecated('ORM.prototype.getDefaultState is deprecated. Use ' +
+            'the ORM.prototype.getEmptyState instead.');
         return this.getEmptyState();
     }
 
@@ -269,17 +259,13 @@ export class ORM {
      * @deprecated Define a Model class instead.
      */
     define() {
-        throw new Error(
-            'ORM.prototype.define is removed. Please define a Model class.'
-        );
+        throw new Error('ORM.prototype.define is removed. Please define a Model class.');
     }
 }
 
 export function DeprecatedSchema() {
-    throw new Error(
-        'Schema has been renamed to ORM. Please import ORM instead of Schema ' +
-        'from Redux-ORM.'
-    );
+    throw new Error('Schema has been renamed to ORM. Please import ORM instead of Schema ' +
+        'from Redux-ORM.');
 }
 
 export default ORM;

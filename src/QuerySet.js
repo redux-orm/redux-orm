@@ -63,8 +63,7 @@ const QuerySet = class QuerySet {
     toString() {
         this._evaluate();
         const contents = this.rows.map(id =>
-            this.modelClass.withId(id).toString()
-        ).join('\n    - ');
+            this.modelClass.withId(id).toString()).join('\n    - ');
         return `QuerySet contents: \n    - ${contents}`;
     }
 
@@ -186,7 +185,7 @@ const QuerySet = class QuerySet {
 
     _evaluate() {
         if (!this._evaluated) {
-            const session = this.modelClass.session;
+            const { session } = this.modelClass;
             const querySpec = {
                 table: this.modelClass.modelName,
                 clauses: this.clauses,
@@ -264,21 +263,18 @@ const QuerySet = class QuerySet {
      * instantiate Models from refs, e.g. `new Model(ref)`.
      */
     get withModels() {
-        throw new Error(
-            'QuerySet.prototype.withModels is removed. ' +
+        throw new Error('QuerySet.prototype.withModels is removed. ' +
             'Use .toModelArray() or predicate functions that ' +
-            'instantiate Models from refs, e.g. new Model(ref).'
-        );
+            'instantiate Models from refs, e.g. new Model(ref).');
     }
 
     /**
      * @deprecated Query building operates on refs only now.
      */
     get withRefs() {
-        warnDeprecated(
-            'QuerySet.prototype.withRefs is deprecated. ' +
-            'Query building operates on refs only now.'
-        );
+        warnDeprecated('QuerySet.prototype.withRefs is deprecated. ' +
+            'Query building operates on refs only now.');
+        return undefined;
     }
 
     /**
@@ -286,10 +282,8 @@ const QuerySet = class QuerySet {
      * Call {@link QuerySet#toModelArray} or {@link QuerySet#toRefArray} first to map.
      */
     map() {
-        throw new Error(
-            'QuerySet.prototype.map is removed. ' +
-            'Call .toModelArray() or .toRefArray() first to map.'
-        );
+        throw new Error('QuerySet.prototype.map is removed. ' +
+            'Call .toModelArray() or .toRefArray() first to map.');
     }
 
     /**
@@ -297,10 +291,8 @@ const QuerySet = class QuerySet {
      * Call {@link QuerySet#toModelArray} or {@link QuerySet#toRefArray} first to iterate.
      */
     forEach() {
-        throw new Error(
-            'QuerySet.prototype.forEach is removed. ' +
-            'Call .toModelArray() or .toRefArray() first to iterate.'
-        );
+        throw new Error('QuerySet.prototype.forEach is removed. ' +
+            'Call .toModelArray() or .toRefArray() first to iterate.');
     }
 };
 

@@ -199,7 +199,9 @@ export function createTestSession() {
 export function createTestSessionWithData(customORM) {
     const orm = customORM || createTestORM();
     const state = orm.getEmptyState();
-    const { Author, Cover, Genre, Tag, Book, Publisher } = orm.mutableSession(state);
+    const {
+        Author, Cover, Genre, Tag, Book, Publisher
+    } = orm.mutableSession(state);
 
     AUTHORS_INITIAL.forEach(props => Author.create(props));
     COVERS_INITIAL.forEach(props => Cover.create(props));
