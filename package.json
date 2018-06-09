@@ -5,7 +5,9 @@
   "main": "lib/index.js",
   "module": "src/index.js",
   "scripts": {
-    "test": "jest --coverage",
+    "test": "jest",
+    "test:watch": "npm test -- --watch",
+    "test:cov": "npm test -- --coverage",
     "prepare": "npm run build",
     "build": "npm run clean && babel src --out-dir lib && webpack --config webpack.dev.js && webpack --config webpack.prod.js && jsdoc src -d docs -c ./jsdoc.conf.json --verbose",
     "pub": "npm run lint && npm run test && npm run build && npm version patch && npm publish && git push origin && gulp deploy && npm run clean",
