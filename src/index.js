@@ -20,9 +20,11 @@ import {
 const Schema = DeprecatedSchema;
 
 const Backend = function RemovedBackend() {
-    throw new Error('Having a custom Backend instance is now unsupported. ' +
+    throw new Error(
+        'Having a custom Backend instance is now unsupported. ' +
         'Documentation for database customization is upcoming, for now ' +
-        'please look at the db folder in the source.');
+        'please look at the db folder in the source.'
+    );
 };
 
 export {

@@ -158,8 +158,10 @@ const Session = class Session {
      * @deprecated Access {@link Session#state} instead.
      */
     getNextState() {
-        warnDeprecated('Session.prototype.getNextState function is deprecated. Access ' +
-            'the Session.prototype.state property instead.');
+        warnDeprecated(
+            'Session.prototype.getNextState function is deprecated. Access ' +
+            'the Session.prototype.state property instead.'
+        );
         return this.state;
     }
 
@@ -169,9 +171,11 @@ const Session = class Session {
      * See the 0.9 migration guide in the GitHub repo.
      */
     reduce() {
-        throw new Error('Session.prototype.reduce is removed. The Redux integration API ' +
+        throw new Error(
+            'Session.prototype.reduce is removed. The Redux integration API ' +
             'is now decoupled from ORM and Session - see the 0.9 migration guide ' +
-            'in the GitHub repo.');
+            'in the GitHub repo.'
+        );
     }
 };
 

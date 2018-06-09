@@ -22,15 +22,16 @@ describe('Integration', () => {
         });
 
         it('Initial data bootstrapping results in a correct state', () => {
-            expect(state).toEqual(expect.objectContaining({
-                Book: expect.anything(),
-                Cover: expect.anything(),
-                Genre: expect.anything(),
-                Tag: expect.anything(),
-                Author: expect.anything(),
-                BookGenres: expect.anything(),
-                BookTags: expect.anything(),
-                Publisher: expect.anything()
+            expect(state).toEqual(
+                expect.objectContaining({
+                    Book: expect.anything(),
+                    Cover: expect.anything(),
+                    Genre: expect.anything(),
+                    Tag: expect.anything(),
+                    Author: expect.anything(),
+                    BookGenres: expect.anything(),
+                    BookTags: expect.anything(),
+                    Publisher: expect.anything()
                 })
             );
 
@@ -254,18 +255,22 @@ describe('Integration', () => {
 
             book.update({ genres: [0, 99] });
 
-            expect(session.BookGenres
-                .filter({ fromBookId: book.id })
-                .toRefArray()
-                .map(row => row.toGenreId)).toEqual([0, 99]);
+            expect(
+                session.BookGenres
+                    .filter({ fromBookId: book.id })
+                    .toRefArray()
+                    .map(row => row.toGenreId)
+            ).toEqual([0, 99]);
             expect(book.genres.toRefArray().map(row => row.id)).toEqual([0]);
 
             book.update({ genres: [1, 98] });
 
-            expect(session.BookGenres
-                .filter({ fromBookId: book.id })
-                .toRefArray()
-                .map(row => row.toGenreId)).toEqual([1, 98]);
+            expect(
+                session.BookGenres
+                    .filter({ fromBookId: book.id })
+                    .toRefArray()
+                    .map(row => row.toGenreId)
+            ).toEqual([1, 98]);
             expect(book.genres.toRefArray().map(row => row.id)).toEqual([1]);
         });
 

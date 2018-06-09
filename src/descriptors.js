@@ -112,13 +112,16 @@ function manyToManyDescriptor(
             }
 
             const throughQs = throughModel.filter(lookupObj);
-            const toIds = new Set(throughQs
-                .toRefArray()
-                .map(obj => obj[reverse ? fromFieldName : toFieldName]));
+            const toIds = new Set(
+                throughQs
+                    .toRefArray()
+                    .map(obj => obj[reverse ? fromFieldName : toFieldName])
+            );
 
             const qsFromModel = reverse ? declaredFromModel : declaredToModel;
             const qs = qsFromModel.filter(attrs =>
-                toIds.has(attrs[qsFromModel.idAttribute]));
+                toIds.has(attrs[qsFromModel.idAttribute])
+            );
 
             qs.add = function add(...args) {
                 const idsToAdd = new Set(args.map(normalizeEntity));
@@ -126,7 +129,8 @@ function manyToManyDescriptor(
                 const filterWithAttr = reverse ? fromFieldName : toFieldName;
 
                 const existingQs = throughQs.filter(through =>
-                    idsToAdd.has(through[filterWithAttr]));
+                    idsToAdd.has(through[filterWithAttr])
+                );
 
                 if (existingQs.exists()) {
                     const existingIds = existingQs
@@ -168,7 +172,9 @@ function manyToManyDescriptor(
                 const idsToRemove = new Set(entities.map(normalizeEntity));
 
                 const attrInIdsToRemove = reverse ? fromFieldName : toFieldName;
-                const entitiesToDelete = throughQs.filter(through => idsToRemove.has(through[attrInIdsToRemove]));
+                const entitiesToDelete = throughQs.filter(
+                    through => idsToRemove.has(through[attrInIdsToRemove])
+                );
 
                 if (entitiesToDelete.count() !== idsToRemove.size) {
                     // Tried deleting non-existing entities.
@@ -176,7 +182,9 @@ function manyToManyDescriptor(
                         .toRefArray()
                         .map(through => through[attrInIdsToRemove]);
 
-                    const unexistingIds = [...idsToRemove].filter(id => !includes(entitiesToDeleteIds, id));
+                    const unexistingIds = [...idsToRemove].filter(
+                        id => !includes(entitiesToDeleteIds, id)
+                    );
 
                     const toDeleteModel = reverse
                         ? declaredFromModel.modelName

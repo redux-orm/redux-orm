@@ -14,7 +14,8 @@
     "no-prototype-builtins": 0,
     "no-plusplus": 0,
     "no-console": 0,
-    "import/no-named-as-default": 0
+    "import/no-named-as-default": 0,
+    "function-paren-newline": 0
   },
   "parserOptions": {
     "ecmaFeatures": {

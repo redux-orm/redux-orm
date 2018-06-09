@@ -219,7 +219,8 @@ const Model = class Model {
             }
 
             const currentIds = ThroughModel.filter(through =>
-                through[fromField] === this[ThisModel.idAttribute]).toRefArray().map(ref => ref[toField]);
+                through[fromField] === this[ThisModel.idAttribute]
+            ).toRefArray().map(ref => ref[toField]);
 
             const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
 
@@ -430,7 +431,9 @@ const Model = class Model {
         const fields = fieldNames.map((fieldName) => {
             const field = ThisModel.fields[fieldName];
             if (field instanceof ManyToMany) {
-                const ids = this[fieldName].toModelArray().map(model => model.getId());
+                const ids = this[fieldName].toModelArray().map(
+                    model => model.getId()
+                );
                 return `${fieldName}: [${ids.join(', ')}]`;
             }
             const val = this._fields[fieldName];
@@ -565,8 +568,10 @@ const Model = class Model {
      * @deprecated See the 0.9 migration guide on the GitHub repo.
      */
     getNextState() {
-        throw new Error('Model.prototype.getNextState is removed. See the 0.9 ' +
-            'migration guide on the GitHub repo.');
+        throw new Error(
+            'Model.prototype.getNextState is removed. See the 0.9 ' +
+            'migration guide on the GitHub repo.'
+        );
     }
 };
 

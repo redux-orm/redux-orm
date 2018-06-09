@@ -5,7 +5,8 @@ export const eqCheck = defaultEqualityCheck;
 
 const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (
     nextArgs.every((arg, index) =>
-        equalityCheck(arg, lastArgs[index]))
+        equalityCheck(arg, lastArgs[index])
+    )
 );
 
 const rowsAreEqual = (ids, rowsA, rowsB) => (
