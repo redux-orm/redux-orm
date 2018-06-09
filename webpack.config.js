@@ -1,14 +1,12 @@
 var path = require('path');
 var webpack = require('webpack');
-var env = require('yargs').argv.mode;
+var env = process.env.NODE_ENV === 'production'
+    ? 'production'
+    : 'development';
 
-var UglifyJsPlugin = webpack.optimize.UglifyJsPlugin;
-
-var plugins = [];
 var outputFile;
 
-if (env === 'build') {
-    plugins = [new UglifyJsPlugin({ minimize: true })];
+if (env === 'production') {
     outputFile = 'redux-orm.min.js';
 } else {
     outputFile = 'redux-orm.js';
@@ -17,6 +15,7 @@ if (env === 'build') {
 module.exports = {
     entry: './src/index.js',
     devtool: 'source-map',
+    mode: env,
     output: {
         path: path.resolve('./dist'),
         filename: outputFile,
@@ -25,17 +24,23 @@ module.exports = {
         umdNamedDefine: true,
     },
     resolve: {
-        root: path.resolve('./src'),
-        extensions: ['', '.js'],
+        modules: [
+            path.resolve('./src'),
+            'node_modules',
+        ],
+        extensions: ['.js'],
     },
     module: {
-        loaders: [
+        rules: [
             {
                 test: /\.js$/,
-                loader: 'babel',
+                loader: 'babel-loader',
                 exclude: /node_modules/,
             },
         ],
     },
-    plugins: plugins,
+    plugins: [],
+    optimization: {
+        minimize: (env === 'production'),
+    },
 };
