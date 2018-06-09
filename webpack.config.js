@@ -40,7 +40,4 @@ module.exports = {
         ],
     },
     plugins: [],
-    optimization: {
-        minimize: (env === 'production'),
-    },
 };
