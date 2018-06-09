@@ -11,4 +11,5 @@ module.exports = merge(common, {
         libraryTarget: 'umd',
         umdNamedDefine: true,
     },
+    devtool: 'source-map',
 });
