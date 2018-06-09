@@ -11,7 +11,7 @@
     "pub": "npm run lint && npm run test && npm run build && npm version patch && npm publish && git push origin && gulp deploy && npm run clean",
     "lint": "eslint src",
     "deploydocs": "npm run build && gulp deploy",
-    "clean": "rimraf lib && rimraf dist && rimraf docs"
+    "clean": "rimraf lib dist docs"
   },
   "keywords": [
     "redux",
