@@ -542,7 +542,7 @@ Minor changes before 1.0.0 can include breaking changes.
 
 ### 0.10.1
 
-- Fixed filter functions not working when using strings as id attributes. #207
+- Fixed filter functions not working when using strings as id attributes. [#207](https://github.com/tommikaikkonen/redux-orm/pull/207)
 
 ### 0.10.0
 
