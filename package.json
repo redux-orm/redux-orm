@@ -42,7 +42,7 @@
     "eslint-plugin-import": "^2.12.0",
     "eslint-plugin-jest": "^21.17.0",
     "gulp": "^4.0.0",
-    "gulp-gh-pages": "^0.5.4",
+    "gulp-gh-pages": "https://github.com/tekd/gulp-gh-pages/tarball/9ebafeb4011982c98038d8e90373fe7ed91e3f88",
     "gulp-rename": "^1.2.2",
     "jest": "^23.1.0",
     "jest-cli": "^23.1.0",
