@@ -28,13 +28,13 @@
 
 <header>
     
-        <h2>Model</h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>Model<span class="signature">(props)</span><span class="type-signature"></span></h2>
         
             <div class="class-description"><p>The heart of an ORM, the data model.</p>
 <p>The fields you specify to the Model will be used to generate
 a schema to the database, related property accessors, and
 possibly through models.</p>
-<p>In each <a href="Session.html"><code>Session</code></a> you instantiate from an <a href="global.html#ORM"><code>ORM</code></a> instance,
+<p>In each <a href="Session.html"><code>Session</code></a> you instantiate from an <a href="ORM.html"><code>ORM</code></a> instance,
 you will receive a session-specific subclass of this Model. The methods
 you define here will be available to you in sessions.</p>
 <p>An instance of <a href="Model.html"><code>Model</code></a> represents a record in the database, though
@@ -55,7 +55,9 @@ logic by defining prototype methods (without <code>static</code> keyword).</p></
     <h2>Constructor</h2>
     
 
+    
     <h4 class="name" id="Model"><span class="type-signature"></span>new Model<span class="signature">(props)</span><span class="type-signature"></span></h4>
+    
 
     
 
@@ -182,6 +184,8 @@ Don't use this to create a new record; Use the static method <code>Model#create<
 
 
 
+
+
     
     </div>
 
@@ -191,7 +195,9 @@ Don't use this to create a new record; Use the static method <code>Model#create<
 
     
 
-     
+    
+
+    
 
     
 
@@ -244,7 +250,7 @@ Don't use this to create a new record; Use the static method <code>Model#create<
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line136">line 136</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line140">line 140</a>
     </li></ul></dd>
     
 
@@ -307,7 +313,7 @@ Make sure to not mutate this.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line410">line 410</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line413">line 413</a>
     </li></ul></dd>
     
 
@@ -334,7 +340,9 @@ Make sure to not mutate this.</p>
 
     
 
+    
     <h4 class="name" id=".all"><span class="type-signature">(static) </span>all<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="QuerySet.html">QuerySet</a>}</span></h4>
+    
 
     
 
@@ -385,7 +393,7 @@ Make sure to not mutate this.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line181">line 181</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line185">line 185</a>
     </li></ul></dd>
     
 
@@ -433,12 +441,16 @@ Make sure to not mutate this.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id=".create"><span class="type-signature">(static) </span>create<span class="signature">(userProps)</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>}</span></h4>
+    
 
     
 
@@ -540,7 +552,7 @@ model as well.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line246">line 246</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line249">line 249</a>
     </li></ul></dd>
     
 
@@ -588,12 +600,16 @@ model as well.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id=".get"><span class="type-signature">(static) </span>get<span class="signature">(lookupObj)</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>}</span></h4>
+    
 
     
 
@@ -695,7 +711,7 @@ the properties.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line371">line 371</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line374">line 374</a>
     </li></ul></dd>
     
 
@@ -743,12 +759,16 @@ the properties.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id=".hasId"><span class="type-signature">(static) </span>hasId<span class="signature">(id)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    
 
     
 
@@ -849,7 +869,7 @@ in the state.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line343">line 343</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line346">line 346</a>
     </li></ul></dd>
     
 
@@ -897,12 +917,16 @@ in the state.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id=".options"><span class="type-signature">(static) </span>options<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
+    
 
     
 
@@ -1007,12 +1031,16 @@ Model class.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id=".upsert"><span class="type-signature">(static) </span>upsert<span class="signature">(userProps)</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>}</span></h4>
+    
 
     
 
@@ -1114,7 +1142,7 @@ model as well.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line306">line 306</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line309">line 309</a>
     </li></ul></dd>
     
 
@@ -1162,12 +1190,16 @@ model as well.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id=".withId"><span class="type-signature">(static) </span>withId<span class="signature">(id)</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>}</span></h4>
+    
 
     
 
@@ -1269,7 +1301,7 @@ to check for existence first if you're not certain.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line326">line 326</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line329">line 329</a>
     </li></ul></dd>
     
 
@@ -1329,12 +1361,16 @@ to check for existence first if you're not certain.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id="_refreshMany2Many"><span class="type-signature"></span>_refreshMany2Many<span class="signature">(relations)</span><span class="type-signature"></span></h4>
+    
 
     
 
@@ -1429,7 +1465,7 @@ to check for existence first if you're not certain.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line189">line 189</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line193">line 193</a>
     </li></ul></dd>
     
 
@@ -1455,12 +1491,16 @@ to check for existence first if you're not certain.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id="delete"><span class="type-signature"></span>delete<span class="signature">()</span><span class="type-signature"> &rarr; {undefined}</span></h4>
+    
 
     
 
@@ -1512,7 +1552,7 @@ You'll still be able to access fields and values on the instance.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line533">line 533</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line535">line 535</a>
     </li></ul></dd>
     
 
@@ -1556,12 +1596,16 @@ You'll still be able to access fields and values on the instance.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id="equals"><span class="type-signature"></span>equals<span class="signature">(otherModel)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    
 
     
 
@@ -1662,7 +1706,7 @@ Equality is determined by shallow comparing their attributes.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line449">line 449</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line452">line 452</a>
     </li></ul></dd>
     
 
@@ -1710,12 +1754,16 @@ Equality is determined by shallow comparing their attributes.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id="getClass"><span class="type-signature"></span>getClass<span class="signature">()</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>}</span></h4>
+    
 
     
 
@@ -1767,7 +1815,7 @@ instantiated this instance).</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line392">line 392</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line395">line 395</a>
     </li></ul></dd>
     
 
@@ -1816,12 +1864,16 @@ instantiated this instance).</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id="getId"><span class="type-signature"></span>getId<span class="signature">()</span><span class="type-signature"> &rarr; {*}</span></h4>
+    
 
     
 
@@ -1872,7 +1924,7 @@ instantiated this instance).</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line400">line 400</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line403">line 403</a>
     </li></ul></dd>
     
 
@@ -1920,12 +1972,100 @@ instantiated this instance).</p>
 
 
 
+
+
         
             
 
     
 
+    
+    <h4 class="name" id="getNextState"><span class="type-signature"></span>getNextState<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <dt class="important tag-deprecated">Deprecated:</dt><dd><ul class="dummy"><li>See the 0.9 migration guide on the GitHub repo.</li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line570">line 570</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    
     <h4 class="name" id="refreshFromState"><span class="type-signature"></span>refreshFromState<span class="signature">()</span><span class="type-signature"> &rarr; {undefined}</span></h4>
+    
 
     
 
@@ -1977,7 +2117,7 @@ database state in the current session.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line523">line 523</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line525">line 525</a>
     </li></ul></dd>
     
 
@@ -2021,12 +2161,16 @@ database state in the current session.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id="set"><span class="type-signature"></span>set<span class="signature">(propertyName, value)</span><span class="type-signature"> &rarr; {undefined}</span></h4>
+    
 
     
 
@@ -2150,7 +2294,7 @@ The values are immediately committed to the database.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line462">line 462</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line465">line 465</a>
     </li></ul></dd>
     
 
@@ -2194,12 +2338,16 @@ The values are immediately committed to the database.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id="toString"><span class="type-signature"></span>toString<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
+    
 
     
 
@@ -2250,7 +2398,7 @@ The values are immediately committed to the database.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line424">line 424</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line427">line 427</a>
     </li></ul></dd>
     
 
@@ -2298,12 +2446,16 @@ The values are immediately committed to the database.</p>
 
 
 
+
+
         
             
 
     
 
+    
     <h4 class="name" id="update"><span class="type-signature"></span>update<span class="signature">(userMergeObj)</span><span class="type-signature"> &rarr; {undefined}</span></h4>
+    
 
     
 
@@ -2404,7 +2556,7 @@ The updates are immediately committed to the database.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line473">line 473</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line476">line 476</a>
     </li></ul></dd>
     
 
@@ -2448,6 +2600,8 @@ The updates are immediately committed to the database.</p>
 
 
 
+
+
         
     
 
@@ -2464,13 +2618,13 @@ The updates are immediately committed to the database.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-fields.html">fields</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="global.html#ORM">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#createSelector">createSelector</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-fields.html">fields</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="ORM.html">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#createSelector">createSelector</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Wed Jun 28 2017 19:37:20 GMT+0300 (MSK)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sun Jun 10 2018 12:40:35 GMT+0200 (CEST)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: memoize.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: memoize.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import every from 'lodash/every';
+
+const defaultEqualityCheck = (a, b) => a === b;
+export const eqCheck = defaultEqualityCheck;
+
+const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (
+    nextArgs.every((arg, index) =>
+        equalityCheck(arg, lastArgs[index])
+    )
+);
+
+const rowsAreEqual = (ids, rowsA, rowsB) => (
+    ids.every(id => rowsA[id] === rowsB[id])
+);
+
+const tablesAreEqual = (rowsA, rowsB) => {
+    const rowIdsA = Object.keys(rowsA);
+    const rowIdsB = Object.keys(rowsB);
+
+    if (rowIdsA.length !== rowIdsB.length) {
+        /**
+         * the table contains new rows or old ones were removed
+         * this immediately means the table has been updated
+         */
+        return false;
+    }
+
+    return (
+        rowsAreEqual(rowIdsA, rowsA, rowsB) &amp;&amp;
+        rowsAreEqual(rowIdsB, rowsA, rowsB)
+    );
+};
+
+const accessedModelInstancesAreEqual = (previous, ormState) => {
+    const {
+        accessedModelInstances,
+    } = previous;
+
+    return every(accessedModelInstances, (accessedInstances, modelName) => {
+        const { itemsById: previousRows } = previous.ormState[modelName];
+        const { itemsById: rows } = ormState[modelName];
+
+        const accessedIds = Object.keys(accessedInstances);
+        return rowsAreEqual(accessedIds, previousRows, rows);
+    });
+};
+
+const fullTableScannedModelsAreEqual = (previous, ormState) => {
+    const {
+        fullTableScannedModels,
+    } = previous;
+
+    return fullTableScannedModels.every((modelName) => {
+        const { itemsById: previousRows } = previous.ormState[modelName];
+        const { itemsById: rows } = ormState[modelName];
+
+        /**
+         * all of this model's instances were checked against some condition
+         * invalidate them unless none of them have changed
+         */
+        return tablesAreEqual(previousRows, rows);
+    });
+};
+
+/**
+ * A memoizer to use with redux-orm
+ * selectors. When the memoized function is first run,
+ * the memoizer will remember the models that are accessed
+ * during that function run.
+ *
+ * On subsequent runs, the memoizer will check if those
+ * models' states have changed compared to the previous run.
+ *
+ * Memoization algorithm operates like this:
+ *
+ * 1. Has the selector been run before? If not, go to 5.
+ *
+ * 2. If the selector has other input selectors in addition to the
+ *    ORM state selector, check their results for equality with the previous results.
+ *    If they aren't equal, go to 5.
+ *
+ * 3. Is the ORM state referentially equal to the previous ORM state the selector
+ *    was called with? If yes, return the previous result.
+ *
+ * 4. Check which Model's instances the selector has accessed on previous runs.
+ *    Check for equality with each of those states versus their states in the
+ *    previous ORM state. If all of them are equal, return the previous result.
+ *
+ * 5. Run the selector. Check the Session object used by the selector for
+ *    which Model's states were accessed, and merge them with the previously
+ *    saved information about accessed models (if-else branching can change
+ *    which models are accessed on different inputs). Save the ORM state and
+ *    other arguments the selector was called with, overriding previously
+ *    saved values. Save the selector result. Return the selector result.
+ *
+ * @private
+ * @param  {Function} func - function to memoize
+ * @param  {Function} argEqualityCheck - equality check function to use with normal
+ *                                       selector args
+ * @param  {ORM} orm - a redux-orm ORM instance
+ * @return {Function} `func` memoized.
+ */
+export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
+    const previous = {
+        /* result of the previous function call */
+        result: null,
+        /* arguments to the previous function call (excluding ORM state) */
+        args: null,
+        /**
+         * lets us know how the models looked like
+         * during the previous function call
+         */
+        ormState: null,
+        /**
+        * array of names of models whose tables have been scanned completely
+        * during previous function call (contains only model names)
+        * format (e.g.): ['Book']
+        */
+        fullTableScannedModels: [],
+        /**
+        * map of which model instances have been accessed
+        * during previous function call (contains only IDs of accessed instances)
+        * format (e.g.): { Book: { 1: true, 3: true } }
+        */
+        accessedModelInstances: {},
+    };
+
+    return (...stateAndArgs) => {
+        const [ormState, ...args] = stateAndArgs;
+
+        const selectorWasCalledBefore = (
+            previous.args &amp;&amp;
+            previous.ormState
+        );
+
+        if (
+            selectorWasCalledBefore &amp;&amp;
+            argsAreEqual(previous.args, args, argEqualityCheck) &amp;&amp;
+            accessedModelInstancesAreEqual(previous, ormState) &amp;&amp;
+            fullTableScannedModelsAreEqual(previous, ormState)
+        ) {
+            /**
+             * the instances that were accessed as well as
+             * the arguments that were passed to func the previous time that
+             * func was called have not changed
+             */
+            return previous.result;
+        }
+
+        /* previous result is no longer valid, update cached values */
+        previous.args = args;
+
+        const session = orm.session(ormState);
+        previous.ormState = ormState;
+
+        /* this is where we call the actual function */
+        const result = func(...[session, ...args]);
+        previous.result = result;
+
+        /* rows retrieved during function call */
+        previous.accessedModelInstances = session.accessedModelInstances;
+        /* tables that had to be scanned completely */
+        previous.fullTableScannedModels = session.fullTableScannedModels;
+
+        return result;
+    };
+}
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-fields.html">fields</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="ORM.html">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#createSelector">createSelector</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sun Jun 10 2018 12:40:35 GMT+0200 (CEST)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

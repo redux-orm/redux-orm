@@ -87,85 +87,12 @@
 
     
 
-     
-
-    
-
-    
-        <h3 class="subsection-title">Members</h3>
-
-        
-            
-<h4 class="name" id="ORM"><span class="type-signature">(constant) </span>ORM<span class="type-signature"></span></h4>
-
-
-
-
-<div class="description">
-    <p>ORM - the Object Relational Mapper.</p>
-<p>Use instances of this class to:</p>
-<ul>
-<li>Register your <a href="Model.html"><code>Model</code></a> classes using <a href="global.html#ORM#register"><code>ORM#register</code></a></li>
-<li>Get the empty state for the underlying database with <a href="global.html#ORM#getEmptyState"><code>ORM#getEmptyState</code></a></li>
-<li>Start an immutable database session with <a href="global.html#ORM#session"><code>ORM#session</code></a></li>
-<li>Start a mutating database session with <a href="global.html#ORM#mutableSession"><code>ORM#mutableSession</code></a></li>
-</ul>
-<p>Internally, this class handles generating a schema specification from models
-to the database.</p>
-</div>
-
-
-
-
-
-
-
-<dl class="details">
-
     
 
     
 
     
 
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="ORM.js.html">ORM.js</a>, <a href="ORM.js.html#line43">line 43</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-        
     
 
     
@@ -176,7 +103,9 @@ to the database.</p>
 
     
 
+    
     <h4 class="name" id="createSelector"><span class="type-signature"></span>createSelector<span class="signature">(orm, &hellip;args)</span><span class="type-signature"> &rarr; {function}</span></h4>
+    
 
     
 
@@ -191,7 +120,7 @@ same as in <code>reselect</code>. The last argument is the selector
 function and the previous are input selectors.</p>
 <p>When you use this method to create a selector, the returned selector
 expects the whole <code>redux-orm</code> state branch as input. In the selector
-function that you pass as the last argument, you will receive
+function that you pass as the last argument, you will receive a
 <code>session</code> argument (a <code>Session</code> instance) followed by any
 input arguments, like in <code>reselect</code>.</p>
 <p>This is an example selector:</p>
@@ -203,12 +132,19 @@ const bookSelector = createSelector(orm, session => {
             genres: book.genres.map(genre => genre.name),
         });
     });
-});</code></pre><p>redux-orm uses a special memoization function to avoid recomputations.
-When a selector runs for the first time, it checks which Models' state
-branches were accessed. On subsequent runs, the selector first checks
-if those branches have changed -- if not, it just returns the previous
-result. This way you can use the <code>PureRenderMixin</code> in your React
-components for performance gains.</p>
+});</code></pre><p>redux-orm uses a special memoization function to avoid recomputations.</p>
+<p>Everytime a selector runs, this function records which instances
+of your <code>Model</code>s were accessed.<br>
+On subsequent runs, the selector first checks if the previously
+accessed instances or <code>args</code> have changed in any way:</p>
+<ul>
+    <li>If yes, the selector calls the function you passed to it.</li>
+    <li>If not, it just returns the previous result
+        (unless you call it for the first time).</li>
+</ul>
+
+<p>This way you can use the <code>PureRenderMixin</code> in your React components
+for performance gains.</p>
 </div>
 
 
@@ -252,7 +188,7 @@ components for performance gains.</p>
             <td class="type">
             
                 
-<span class="param-type"><a href="global.html#ORM">ORM</a></span>
+<span class="param-type"><a href="ORM.html">ORM</a></span>
 
 
             
@@ -345,7 +281,7 @@ components for performance gains.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="redux.js.html">redux.js</a>, <a href="redux.js.html#line65">line 65</a>
+        <a href="redux.js.html">redux.js</a>, <a href="redux.js.html#line73">line 73</a>
     </li></ul></dd>
     
 
@@ -393,6 +329,8 @@ components for performance gains.</p>
 
 
 
+
+
         
     
 
@@ -409,13 +347,13 @@ components for performance gains.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-fields.html">fields</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="global.html#ORM">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#createSelector">createSelector</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-fields.html">fields</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="ORM.html">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#createSelector">createSelector</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Wed Jun 28 2017 19:37:20 GMT+0300 (MSK)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sun Jun 10 2018 12:40:35 GMT+0200 (CEST)
 </footer>
 
 <script> prettyPrint(); </script>
