@@ -4,6 +4,7 @@ docs/
 *.sublime-workspace
 .DS_Store
 lib/
+es/
 .publish
 dist/
 min
