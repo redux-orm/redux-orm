@@ -91,7 +91,8 @@ function manyToManyDescriptor(
     declaredToModelName,
     throughModelName,
     throughFields,
-    reverse) {
+    reverse
+) {
     return {
         get() {
             const currentSession = this.getClass().session;
@@ -112,9 +113,9 @@ function manyToManyDescriptor(
 
             const throughQs = throughModel.filter(lookupObj);
             const toIds = new Set(
-              throughQs
-                .toRefArray()
-                .map(obj => obj[reverse ? fromFieldName : toFieldName])
+                throughQs
+                    .toRefArray()
+                    .map(obj => obj[reverse ? fromFieldName : toFieldName])
             );
 
             const qsFromModel = reverse ? declaredFromModel : declaredToModel;
@@ -128,7 +129,7 @@ function manyToManyDescriptor(
                 const filterWithAttr = reverse ? fromFieldName : toFieldName;
 
                 const existingQs = throughQs.filter(through =>
-                  idsToAdd.has(through[filterWithAttr])
+                    idsToAdd.has(through[filterWithAttr])
                 );
 
                 if (existingQs.exists()) {
@@ -182,7 +183,7 @@ function manyToManyDescriptor(
                         .map(through => through[attrInIdsToRemove]);
 
                     const unexistingIds = [...idsToRemove].filter(
-                      id => !includes(entitiesToDeleteIds, id)
+                        id => !includes(entitiesToDeleteIds, id)
                     );
 
                     const toDeleteModel = reverse

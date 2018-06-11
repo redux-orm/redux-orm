@@ -5,7 +5,7 @@ node_js: "8"
 script:
   - npm run lint
   - npm run build
-  - npm run test
+  - "npm run test:cov"
 
 after_success:
   - codecov

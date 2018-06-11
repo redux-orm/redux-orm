@@ -109,7 +109,7 @@ const Session = class Session {
     _getTransaction(updateSpec) {
         const { withMutations } = this;
         const { action } = updateSpec;
-        let batchToken = this.batchToken;
+        let { batchToken } = this;
         if ([UPDATE, DELETE].includes(action)) {
             batchToken = getBatchToken();
         }
@@ -120,7 +120,7 @@ const Session = class Session {
         const { table, clauses } = querySpec;
         const { rows } = result;
 
-        const idAttribute = this[table].idAttribute;
+        const { idAttribute } = this[table];
         const accessedIds = new Set(rows.map(
             row => row[idAttribute]
         ));

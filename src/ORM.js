@@ -72,7 +72,7 @@ export class ORM {
     }
 
     registerManyToManyModelsFor(model) {
-        const fields = model.fields;
+        const { fields } = model;
         const thisModelName = model.modelName;
 
         forOwn(fields, (fieldInstance, fieldName) => {
@@ -81,7 +81,7 @@ export class ORM {
                 if (fieldInstance.toModelName === 'this') {
                     toModelName = thisModelName;
                 } else {
-                    toModelName = fieldInstance.toModelName;
+                    toModelName = fieldInstance.toModelName; // eslint-disable-line prefer-destructuring
                 }
 
                 const fromFieldName = m2mFromFieldName(thisModelName);
@@ -148,7 +148,7 @@ export class ORM {
     _setupModelPrototypes(models) {
         models.forEach((model) => {
             if (!model.isSetUp) {
-                const fields = model.fields;
+                const { fields } = model;
                 forOwn(fields, (fieldInstance, fieldName) => {
                     if (!this.isFieldInstalled(model.modelName, fieldName)) {
                         fieldInstance.install(model, fieldName, this);
@@ -217,7 +217,6 @@ export class ORM {
             'ORM.prototype.withMutations is deprecated. ' +
             'Use ORM.prototype.mutableSession instead.'
         );
-
         return this.mutableSession(state);
     }
 

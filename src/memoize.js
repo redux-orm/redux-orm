@@ -10,9 +10,7 @@ const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (
 );
 
 const rowsAreEqual = (ids, rowsA, rowsB) => (
-    ids.every(
-        id => rowsA[id] === rowsB[id]
-    )
+    ids.every(id => rowsA[id] === rowsB[id])
 );
 
 const tablesAreEqual = (rowsA, rowsB) => {

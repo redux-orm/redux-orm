@@ -186,7 +186,7 @@ const QuerySet = class QuerySet {
 
     _evaluate() {
         if (!this._evaluated) {
-            const session = this.modelClass.session;
+            const { session } = this.modelClass;
             const querySpec = {
                 table: this.modelClass.modelName,
                 clauses: this.clauses,
@@ -279,6 +279,7 @@ const QuerySet = class QuerySet {
             'QuerySet.prototype.withRefs is deprecated. ' +
             'Query building operates on refs only now.'
         );
+        return undefined;
     }
 
     /**

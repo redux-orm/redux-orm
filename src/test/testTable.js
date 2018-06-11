@@ -118,7 +118,7 @@ describe('Table', () => {
         it('filter works correctly with object argument', () => {
             const clauses = [{ type: FILTER, payload: { data: 'verycooldata!' } }];
             const result = table.query(state, clauses);
-            expect(result.length).toBe(1);
+            expect(result).toHaveLength(1);
             expect(result[0]).toBe(state.itemsById[1]);
         });
 
@@ -148,7 +148,7 @@ describe('Table', () => {
                 }
             ];
             const result = table.query(state, clauses);
-            expect(result.length).toBe(2);
+            expect(result).toHaveLength(2);
             expect(result[0]).toBe(state.itemsById.work);
             expect(result[1]).toBe(state.itemsById.urgent);
         });
@@ -168,7 +168,7 @@ describe('Table', () => {
         it('exclude works correctly with object argument', () => {
             const clauses = [{ type: EXCLUDE, payload: { data: 'verycooldata!' } }];
             const result = table.query(state, clauses);
-            expect(result.length).toBe(2);
+            expect(result).toHaveLength(2);
             expect(result.map(row => row.id)).toEqual([0, 2]);
         });
 

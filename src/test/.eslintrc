@@ -17,7 +17,8 @@
     "arrow-parens": 0,
     "no-plusplus": 0,
     "no-console": 0,
-    "no-unsafe-negation": 0
+    "no-unsafe-negation": 0,
+    "function-paren-newline": 0
   },
   "parserOptions": {
     "ecmaFeatures": {

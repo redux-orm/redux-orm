@@ -1,7 +1,5 @@
 import createDatabase from './Database';
 
-export {
-    createDatabase,
-};
+export { createDatabase };
 
 export default createDatabase;

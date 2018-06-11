@@ -192,8 +192,7 @@ const Model = class Model {
      */
     _refreshMany2Many(relations) {
         const ThisModel = this.getClass();
-        const fields = ThisModel.fields;
-        const virtualFields = ThisModel.virtualFields;
+        const { fields, virtualFields } = ThisModel;
 
         Object.keys(relations).forEach((name) => {
             const reverse = !fields.hasOwnProperty(name);
@@ -478,8 +477,7 @@ const Model = class Model {
         const ThisModel = this.getClass();
         const mergeObj = Object.assign({}, userMergeObj);
 
-        const fields = ThisModel.fields;
-        const virtualFields = ThisModel.virtualFields;
+        const { fields, virtualFields } = ThisModel;
         const m2mRelations = {};
 
         // If an array of entities or id's is supplied for a
@@ -543,7 +541,7 @@ const Model = class Model {
     }
 
     _onDelete() {
-        const virtualFields = this.getClass().virtualFields;
+        const { virtualFields } = this.getClass();
         for (const key in virtualFields) { // eslint-disable-line
             const field = virtualFields[key];
             if (field instanceof ManyToMany) {

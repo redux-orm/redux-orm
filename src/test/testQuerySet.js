@@ -55,7 +55,7 @@ describe('QuerySet tests', () => {
         all.toRefArray();
 
         expect(all).not.toBe(bookQs);
-        expect(all.rows.length).toBe(bookQs.rows.length);
+        expect(all.rows).toHaveLength(bookQs.rows.length);
 
         for (let i = 0; i < all.rows.length; i++) {
             expect(all.rows[i]).toBe(bookQs.rows[i]);

@@ -45,8 +45,7 @@ class RelationalField {
             this.through = opts.through;
             this.throughFields = opts.throughFields;
         } else {
-            this.toModelName = args[0];
-            this.relatedName = args[1];
+            [this.toModelName, this.relatedName] = args;
         }
     }
 
@@ -57,7 +56,7 @@ class RelationalField {
 
 export class ForeignKey extends RelationalField {
     install(model, fieldName, orm) {
-        const toModelName = this.toModelName;
+        const { toModelName } = this;
         const toModel = toModelName === 'this' ? model : orm.get(toModelName);
 
         // Forwards.
@@ -100,7 +99,7 @@ export class ForeignKey extends RelationalField {
 
 export class ManyToMany extends RelationalField {
     install(model, fieldName, orm) {
-        const toModelName = this.toModelName;
+        const { toModelName } = this;
         const toModel = toModelName === 'this' ? model : orm.get(toModelName);
 
         // Forwards.
@@ -211,7 +210,7 @@ export class ManyToMany extends RelationalField {
 
 export class OneToOne extends RelationalField {
     install(model, fieldName, orm) {
-        const toModelName = this.toModelName;
+        const { toModelName } = this;
         const toModel = toModelName === 'this' ? model : orm.get(toModelName);
 
         // Forwards.
