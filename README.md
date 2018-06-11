@@ -540,6 +540,11 @@ session.Book.create({id: 5, name: 'Refactoring', release_year: 1999});
 
 Minor changes before 1.0.0 can include breaking changes.
 
+### 0.10.2
+
+- `pkg.module` now points to a new entrypoint at `es/index.js` adhering to the latest finalized ECMAScript version without non-standard language features. [3ab92b9](https://github.com/tommikaikkonen/redux-orm/commit/3ab92b96e5a5ee43445c542a1bd20589ff32bcd2)
+To use the original source in your application, please have your bundler resolve `src/index.js` as defined in `pkg["jsnext:main"]`.
+
 ### 0.10.1
 
 - Fixed filter functions not working when using strings as id attributes. [#207](https://github.com/tommikaikkonen/redux-orm/pull/207)
