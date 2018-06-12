@@ -265,7 +265,7 @@ describe('Integration', () => {
         });
 
         it('Model updates change relations if only relations are updated', () => {
-            const { Book } = session;
+            const { Book, Genre } = session;
 
             const genres = [1, 2];
             const book = Book.create({
@@ -285,8 +285,15 @@ describe('Integration', () => {
              * but still caused an update of the genres relation
              */
             expect(
-                book.genres.all().toRefArray().map(genre => genre.id)
+                book.genres.all().toRefArray()
+                    .map(genre => genre.id)
             ).toEqual([1, 2, 3]);
+            /* the backward relation must have been updated as well */
+            expect(
+                Genre.withId(3).books.all().toRefArray()
+                    .map(book => book.id)
+                    .includes(book.id)
+            ).toBeTruthy();
         });
 
         it('many-to-many relationship descriptors work', () => {
