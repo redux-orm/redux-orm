@@ -291,7 +291,7 @@ describe('Integration', () => {
             /* the backward relation must have been updated as well */
             expect(
                 Genre.withId(3).books.all().toRefArray()
-                    .map(book => book.id)
+                    .map(_book => _book.id)
                     .includes(book.id)
             ).toBeTruthy();
         });
