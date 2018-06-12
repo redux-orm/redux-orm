@@ -67,7 +67,7 @@ const Model = class Model {
     }
 
     _initFields(props) {
-        this._fields = Object.assign({}, props);
+        this._fields = { ...props };
 
         forOwn(props, (fieldValue, fieldName) => {
             // In this case, we got a prop that wasn't defined as a field.
@@ -247,7 +247,7 @@ const Model = class Model {
      * @return {Model} a new {@link Model} instance.
      */
     static create(userProps) {
-        const props = Object.assign({}, userProps);
+        const props = { ...userProps };
 
         const m2mRelations = {};
 
@@ -446,6 +446,10 @@ const Model = class Model {
      * Returns a boolean indicating if `otherModel` equals this {@link Model} instance.
      * Equality is determined by shallow comparing their attributes.
      *
+     * This equality is used when you call {@link Model#update}.
+     * You can prevent model updates by returning `true` here.
+     * However, a model will always be updated if its relationships are changed.
+     *
      * @param  {Model} otherModel - a {@link Model} instance to compare
      * @return {Boolean} a boolean indicating if the {@link Model} instance's are equal.
      */
@@ -474,10 +478,11 @@ const Model = class Model {
      * @return {undefined}
      */
     update(userMergeObj) {
-        const ThisModel = this.getClass();
-        const mergeObj = Object.assign({}, userMergeObj);
+        const mergeObj = { ...userMergeObj };
 
+        const ThisModel = this.getClass();
         const { fields, virtualFields } = ThisModel;
+
         const m2mRelations = {};
 
         // If an array of entities or id's is supplied for a
@@ -507,14 +512,39 @@ const Model = class Model {
             }
         }
 
-        this._initFields(Object.assign({}, this._fields, mergeObj));
-        this._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
+        const mergedFields = {
+            ...this._fields,
+            ...mergeObj,
+        };
 
-        ThisModel.session.applyUpdate({
-            action: UPDATE,
-            query: getByIdQuery(this),
-            payload: mergeObj,
-        });
+        const updatedModel = new ThisModel(this._fields);
+        updatedModel._initFields(mergedFields); // eslint-disable-line no-underscore-dangle
+
+        // determine if model would have different related models after update
+        updatedModel._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
+        const relationsEqual = Object.keys(m2mRelations).every(name =>
+            !arrayDiffActions(this[name], updatedModel[name])
+        );
+        const fieldsEqual = this.equals(updatedModel);
+
+        // only update fields if they have changed (referentially)
+        if (!fieldsEqual) {
+            this._initFields(mergedFields);
+        }
+
+        // only update many-to-many relationships if any reference has changed
+        if (!relationsEqual) {
+            this._refreshMany2Many(m2mRelations);
+        }
+
+        // only apply the update if a field or relationship has changed
+        if (!fieldsEqual || !relationsEqual) {
+            ThisModel.session.applyUpdate({
+                action: UPDATE,
+                query: getByIdQuery(this),
+                payload: mergeObj,
+            });
+        }
     }
 
     /**

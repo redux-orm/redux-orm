@@ -102,6 +102,16 @@ const PUBLISHERS_INITIAL = [
     },
 ];
 
+const MOVIES_INITIAL = [
+    {
+        name: 'The Godfather',
+        characters: ['Vito Corleone', 'Tom Hagen', 'Bonasera'],
+        hasPremiered: true,
+        rating: 9.2,
+        meta: {},
+    },
+];
+
 export function createTestModels() {
     const Book = class BookModel extends Model {
         static get fields() {
@@ -165,6 +175,17 @@ export function createTestModels() {
         name: attr(),
     };
 
+    const Movie = class MovieModel extends Model {};
+    Movie.modelName = 'Movie';
+    Movie.fields = {
+        id: attr(),
+        name: attr(),
+        rating: attr(),
+        hasPremiered: attr(),
+        characters: attr(),
+        meta: attr(),
+    };
+
     return {
         Book,
         Author,
@@ -172,6 +193,7 @@ export function createTestModels() {
         Genre,
         Tag,
         Publisher,
+        Movie,
     };
 }
 
@@ -184,23 +206,24 @@ export function createTestORM(customModels) {
         Genre,
         Tag,
         Publisher,
+        Movie,
     } = models;
 
     const orm = new ORM();
-    orm.register(Book, Author, Cover, Genre, Tag, Publisher);
+    orm.register(Book, Author, Cover, Genre, Tag, Publisher, Movie);
     return orm;
 }
 
 export function createTestSession() {
     const orm = createTestORM();
-    return orm.session(orm.getEmptytate());
+    return orm.session(orm.getEmptyState());
 }
 
 export function createTestSessionWithData(customORM) {
     const orm = customORM || createTestORM();
     const state = orm.getEmptyState();
     const {
-        Author, Cover, Genre, Tag, Book, Publisher
+        Author, Cover, Genre, Tag, Book, Publisher, Movie
     } = orm.mutableSession(state);
 
     AUTHORS_INITIAL.forEach(props => Author.create(props));
@@ -209,6 +232,7 @@ export function createTestSessionWithData(customORM) {
     TAGS_INITIAL.forEach(props => Tag.create(props));
     BOOKS_INITIAL.forEach(props => Book.create(props));
     PUBLISHERS_INITIAL.forEach(props => Publisher.create(props));
+    MOVIES_INITIAL.forEach(props => Movie.create(props));
 
     const normalSession = orm.session(state);
     return { session: normalSession, orm, state };

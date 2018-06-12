@@ -31,7 +31,7 @@ describe('Integration', () => {
                     Author: expect.anything(),
                     BookGenres: expect.anything(),
                     BookTags: expect.anything(),
-                    Publisher: expect.anything()
+                    Movie: expect.anything(),
                 })
             );
 
@@ -58,6 +58,9 @@ describe('Integration', () => {
 
             expect(state.Publisher.items).toHaveLength(2);
             expect(Object.keys(state.Publisher.itemsById)).toHaveLength(2);
+
+            expect(state.Movie.items).toHaveLength(1);
+            expect(Object.keys(state.Movie.itemsById)).toHaveLength(1);
         });
 
         it('Models correctly indicate if id exists', () => {
@@ -163,6 +166,134 @@ describe('Integration', () => {
             expect(session.Book.last().releaseYear).toBe(2016);
             expect(book.ref).toBe(nextBook.ref);
             expect(nextBook).toBeInstanceOf(Book);
+        });
+
+        it('Model updates preserve instance reference if fields are referentially equal', () => {
+            const { Movie } = session;
+
+            const movie = Movie.first();
+            const { name, characters, meta } = movie;
+            const oldRef = movie.ref;
+
+            movie.update({ name });
+            expect(oldRef).toBe(movie.ref);
+
+            movie.update({ meta });
+            expect(oldRef).toBe(movie.ref);
+
+            movie.update({ characters });
+            expect(oldRef).toBe(movie.ref);
+        });
+
+        it('Model updates change instance reference if string field changes', () => {
+            const { Movie } = session;
+
+            const movie = Movie.first();
+            const oldRef = movie.ref;
+
+            movie.update({ name: 'New name' });
+            expect(oldRef).not.toBe(movie.ref);
+        });
+
+        it('Model updates change instance reference if object field changes reference', () => {
+            const { Movie } = session;
+
+            const movie = Movie.first();
+            const oldRef = movie.ref;
+
+            movie.update({ meta: {} });
+            expect(oldRef).not.toBe(movie.ref);
+        });
+
+        it('Model updates only change instance reference if equals returns false', () => {
+            const { Movie } = session;
+
+            const movie = Movie.first();
+            const oldRef = movie.ref;
+
+            movie.equals = (otherModel) => true;
+            movie.update({
+                name: 'New name',
+                rating: 10,
+                hasPremiered: false,
+                characters: [],
+                meta: {},
+            });
+            expect(oldRef).toBe(movie.ref);
+
+            const movie2 = Movie.create({
+                characters: ['Joker'],
+            });
+            const oldRef2 = movie2.ref;
+            movie2.equals = function characterAmountsEqual(otherModel) {
+                return (
+                    this._fields.characters.length ===
+                    otherModel._fields.characters.length
+                );
+            };
+
+            // length of characters array is equal, should not cause change of reference
+            movie2.update({ characters: ['Joker'] });
+            expect(oldRef2).toBe(movie2.ref);
+
+            // length of characters array has changed, should cause change of reference
+            movie2.update({ characters: ['Joker', 'Mickey Mouse'] });
+            expect(oldRef2).not.toBe(movie2.ref);
+            const newRef2 = movie2.ref;
+
+            // length of characters array has not changed, should cause change of reference
+            movie2.update({ characters: ['Batman', 'Catwoman'] });
+            expect(newRef2).toBe(movie2.ref);
+        });
+
+        it('Model updates preserve relations if only other fields are changed', () => {
+            const { Book } = session;
+
+            const genres = [1, 2];
+            const book = Book.create({
+                name: 'Book name',
+                genres,
+            });
+            expect(
+                book.genres.all().toRefArray().map(genre => genre.id)
+            ).toEqual([1, 2]);
+            // update with same string, expect relations to be preserved
+            book.update({ name: 'Updated Book name' });
+            expect(
+                book.genres.all().toRefArray().map(genre => genre.id)
+            ).toEqual([1, 2]);
+        });
+
+        it('Model updates change relations if only relations are updated', () => {
+            const { Book, Genre } = session;
+
+            const genres = [1, 2];
+            const book = Book.create({
+                name: 'New Book',
+                genres,
+            });
+            expect(
+                book.genres.all().toRefArray().map(genre => genre.id)
+            ).toEqual([1, 2]);
+
+            // mutate array by appending element without changing reference
+            genres.push(3);
+            // update book with field containing the same reference
+            book.update({ genres });
+            /**
+             * update should have seen equality of fields
+             * but still caused an update of the genres relation
+             */
+            expect(
+                book.genres.all().toRefArray()
+                    .map(genre => genre.id)
+            ).toEqual([1, 2, 3]);
+            /* the backward relation must have been updated as well */
+            expect(
+                Genre.withId(3).books.all().toRefArray()
+                    .map(_book => _book.id)
+                    .includes(book.id)
+            ).toBeTruthy();
         });
 
         it('many-to-many relationship descriptors work', () => {
