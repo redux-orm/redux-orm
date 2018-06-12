@@ -221,7 +221,7 @@ describe('Integration', () => {
             });
             expect(oldRef).toBe(movie.ref);
 
-            function charactersEqual(otherModel) {
+            function characterAmountsEqual(otherModel) {
                 return (
                     this._fields.characters.length ===
                     otherModel._fields.characters.length
@@ -232,7 +232,7 @@ describe('Integration', () => {
                 characters: ['Joker'],
             });
             const oldRef2 = movie2.ref;
-            movie2.equals = charactersEqual;
+            movie2.equals = characterAmountsEqual;
 
             // length of characters array is equal, should not cause change of reference
             movie2.update({ characters: ['Mickey Mouse'] });
@@ -242,7 +242,7 @@ describe('Integration', () => {
                 characters: ['Joker'],
             });
             const oldRef3 = movie3.ref;
-            movie3.equals = charactersEqual;
+            movie3.equals = characterAmountsEqual;
 
             // length of characters array has changed, should cause change of reference
             movie3.update({ characters: ['Joker', 'Mickey Mouse'] });
