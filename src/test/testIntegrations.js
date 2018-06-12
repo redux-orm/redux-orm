@@ -221,32 +221,29 @@ describe('Integration', () => {
             });
             expect(oldRef).toBe(movie.ref);
 
-            function characterAmountsEqual(otherModel) {
-                return (
-                    this._fields.characters.length ===
-                    otherModel._fields.characters.length
-                );
-            }
-
             const movie2 = Movie.create({
                 characters: ['Joker'],
             });
             const oldRef2 = movie2.ref;
-            movie2.equals = characterAmountsEqual;
+            movie2.equals = function characterAmountsEqual(otherModel) {
+                return (
+                    this._fields.characters.length ===
+                    otherModel._fields.characters.length
+                );
+            };
 
             // length of characters array is equal, should not cause change of reference
-            movie2.update({ characters: ['Mickey Mouse'] });
+            movie2.update({ characters: ['Joker'] });
             expect(oldRef2).toBe(movie2.ref);
 
-            const movie3 = Movie.create({
-                characters: ['Joker'],
-            });
-            const oldRef3 = movie3.ref;
-            movie3.equals = characterAmountsEqual;
-
             // length of characters array has changed, should cause change of reference
-            movie3.update({ characters: ['Joker', 'Mickey Mouse'] });
-            expect(oldRef).not.toBe(movie3.ref);
+            movie2.update({ characters: ['Joker', 'Mickey Mouse'] });
+            expect(oldRef2).not.toBe(movie2.ref);
+            const newRef2 = movie2.ref;
+
+            // length of characters array has not changed, should cause change of reference
+            movie2.update({ characters: ['Batman', 'Catwoman'] });
+            expect(newRef2).toBe(movie2.ref);
         });
 
         it('Model updates preserve relations if only other fields are changed', () => {
