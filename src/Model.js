@@ -192,12 +192,16 @@ const Model = class Model {
      */
     _refreshMany2Many(relations) {
         const ThisModel = this.getClass();
-        const { fields, virtualFields } = ThisModel;
+        const { fields, virtualFields, modelName } = ThisModel;
 
         Object.keys(relations).forEach((name) => {
             const reverse = !fields.hasOwnProperty(name);
             const field = virtualFields[name];
             const values = relations[name];
+
+            if (!Array.isArray(values)) {
+                throw new TypeError(`Failed to resolve many-to-many relationship: ${modelName}[${name}] must be an array (passed: ${values})`);
+            }
 
             const normalizedNewIds = values.map(normalizeEntity);
             const uniqueIds = uniq(normalizedNewIds);

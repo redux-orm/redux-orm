@@ -421,6 +421,40 @@ describe('Integration', () => {
             expect(deleteGenre.books.filter({ id: book.id }).exists()).toBe(false);
         });
 
+        it('creating models without many-to-many entities works', () => {
+            const { Book } = session;
+            expect(() => {
+                Book.create({ id: 457656121 });
+            }).not.toThrowError();
+        });
+
+        it('creating models throws when passing non-array many field', () => {
+            const { Book } = session;
+            [null, undefined, 353, 'a string'].forEach(value => {
+                expect(() => {
+                    Book.create({ id: 457656121, genres: value });
+                }).toThrowError(`Failed to resolve many-to-many relationship: Book[genres] must be an array (passed: ${value})`);
+            });
+        });
+
+        it('updating models without many-to-many entities works', () => {
+            const { Book } = session;
+            const book = Book.create({ id: 457656121 });
+            expect(() => {
+                book.update({ id: 457656121 });
+            }).not.toThrowError();
+        });
+
+        it('update throws with non-array many field', () => {
+            const { Book } = session;
+            const book = Book.create({ id: 457656121 });
+            [null, undefined, 353, 'a string'].forEach(value => {
+                expect(() => {
+                    book.update({ genres: value });
+                }).toThrowError(`Failed to resolve many-to-many relationship: Book[genres] must be an array (passed: ${value})`);
+            });
+        });
+
         it('removing related many-to-many entities works', () => {
             const { Book, Genre } = session;
             const book = Book.withId(0);

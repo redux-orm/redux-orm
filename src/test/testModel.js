@@ -1,4 +1,4 @@
-import { ORM, Model as BaseModel, ManyToMany, attr } from '../';
+import { ORM, Model as BaseModel, attr } from '../';
 
 describe('Model', () => {
     describe('static method', () => {
