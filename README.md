@@ -1,14 +1,16 @@
-# Redux-ORM
+<h1 align="center">Redux-ORM</h1>
+
+<div align="center">
 
 [![Build Status](https://img.shields.io/travis/tommikaikkonen/redux-orm.svg?style=flat-square)](https://travis-ci.org/tommikaikkonen/redux-orm)
-[![Codacy Grade](https://img.shields.io/codacy/grade/55fea9be60974a5c9b8f0459070dfefc.svg)](https://www.codacy.com/app/haveyaseen/redux-orm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=tommikaikkonen/redux-orm&amp;utm_campaign=Badge_Grade)
+[![Codacy Grade](https://img.shields.io/codacy/grade/55fea9be60974a5c9b8f0459070dfefc.svg?style=flat-square)](https://www.codacy.com/app/haveyaseen/redux-orm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=tommikaikkonen/redux-orm&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://img.shields.io/codecov/c/github/tommikaikkonen/redux-orm/master.svg?style=flat-square)](https://codecov.io/gh/tommikaikkonen/redux-orm/branch/master)
 [![NPM package](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
-![GitHub Release Date](https://img.shields.io/github/release-date/tommikaikkonen/redux-orm.svg)
+![GitHub Release Date](https://img.shields.io/github/release-date/tommikaikkonen/redux-orm.svg?style=flat-square)
 [![NPM downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
-[![Gitter](https://badges.gitter.im/redux-orm/Lobby.svg)](https://gitter.im/redux-orm/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-A small, simple and immutable ORM to manage relational data in your Redux store.
+[![Gitter](https://badges.gitter.im/redux-orm/Lobby.svg?style=flat-square)](https://gitter.im/redux-orm/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+![NPM license](https://img.shields.io/npm/l/redux-orm.svg?style=flat-square)
+</div>
 
 See [a guide to creating a simple app with Redux-ORM](https://github.com/tommikaikkonen/redux-orm-primer) (includes the source). Its README is not updated for 0.9 yet but the [code has a branch for it](https://github.com/tommikaikkonen/redux-orm-primer/tree/migrate_to_0_9).
 
@@ -17,10 +19,6 @@ See [a guide to creating a simple app with Redux-ORM](https://github.com/tommika
 Looking for the 0.8 docs? Read the [old README.md in the repo](https://github.com/tommikaikkonen/redux-orm/tree/3c36fa804d2810b2aaaad89ff1d99534b847ea35). For the API reference, clone the repo, `npm install`, `make build` and open up `index.html` in your browser. Sorry for the inconvenience.
 
 API can be unstable until 1.0.0. Minor version bumps before 1.0.0 can and will introduce breaking changes. They will be noted in the [changelog](https://github.com/tommikaikkonen/redux-orm/blob/master/CHANGELOG.md).
-
-## Extensions
-
-- [`redux-orm-proptypes`](https://github.com/tommikaikkonen/redux-orm-proptypes): React PropTypes validation and defaultProps mixin for Redux-ORM Models
 
 ## Installation
 
@@ -39,7 +37,11 @@ Or with a script tag
 
 ### Polyfill
 
-Redux-ORM uses some ES2015+ features, such as `Set`. If you are using Redux-ORM in a pre-ES2015 environment, you should load a polyfill like [`babel-polyfill`](https://babeljs.io/docs/usage/polyfill/) before using Redux-ORM.
+Redux-ORM uses some ES2015+ features, such as `Set`. If you are using Redux-ORM in a pre-ES2015+ environment, you should load a polyfill like [`babel-polyfill`](https://babeljs.io/docs/usage/polyfill/) before using Redux-ORM.
+
+### Extensions
+
+- [`redux-orm-proptypes`](https://github.com/tommikaikkonen/redux-orm-proptypes): React PropTypes validation and defaultProps mixin for Redux-ORM Models
 
 ## Usage
 
@@ -276,7 +278,7 @@ const authorSelector = createSelector(
 //   {
 //     id: 0,
 //     name: 'Tommi Kaikkonen',
-//     books: ['Introduction to redux-orm', 'Developing Redux applications'],
+//     books: ['Introduction to Redux-ORM', 'Developing Redux applications'],
 //   },
 //   {
 //     id: 1,
@@ -323,7 +325,7 @@ function mapStateToProps(state) {
 export default connect(mapStateToProps)(App);
 ```
 
-## Understanding redux-orm
+## Understanding Redux-ORM
 
 ### An ORM?
 
@@ -489,7 +491,7 @@ Book.modelName = 'Book';
 
 **Declaring `options`**
 
-If you need to specify options to the redux-orm database, you can declare a static `options` property on the Model class with an object key. Currently you can specify the id attribute name:
+If you need to specify options to the Redux-ORM database, you can declare a static `options` property on the Model class with an object key. Currently you can specify the id attribute name:
 
 ```javascript
 // This is the default value. 
