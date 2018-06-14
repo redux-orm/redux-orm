@@ -4,7 +4,7 @@
 [![Codacy Grade](https://img.shields.io/codacy/grade/55fea9be60974a5c9b8f0459070dfefc.svg)](https://www.codacy.com/app/haveyaseen/redux-orm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=tommikaikkonen/redux-orm&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://img.shields.io/codecov/c/github/tommikaikkonen/redux-orm/master.svg?style=flat-square)](https://codecov.io/gh/tommikaikkonen/redux-orm/branch/master)
 [![NPM package](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
-[![GitHub Release Date](https://img.shields.io/github/release-date/tommikaikkonen/redux-orm.svg)]
+![GitHub Release Date](https://img.shields.io/github/release-date/tommikaikkonen/redux-orm.svg)
 [![NPM downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
 [![Gitter](https://badges.gitter.im/redux-orm/Lobby.svg)](https://gitter.im/redux-orm/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
