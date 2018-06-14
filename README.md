@@ -1,8 +1,10 @@
-redux-orm
-===============
+# Redux-ORM
+
 [![Build Status](https://img.shields.io/travis/tommikaikkonen/redux-orm.svg?style=flat-square)](https://travis-ci.org/tommikaikkonen/redux-orm)
+[![Codacy Grade](https://img.shields.io/codacy/grade/55fea9be60974a5c9b8f0459070dfefc.svg)](https://www.codacy.com/app/haveyaseen/redux-orm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=tommikaikkonen/redux-orm&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://img.shields.io/codecov/c/github/tommikaikkonen/redux-orm/master.svg?style=flat-square)](https://codecov.io/gh/tommikaikkonen/redux-orm/branch/master)
 [![NPM package](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
+[![GitHub Release Date](https://img.shields.io/github/release-date/tommikaikkonen/redux-orm.svg)]
 [![NPM downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
 [![Gitter](https://badges.gitter.im/redux-orm/Lobby.svg)](https://gitter.im/redux-orm/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -14,7 +16,7 @@ See [a guide to creating a simple app with Redux-ORM](https://github.com/tommika
 
 Looking for the 0.8 docs? Read the [old README.md in the repo](https://github.com/tommikaikkonen/redux-orm/tree/3c36fa804d2810b2aaaad89ff1d99534b847ea35). For the API reference, clone the repo, `npm install`, `make build` and open up `index.html` in your browser. Sorry for the inconvenience.
 
-API can be unstable until 1.0.0. Minor version bumps before 1.0.0 can and will introduce breaking changes. They will be noted in the [changelog](https://github.com/tommikaikkonen/redux-orm#changelog).
+API can be unstable until 1.0.0. Minor version bumps before 1.0.0 can and will introduce breaking changes. They will be noted in the [changelog](https://github.com/tommikaikkonen/redux-orm/blob/master/CHANGELOG.md).
 
 ## Extensions
 
@@ -29,7 +31,7 @@ npm install redux-orm --save
 Or with a script tag
 
 ```html
-<script src="https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.js"></script>
+<script src="https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.min.js"></script>
 ```
 
 - [Browser build following master](https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.js)
@@ -37,13 +39,13 @@ Or with a script tag
 
 ### Polyfill
 
-`redux-orm` uses some ES2015 features, such as `Set`. If you are using `redux-orm` in a pre-ES2015 environment, you should load a polyfill like [`babel-polyfill`](https://babeljs.io/docs/usage/polyfill/) before using `redux-orm`.
+Redux-ORM uses some ES2015+ features, such as `Set`. If you are using Redux-ORM in a pre-ES2015 environment, you should load a polyfill like [`babel-polyfill`](https://babeljs.io/docs/usage/polyfill/) before using Redux-ORM.
 
 ## Usage
 
 ### Declare Your Models
 
-You can declare your models with the ES6 class syntax, extending from `Model`. You need to declare all your non-relational fields on the Model, and declaring all data fields is recommended as the library doesn't have to redefine getters and setters when instantiating Models. `redux-orm` supports one-to-one and many-to-many relations in addition to foreign keys (`oneToOne`, `many` and `fk` imports respectively). Non-related properties can be accessed like in normal JavaScript objects.
+You can declare your models with the ES6 class syntax, extending from `Model`. You need to declare all your non-relational fields on the Model, and declaring all data fields is recommended as the library doesn't have to redefine getters and setters when instantiating Models. Redux-ORM supports one-to-one and many-to-many relations in addition to foreign keys (`oneToOne`, `many` and `fk` imports respectively). Non-related properties can be accessed like in normal JavaScript objects.
 
 ```javascript
 // models.js
@@ -238,7 +240,7 @@ As you can see, it just instantiates a new Session, loops through all the Models
 
 ### Use with React
 
-Use memoized selectors to make queries into the state. `redux-orm` uses smart memoization: the below selector accesses `Author` and `AuthorBooks` branches (`AuthorBooks` is a many-to-many branch generated from the model field declarations), and the selector will be recomputed only if those branches change. The accessed branches are resolved on the first run.
+Use memoized selectors to make queries into the state. Redux-ORM uses smart memoization: the below selector accesses `Author` and `AuthorBooks` branches (`AuthorBooks` is a many-to-many branch generated from the model field declarations), and the selector will be recomputed only if those branches change. The accessed branches are resolved on the first run.
 
 ```javascript
 // selectors.js
@@ -290,11 +292,11 @@ Because selectors are memoized, you can use pure rendering in React for performa
 
 ```jsx
 // components.js
-import PureComponent from 'react-pure-render/component';
+import React from 'react';
 import { authorSelector } from './selectors';
 import { connect } from 'react-redux';
 
-class App extends PureComponent {
+class App extends React.PureComponent {
     render() {
         const authors = this.props.authors.map(author => {
             return (
@@ -325,11 +327,11 @@ export default connect(mapStateToProps)(App);
 
 ### An ORM?
 
-Well, yeah. `redux-orm` deals with related data, structured similar to a relational database. The database in this case is a simple JavaScript object database.
+Well, yeah. Redux-ORM deals with related data, structured similar to a relational database. The database in this case is a simple JavaScript object database.
 
 ### Why?
 
-For simple apps, writing reducers by hand is alright, but when the number of object types you have increases and you need to maintain relations between them, things get hairy. ImmutableJS goes a long way to reduce complexity in your reducers, but `redux-orm` is specialized for relational data.
+For simple apps, writing reducers by hand is alright, but when the number of object types you have increases and you need to maintain relations between them, things get hairy. ImmutableJS goes a long way to reduce complexity in your reducers, but Redux-ORM is specialized for relational data.
 
 ### Immutability
 
@@ -391,7 +393,7 @@ Just like you can extend `Model`, you can do the same for `QuerySet` (customize 
 
 ### Caveats
 
-The ORM abstraction will never be as performant compared to writing reducers by hand, and adds to the build size of your project (last I checked, minimizing the source files and gzipping yielded about 8 KB). If you have very simple data without relations, `redux-orm` may be overkill. The development convenience benefit is considerable though.
+The ORM abstraction will never be as performant compared to writing reducers by hand, and adds to the build size of your project (last I checked, minimizing the source files and gzipping yielded about 8 KB). If you have very simple data without relations, Redux-ORM may be overkill. The development convenience benefit is considerable though.
 
 ## API
 
@@ -419,7 +421,7 @@ Instance methods:
 
 See the full documentation for `Model` [here](http://tommikaikkonen.github.io/redux-orm/Model.html).
 
-**Instantiation**: Don't instantiate directly; use class method `create`.
+**Instantiation**: Don't instantiate directly; use the class methods `create` and `upsert` as documented below.
 
 **Class Methods**:
 
@@ -508,7 +510,7 @@ You can access all of these methods straight from a `Model` class, as if they we
 - `toModelArray()`: returns the objects represented by the `QuerySet` as an array of `Model` instances objects.
 - `count()`: returns the number of `Model` instances in the `QuerySet`.
 - `exists()`: return `true` if number of entities is more than 0, else `false`.
-- `filter(filterArg)`: returns a new `QuerySet` representing the records from the parent QuerySet that pass the filter. For `filterArg`, you can either pass an object that `redux-orm` tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not. The function receives a model instance as its sole argument.
+- `filter(filterArg)`: returns a new `QuerySet` representing the records from the parent QuerySet that pass the filter. For `filterArg`, you can either pass an object that Redux-ORM tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not. The function receives a model instance as its sole argument.
 - `exclude` returns a new `QuerySet` represeting entities in the parent QuerySet that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function. The function receives a model instance as its sole argument.
 - `all()` returns a new `QuerySet` with the same entities.
 - `at(index)` returns an `Model` instance at the supplied `index` in the `QuerySet`.
@@ -538,186 +540,10 @@ session.Book.create({id: 5, name: 'Refactoring', release_year: 1999});
 
 ## Changelog
 
-Minor changes before 1.0.0 can include breaking changes.
+Minor changes before v1.0.0 can include breaking changes.
 
-### 0.10.2
-
-- `pkg.module` now points to a new entrypoint at `es/index.js` adhering to the latest finalized ECMAScript version without non-standard language features. [3ab92b9](https://github.com/tommikaikkonen/redux-orm/commit/3ab92b96e5a5ee43445c542a1bd20589ff32bcd2)
-To use the original source in your application, please have your bundler resolve `src/index.js` as defined in `pkg["jsnext:main"]`.
-
-### 0.10.1
-
-- Fixed filter functions not working when using strings as id attributes. [#207](https://github.com/tommikaikkonen/redux-orm/pull/207)
-
-### 0.10.0
-
-- Added memoization by instance. Prevents unnecessary full table scans when not interested in unchanged records. [#185](https://github.com/tommikaikkonen/redux-orm/pull/185)
-- Improved performance of many-to-many descriptors. [#165](https://github.com/tommikaikkonen/redux-orm/pull/165)
-- Faster model lookups by primary key (id). [#158](https://github.com/tommikaikkonen/redux-orm/pull/158)
-- Added `@deprecated` JSDoc tag to deprecated members and functions. [#201](https://github.com/tommikaikkonen/redux-orm/pull/201)
-- Added `pkg.module` path to `package.json` indicating path for ES6 module. May fix [#53](https://github.com/tommikaikkonen/redux-orm/issues/53) for some people. [#192](https://github.com/tommikaikkonen/redux-orm/pull/192)
-- Introduced dependency on ES2015 `Set`. See [Polyfill](https://github.com/tommikaikkonen/redux-orm#polyfill).
-- Added performance regression tests.
-
-### 0.9.4
-fix for filter/query [#99](https://github.com/tommikaikkonen/redux-orm/issues/99)
-
-### 0.9.2 - 0.9.3
-fix for many-many updates [#136](https://github.com/tommikaikkonen/redux-orm/issues/136)
-
-### 0.9.1
-- Added 'upsert' method to Model (insert or update behaviour)
-- Major updates for tests
-- CI integration
-
-### 0.9.0
-
-A lot. See [the migration guide](https://github.com/tommikaikkonen/redux-orm/wiki/0.9-Migration-Guide).
-
-### 0.8.4
-
-Adds UMD build to partially fix [#41](https://github.com/tommikaikkonen/redux-orm/issues/41). You can now use or try out `redux-orm` through a script tag:
-
-```html
-<script src="https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.js"></script>
-```
-
-`redux-orm.js` will point to the master version of the library; If you need to stick to a version, make a copy or build it yourself.
-
-### 0.8.3
-
-Fixed bug that mutated the backend options in `Model` if you supplied custom ones, see [Issue 37](https://github.com/tommikaikkonen/redux-orm/issues/37). Thanks to [@diffcunha](https://github.com/diffcunha) for the [fix](https://github.com/tommikaikkonen/redux-orm/pull/38)!
-
-### 0.8.2
-
-Fixed [regression in `Model.prototype.update`](https://github.com/tommikaikkonen/redux-orm/issues/23)
-
-### 0.8.1
-
-Added `babel-runtime to dependencies`
-
-### 0.8.0
-
-Adds **batched mutations.** This is a big performance improvement. Previously adding 10,000 objects would take 15s, now it takes about 0.5s. Batched mutations are implemented using [`immutable-ops`](https://github.com/tommikaikkonen/immutable-ops) internally.
-
-**Breaking changes**:
-
-- Removed `indexById` option from Backend. This means that data will always be stored in both an array of id's and a map of `id => entity`, which was the default setting. If you didn't explicitly set `indexById` to `false`, you don't need to change anything.
-
-- Batched mutations brought some internal changes. If you had custom `Backend` or `Session` classes, or have overridden `Model.getNextState`, please check out the diff.
-
-### 0.7.0
-
-**Breaking changes**:
-
-Model classes that you access in reducers and selectors are now session-specific. Previously the user-defined Model class reference was used for sessions, with a private `session` property changing based on the most recently created session. Now Model classes are given a unique dummy subclass for each session. The subclass will be bound to that specific session. This allows multiple sessions to be used at the same time.
-
-You most likely don't need to change anything. The documentation was written with this feature in mind from the start. As long as you've used the model class references given to you in reducers and selectors as arguments (not the reference to the model class you defined), you're fine.
-
-### 0.6.0
-
-**Breaking changes**:
-
-- When calling `QuerySet.filter` or `QuerySet.exclude` with an object argument, any values of that object that look like a `Model` instance (i.e. they have a `getId` property that is a function), will be turned into the id of that instance before performing the filtering or excluding.
-
-E.g.
-
-```javascript
-Book.filter({ author: Author.withId(0) });
-```
-
-Is equivalent to
-
-```javascript
-Book.filter({ author: 0 });
-```
-
-### 0.5.0
-
-**Breaking changes**:
-
-- Model instance method `equals(otherModel)` now checks if the two model's attributes are shallow equal. Previously, it checked if the id's and model classes are equal.
-- Session constructor now receives a Schema instance as its first argument, instead of an array of Model classes (this only affects you if you're manually instantiating Sessions with the `new` operator).
-
-Other changes:
-
-- Added `hasId` static method to the Model class. It tests for the existence of the supplied id in the model's state.
-- Added instance method `getNextState` to the Session class. This enables you to get the next state without running model-reducers. Useful if you're bootstrapping data, writing tests, or otherwise operating on the data outside reducers. You can pass an options object that currently accepts a `runReducers` key. It's value indicates if reducers should be run or not.
-- Improved API documentation.
-
-### 0.4.0
-
-- Fixed a bug that mutated props passed to Model constructors, which could be a reference from the state. I highly recommend updating from 0.3.1.
-- API cleanup, see breaking changes below.
-- Calling getNextState is no longer mandatory in your Model reducers. If your reducer returns `undefined`, `getNextState` will be called for you.
-
-**Breaking changes**:
-
-- Removed static methods `Model.setOrder()` and `Backend.order`. If you want ordered entities, use the QuerySet instance method `orderBy`.
-- Added helpful error messages when trying to add a duplicate many-to-many entry (Model.someManyRelated.add(...)), trying to remove an unexisting many-to-many entry (Model.exampleManyRelated.remove(...)), or creating a Model with duplicate many-to-many entry ids (Model.create(...)).
-- Removed ability to supply a mapping function to QuerySet instance method `update`. If you need to record updates dynamically based on each entity, iterate through the objects with `forEach` and record updates separately:
-
-```javascript
-const authors = publisher.authors;
-authors.forEach(author => {
-    const isAdult = author.age >= 18;
-    author.update({ isAdult });
-})
-```
-
-or use the ability to merge an object with all objects in a QuerySet. Since the update operation is batched for all objects in the QuerySet, it can be more performant with a large amount of entities:
-
-```javascript
-const authors = publisher.authors;
-const isAdult = author => author.age >= 18;
-
-const adultAuthors = authors.filter(isAdult);
-adultAuthors.update({ isAdult: true });
-
-const youngAuthors = authors.exclude(isAdult);
-youngAuthors.update({ isAdult: false });
-```
-
-### 0.3.1
-
-A descriptive error is now thrown when a reverse field conflicts with another field declaration.
-For example, the following schema:
-
-```javascript
-class A extends Model {}
-A.modelName = 'A';
-
-class B extends Model {}
-B.modelName = 'B';
-B.fields = {
-    field1: one('A'),
-    field2: one('A'),
-};
-```
-
-would try to define the reverse field `b` on `A` twice, throwing an error with an undescriptive message.
-
-### 0.3.0
-
-**Breaking changes**:
-
-- `Model.withId(id)` now throws if object with id `id` does not exist in the database. 
-
-### 0.2.0
-
-Includes various bugfixes and improvements.
-
-**Breaking changes**:
-- Replaced `plain` and `models` instance attributes in `QuerySet` with `withRefs` and `withModels` respectively. The attributes return a new `QuerySet` instead of modifying the existing one. A `ref` alias is also added for `withRefs`, so you can do `Book.ref.at(2)`.
-- After calling `filter`, `exclude` or `orderBy` method on a `QuerySet` instance, the `withRefs` flag is always flipped off so that calling the same methods on the returned `QuerySet` would use model instances in the operations. Previously the flag value remained after calling those methods.
-- `.toPlain()` from `QuerySet` is renamed to `.toRefArray()` for clarity.
-- Added `.toModelArray()` method to `QuerySet`.
-- Removed `.objects()` method from `QuerySet`. Use `.toRefArray()` or `.toModelArray()` instead.
-- Removed `.toPlain()` method from `Model`, which returned a copy of the Model instance's property values. To replace that, `ref` instance getter was added. It returns a reference to the plain JavaScript object in the database. So you can do `Book.withId(0).ref`. If you need a copy, you can do `Object.assign({}, Book.withId(0).ref)`.
-- Removed `.fromEmpty()` instance method from `Schema`.
-- Removed `.setReducer()` instance method from `Schema`. You can just do `ModelClass.reducer = reducerFunc;`.
-
+See [`CHANGELOG.md`](https://github.com/tommikaikkonen/redux-orm/blob/master/CHANGELOG.md).
 
 ## License
 
-MIT. See `LICENSE`
+MIT. See [`LICENSE`](https://github.com/tommikaikkonen/redux-orm/blob/master/LICENSE).
