@@ -107,10 +107,5 @@ describe('Model', () => {
             const instance2 = new Model({ id: 0, object: {} });
             expect(instance1.equals(instance2)).toBeFalsy();
         });
-
-        it('getNextState throws', () => {
-            const instance = new Model();
-            expect(() => instance.getNextState()).toThrowError('Model.prototype.getNextState is removed. See the 0.9 migration guide on the GitHub repo.');
-        });
     });
 });
