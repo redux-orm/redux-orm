@@ -353,7 +353,7 @@ const Model = class Model {
     static withId(id) {
         return this.get({
             [this.idAttribute]: id,
-        })
+        });
     }
 
     /**

@@ -130,6 +130,23 @@ describe('Integration', () => {
             expect(Book.withId(9043290)).toBe(null);
         });
 
+        it('get returns null if model instance not found', () => {
+            const { Book } = session;
+            expect(Book.get({
+                name: 'does not exist',
+            })).toBe(null);
+        });
+
+        it('get throws if multiple model instances are found', () => {
+            const { Book } = session;
+            const book = Book.create({
+                name: 'Clean Code',
+            });
+            expect(() => Book.get({
+                name: 'Clean Code'
+            })).toThrowError('Expected to find a single row in Model.get. Found 2.');
+        });
+
         it('Models correctly create a new instance via upsert', () => {
             const { Book } = session;
             const book = Book.upsert({
