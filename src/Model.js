@@ -19,18 +19,22 @@ import {
 } from './utils';
 
 
-// Generates a query specification
-// to get a single row from a table identified
-// by a primary key.
+/**
+ * Generates a query specification to get the instance's
+ * corresponding table row using its primary key.
+ * @returns {Object}
+ */
 function getByIdQuery(modelInstance) {
     const modelClass = modelInstance.getClass();
+    const { idAttribute, modelName } = modelClass;
+
     return {
-        table: modelClass.modelName,
+        table: modelName,
         clauses: [
             {
                 type: FILTER,
                 payload: {
-                    [modelClass.idAttribute]: modelInstance.getId(),
+                    [idAttribute]: modelInstance.getId(),
                 },
             },
         ],
