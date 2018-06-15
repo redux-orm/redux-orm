@@ -8,7 +8,6 @@
   "scripts": {
     "test": "jest",
     "test:watch": "npm test -- --watch",
-    "test:cov": "npm test -- --coverage",
     "prepublishOnly": "npm run build",
     "transpile:es5": "babel src --out-dir lib --no-comments",
     "transpile:es": "babel src --out-dir es --no-babelrc --presets=stage-2 --plugins=transform-runtime,transform-es2015-classes",
