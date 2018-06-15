@@ -119,10 +119,10 @@ describe('Many-to-many relationship performance', () => {
 
         const totalAmount = 10000;
         for (let i = 0; i < totalAmount; i++) {
-            session.Child.create({ id: i, name: 'TestChild' });
+            Child.create({ id: i, name: 'TestChild' });
         }
 
-        const parent = session.Parent.create({});
+        const parent = Parent.create({});
         const childAmount = 2000;
         for (let i = 0; i < childAmount; i++) {
             parent.children.add(i);
