@@ -427,12 +427,12 @@ See the full documentation for `Model` [here](http://tommikaikkonen.github.io/re
 
 **Class Methods**:
 
+- `withId(id)`: gets the Model instance with id `id`.
 - `idExists(id)`: returns a boolean indicating if an entity with id `id` exists in the state.
 - `exists(matchObj)`: returns a boolean indicating if an entity whose properties match `matchObj` exists in the state.
-- `withId(id)`: gets the Model instance with id `id`.
-- `get(matchObj)`: to get a Model instance based on matching properties in `matchObj`.
-- `create(props)`: to create a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`.
-- `upsert(props)`: to create a new Model instance with `props` or to update a existing Model with same `id` - by other words its **create or update** behaviour.
+- `get(matchObj)`: gets a Model instance based on matching properties in `matchObj` (if you are sure there is only one matching instance).
+- `create(props)`: creates a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`.
+- `upsert(props)`: either creates a new Model instance with `props` or, in case an instance with the same id already exists, updates that one - in other words it's **create or update** behaviour.
 
 You will also have access to almost all [QuerySet instance methods](http://tommikaikkonen.github.io/redux-orm/QuerySet.html) from the class object for convenience, including `where` and the like.
 
