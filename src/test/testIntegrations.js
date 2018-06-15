@@ -65,9 +65,9 @@ describe('Integration', () => {
 
         it('Models correctly indicate if id exists', () => {
             const { Book } = session;
-            expect(Book.hasId(0)).toBe(true);
-            expect(Book.hasId(92384)).toBe(false);
-            expect(Book.hasId()).toBe(false);
+            expect(Book.idExists(0)).toBe(true);
+            expect(Book.idExists(92384)).toBe(false);
+            expect(Book.idExists()).toBe(false);
         });
 
         it('Models correctly create new instances', () => {
@@ -107,7 +107,7 @@ describe('Integration', () => {
             expect(Book.count()).toBe(3);
             Book.withId(0).delete();
             expect(session.Book.count()).toBe(2);
-            expect(session.Book.hasId(0)).toBe(false);
+            expect(session.Book.idExists(0)).toBe(false);
         });
 
         it('Models correctly update when setting properties', () => {
@@ -125,9 +125,9 @@ describe('Integration', () => {
             'releaseYear: 2050, author: 0, cover: 0, genres: [0, 1], tags: [Technology, Literary], publisher: 1}');
         });
 
-        it('withId throws if model instance not found', () => {
+        it('withId returns null if model instance not found', () => {
             const { Book } = session;
-            expect(() => Book.withId(10)).toThrowError(Error);
+            expect(Book.withId(9043290)).toBe(null);
         });
 
         it('Models correctly create a new instance via upsert', () => {
@@ -543,11 +543,11 @@ describe('Integration', () => {
             const sess = _orm.session(_orm.getEmptyState());
             sess.DefaultFieldModel.create({});
 
-            expect(sess.DefaultFieldModel.hasId(1)).toBe(true);
+            expect(sess.DefaultFieldModel.idExists(1)).toBe(true);
 
             returnId = 999;
             sess.DefaultFieldModel.create({});
-            expect(sess.DefaultFieldModel.hasId(999)).toBe(true);
+            expect(sess.DefaultFieldModel.idExists(999)).toBe(true);
         });
     });
 

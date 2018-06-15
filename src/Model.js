@@ -164,16 +164,28 @@ const Model = class Model {
         return this._session;
     }
 
+    /**
+     * Returns an instance of the model's `querySetClass` field.
+     * By default, this will be an empty {@link QuerySet}.
+     *
+     * @return {Object} An instance of the model's `querySetClass`.
+     */
     static getQuerySet() {
-        const QuerySetClass = this.querySetClass;
+        const { querySetClass: QuerySetClass } = this;
         return new QuerySetClass(this);
     }
 
+    /**
+     * @todo Document this method.
+     */
     static invalidateClassCache() {
         this.isSetUp = undefined;
         this.virtualFields = {};
     }
 
+    /**
+     * @see {@link Model.getQuerySet}
+     */
     static get query() {
         return this.getQuerySet();
     }
@@ -189,6 +201,8 @@ const Model = class Model {
     /**
      * Update many-many relations for model.
      * @param relations
+     * @return undefined
+     * @private
      */
     _refreshMany2Many(relations) {
         const ThisModel = this.getClass();
@@ -229,8 +243,10 @@ const Model = class Model {
             const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
 
             if (diffActions) {
-                const idsToDelete = diffActions.delete;
-                const idsToAdd = diffActions.add;
+                const {
+                    delete: idsToDelete,
+                    add: idsToAdd,
+                } = diffActions;
                 if (idsToDelete.length > 0) {
                     this[name].remove(...idsToDelete);
                 }
@@ -311,11 +327,14 @@ const Model = class Model {
      * @return {Model} a {@link Model} instance.
      */
     static upsert(userProps) {
-        const idAttr = this.idAttribute;
-        if (userProps.hasOwnProperty(idAttr) && this.hasId(userProps[idAttr])) {
-            const model = this.withId(userProps[idAttr]);
-            model.update(userProps);
-            return model;
+        const { idAttribute } = this;
+        if (userProps.hasOwnProperty(idAttribute)) {
+            const id = userProps[idAttribute];
+            if (this.idExists(id)) {
+                const model = this.withId(id);
+                model.update(userProps);
+                return model;
+            }
         }
 
         return this.create(userProps);
@@ -323,65 +342,59 @@ const Model = class Model {
 
     /**
      * Returns a {@link Model} instance for the object with id `id`.
-     * This throws if the `id` doesn't exist. Use {@link Model#hasId}
-     * to check for existence first if you're not certain.
+     * Returns `null` if the model has no instance with id `id`.
+     *
+     * You can use {@link Model#idExists} to check for existence instead.
      *
      * @param  {*} id - the `id` of the object to get
      * @throws If object with id `id` doesn't exist
-     * @return {Model} {@link Model} instance with id `id`
+     * @return {Model|null} {@link Model} instance with id `id`
      */
     static withId(id) {
-        const ModelClass = this;
-        const rows = this._findDatabaseRows({ [ModelClass.idAttribute]: id });
-        if (rows.length === 0) {
-            throw new Error(`${ModelClass.modelName} instance with id ${id} not found`);
-        }
-
-        return new ModelClass(rows[0]);
+        return this.get({
+            [this.idAttribute]: id,
+        })
     }
 
     /**
-     * Returns a boolean indicating if an entity with the id `id` exists
-     * in the state.
+     * Returns a boolean indicating if an entity
+     * with the id `id` exists in the state.
      *
      * @param  {*}  id - a value corresponding to the id attribute of the {@link Model} class.
      * @return {Boolean} a boolean indicating if entity with `id` exists in the state
      */
-    static hasId(id) {
-        const rows = this._findDatabaseRows({ [this.idAttribute]: id });
-        return rows.length === 1;
+    static idExists(id) {
+        return this.exists({
+            [this.idAttribute]: id,
+        });
     }
 
-    static _findDatabaseRows(lookupObj) {
-        const ModelClass = this;
-        return ModelClass
-            .session
-            .query({
-                table: ModelClass.modelName,
-                clauses: [
-                    {
-                        type: FILTER,
-                        payload: lookupObj,
-                    },
-                ],
-            }).rows;
+    /**
+     * Returns a boolean indicating if an entity
+     * with the given props exists in the state.
+     *
+     * @param  {*}  props - a key-value that {@link Model} instances should have to be considered as existing.
+     * @return {Boolean} a boolean indicating if entity with `props` exists in the state
+     */
+    static exists(lookupObj) {
+        return Boolean(this._findDatabaseRows(lookupObj).length);
     }
 
     /**
      * Gets the {@link Model} instance that matches properties in `lookupObj`.
-     * Throws an error if {@link Model} is not found, or multiple records match
+     * Throws an error if {@link Model} if multiple records match
      * the properties.
      *
      * @param  {Object} lookupObj - the properties used to match a single entity.
-     * @return {Model} a {@link Model} instance that matches `lookupObj` properties.
+     * @throws {Error} If more than one entity matches the properties in `lookupObj`.
+     * @return {Model} a {@link Model} instance that matches the properties in `lookupObj`.
      */
     static get(lookupObj) {
         const ModelClass = this;
 
         const rows = this._findDatabaseRows(lookupObj);
-
         if (rows.length === 0) {
-            throw new Error('Model instance not found when calling get method');
+            return null;
         } else if (rows.length > 1) {
             throw new Error(`Expected to find a single row in Model.get. Found ${rows.length}.`);
         }
@@ -421,6 +434,29 @@ const Model = class Model {
         return ModelClass._findDatabaseRows({
             [ModelClass.idAttribute]: this.getId(),
         })[0];
+    }
+
+    /**
+     * Finds all rows in this model's table that match the given `lookupObj`.
+     * If no `lookupObj` is passed, all rows in the model's table will be returned.
+     *
+     * @param  {*}  props - a key-value that {@link Model} instances should have to be considered as existing.
+     * @return {Boolean} a boolean indicating if entity with `props` exists in the state
+     * @private
+     */
+    static _findDatabaseRows(lookupObj) {
+        const querySpec = {
+            table: this.modelName,
+        };
+        if (lookupObj) {
+            querySpec.clauses = [
+                {
+                    type: FILTER,
+                    payload: lookupObj,
+                },
+            ];
+        }
+        return this.session.query(querySpec).rows;
     }
 
     /**
@@ -471,7 +507,9 @@ const Model = class Model {
      * @return {undefined}
      */
     set(propertyName, value) {
-        this.update({ [propertyName]: value });
+        this.update({
+            [propertyName]: value,
+        });
     }
 
     /**
@@ -599,7 +637,21 @@ const Model = class Model {
     // DEPRECATED AND REMOVED METHODS
 
     /**
+     * Returns a boolean indicating if an entity
+     * with the id `id` exists in the state.
+     *
+     * @param  {*}  id - a value corresponding to the id attribute of the {@link Model} class.
+     * @return {Boolean} a boolean indicating if entity with `id` exists in the state
+     * @deprecated Please use {@link Model.idExists} instead.
+     */
+    static hasId(id) {
+        console.warn('Model.hasId has been deprecated. Please use Model.idExists instead.');
+        return this.idExists(id);
+    }
+
+    /**
      * @deprecated See the 0.9 migration guide on the GitHub repo.
+     * @throws {Error} Due to deprecation.
      */
     getNextState() {
         throw new Error(

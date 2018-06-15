@@ -92,7 +92,9 @@ function forEachSuperClass(subClass, func) {
 }
 
 function attachQuerySetMethods(modelClass, querySetClass) {
-    const leftToDefine = querySetClass.sharedMethods.slice();
+    const leftToDefine = querySetClass.sharedMethods.slice().filter(
+        methodName => typeof modelClass[methodName] !== 'function'
+    );
 
     // There is no way to get a property descriptor for the whole prototype chain;
     // only from an objects own properties. Therefore we traverse the whole prototype
