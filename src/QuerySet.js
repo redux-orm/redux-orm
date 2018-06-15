@@ -311,7 +311,6 @@ QuerySet.sharedMethods = [
     'all',
     'last',
     'first',
-    'exists',
     'filter',
     'exclude',
     'orderBy',
