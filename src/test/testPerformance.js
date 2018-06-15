@@ -27,7 +27,7 @@ describe('Big Data Test', () => {
         }
         const tookSeconds = measureMs(start) / 1000;
         console.log(`Creating ${amount} objects took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 1 : 0.5);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 1.5 : 0.5);
     });
 
     it('looks up items by id in a large table in acceptable time', () => {
