@@ -27,7 +27,7 @@ describe('Big Data Test', () => {
         }
         const tookSeconds = measureMs(start) / 1000;
         console.log(`Creating ${amount} objects took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 1.5 : 0.5);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 1.5 : 0.75);
     });
 
     it('looks up items by id in a large table in acceptable time', () => {
@@ -69,20 +69,29 @@ describe('Many-to-many relationship performance', () => {
         session = orm.session(orm.getEmptyState());
     });
 
+    const createChildren = (amount) => {
+        for (let i = 0; i < amount; i++) {
+            session.Child.create({
+                id: i,
+                name: 'TestChild',
+            });
+        }
+    };
+
+    const assignChildren = (parent, amount) => {
+        for (let i = 0; i < amount; i++) {
+            parent.children.add(i);
+        }
+    };
+
     it('adds many-to-many relationships in acceptable time', () => {
         const { Child, Parent } = session;
 
-        const totalAmount = 8000;
-        for (let i = 0; i < totalAmount; i++) {
-            Child.create({ id: i, name: 'TestChild' });
-        }
-
+        createChildren(8000);
         const parent = Parent.create({});
         const start = measureMs();
         const childAmount = 2500;
-        for (let i = 0; i < childAmount; i++) {
-            parent.children.add(i);
-        }
+        assignChildren(parent, childAmount);
 
         const tookSeconds = measureMs(start) / 1000;
         console.log(`Adding ${childAmount} relations took ${tookSeconds}s`);
@@ -92,16 +101,9 @@ describe('Many-to-many relationship performance', () => {
     it('queries many-to-many relationships in acceptable time', () => {
         const { Child, Parent } = session;
 
-        const totalAmount = 10000;
-        for (let i = 0; i < totalAmount; i++) {
-            Child.create({ id: i, name: 'TestChild' });
-        }
-
+        createChildren(10000);
         const parent = Parent.create({});
-        const relationshipAmount = 3000;
-        for (let i = 0; i < relationshipAmount; i++) {
-            parent.children.add(i);
-        }
+        assignChildren(parent, 3000);
 
         const start = measureMs();
         const queryCount = 500;
@@ -117,16 +119,9 @@ describe('Many-to-many relationship performance', () => {
     it('removes many-to-many relationships in acceptable time', () => {
         const { Child, Parent } = session;
 
-        const totalAmount = 10000;
-        for (let i = 0; i < totalAmount; i++) {
-            Child.create({ id: i, name: 'TestChild' });
-        }
-
+        createChildren(10000);
         const parent = Parent.create({});
-        const childAmount = 2000;
-        for (let i = 0; i < childAmount; i++) {
-            parent.children.add(i);
-        }
+        assignChildren(parent, 2000);
 
         const removeCount = 1000;
         const start = measureMs();

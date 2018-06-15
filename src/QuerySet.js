@@ -62,10 +62,10 @@ const QuerySet = class QuerySet {
 
     toString() {
         this._evaluate();
-        const contents = this.rows.map(id =>
+        const contents = this.rows.map(({ id }) =>
             this.modelClass.withId(id).toString()
         ).join('\n    - ');
-        return `QuerySet contents: \n    - ${contents}`;
+        return `QuerySet contents:\n    - ${contents}`;
     }
 
     /**

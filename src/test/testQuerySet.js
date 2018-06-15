@@ -96,6 +96,24 @@ describe('QuerySet tests', () => {
         expect(idArr).toEqual([0, 2]);
     });
 
+    it('exclude works correctly with object argument, with model instance value', () => {
+        const excluded = bookQs.exclude({
+            author: session.Author.withId(1),
+        });
+        expect(excluded.count()).toBe(2);
+
+        const idArr = excluded.toRefArray().map(row => row.id);
+        expect(idArr).toEqual([0, 2]);
+    });
+
+    it('exclude works correctly with function argument', () => {
+        const excluded = bookQs.exclude(({ author }) => author === 1);
+        expect(excluded.count()).toBe(2);
+
+        const idArr = excluded.toRefArray().map(row => row.id);
+        expect(idArr).toEqual([0, 2]);
+    });
+
     it('update records a update', () => {
         const mergeObj = { name: 'Updated Book Name' };
         bookQs.update(mergeObj);
@@ -106,6 +124,13 @@ describe('QuerySet tests', () => {
     it('delete records a update', () => {
         bookQs.delete();
         expect(bookQs.count()).toBe(0);
+    });
+
+    it('toString returns evaluated models', () => {
+        const firstTwoBooks = bookQs.filter(({ id }) => [0, 1].includes(id));
+        expect(firstTwoBooks.toString()).toBe(`QuerySet contents:
+    - Book: {id: 0, name: Tommi Kaikkonen - an Autobiography, releaseYear: 2050, author: 0, cover: 0, genres: [0, 1], tags: [Technology, Literary], publisher: 1}
+    - Book: {id: 1, name: Clean Code, releaseYear: 2008, author: 1, cover: 1, genres: [2], tags: [Technology], publisher: 0}`);
     });
 
     it('custom methods works', () => {
