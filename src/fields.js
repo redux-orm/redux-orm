@@ -19,25 +19,20 @@ function getToModel(field, model, orm) {
     const { toModelName } = field;
     if (!toModelName) return null;
 
-    return toModelName === 'this'
-        ? model
-        : orm.get(toModelName);
+    if (toModelName === 'this') return model;
+    return orm.get(toModelName);
 }
 
 function getThroughModel(field, fieldName, model, orm) {
-    const throughModelName =
-        field.through ||
-        m2mName(model.modelName, fieldName);
+    const throughModelName = field.getThroughModelName(fieldName, model);
+    if (!throughModelName) return null;
 
     return orm.get(throughModelName);
 }
 
 export function installBackwardsField(field, fieldName, model, orm) {
     const toModel = getToModel(field, model, orm);
-    const throughModel = field.usesThroughModel
-        && getThroughModel(field, fieldName, model, orm);
-    const throughFields = field.usesThroughModel
-        && field.getThroughFields(fieldName, model, toModel, throughModel);
+    const throughModel = getThroughModel(field, fieldName, model, orm);
 
     const backwardsFieldName = field.getBackwardsFieldName(model);
 
@@ -62,8 +57,7 @@ export function installBackwardsField(field, fieldName, model, orm) {
             fieldName,
             model,
             toModel,
-            throughModel,
-            throughFields
+            throughModel
         )
     );
 
@@ -72,17 +66,13 @@ export function installBackwardsField(field, fieldName, model, orm) {
         fieldName,
         model,
         toModel,
-        throughModel,
-        throughFields
+        throughModel
     );
 }
 
 export function installField(field, fieldName, model, orm) {
     const toModel = getToModel(field, model, orm);
-    const throughModel = field.usesThroughModel
-        && getThroughModel(field, fieldName, model, orm);
-    const throughFields = field.usesThroughModel
-        && field.getThroughFields(fieldName, model, toModel, throughModel);
+    const throughModel = getThroughModel(field, fieldName, model, orm);
 
     // install forwards descriptor
     if (field.installsForwardsDescriptor) {
@@ -93,8 +83,7 @@ export function installField(field, fieldName, model, orm) {
                 fieldName,
                 model,
                 toModel,
-                throughModel,
-                throughFields
+                throughModel
             )
         );
     }
@@ -105,8 +94,7 @@ export function installField(field, fieldName, model, orm) {
             fieldName,
             model,
             toModel,
-            throughModel,
-            throughFields
+            throughModel
         );
     }
 
@@ -124,6 +112,10 @@ class Field {
         return false;
     }
 
+    getThroughModelName(fieldName, model) {
+        return null;
+    }
+
     get installsForwardsDescriptor() {
         return true;
     }
@@ -133,10 +125,6 @@ class Field {
     }
 
     get installsBackwardsField() {
-        return false;
-    }
-
-    get usesThroughModel() {
         return false;
     }
 }
@@ -177,10 +165,6 @@ class RelationalField extends Field {
         return this.relatedName || reverseFieldName(model.modelName);
     }
 
-    getThroughModelName(fieldName, model) {
-        return this.through || m2mName(model.modelName, fieldName);
-    }
-
     getThroughFields(fieldName, model, toModel, throughModel) {
         if (this.throughFields) {
             const [fieldAName, fieldBName] = this.throughFields;
@@ -204,18 +188,18 @@ class RelationalField extends Field {
         };
     }
 
-    createBackwardsVirtualField(fieldName, model, toModel, throughModel, throughFields) {
+    createBackwardsVirtualField(fieldName, model, toModel, throughModel) {
         const ThisField = this.getClass();
         return new ThisField(model.modelName, fieldName);
     }
 }
 
 export class ForeignKey extends RelationalField {
-    createForwardsDescriptor(fieldName, model, toModel, throughModel, throughFields) {
+    createForwardsDescriptor(fieldName, model, toModel, throughModel) {
         return forwardManyToOneDescriptor(fieldName, toModel.modelName);
     }
 
-    createBackwardsDescriptor(fieldName, model, toModel, throughModel, throughFields) {
+    createBackwardsDescriptor(fieldName, model, toModel, throughModel) {
         return backwardManyToOneDescriptor(fieldName, model.modelName);
     }
 
@@ -233,43 +217,47 @@ export class ManyToMany extends RelationalField {
         return [];
     }
 
-    createForwardsDescriptor(fieldName, model, toModel, throughModel, throughFields) {
+    getThroughModelName(fieldName, model) {
+        return this.through || m2mName(model.modelName, fieldName);
+    }
+
+    createForwardsDescriptor(fieldName, model, toModel, throughModel) {
         return manyToManyDescriptor(
             model.modelName,
             toModel.modelName,
             throughModel.modelName,
-            throughFields,
+            this.getThroughFields(fieldName, model, toModel, throughModel),
             false
         );
     }
 
-    createBackwardsDescriptor(fieldName, model, toModel, throughModel, throughFields) {
+    createBackwardsDescriptor(fieldName, model, toModel, throughModel) {
         return manyToManyDescriptor(
             model.modelName,
             toModel.modelName,
             throughModel.modelName,
-            throughFields,
+            this.getThroughFields(fieldName, model, toModel, throughModel),
             true
         );
     }
 
-    createBackwardsVirtualField(fieldName, model, toModel, throughModel, throughFields) {
+    createBackwardsVirtualField(fieldName, model, toModel, throughModel) {
         const ThisField = this.getClass();
         return new ThisField({
             to: model.modelName,
             relatedName: fieldName,
             through: throughModel.modelName,
-            throughFields,
+            throughFields: this.getThroughFields(fieldName, model, toModel, throughModel),
         });
     }
 
-    createForwardsVirtualField(fieldName, model, toModel, throughModel, throughFields) {
+    createForwardsVirtualField(fieldName, model, toModel, throughModel) {
         const ThisField = this.getClass();
         return new ThisField({
             to: toModel.modelName,
             relatedName: fieldName,
             through: this.through,
-            throughFields,
+            throughFields: this.getThroughFields(fieldName, model, toModel, throughModel),
         });
     }
 
@@ -280,10 +268,6 @@ export class ManyToMany extends RelationalField {
     get installsBackwardsField() {
         return true;
     }
-
-    get usesThroughModel() {
-        return true;
-    }
 }
 
 export class OneToOne extends RelationalField {
@@ -291,11 +275,11 @@ export class OneToOne extends RelationalField {
         return this.relatedName || model.modelName.toLowerCase();
     }
 
-    createForwardsDescriptor(fieldName, model, toModel, throughModel, throughFields) {
+    createForwardsDescriptor(fieldName, model, toModel, throughModel) {
         return forwardOneToOneDescriptor(fieldName, toModel.modelName);
     }
 
-    createBackwardsDescriptor(fieldName, model, toModel, throughModel, throughFields) {
+    createBackwardsDescriptor(fieldName, model, toModel, throughModel) {
         return backwardOneToOneDescriptor(fieldName, model.modelName);
     }
 
