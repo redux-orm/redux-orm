@@ -17,7 +17,7 @@ import {
 
 function getToModel(field, model, orm) {
     const { toModelName } = field;
-    if (!toModelName) return;
+    if (!toModelName) return null;
 
     return toModelName === 'this'
         ? model
@@ -120,6 +120,10 @@ class Field {
         return this.constructor;
     }
 
+    isForeignKeyTo(model) {
+        return false;
+    }
+
     get installsForwardsDescriptor() {
         return true;
     }
@@ -181,29 +185,18 @@ class RelationalField extends Field {
         if (this.throughFields) {
             const [fieldAName, fieldBName] = this.throughFields;
             const fieldA = throughModel.fields[fieldAName];
-            if (fieldA.toModelName === toModel.modelName) {
-                return {
-                    to: fieldAName,
-                    from: fieldBName,
-                };
-            } else {
-                return {
-                    to: fieldBName,
-                    from: fieldAName,
-                };
-            }
+            return {
+                to: fieldA.isForeignKeyTo(toModel) ? fieldAName : fieldBName,
+                from: fieldA.isForeignKeyTo(toModel) ? fieldBName : fieldAName,
+            };
         }
         const toFieldName = findKey(
             throughModel.fields,
-            field =>
-                field instanceof ForeignKey &&
-                field.toModelName === toModel.modelName
+            field => field.isForeignKeyTo(toModel)
         );
         const fromFieldName = findKey(
             throughModel.fields,
-            field =>
-                field instanceof ForeignKey &&
-                field.toModelName === model.modelName
+            field => field.isForeignKeyTo(model)
         );
         return {
             to: toFieldName,
@@ -228,6 +221,10 @@ export class ForeignKey extends RelationalField {
 
     get installsBackwardsField() {
         return true;
+    }
+
+    isForeignKeyTo(model) {
+        return this.toModelName === model.modelName;
     }
 }
 
@@ -295,7 +292,7 @@ export class OneToOne extends RelationalField {
     }
 
     createForwardsDescriptor(fieldName, model, toModel, throughModel, throughFields) {
-        return forwardOneToOneDescriptor(fieldName, toModel.modelName)
+        return forwardOneToOneDescriptor(fieldName, toModel.modelName);
     }
 
     createBackwardsDescriptor(fieldName, model, toModel, throughModel, throughFields) {
