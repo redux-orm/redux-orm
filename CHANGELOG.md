@@ -1,5 +1,15 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.11.0
+
+- Potential breaking changes to model API:
+    - `Model#equals` is now used by `Model#update` to prevent unnecessary updates in some cases when the intended updates would not change the current model. By default models will always be updated if any of the passed attributes have a different reference than the respective existing attribute. [#204](https://github.com/tommikaikkonen/redux-orm/pull/204)
+    - `Model.exists` now accepts passing a lookup object to check if any model instance matching the passed attributes exists. [#209](https://github.com/tommikaikkonen/redux-orm/pull/209)
+    - `Model.hasId` has been replaced by `Model.idExists`. [#209](https://github.com/tommikaikkonen/redux-orm/pull/209)
+- Fixed `QuerySet#toString`. [12ce882](https://github.com/tommikaikkonen/redux-orm/commit/12ce882e9ed7fc1ba742e94feb10e82f0968de85)
+- Upgraded to reselect v3.0.1. [#208](https://github.com/tommikaikkonen/redux-orm/pull/208)
+- Refactored `fields.js`, `descriptors.js` and small parts of `Model.js`. [#210](https://github.com/tommikaikkonen/redux-orm/pull/210)
+
 ### 0.10.2
 
 - `pkg.module` now points to a new entrypoint at `es/index.js` adhering to the latest finalized ECMAScript version without non-standard language features. [3ab92b9](https://github.com/tommikaikkonen/redux-orm/commit/3ab92b96e5a5ee43445c542a1bd20589ff32bcd2)
