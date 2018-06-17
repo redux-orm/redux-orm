@@ -383,6 +383,15 @@ describe('Integration', () => {
             expect(() => book.genres.add(existingId)).toThrowError(existingId.toString());
         });
 
+        it('trying to set many-to-many fields throws', () => {
+            const { Book } = session;
+            const book = Book.withId(0);
+
+            expect(() => {
+                book.genres = 'whatever';
+            }).toThrowError('Tried setting a M2M field. Please use the related QuerySet methods add, remove and clear.');
+        });
+
         it('updating related many-to-many entities through ids works', () => {
             const { Genre, Author } = session;
             const tommi = Author.get({ name: 'Tommi Kaikkonen' });
@@ -519,6 +528,32 @@ describe('Integration', () => {
             expect(relatedBooks.modelClass).toBe(Book);
         });
 
+        it('setting forwards foreign key (many-to-one) field works', () => {
+            const {
+                Book,
+                Author,
+            } = session;
+
+            const book = Book.first();
+            const newAuthor = Author.withId(2);
+
+            book.author = newAuthor;
+
+            expect(book.author).toEqual(newAuthor);
+            expect(book.author.ref).toBe(newAuthor.ref);
+        });
+
+        it('trying to set backwards foreign key (reverse many-to-one) field throws', () => {
+            const {
+                Book,
+            } = session;
+
+            const book = Book.first();
+            expect(() => {
+                book.author.books = 'whatever';
+            }).toThrowError('Can\'t mutate a reverse many-to-one relation.');
+        });
+
         it('one-to-one relationship descriptors work', () => {
             const {
                 Book,
@@ -536,6 +571,18 @@ describe('Integration', () => {
             const relatedBook = cover.book;
             expect(relatedBook).toBeInstanceOf(Book);
             expect(relatedBook.getId()).toBe(book.getId());
+        });
+
+        it('trying to set backwards one-to-one field throws', () => {
+            const {
+                Book,
+                Cover,
+            } = session;
+
+            const book = Book.first();
+            expect(() => {
+                book.cover.book = 'whatever';
+            }).toThrowError('Can\'t mutate a reverse one-to-one relation.');
         });
 
         it('applying no updates returns the same state reference', () => {
