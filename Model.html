@@ -158,7 +158,7 @@ Don't use this to create a new record; Use the static method <code>Model#create<
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line59">line 59</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line63">line 63</a>
     </li></ul></dd>
     
 
@@ -250,12 +250,77 @@ Don't use this to create a new record; Use the static method <code>Model#create<
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line140">line 140</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line144">line 144</a>
     </li></ul></dd>
     
 
     
 
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".query"><span class="type-signature">(static) </span>query<span class="type-signature"></span></h4>
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line193">line 193</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="Model.html#.getQuerySet"><code>Model.getQuerySet</code></a></li>
+        </ul>
+    </dd>
     
 
     
@@ -313,7 +378,7 @@ Make sure to not mutate this.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line413">line 413</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line434">line 434</a>
     </li></ul></dd>
     
 
@@ -393,7 +458,7 @@ Make sure to not mutate this.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line185">line 185</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line201">line 201</a>
     </li></ul></dd>
     
 
@@ -552,7 +617,7 @@ model as well.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line249">line 249</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line273">line 273</a>
     </li></ul></dd>
     
 
@@ -608,6 +673,164 @@ model as well.</p>
     
 
     
+    <h4 class="name" id=".exists"><span class="type-signature">(static) </span>exists<span class="signature">(props)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Returns a boolean indicating if an entity
+with the given props exists in the state.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>props</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>a key-value that <a href="Model.html"><code>Model</code></a> instances should have to be considered as existing.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line383">line 383</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>a boolean indicating if entity with <code>props</code> exists in the state</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
     <h4 class="name" id=".get"><span class="type-signature">(static) </span>get<span class="signature">(lookupObj)</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>}</span></h4>
     
 
@@ -617,7 +840,7 @@ model as well.</p>
 
 <div class="description">
     <p>Gets the <a href="Model.html"><code>Model</code></a> instance that matches properties in <code>lookupObj</code>.
-Throws an error if <a href="Model.html"><code>Model</code></a> is not found, or multiple records match
+Throws an error if <a href="Model.html"><code>Model</code></a> if multiple records match
 the properties.</p>
 </div>
 
@@ -711,7 +934,7 @@ the properties.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line374">line 374</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line396">line 396</a>
     </li></ul></dd>
     
 
@@ -732,13 +955,42 @@ the properties.</p>
 
 
 
+<h5>Throws:</h5>
+
+        
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>If more than one entity matches the properties in <code>lookupObj</code>.</p>
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+
+    
 
 
 <h5>Returns:</h5>
 
         
 <div class="param-desc">
-    <p>a <a href="Model.html"><code>Model</code></a> instance that matches <code>lookupObj</code> properties.</p>
+    <p>a <a href="Model.html"><code>Model</code></a> instance that matches the properties in <code>lookupObj</code>.</p>
 </div>
 
 
@@ -767,6 +1019,115 @@ the properties.</p>
     
 
     
+    <h4 class="name" id=".getQuerySet"><span class="type-signature">(static) </span>getQuerySet<span class="signature">()</span><span class="type-signature"> &rarr; {Object}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Returns an instance of the model's <code>querySetClass</code> field.
+By default, this will be an empty <a href="QuerySet.html"><code>QuerySet</code></a>.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line177">line 177</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>An instance of the model's <code>querySetClass</code>.</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Object</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
     <h4 class="name" id=".hasId"><span class="type-signature">(static) </span>hasId<span class="signature">(id)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
     
 
@@ -775,8 +1136,168 @@ the properties.</p>
 
 
 <div class="description">
-    <p>Returns a boolean indicating if an entity with the id <code>id</code> exists
-in the state.</p>
+    <p>Returns a boolean indicating if an entity
+with the id <code>id</code> exists in the state.</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>id</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">*</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>a value corresponding to the id attribute of the <a href="Model.html"><code>Model</code></a> class.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+        <dt class="important tag-deprecated">Deprecated:</dt><dd><ul class="dummy"><li>Please use <a href="Model.html#.idExists"><code>Model.idExists</code></a> instead.</li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line651">line 651</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <p>a boolean indicating if entity with <code>id</code> exists in the state</p>
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".idExists"><span class="type-signature">(static) </span>idExists<span class="signature">(id)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>Returns a boolean indicating if an entity
+with the id <code>id</code> exists in the state.</p>
 </div>
 
 
@@ -869,7 +1390,7 @@ in the state.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line346">line 346</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line370">line 370</a>
     </li></ul></dd>
     
 
@@ -914,6 +1435,95 @@ in the state.</p>
 </dl>
 
     
+
+
+
+
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".invalidateClassCache"><span class="type-signature">(static) </span>invalidateClassCache<span class="signature">()</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line185">line 185</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+    <dt class="tag-todo">To Do:</dt>
+    <dd class="tag-todo">
+        <ul>
+            <li>Document this method.</li>
+        </ul>
+    </dd>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -982,7 +1592,7 @@ Model class.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line105">line 105</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line109">line 109</a>
     </li></ul></dd>
     
 
@@ -1142,7 +1752,7 @@ model as well.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line309">line 309</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line333">line 333</a>
     </li></ul></dd>
     
 
@@ -1198,7 +1808,7 @@ model as well.</p>
     
 
     
-    <h4 class="name" id=".withId"><span class="type-signature">(static) </span>withId<span class="signature">(id)</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>}</span></h4>
+    <h4 class="name" id=".withId"><span class="type-signature">(static) </span>withId<span class="signature">(id)</span><span class="type-signature"> &rarr; {<a href="Model.html">Model</a>|null}</span></h4>
     
 
     
@@ -1207,8 +1817,8 @@ model as well.</p>
 
 <div class="description">
     <p>Returns a <a href="Model.html"><code>Model</code></a> instance for the object with id <code>id</code>.
-This throws if the <code>id</code> doesn't exist. Use <code>Model#hasId</code>
-to check for existence first if you're not certain.</p>
+Returns <code>null</code> if the model has no instance with id <code>id</code>.</p>
+<p>You can use <code>Model#idExists</code> to check for existence instead.</p>
 </div>
 
 
@@ -1301,7 +1911,7 @@ to check for existence first if you're not certain.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line329">line 329</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line357">line 357</a>
     </li></ul></dd>
     
 
@@ -1352,142 +1962,15 @@ to check for existence first if you're not certain.</p>
     <dd>
         
 <span class="param-type"><a href="Model.html">Model</a></span>
+|
+
+<span class="param-type">null</span>
 
 
     </dd>
 </dl>
 
     
-
-
-
-
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="_refreshMany2Many"><span class="type-signature"></span>_refreshMany2Many<span class="signature">(relations)</span><span class="type-signature"></span></h4>
-    
-
-    
-
-
-
-<div class="description">
-    <p>Update many-many relations for model.</p>
-</div>
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>relations</code></td>
-            
-
-            <td class="type">
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line193">line 193</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1552,7 +2035,7 @@ You'll still be able to access fields and values on the instance.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line535">line 535</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line611">line 611</a>
     </li></ul></dd>
     
 
@@ -1614,6 +2097,9 @@ You'll still be able to access fields and values on the instance.</p>
 <div class="description">
     <p>Returns a boolean indicating if <code>otherModel</code> equals this <a href="Model.html"><code>Model</code></a> instance.
 Equality is determined by shallow comparing their attributes.</p>
+<p>This equality is used when you call <a href="Model.html#update"><code>Model#update</code></a>.
+You can prevent model updates by returning <code>true</code> here.
+However, a model will always be updated if its relationships are changed.</p>
 </div>
 
 
@@ -1706,7 +2192,7 @@ Equality is determined by shallow comparing their attributes.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line452">line 452</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line500">line 500</a>
     </li></ul></dd>
     
 
@@ -1815,7 +2301,7 @@ instantiated this instance).</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line395">line 395</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line416">line 416</a>
     </li></ul></dd>
     
 
@@ -1924,7 +2410,7 @@ instantiated this instance).</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line403">line 403</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line424">line 424</a>
     </li></ul></dd>
     
 
@@ -2030,7 +2516,7 @@ instantiated this instance).</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line570">line 570</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line660">line 660</a>
     </li></ul></dd>
     
 
@@ -2051,6 +2537,35 @@ instantiated this instance).</p>
 
 
 
+<h5>Throws:</h5>
+
+        
+
+<dl>
+    <dt>
+        <div class="param-desc">
+        <p>Due to deprecation.</p>
+        </div>
+    </dt>
+    <dd></dd>
+    <dt>
+        <dl>
+            <dt>
+                Type
+            </dt>
+            <dd>
+                
+<span class="param-type">Error</span>
+
+
+            </dd>
+        </dl>
+    </dt>
+    <dd></dd>
+</dl>
+
+
+    
 
 
 
@@ -2117,7 +2632,7 @@ database state in the current session.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line525">line 525</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line601">line 601</a>
     </li></ul></dd>
     
 
@@ -2294,7 +2809,7 @@ The values are immediately committed to the database.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line465">line 465</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line513">line 513</a>
     </li></ul></dd>
     
 
@@ -2398,7 +2913,7 @@ The values are immediately committed to the database.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line427">line 427</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line471">line 471</a>
     </li></ul></dd>
     
 
@@ -2556,7 +3071,7 @@ The updates are immediately committed to the database.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line476">line 476</a>
+        <a href="Model.js.html">Model.js</a>, <a href="Model.js.html#line526">line 526</a>
     </li></ul></dd>
     
 
@@ -2618,13 +3133,13 @@ The updates are immediately committed to the database.</p>
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-fields.html">fields</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="ORM.html">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#createSelector">createSelector</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-fields.html">fields</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="ORM.html">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#createSelector">createSelector</a></li><li><a href="global.html#getByIdQuery">getByIdQuery</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Mon Jun 11 2018 14:33:30 GMT+0200 (CEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sun Jun 17 2018 17:07:42 GMT+0200 (CEST)
 </footer>
 
 <script> prettyPrint(); </script>
