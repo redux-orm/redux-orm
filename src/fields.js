@@ -2,10 +2,10 @@ import findKey from 'lodash/findKey';
 
 import {
     attrDescriptor,
-    forwardManyToOneDescriptor,
-    backwardManyToOneDescriptor,
-    forwardOneToOneDescriptor,
-    backwardOneToOneDescriptor,
+    forwardsManyToOneDescriptor,
+    backwardsManyToOneDescriptor,
+    forwardsOneToOneDescriptor,
+    backwardsOneToOneDescriptor,
     manyToManyDescriptor,
 } from './descriptors';
 
@@ -196,11 +196,11 @@ class RelationalField extends Field {
 
 export class ForeignKey extends RelationalField {
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
-        return forwardManyToOneDescriptor(fieldName, toModel.modelName);
+        return forwardsManyToOneDescriptor(fieldName, toModel.modelName);
     }
 
     createBackwardsDescriptor(fieldName, model, toModel, throughModel) {
-        return backwardManyToOneDescriptor(fieldName, model.modelName);
+        return backwardsManyToOneDescriptor(fieldName, model.modelName);
     }
 
     get installsBackwardsField() {
@@ -276,11 +276,11 @@ export class OneToOne extends RelationalField {
     }
 
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
-        return forwardOneToOneDescriptor(fieldName, toModel.modelName);
+        return forwardsOneToOneDescriptor(fieldName, toModel.modelName);
     }
 
     createBackwardsDescriptor(fieldName, model, toModel, throughModel) {
-        return backwardOneToOneDescriptor(fieldName, model.modelName);
+        return backwardsOneToOneDescriptor(fieldName, model.modelName);
     }
 
     get installsBackwardsField() {

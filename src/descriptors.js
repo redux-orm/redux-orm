@@ -21,7 +21,7 @@ function attrDescriptor(fieldName) {
 
 // Forwards side a Foreign Key: returns one object.
 // Also works as forwardsOneToOneDescriptor.
-function forwardManyToOneDescriptor(fieldName, declaredToModelName) {
+function forwardsManyToOneDescriptor(fieldName, declaredToModelName) {
     return {
         get() {
             const {
@@ -43,9 +43,9 @@ function forwardManyToOneDescriptor(fieldName, declaredToModelName) {
     };
 }
 
-const forwardOneToOneDescriptor = forwardManyToOneDescriptor;
+const forwardsOneToOneDescriptor = forwardsManyToOneDescriptor;
 
-function backwardOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
+function backwardsOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
     return {
         get() {
             const {
@@ -65,7 +65,7 @@ function backwardOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
 }
 
 // Reverse side of a Foreign Key: returns many objects.
-function backwardManyToOneDescriptor(declaredFieldName, declaredFromModelName) {
+function backwardsManyToOneDescriptor(declaredFieldName, declaredFromModelName) {
     return {
         get() {
             const {
@@ -150,9 +150,9 @@ function manyToManyDescriptor(
              *
              * @return undefined
              */
-            qs.add = function add(...args) {
+            qs.add = function add(...entities) {
                 const idsToAdd = new Set(
-                    args.map(normalizeEntity)
+                    entities.map(normalizeEntity)
                 );
 
                 const existingQs = throughQs.filter(through =>
@@ -196,7 +196,9 @@ function manyToManyDescriptor(
              * @return undefined
              */
             qs.remove = function remove(...entities) {
-                const idsToRemove = new Set(entities.map(normalizeEntity));
+                const idsToRemove = new Set(
+                    entities.map(normalizeEntity)
+                );
 
                 const entitiesToDelete = throughQs.filter(
                     through => idsToRemove.has(through[otherReferencingField])
@@ -229,9 +231,9 @@ function manyToManyDescriptor(
 
 export {
     attrDescriptor,
-    forwardManyToOneDescriptor,
-    forwardOneToOneDescriptor,
-    backwardOneToOneDescriptor,
-    backwardManyToOneDescriptor,
+    forwardsManyToOneDescriptor,
+    forwardsOneToOneDescriptor,
+    backwardsOneToOneDescriptor,
+    backwardsManyToOneDescriptor,
     manyToManyDescriptor,
 };
