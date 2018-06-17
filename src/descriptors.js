@@ -56,13 +56,7 @@ function backwardOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
             const currentSession = this.getClass().session;
             const declaredFromModel = currentSession[declaredFromModelName];
             const thisId = this.getId();
-            let found;
-            try {
-                found = declaredFromModel.get({ [declaredFieldName]: thisId });
-            } catch (e) {
-                return null;
-            }
-            return found;
+            return declaredFromModel.get({ [declaredFieldName]: thisId });
         },
         set() {
             throw new Error('Can\'t mutate a reverse one-to-one relation.');

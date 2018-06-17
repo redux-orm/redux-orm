@@ -107,17 +107,32 @@ describe('Deprecations', () => {
                 'ORM.prototype.define is removed. Please define a Model class.'
             );
         });
+
+        it('Model.hasId is deprecated', () => {
+            expect(consoleWarn.timesRun).toBe(0);
+            const { Book } = session;
+
+            expect(Book.hasId(0)).toEqual(Book.idExists(0));
+            expect(consoleWarn.timesRun).toBe(1);
+            expect(consoleWarn.lastMessage).toBe('Model.hasId has been deprecated. Please use Model.idExists instead.');
+
+            expect(Book.hasId(4326262342)).toEqual(Book.idExists(4326262342));
+            expect(consoleWarn.timesRun).toBe(2);
+            expect(consoleWarn.lastMessage).toBe('Model.hasId has been deprecated. Please use Model.idExists instead.');
+        });
     });
 
     describe('Without session', () => {
+        let Book;
         beforeEach(() => {
-            session = createTestORM();
+            orm = createTestORM();
             consoleWarn.timesRun = 0;
             consoleWarn.lastMessage = null;
             console.warn = (msg) => {
                 consoleWarn.timesRun++;
                 consoleWarn.lastMessage = msg;
             };
+            Book = orm.get('Book');
         });
 
         it('Backend is deprecated', () => {
@@ -141,7 +156,7 @@ describe('Deprecations', () => {
 
         it('QuerySet#withRefs is deprecated', () => {
             expect(consoleWarn.timesRun).toBe(0);
-            const bookQs = orm.get('Book').getQuerySet();
+            const bookQs = Book.getQuerySet();
 
             expect(bookQs.withRefs).toBe(undefined);
 
@@ -151,16 +166,23 @@ describe('Deprecations', () => {
         });
 
         it('QuerySet#map is deprecated', () => {
-            const bookQs = orm.get('Book').getQuerySet();
+            const bookQs = Book.getQuerySet();
             expect(() => bookQs.map()).toThrowError(
                 'QuerySet.prototype.map is removed. Call .toModelArray() or .toRefArray() first to map.'
             );
         });
 
         it('QuerySet#forEach is deprecated', () => {
-            const bookQs = orm.get('Book').getQuerySet();
+            const bookQs = Book.getQuerySet();
             expect(() => bookQs.forEach()).toThrowError(
                 'QuerySet.prototype.forEach is removed. Call .toModelArray() or .toRefArray() first to iterate.'
+            );
+        });
+
+        it('Model#getNextState is deprecated', () => {
+            const book = new Book();
+            expect(() => book.getNextState()).toThrowError(
+                'Model.prototype.getNextState is removed. See the 0.9 migration guide on the GitHub repo.'
             );
         });
     });
