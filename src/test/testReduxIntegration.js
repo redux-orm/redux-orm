@@ -88,11 +88,7 @@ describe('Redux integration', () => {
         let selectorTimesRun = 0;
         const selector = createSelector(orm, (memoizeSession) => {
             selectorTimesRun++;
-            try {
-                return memoizeSession.Book.withId(0);
-            } catch (e) {
-                return null;
-            }
+            return memoizeSession.Book.withId(0);
         });
         expect(typeof selector).toBe('function');
 
@@ -133,11 +129,7 @@ describe('Redux integration', () => {
         let selectorTimesRun = 0;
         const selector = createSelector(orm, (memoizeSession) => {
             selectorTimesRun++;
-            try {
-                return memoizeSession.Book.withId(0);
-            } catch (e) {
-                return null;
-            }
+            return memoizeSession.Book.withId(0);
         });
         expect(typeof selector).toBe('function');
 
@@ -160,11 +152,7 @@ describe('Redux integration', () => {
         let selectorTimesRun = 0;
         const selector = createSelector(orm, (memoizeSession) => {
             selectorTimesRun++;
-            try {
-                return memoizeSession.Book.withId(0);
-            } catch (e) {
-                return null;
-            }
+            return memoizeSession.Book.withId(0);
         });
         expect(typeof selector).toBe('function');
 
@@ -188,11 +176,7 @@ describe('Redux integration', () => {
         let selectorTimesRun = 0;
         const selector = createSelector(orm, (memoizeSession) => {
             selectorTimesRun++;
-            try {
-                return memoizeSession.Book.withId(0);
-            } catch (e) {
-                return null;
-            }
+            return memoizeSession.Book.withId(0);
         });
         expect(typeof selector).toBe('function');
 
