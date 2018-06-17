@@ -2,10 +2,10 @@ import findKey from 'lodash/findKey';
 
 import {
     attrDescriptor,
-    forwardManyToOneDescriptor,
-    backwardManyToOneDescriptor,
-    forwardOneToOneDescriptor,
-    backwardOneToOneDescriptor,
+    forwardsManyToOneDescriptor,
+    backwardsManyToOneDescriptor,
+    forwardsOneToOneDescriptor,
+    backwardsOneToOneDescriptor,
     manyToManyDescriptor,
 } from './descriptors';
 
@@ -15,29 +15,141 @@ import {
     reverseFieldErrorMessage,
 } from './utils';
 
+function getToModel(field, model, orm) {
+    const { toModelName } = field;
+    if (!toModelName) return null;
+
+    if (toModelName === 'this') return model;
+    return orm.get(toModelName);
+}
+
+function getThroughModel(field, fieldName, model, orm) {
+    const throughModelName = field.getThroughModelName(fieldName, model);
+    if (!throughModelName) return null;
+
+    return orm.get(throughModelName);
+}
+
+export function installBackwardsField(field, fieldName, model, orm) {
+    const toModel = getToModel(field, model, orm);
+    const throughModel = getThroughModel(field, fieldName, model, orm);
+
+    const backwardsFieldName = field.getBackwardsFieldName(model);
+
+    const backwardsDescriptor = Object.getOwnPropertyDescriptor(
+        toModel.prototype,
+        backwardsFieldName
+    );
+    if (backwardsDescriptor) {
+        throw new Error(reverseFieldErrorMessage(
+            model.modelName,
+            fieldName,
+            toModel.modelName,
+            backwardsFieldName
+        ));
+    }
+
+    // install backwards descriptor
+    Object.defineProperty(
+        toModel.prototype,
+        backwardsFieldName,
+        field.createBackwardsDescriptor(
+            fieldName,
+            model,
+            toModel,
+            throughModel
+        )
+    );
+
+    // install backwards virtual field
+    toModel.virtualFields[backwardsFieldName] = field.createBackwardsVirtualField(
+        fieldName,
+        model,
+        toModel,
+        throughModel
+    );
+}
+
+export function installField(field, fieldName, model, orm) {
+    const toModel = getToModel(field, model, orm);
+    const throughModel = getThroughModel(field, fieldName, model, orm);
+
+    // install forwards descriptor
+    if (field.installsForwardsDescriptor) {
+        Object.defineProperty(
+            model.prototype,
+            fieldName,
+            field.createForwardsDescriptor(
+                fieldName,
+                model,
+                toModel,
+                throughModel
+            )
+        );
+    }
+
+    // install forwards virtual field
+    if (field.installsForwardsVirtualField) {
+        model.virtualFields[fieldName] = field.createForwardsVirtualField(
+            fieldName,
+            model,
+            toModel,
+            throughModel
+        );
+    }
+
+    if (field.installsBackwardsField) {
+        installBackwardsField(field, fieldName, model, orm);
+    }
+}
+
+class Field {
+    getClass() {
+        return this.constructor;
+    }
+
+    isForeignKeyTo(model) {
+        return false;
+    }
+
+    getThroughModelName(fieldName, model) {
+        return null;
+    }
+
+    get installsForwardsDescriptor() {
+        return true;
+    }
+
+    get installsForwardsVirtualField() {
+        return false;
+    }
+
+    get installsBackwardsField() {
+        return false;
+    }
+}
+
 /**
  * @module fields
  */
-export class Attribute {
+export class Attribute extends Field {
     constructor(opts) {
-        this.opts = (opts || {});
+        super(opts);
+        this.opts = opts || {};
 
         if (this.opts.hasOwnProperty('getDefault')) {
             this.getDefault = this.opts.getDefault;
         }
     }
 
-    install(model, fieldName, orm) {
-        Object.defineProperty(
-            model.prototype,
-            fieldName,
-            attrDescriptor(fieldName)
-        );
+    createForwardsDescriptor(fieldName, model) {
+        return attrDescriptor(fieldName);
     }
 }
 
-class RelationalField {
+class RelationalField extends Field {
     constructor(...args) {
+        super(...args);
         if (args.length === 1 && typeof args[0] === 'object') {
             const opts = args[0];
             this.toModelName = opts.to;
@@ -49,203 +161,130 @@ class RelationalField {
         }
     }
 
-    getClass() {
-        return this.constructor;
+    getBackwardsFieldName(model) {
+        return this.relatedName || reverseFieldName(model.modelName);
+    }
+
+    getThroughFields(fieldName, model, toModel, throughModel) {
+        if (this.throughFields) {
+            const [fieldAName, fieldBName] = this.throughFields;
+            const fieldA = throughModel.fields[fieldAName];
+            return {
+                to: fieldA.isForeignKeyTo(toModel) ? fieldAName : fieldBName,
+                from: fieldA.isForeignKeyTo(toModel) ? fieldBName : fieldAName,
+            };
+        }
+        const toFieldName = findKey(
+            throughModel.fields,
+            field => field.isForeignKeyTo(toModel)
+        );
+        const fromFieldName = findKey(
+            throughModel.fields,
+            field => field.isForeignKeyTo(model)
+        );
+        return {
+            to: toFieldName,
+            from: fromFieldName,
+        };
+    }
+
+    createBackwardsVirtualField(fieldName, model, toModel, throughModel) {
+        const ThisField = this.getClass();
+        return new ThisField(model.modelName, fieldName);
     }
 }
 
 export class ForeignKey extends RelationalField {
-    install(model, fieldName, orm) {
-        const { toModelName } = this;
-        const toModel = toModelName === 'this' ? model : orm.get(toModelName);
+    createForwardsDescriptor(fieldName, model, toModel, throughModel) {
+        return forwardsManyToOneDescriptor(fieldName, toModel.modelName);
+    }
 
-        // Forwards.
-        Object.defineProperty(
-            model.prototype,
-            fieldName,
-            forwardManyToOneDescriptor(fieldName, toModel.modelName)
-        );
+    createBackwardsDescriptor(fieldName, model, toModel, throughModel) {
+        return backwardsManyToOneDescriptor(fieldName, model.modelName);
+    }
 
-        // Backwards.
-        const backwardsFieldName = this.relatedName
-            ? this.relatedName
-            : reverseFieldName(model.modelName);
+    get installsBackwardsField() {
+        return true;
+    }
 
-        const backwardsDescriptor = Object.getOwnPropertyDescriptor(
-            toModel.prototype,
-            backwardsFieldName
-        );
-
-        if (backwardsDescriptor) {
-            const errorMsg = reverseFieldErrorMessage(
-                model.modelName,
-                fieldName,
-                toModel.modelName,
-                backwardsFieldName
-            );
-            throw new Error(errorMsg);
-        }
-
-        Object.defineProperty(
-            toModel.prototype,
-            backwardsFieldName,
-            backwardManyToOneDescriptor(fieldName, model.modelName)
-        );
-
-        const ThisField = this.getClass();
-        toModel.virtualFields[backwardsFieldName] = new ThisField(model.modelName, fieldName);
+    isForeignKeyTo(model) {
+        return this.toModelName === model.modelName;
     }
 }
 
 export class ManyToMany extends RelationalField {
-    install(model, fieldName, orm) {
-        const { toModelName } = this;
-        const toModel = toModelName === 'this' ? model : orm.get(toModelName);
+    getDefault() {
+        return [];
+    }
 
-        // Forwards.
+    getThroughModelName(fieldName, model) {
+        return this.through || m2mName(model.modelName, fieldName);
+    }
 
-        const throughModelName =
-            this.through ||
-            m2mName(model.modelName, fieldName);
-
-        const throughModel = orm.get(throughModelName);
-
-        let throughFields;
-        if (!this.throughFields) {
-            const toFieldName = findKey(
-                throughModel.fields,
-                field =>
-                    field instanceof ForeignKey &&
-                    field.toModelName === toModel.modelName
-            );
-            const fromFieldName = findKey(
-                throughModel.fields,
-                field =>
-                    field instanceof ForeignKey &&
-                    field.toModelName === model.modelName
-            );
-            throughFields = {
-                to: toFieldName,
-                from: fromFieldName,
-            };
-        } else {
-            const [fieldAName, fieldBName] = this.throughFields;
-            const fieldA = throughModel.fields[fieldAName];
-            if (fieldA.toModelName === toModel.modelName) {
-                throughFields = {
-                    to: fieldAName,
-                    from: fieldBName,
-                };
-            } else {
-                throughFields = {
-                    to: fieldBName,
-                    from: fieldAName,
-                };
-            }
-        }
-
-        Object.defineProperty(
-            model.prototype,
-            fieldName,
-            manyToManyDescriptor(
-                model.modelName,
-                toModel.modelName,
-                throughModelName,
-                throughFields,
-                false
-            )
+    createForwardsDescriptor(fieldName, model, toModel, throughModel) {
+        return manyToManyDescriptor(
+            model.modelName,
+            toModel.modelName,
+            throughModel.modelName,
+            this.getThroughFields(fieldName, model, toModel, throughModel),
+            false
         );
+    }
 
-        model.virtualFields[fieldName] = new ManyToMany({
-            to: toModel.modelName,
-            relatedName: fieldName,
-            through: this.through,
-            throughFields,
-        });
-
-        // Backwards.
-        const backwardsFieldName = this.relatedName
-            ? this.relatedName
-            : reverseFieldName(model.modelName);
-
-        const backwardsDescriptor = Object.getOwnPropertyDescriptor(
-            toModel.prototype,
-            backwardsFieldName
+    createBackwardsDescriptor(fieldName, model, toModel, throughModel) {
+        return manyToManyDescriptor(
+            model.modelName,
+            toModel.modelName,
+            throughModel.modelName,
+            this.getThroughFields(fieldName, model, toModel, throughModel),
+            true
         );
+    }
 
-        if (backwardsDescriptor) {
-            // Backwards field was already defined on toModel.
-            const errorMsg = reverseFieldErrorMessage(
-                model.modelName,
-                fieldName,
-                toModel.modelName,
-                backwardsFieldName
-            );
-            throw new Error(errorMsg);
-        }
-
-        Object.defineProperty(
-            toModel.prototype,
-            backwardsFieldName,
-            manyToManyDescriptor(
-                model.modelName,
-                toModel.modelName,
-                throughModelName,
-                throughFields,
-                true
-            )
-        );
-        toModel.virtualFields[backwardsFieldName] = new ManyToMany({
+    createBackwardsVirtualField(fieldName, model, toModel, throughModel) {
+        const ThisField = this.getClass();
+        return new ThisField({
             to: model.modelName,
             relatedName: fieldName,
-            through: throughModelName,
-            throughFields,
+            through: throughModel.modelName,
+            throughFields: this.getThroughFields(fieldName, model, toModel, throughModel),
         });
     }
 
-    getDefault() {
-        return [];
+    createForwardsVirtualField(fieldName, model, toModel, throughModel) {
+        const ThisField = this.getClass();
+        return new ThisField({
+            to: toModel.modelName,
+            relatedName: fieldName,
+            through: this.through,
+            throughFields: this.getThroughFields(fieldName, model, toModel, throughModel),
+        });
+    }
+
+    get installsForwardsVirtualField() {
+        return true;
+    }
+
+    get installsBackwardsField() {
+        return true;
     }
 }
 
 export class OneToOne extends RelationalField {
-    install(model, fieldName, orm) {
-        const { toModelName } = this;
-        const toModel = toModelName === 'this' ? model : orm.get(toModelName);
+    getBackwardsFieldName(model) {
+        return this.relatedName || model.modelName.toLowerCase();
+    }
 
-        // Forwards.
-        Object.defineProperty(
-            model.prototype,
-            fieldName,
-            forwardOneToOneDescriptor(fieldName, toModel.modelName)
-        );
+    createForwardsDescriptor(fieldName, model, toModel, throughModel) {
+        return forwardsOneToOneDescriptor(fieldName, toModel.modelName);
+    }
 
-        // Backwards.
-        const backwardsFieldName = this.relatedName
-            ? this.relatedName
-            : model.modelName.toLowerCase();
+    createBackwardsDescriptor(fieldName, model, toModel, throughModel) {
+        return backwardsOneToOneDescriptor(fieldName, model.modelName);
+    }
 
-        const backwardsDescriptor = Object.getOwnPropertyDescriptor(
-            toModel.prototype,
-            backwardsFieldName
-        );
-
-        if (backwardsDescriptor) {
-            const errorMsg = reverseFieldErrorMessage(
-                model.modelName,
-                fieldName,
-                toModel.modelName,
-                backwardsFieldName
-            );
-            throw new Error(errorMsg);
-        }
-
-        Object.defineProperty(
-            toModel.prototype,
-            backwardsFieldName,
-            backwardOneToOneDescriptor(fieldName, model.modelName)
-        );
-        toModel.virtualFields[backwardsFieldName] = new OneToOne(model.modelName, fieldName);
+    get installsBackwardsField() {
+        return true;
     }
 }
 

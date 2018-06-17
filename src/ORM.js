@@ -8,6 +8,7 @@ import {
     ForeignKey,
     ManyToMany,
     attr,
+    installField,
 } from './fields';
 
 import {
@@ -151,7 +152,7 @@ export class ORM {
                 const { fields } = model;
                 forOwn(fields, (fieldInstance, fieldName) => {
                     if (!this.isFieldInstalled(model.modelName, fieldName)) {
-                        fieldInstance.install(model, fieldName, this);
+                        installField(fieldInstance, fieldName, model, this);
                         this.setFieldInstalled(model.modelName, fieldName);
                     }
                 });

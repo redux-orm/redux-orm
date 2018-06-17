@@ -21,42 +21,42 @@ function attrDescriptor(fieldName) {
 
 // Forwards side a Foreign Key: returns one object.
 // Also works as forwardsOneToOneDescriptor.
-function forwardManyToOneDescriptor(fieldName, declaredToModelName) {
+function forwardsManyToOneDescriptor(fieldName, declaredToModelName) {
     return {
         get() {
-            const currentSession = this.getClass().session;
-            const declaredToModel = currentSession[declaredToModelName];
-            const toId = this._fields[fieldName];
-            if (typeof toId !== 'undefined' && toId !== null) {
-                return declaredToModel.withId(toId);
-            }
-            return undefined;
+            const {
+                session: {
+                    [declaredToModelName]: DeclaredToModel,
+                },
+            } = this.getClass();
+            const {
+                [fieldName]: toId,
+            } = this._fields;
+
+            return DeclaredToModel.withId(toId);
         },
         set(value) {
-            const currentSession = this.getClass().session;
-            const declaredToModel = currentSession[declaredToModelName];
-
-            let toId;
-            if (value instanceof declaredToModel) {
-                toId = value.getId();
-            } else {
-                toId = value;
-            }
-
-            this.update({ [fieldName]: toId });
+            this.update({
+                [fieldName]: normalizeEntity(value),
+            });
         },
     };
 }
 
-const forwardOneToOneDescriptor = forwardManyToOneDescriptor;
+const forwardsOneToOneDescriptor = forwardsManyToOneDescriptor;
 
-function backwardOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
+function backwardsOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
     return {
         get() {
-            const currentSession = this.getClass().session;
-            const declaredFromModel = currentSession[declaredFromModelName];
-            const thisId = this.getId();
-            return declaredFromModel.get({ [declaredFieldName]: thisId });
+            const {
+                session: {
+                    [declaredFromModelName]: DeclaredFromModel,
+                },
+            } = this.getClass();
+
+            return DeclaredFromModel.get({
+                [declaredFieldName]: this.getId(),
+            });
         },
         set() {
             throw new Error('Can\'t mutate a reverse one-to-one relation.');
@@ -65,13 +65,18 @@ function backwardOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
 }
 
 // Reverse side of a Foreign Key: returns many objects.
-function backwardManyToOneDescriptor(declaredFieldName, declaredFromModelName) {
+function backwardsManyToOneDescriptor(declaredFieldName, declaredFromModelName) {
     return {
         get() {
-            const currentSession = this.getClass().session;
-            const declaredFromModel = currentSession[declaredFromModelName];
-            const thisId = this.getId();
-            return declaredFromModel.filter({ [declaredFieldName]: thisId });
+            const {
+                session: {
+                    [declaredFromModelName]: DeclaredFromModel,
+                },
+            } = this.getClass();
+
+            return DeclaredFromModel.filter({
+                [declaredFieldName]: this.getId(),
+            });
         },
         set() {
             throw new Error('Can\'t mutate a reverse many-to-one relation.');
@@ -89,106 +94,127 @@ function manyToManyDescriptor(
 ) {
     return {
         get() {
-            const currentSession = this.getClass().session;
-            const declaredFromModel = currentSession[declaredFromModelName];
-            const declaredToModel = currentSession[declaredToModelName];
-            const throughModel = currentSession[throughModelName];
+            const {
+                session: {
+                    [declaredFromModelName]: DeclaredFromModel,
+                    [declaredToModelName]: DeclaredToModel,
+                    [throughModelName]: ThroughModel,
+                },
+            } = this.getClass();
+
+            const ThisModel = reverse
+                ? DeclaredToModel
+                : DeclaredFromModel;
+            const OtherModel = reverse
+                ? DeclaredFromModel
+                : DeclaredToModel;
+
+            const thisReferencingField = reverse
+                ? throughFields.to
+                : throughFields.from;
+            const otherReferencingField = reverse
+                ? throughFields.from
+                : throughFields.to;
+
             const thisId = this.getId();
 
-            const fromFieldName = throughFields.from;
-            const toFieldName = throughFields.to;
+            const throughQs = ThroughModel.filter({
+                [thisReferencingField]: thisId,
+            });
 
-            const lookupObj = {};
-            if (!reverse) {
-                lookupObj[fromFieldName] = thisId;
-            } else {
-                lookupObj[toFieldName] = thisId;
-            }
-
-            const throughQs = throughModel.filter(lookupObj);
-            const toIds = new Set(
+            /**
+             * all IDs of instances of the other model that are
+             * referenced by any instance of the current model
+             */
+            const referencedOtherIds = new Set(
                 throughQs
                     .toRefArray()
-                    .map(obj => obj[reverse ? fromFieldName : toFieldName])
+                    .map(obj => obj[otherReferencingField])
             );
 
-            const qsFromModel = reverse ? declaredFromModel : declaredToModel;
-            const qs = qsFromModel.filter(attrs =>
-                toIds.has(attrs[qsFromModel.idAttribute])
+            /**
+             * selects all instances of other model that are referenced
+             * by any instance of the current model
+             */
+            const qs = OtherModel.filter(otherModelInstance =>
+                referencedOtherIds.has(
+                    otherModelInstance[OtherModel.idAttribute]
+                )
             );
 
-            qs.add = function add(...args) {
-                const idsToAdd = new Set(args.map(normalizeEntity));
-
-                const filterWithAttr = reverse ? fromFieldName : toFieldName;
+            /**
+             * Allows adding OtherModel instances to be referenced by the current instance.
+             *
+             * E.g. Book.first().authors.add(1, 2) would add the authors with IDs 1 and 2
+             * to the first book's list of referenced authors.
+             *
+             * @return undefined
+             */
+            qs.add = function add(...entities) {
+                const idsToAdd = new Set(
+                    entities.map(normalizeEntity)
+                );
 
                 const existingQs = throughQs.filter(through =>
-                    idsToAdd.has(through[filterWithAttr])
+                    idsToAdd.has(through[otherReferencingField])
                 );
 
                 if (existingQs.exists()) {
                     const existingIds = existingQs
                         .toRefArray()
-                        .map(through => through[filterWithAttr]);
+                        .map(through => through[otherReferencingField]);
 
-                    const toAddModel = reverse
-                        ? declaredFromModel.modelName
-                        : declaredToModel.modelName;
-
-                    const addFromModel = reverse
-                        ? declaredToModel.modelName
-                        : declaredFromModel.modelName;
-                    throw new Error(`Tried to add already existing ${toAddModel} id(s) ${existingIds} to the ${addFromModel} instance with id ${thisId}`);
+                    throw new Error(`Tried to add already existing ${OtherModel.modelName} id(s) ${existingIds} to the ${ThisModel.modelName} instance with id ${thisId}`);
                 }
 
-                if (reverse) {
-                    idsToAdd.forEach((id) => {
-                        throughModel.create({
-                            [fromFieldName]: id,
-                            [toFieldName]: thisId,
-                        });
-                    });
-                } else {
-                    idsToAdd.forEach((id) => {
-                        throughModel.create({
-                            [fromFieldName]: thisId,
-                            [toFieldName]: id,
-                        });
-                    });
-                }
+                idsToAdd.forEach(id =>
+                    ThroughModel.create({
+                        [otherReferencingField]: id,
+                        [thisReferencingField]: thisId,
+                    })
+                );
             };
 
+            /**
+             * Removes references to all OtherModel instances from the current model.
+             *
+             * E.g. Book.first().authors.clear() would cause the first book's list
+             * of referenced authors to become empty.
+             *
+             * @return undefined
+             */
             qs.clear = function clear() {
                 throughQs.delete();
             };
 
+            /**
+             * Removes references to all passed OtherModel instances from the current model.
+             *
+             * E.g. Book.first().authors.remove(1, 2) would cause the authors with
+             * IDs 1 and 2 to no longer be referenced by the first book.
+             *
+             * @return undefined
+             */
             qs.remove = function remove(...entities) {
-                const idsToRemove = new Set(entities.map(normalizeEntity));
+                const idsToRemove = new Set(
+                    entities.map(normalizeEntity)
+                );
 
-                const attrInIdsToRemove = reverse ? fromFieldName : toFieldName;
                 const entitiesToDelete = throughQs.filter(
-                    through => idsToRemove.has(through[attrInIdsToRemove])
+                    through => idsToRemove.has(through[otherReferencingField])
                 );
 
                 if (entitiesToDelete.count() !== idsToRemove.size) {
                     // Tried deleting non-existing entities.
                     const entitiesToDeleteIds = entitiesToDelete
                         .toRefArray()
-                        .map(through => through[attrInIdsToRemove]);
+                        .map(through => through[otherReferencingField]);
 
                     const unexistingIds = [...idsToRemove].filter(
                         id => !includes(entitiesToDeleteIds, id)
                     );
 
-                    const toDeleteModel = reverse
-                        ? declaredFromModel.modelName
-                        : declaredToModel.modelName;
-
-                    const deleteFromModel = reverse
-                        ? declaredToModel.modelName
-                        : declaredFromModel.modelName;
-
-                    throw new Error(`Tried to delete non-existing ${toDeleteModel} id(s) ${unexistingIds} from the ${deleteFromModel} instance with id ${thisId}`);
+                    throw new Error(`Tried to delete non-existing ${OtherModel.modelName} id(s) ${unexistingIds} from the ${ThisModel.modelName} instance with id ${thisId}`);
                 }
 
                 entitiesToDelete.delete();
@@ -198,16 +224,16 @@ function manyToManyDescriptor(
         },
 
         set() {
-            throw new Error('Tried setting a M2M field. Please use the related QuerySet methods add and remove.');
+            throw new Error('Tried setting a M2M field. Please use the related QuerySet methods add, remove and clear.');
         },
     };
 }
 
 export {
     attrDescriptor,
-    forwardManyToOneDescriptor,
-    forwardOneToOneDescriptor,
-    backwardOneToOneDescriptor,
-    backwardManyToOneDescriptor,
+    forwardsManyToOneDescriptor,
+    forwardsOneToOneDescriptor,
+    backwardsOneToOneDescriptor,
+    backwardsManyToOneDescriptor,
     manyToManyDescriptor,
 };
