@@ -395,7 +395,9 @@ Just like you can extend `Model`, you can do the same for `QuerySet` (customize 
 
 ### Caveats
 
-The ORM abstraction will never be as performant compared to writing reducers by hand, and adds to the build size of your project (last I checked, minimizing the source files and gzipping yielded about 8 KB). If you have very simple data without relations, Redux-ORM may be overkill. The development convenience benefit is considerable though.
+![gzip size](https://img.shields.io/bundlephobia/minzip/redux-orm.svg?style=flat-square)
+
+The ORM abstraction will never be as performant compared to writing reducers by hand, and adds to the build size of your project. If you have very simple data without relations, Redux-ORM may be overkill. The development convenience benefit is considerable though.
 
 ## API
 
