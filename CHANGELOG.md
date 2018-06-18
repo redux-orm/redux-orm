@@ -4,6 +4,7 @@
 
 - Potential breaking changes to model API:
     - `Model#equals` is now used by `Model#update` to prevent unnecessary updates in some cases when the intended updates would not change the current model. By default models will always be updated if any of the passed attributes have a different reference than the respective existing attribute. [#204](https://github.com/tommikaikkonen/redux-orm/pull/204)
+    - `Model.withId` and resolving foreign key relationships no longer throw an error if the referenced model does not exist. Instead `null` is returned. [#210](https://github.com/tommikaikkonen/redux-orm/pull/210)
     - `Model.exists` now accepts passing a lookup object to check if any model instance matching the passed attributes exists. [#209](https://github.com/tommikaikkonen/redux-orm/pull/209)
     - `Model.hasId` has been replaced by `Model.idExists`. [#209](https://github.com/tommikaikkonen/redux-orm/pull/209)
 - Fixed `QuerySet#toString`. [12ce882](https://github.com/tommikaikkonen/redux-orm/commit/12ce882e9ed7fc1ba742e94feb10e82f0968de85)
