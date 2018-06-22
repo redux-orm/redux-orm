@@ -76,8 +76,7 @@ const QuerySet = class QuerySet {
      *                    the QuerySet
      */
     toRefArray() {
-        this._evaluate();
-        return this.rows;
+        return this._evaluate();
     }
 
     /**
@@ -85,9 +84,10 @@ const QuerySet = class QuerySet {
      * @return {Model[]} model instances represented by the QuerySet
      */
     toModelArray() {
-        this._evaluate();
-        const ModelClass = this.modelClass;
-        return this.rows.map(props => new ModelClass(props));
+        const { modelClass: ModelClass } = this;
+        return this._evaluate().map(
+            props => new ModelClass(props)
+        );
     }
 
     /**
@@ -121,10 +121,11 @@ const QuerySet = class QuerySet {
      *                           or undefined if the index is out of bounds.
      */
     at(index) {
-        this._evaluate();
-        if (index >= 0 && index < this.rows.length) {
-            const ModelClass = this.modelClass;
-            return new ModelClass(this.rows[index]);
+        const { modelClass: ModelClass } = this;
+
+        const rows = this._evaluate();
+        if (index >= 0 && index < rows.length) {
+            return new ModelClass(rows[index]);
         }
 
         return undefined;
@@ -143,8 +144,8 @@ const QuerySet = class QuerySet {
      * @return {Model}
      */
     last() {
-        this._evaluate();
-        return this.at(this.rows.length - 1);
+        const rows = this._evaluate();
+        return this.at(rows.length - 1);
     }
 
     /**
@@ -158,43 +159,79 @@ const QuerySet = class QuerySet {
     /**
      * Returns a new {@link QuerySet} instance with entities that match properties in `lookupObj`.
      *
-     * @param  {Object} lookupObj - the properties to match objects with.
+     * @param  {Object} lookupObj - the properties to match objects with. Can also be a function.
      * @return {QuerySet} a new {@link QuerySet} instance with objects that passed the filter.
      */
     filter(lookupObj) {
+        /**
+         * allow foreign keys to be specified as model instances,
+         * transform model instances to their primary keys
+         */
         const normalizedLookupObj = typeof lookupObj === 'object'
             ? mapValues(lookupObj, normalizeEntity)
             : lookupObj;
-        const filterDescriptor = { type: FILTER, payload: normalizedLookupObj };
-        return this._new(this.clauses.concat(filterDescriptor));
+
+        const filterDescriptor = {
+            type: FILTER,
+            payload: normalizedLookupObj,
+        };
+        /**
+         * create a new QuerySet
+         * including only rows matching the lookupObj
+         */
+        return this._new(
+            this.clauses.concat(filterDescriptor)
+        );
     }
 
     /**
      * Returns a new {@link QuerySet} instance with entities that do not match
      * properties in `lookupObj`.
      *
-     * @param  {Object} lookupObj - the properties to unmatch objects with.
-     * @return {QuerySet} a new {@link QuerySet} instance with objects that passed the filter.
+     * @param  {Object} lookupObj - the properties to unmatch objects with. Can also be a function.
+     * @return {QuerySet} a new {@link QuerySet} instance with objects that did not pass the filter.
      */
     exclude(lookupObj) {
+        /**
+         * allow foreign keys to be specified as model instances,
+         * transform model instances to their primary keys
+         */
         const normalizedLookupObj = typeof lookupObj === 'object'
             ? mapValues(lookupObj, normalizeEntity)
             : lookupObj;
-        const excludeDescriptor = { type: EXCLUDE, payload: normalizedLookupObj };
-        return this._new(this.clauses.concat(excludeDescriptor));
+        const excludeDescriptor = {
+            type: EXCLUDE,
+            payload: normalizedLookupObj,
+        };
+
+        /**
+         * create a new QuerySet
+         * excluding all rows matching the lookupObj
+         */
+        return this._new(
+            this.clauses.concat(excludeDescriptor)
+        );
     }
 
+    /**
+     * Performs the actual database query.
+     * @private
+     * @return {Array} rows corresponding to the QuerySet's clauses
+     */
     _evaluate() {
         if (!this._evaluated) {
-            const { session } = this.modelClass;
+            const {
+                session,
+                modelName: table,
+            } = this.modelClass;
             const querySpec = {
-                table: this.modelClass.modelName,
+                table,
                 clauses: this.clauses,
             };
-            const { rows } = session.query(querySpec);
-            this.rows = rows;
+            this.rows = session.query(querySpec).rows;
             this._evaluated = true;
         }
+        return this.rows;
     }
 
     /**
@@ -213,8 +250,18 @@ const QuerySet = class QuerySet {
      * @return {QuerySet} a new {@link QuerySet} with objects ordered by `iteratees`.
      */
     orderBy(iteratees, orders) {
-        const orderByDescriptor = { type: ORDER_BY, payload: [iteratees, orders] };
-        return this._new(this.clauses.concat(orderByDescriptor));
+        const orderByDescriptor = {
+            type: ORDER_BY,
+            payload: [iteratees, orders],
+        };
+
+        /**
+         * create a new QuerySet
+         * sorting all rows according to the passed arguments
+         */
+        return this._new(
+            this.clauses.concat(orderByDescriptor)
+        );
     }
 
     /**
@@ -226,14 +273,20 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     update(mergeObj) {
-        this.modelClass.session.applyUpdate({
+        const {
+            session,
+            modelName: table,
+        } = this.modelClass;
+
+        session.applyUpdate({
             action: UPDATE,
             query: {
-                table: this.modelClass.modelName,
+                table,
                 clauses: this.clauses,
             },
             payload: mergeObj,
         });
+
         this._evaluated = false;
     }
 
@@ -242,13 +295,19 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     delete() {
-        // eslint-disable-next-line no-underscore-dangle
-        this.toModelArray().forEach(model => model._onDelete());
+        const {
+            session,
+            modelName: table,
+        } = this.modelClass;
 
-        this.modelClass.session.applyUpdate({
+        this.toModelArray().forEach(
+            model => model._onDelete() // eslint-disable-line no-underscore-dangle
+        );
+
+        session.applyUpdate({
             action: DELETE,
             query: {
-                table: this.modelClass.modelName,
+                table,
                 clauses: this.clauses,
             },
         });

@@ -22,26 +22,26 @@ describe('Big Data Test', () => {
         const start = measureMs();
 
         const amount = 10000;
-        for (let i = 0; i < amount; i++) {
+        for (let i = 0; i < amount; ++i) {
             Item.create({ id: i, name: 'TestItem' });
         }
         const tookSeconds = measureMs(start) / 1000;
         console.log(`Creating ${amount} objects took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 1.5 : 0.75);
+        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 2.5 : 0.75);
     });
 
     it('looks up items by id in a large table in acceptable time', () => {
         const { Item } = session;
 
         const rowCount = 20000;
-        for (let i = 0; i < rowCount; i++) {
+        for (let i = 0; i < rowCount; ++i) {
             Item.create({ id: i, name: 'TestItem' });
         }
 
         const lookupCount = 10000;
         const maxId = rowCount - 1;
         const start = measureMs();
-        for (let j = maxId; j > maxId - lookupCount; j--) {
+        for (let j = maxId, n = maxId - lookupCount; j > n; --j) {
             Item.withId(j);
         }
         const tookSeconds = measureMs(start) / 1000;
@@ -70,7 +70,7 @@ describe('Many-to-many relationship performance', () => {
     });
 
     const createChildren = (amount) => {
-        for (let i = 0; i < amount; i++) {
+        for (let i = 0; i < amount; ++i) {
             session.Child.create({
                 id: i,
                 name: 'TestChild',
@@ -79,7 +79,7 @@ describe('Many-to-many relationship performance', () => {
     };
 
     const assignChildren = (parent, amount) => {
-        for (let i = 0; i < amount; i++) {
+        for (let i = 0; i < amount; ++i) {
             parent.children.add(i);
         }
     };
@@ -107,7 +107,7 @@ describe('Many-to-many relationship performance', () => {
 
         const start = measureMs();
         const queryCount = 500;
-        for (let j = 0; j < queryCount; j++) {
+        for (let j = 0; j < queryCount; ++j) {
             parent.children.count();
         }
 
@@ -125,7 +125,7 @@ describe('Many-to-many relationship performance', () => {
 
         const removeCount = 1000;
         const start = measureMs();
-        for (let j = 0; j < removeCount; j++) {
+        for (let j = 0; j < removeCount; ++j) {
             parent.children.remove(j);
         }
 

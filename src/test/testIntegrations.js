@@ -528,6 +528,20 @@ describe('Integration', () => {
             expect(relatedBooks.modelClass).toBe(Book);
         });
 
+        it('non-existing foreign key relationship descriptors return null', () => {
+            const {
+                Book,
+                Author,
+            } = session;
+
+            const book = Book.first();
+            book.author = 91243424;
+            expect(book.author).toBe(null);
+
+            book.author = null;
+            expect(book.author).toBe(null);
+        });
+
         it('setting forwards foreign key (many-to-one) field works', () => {
             const {
                 Book,

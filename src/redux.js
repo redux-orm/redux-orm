@@ -1,6 +1,6 @@
 import { createSelectorCreator } from 'reselect';
 
-import { memoize, eqCheck } from './memoize';
+import { memoize } from './memoize';
 
 
 export function defaultUpdater(session, action) {
@@ -72,8 +72,8 @@ export const createReducer = (orm, updater = defaultUpdater) =>
  */
 export function createSelector(orm, ...args) {
     if (args.length === 1) {
-        return memoize(args[0], eqCheck, orm);
+        return memoize(args[0], undefined, orm);
     }
 
-    return createSelectorCreator(memoize, eqCheck, orm)(...args);
+    return createSelectorCreator(memoize, undefined, orm)(...args);
 }
