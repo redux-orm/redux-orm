@@ -2,7 +2,14 @@ import { createSelectorCreator } from 'reselect';
 
 import { memoize } from './memoize';
 
+/**
+ * @module redux
+ */
 
+/**
+ * Calls all models' reducers if they exist.
+ * @return {undefined}
+ */
 export function defaultUpdater(session, action) {
     session.sessionBoundModels.forEach((modelClass) => {
         if (typeof modelClass.reducer === 'function') {
@@ -13,12 +20,22 @@ export function defaultUpdater(session, action) {
 }
 
 
-export const createReducer = (orm, updater = defaultUpdater) =>
-    (state, action) => {
+/**
+ * Call the returned function to pass actions to Redux-ORM.
+ *
+ * @global
+ *
+ * @param {ORM} orm - the ORM instance.
+ * @param {Function} [updater] - the function updating the ORM state based on the given action.
+ * @return {Function} reducer that will update the ORM state.
+ */
+export function createReducer(orm, updater = defaultUpdater) {
+    return (state, action) => {
         const session = orm.session(state || orm.getEmptyState());
         updater(session, action);
         return session.state;
     };
+}
 
 
 /**
@@ -64,6 +81,8 @@ export const createReducer = (orm, updater = defaultUpdater) =>
  *
  * This way you can use the `PureRenderMixin` in your React components
  * for performance gains.
+ *
+ * @global
  *
  * @param {ORM} orm - the ORM instance
  * @param  {...Function} args - zero or more input selectors

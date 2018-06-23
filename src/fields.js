@@ -15,6 +15,20 @@ import {
     reverseFieldErrorMessage,
 } from './utils';
 
+/**
+ * Contains the logic for how fields on {@link Model}s work
+ * and which descriptors must be installed.
+ *
+ * If your goal is to define fields on a Model class,
+ * please use the more convenient methods {@link attr},
+ * {@link fk}, {@link many} and {@link oneToOne}.
+ *
+ * @module fields
+ */
+
+/**
+ * @private
+ */
 function getToModel(field, model, orm) {
     const { toModelName } = field;
     if (!toModelName) return null;
@@ -23,6 +37,9 @@ function getToModel(field, model, orm) {
     return orm.get(toModelName);
 }
 
+/**
+ * @private
+ */
 function getThroughModel(field, fieldName, model, orm) {
     const throughModelName = field.getThroughModelName(fieldName, model);
     if (!throughModelName) return null;
@@ -30,6 +47,10 @@ function getThroughModel(field, fieldName, model, orm) {
     return orm.get(throughModelName);
 }
 
+/**
+ * Installs a backwards field on a model as a consequence
+ * of having installed the forwards field on another model.
+ */
 export function installBackwardsField(field, fieldName, model, orm) {
     const toModel = getToModel(field, model, orm);
     const throughModel = getThroughModel(field, fieldName, model, orm);
@@ -70,6 +91,9 @@ export function installBackwardsField(field, fieldName, model, orm) {
     );
 }
 
+/**
+ * Executes strategy to install a field on a model.
+ */
 export function installField(field, fieldName, model, orm) {
     const toModel = getToModel(field, model, orm);
     const throughModel = getThroughModel(field, fieldName, model, orm);
@@ -103,6 +127,9 @@ export function installField(field, fieldName, model, orm) {
     }
 }
 
+/**
+ * @ignore
+ */
 class Field {
     getClass() {
         return this.constructor;
@@ -130,7 +157,7 @@ class Field {
 }
 
 /**
- * @module fields
+ * @ignore
  */
 export class Attribute extends Field {
     constructor(opts) {
@@ -147,6 +174,9 @@ export class Attribute extends Field {
     }
 }
 
+/**
+ * @ignore
+ */
 class RelationalField extends Field {
     constructor(...args) {
         super(...args);
@@ -194,6 +224,9 @@ class RelationalField extends Field {
     }
 }
 
+/**
+ * @ignore
+ */
 export class ForeignKey extends RelationalField {
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
         return forwardsManyToOneDescriptor(fieldName, toModel.modelName);
@@ -212,6 +245,9 @@ export class ForeignKey extends RelationalField {
     }
 }
 
+/**
+ * @ignore
+ */
 export class ManyToMany extends RelationalField {
     getDefault() {
         return [];
@@ -270,6 +306,9 @@ export class ManyToMany extends RelationalField {
     }
 }
 
+/**
+ * @ignore
+ */
 export class OneToOne extends RelationalField {
     getBackwardsFieldName(model) {
         return this.relatedName || model.modelName.toLowerCase();
@@ -294,7 +333,7 @@ export class OneToOne extends RelationalField {
  * Getters and setters need to be defined on each Model
  * instantiation for undeclared data fields, which is slower.
  * You can use the optional `getDefault` parameter to fill in unpassed values
- * to {@link Model#create}, such as for generating ID's with UUID:
+ * to {@link Model.create}, such as for generating ID's with UUID:
  *
  * ```javascript
  * import getUUID from 'your-uuid-package-of-choice';
@@ -304,6 +343,8 @@ export class OneToOne extends RelationalField {
  *   title: attr(),
  * }
  * ```
+ *
+ * @global
  *
  * @param  {Object} [opts]
  * @param {Function} [opts.getDefault] - if you give a function here, it's return
@@ -348,6 +389,8 @@ export function attr(opts) {
  *   author: fk('Author', 'books'),
  * }
  * ```
+ *
+ * @global
  *
  * @param  {string|boolean} toModelNameOrObj - the `modelName` property of
  *                                           the Model that is the target of the
@@ -413,6 +456,8 @@ export function fk(...args) {
  * above case of Authors to Books through Authorships, the relationship is
  * defined only on the Author model.
  *
+ * @global
+ *
  * @param  {Object} options - options
  * @param  {string} options.to - the `modelName` attribute of the target Model.
  * @param  {string} [options.through] - the `modelName` attribute of the through Model which
@@ -444,6 +489,9 @@ export function many(...args) {
  * The arguments are the same as with `fk`. If `relatedName` is not supplied,
  * the source model name in lowercase will be used. Note that with the one-to-one
  * relationship, the `relatedName` should be in singular, not plural.
+ *
+ * @global
+ *
  * @param  {string|boolean} toModelNameOrObj - the `modelName` property of
  *                                           the Model that is the target of the
  *                                           foreign key, or an object with properties

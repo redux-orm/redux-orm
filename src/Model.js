@@ -22,6 +22,8 @@ import {
 /**
  * Generates a query specification to get the instance's
  * corresponding table row using its primary key.
+ *
+ * @private
  * @returns {Object}
  */
 function getByIdQuery(modelInstance) {
@@ -366,6 +368,8 @@ const Model = class Model {
      *
      * @param  {*}  id - a value corresponding to the id attribute of the {@link Model} class.
      * @return {Boolean} a boolean indicating if entity with `id` exists in the state
+     *
+     * @since 0.11.0
      */
     static idExists(id) {
         return this.exists({

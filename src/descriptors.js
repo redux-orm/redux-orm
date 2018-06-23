@@ -3,7 +3,20 @@ import {
     includes,
 } from './utils';
 
+/**
+ * The functions in this file return custom JS property descriptors
+ * that are supposed to be assigned to Model fields.
+ *
+ * Some include the logic to look up models using foreign keys and
+ * to add or remove relationships between models.
+ *
+ * @module descriptors
+ */
 
+/**
+ * Defines a basic non-key attribute.
+ * @param  {string} fieldName - the name of the field the descriptor will be assigned to.
+ */
 function attrDescriptor(fieldName) {
     return {
         get() {
@@ -19,8 +32,15 @@ function attrDescriptor(fieldName) {
     };
 }
 
-// Forwards side a Foreign Key: returns one object.
-// Also works as forwardsOneToOneDescriptor.
+/**
+ * Forwards direction of a Foreign Key: returns one object.
+ * Also works as {@link .forwardsOneToOneDescriptor|forwardsOneToOneDescriptor}.
+ *
+ * For `book.author` referencing an `Author` model instance,
+ * `fieldName` would be `'author'` and `declaredToModelName` would be `'Author'`.
+ * @param  {string} fieldName - the name of the field the descriptor will be assigned to.
+ * @param  {string} declaredToModelName - the name of the model that the field references.
+ */
 function forwardsManyToOneDescriptor(fieldName, declaredToModelName) {
     return {
         get() {
@@ -43,8 +63,29 @@ function forwardsManyToOneDescriptor(fieldName, declaredToModelName) {
     };
 }
 
-const forwardsOneToOneDescriptor = forwardsManyToOneDescriptor;
+/**
+ * Dereferencing foreign keys in {@link module:fields.oneToOne|oneToOne}
+ * relationships works the same way as in many-to-one relationships:
+ * just look up the related model.
+ *
+ * For example, a human face tends to have a single nose.
+ * So if we want to resolve `face.nose`, we need to
+ * look up the `Nose` that has the primary key that `face` references.
+ *
+ * @see {@link module:descriptors~forwardsManyToOneDescriptor|forwardsManyToOneDescriptor}
+ */
+function forwardsOneToOneDescriptor(...args) {
+    return forwardsManyToOneDescriptor(...args);
+}
 
+/**
+ * Here we resolve 1-to-1 relationships starting at the model on which the
+ * field was not installed. This means we need to find the instance of the
+ * other model whose {@link module:fields.oneToOne|oneToOne} FK field contains the current model's primary key.
+ *
+ * @param  {string} declaredFieldName - the name of the field referencing the current model.
+ * @param  {string} declaredFromModelName - the name of the other model.
+ */
 function backwardsOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
     return {
         get() {
@@ -64,7 +105,13 @@ function backwardsOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
     };
 }
 
-// Reverse side of a Foreign Key: returns many objects.
+/**
+ * The backwards direction of a n-to-1 relationship (i.e. 1-to-n),
+ * meaning this will return an a collection (`QuerySet`) of model instances.
+ *
+ * An example would be `author.books` referencing all instances of
+ * the `Book` model that reference the author using `fk()`.
+ */
 function backwardsManyToOneDescriptor(declaredFieldName, declaredFromModelName) {
     return {
         get() {
@@ -84,7 +131,10 @@ function backwardsManyToOneDescriptor(declaredFieldName, declaredFromModelName) 
     };
 }
 
-// Both sides of Many to Many, use the reverse flag.
+/**
+ * This descriptor is assigned to both sides of a many-to-many relationship.
+ * To indicate the backwards direction pass `true` for `reverse`.
+ */
 function manyToManyDescriptor(
     declaredFromModelName,
     declaredToModelName,
