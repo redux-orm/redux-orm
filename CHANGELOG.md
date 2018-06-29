@@ -1,5 +1,10 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.12.0
+
+- Fixed bug where using the ES5 version with ES6-based model classes would not work. [#213](https://github.com/tommikaikkonen/redux-orm/pull/213)
+    - Unfortunately this hotfix contains a performance degradation, so only upgrade if you suffer from the above issue. We are working on an alternative solution.
+
 ### 0.11.0
 
 - Potential breaking changes to model API:
