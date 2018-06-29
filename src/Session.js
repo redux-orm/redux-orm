@@ -27,13 +27,18 @@ const Session = class Session {
         this.models = schema.getModelClasses();
 
         this.sessionBoundModels = this.models.map((modelClass) => {
-            const sessionBoundModel = class SessionBoundModel extends modelClass {};
+            function SessionBoundModel() {
+                return Reflect.construct(modelClass, arguments, SessionBoundModel); // eslint-disable-line prefer-rest-params
+            }
+            Reflect.setPrototypeOf(SessionBoundModel.prototype, modelClass.prototype);
+            Reflect.setPrototypeOf(SessionBoundModel, modelClass);
+
             Object.defineProperty(this, modelClass.modelName, {
-                get: () => sessionBoundModel,
+                get: () => SessionBoundModel,
             });
 
-            sessionBoundModel.connect(this);
-            return sessionBoundModel;
+            SessionBoundModel.connect(this);
+            return SessionBoundModel;
         });
     }
 
