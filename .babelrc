@@ -5,6 +5,7 @@
     ],
     "plugins": [
         "transform-runtime",
+        "transform-es2015-destructuring",
         ["transform-es2015-classes", {
             "loose": true
         }]
