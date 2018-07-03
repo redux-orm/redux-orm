@@ -27,103 +27,138 @@ import {
  */
 
 /**
+ * Installs a field on a model and its related models if necessary.
  * @private
- */
-function getToModel(field, model, orm) {
-    const { toModelName } = field;
-    if (!toModelName) return null;
-
-    if (toModelName === 'this') return model;
-    return orm.get(toModelName);
-}
-
-/**
- * @private
- */
-function getThroughModel(field, fieldName, model, orm) {
-    const throughModelName = field.getThroughModelName(fieldName, model);
-    if (!throughModelName) return null;
-
-    return orm.get(throughModelName);
-}
-
-/**
- * Installs a backwards field on a model as a consequence
- * of having installed the forwards field on another model.
- */
-export function installBackwardsField(field, fieldName, model, orm) {
-    const toModel = getToModel(field, model, orm);
-    const throughModel = getThroughModel(field, fieldName, model, orm);
-
-    const backwardsFieldName = field.getBackwardsFieldName(model);
-
-    const backwardsDescriptor = Object.getOwnPropertyDescriptor(
-        toModel.prototype,
-        backwardsFieldName
-    );
-    if (backwardsDescriptor) {
-        throw new Error(reverseFieldErrorMessage(
-            model.modelName,
-            fieldName,
-            toModel.modelName,
-            backwardsFieldName
-        ));
-    }
-
-    // install backwards descriptor
-    Object.defineProperty(
-        toModel.prototype,
-        backwardsFieldName,
-        field.createBackwardsDescriptor(
-            fieldName,
-            model,
-            toModel,
-            throughModel
-        )
-    );
-
-    // install backwards virtual field
-    toModel.virtualFields[backwardsFieldName] = field.createBackwardsVirtualField(
-        fieldName,
-        model,
-        toModel,
-        throughModel
-    );
-}
-
-/**
- * Executes strategy to install a field on a model.
  */
 export function installField(field, fieldName, model, orm) {
-    const toModel = getToModel(field, model, orm);
-    const throughModel = getThroughModel(field, fieldName, model, orm);
+    const FieldInstaller = field.installerClass;
+    (new FieldInstaller({
+        field,
+        fieldName,
+        model,
+        orm,
+    })).run();
+}
 
-    // install forwards descriptor
-    if (field.installsForwardsDescriptor) {
+/**
+ * @private
+ */
+class FieldInstallerTemplate {
+    constructor(opts) {
+        this.field = opts.field;
+        this.fieldName = opts.fieldName;
+        this.model = opts.model;
+        this.orm = opts.orm;
+    }
+
+    get toModel() {
+        if (typeof this._toModel === 'undefined') {
+            const { toModelName } = this.field;
+            if (!toModelName) {
+                this._toModel = null;
+            } else if (toModelName === 'this') {
+                this._toModel = this.model;
+            } else {
+                this._toModel = this.orm.get(toModelName);
+            }
+        }
+        return this._toModel;
+    }
+
+    get throughModel() {
+        if (typeof this._throughModel === 'undefined') {
+            const throughModelName = this.field.getThroughModelName(
+                this.fieldName,
+                this.model
+            );
+            if (!throughModelName) {
+                this._throughModel = null;
+            } else {
+                this._throughModel = this.orm.get(throughModelName);
+            }
+        }
+        return this._throughModel;
+    }
+
+    get backwardsFieldName() {
+        return this.field.getBackwardsFieldName(this.model);
+    }
+
+    installForwardsDescriptor() {
+        if (!this.field.installsForwardsDescriptor) return;
+
         Object.defineProperty(
-            model.prototype,
-            fieldName,
-            field.createForwardsDescriptor(
-                fieldName,
-                model,
-                toModel,
-                throughModel
+            this.model.prototype,
+            this.fieldName,
+            this.field.createForwardsDescriptor(
+                this.fieldName,
+                this.model,
+                this.toModel,
+                this.throughModel
             )
         );
     }
 
-    // install forwards virtual field
-    if (field.installsForwardsVirtualField) {
-        model.virtualFields[fieldName] = field.createForwardsVirtualField(
-            fieldName,
-            model,
-            toModel,
-            throughModel
+    installForwardsVirtualField() {
+        if (!this.field.installsForwardsVirtualField) return;
+
+        this.model.virtualFields[this.fieldName] = this.field.createForwardsVirtualField(
+            this.fieldName,
+            this.model,
+            this.toModel,
+            this.throughModel
         );
     }
 
-    if (field.installsBackwardsField) {
-        installBackwardsField(field, fieldName, model, orm);
+    installBackwardsDescriptor() {
+        if (!this.field.installsBackwardsField) return;
+
+        const backwardsDescriptor = Object.getOwnPropertyDescriptor(
+            this.toModel.prototype,
+            this.backwardsFieldName
+        );
+        if (backwardsDescriptor) {
+            throw new Error(reverseFieldErrorMessage(
+                this.model.modelName,
+                this.fieldName,
+                this.toModel.modelName,
+                this.backwardsFieldName
+            ));
+        }
+
+        // install backwards descriptor
+        Object.defineProperty(
+            this.toModel.prototype,
+            this.backwardsFieldName,
+            this.field.createBackwardsDescriptor(
+                this.fieldName,
+                this.model,
+                this.toModel,
+                this.throughModel
+            )
+        );
+    }
+
+    installBackwardsVirtualField() {
+        if (!this.field.installsBackwardsField) return;
+
+        this.toModel.virtualFields[this.backwardsFieldName] = this.field.createBackwardsVirtualField(
+            this.fieldName,
+            this.model,
+            this.toModel,
+            this.throughModel
+        );
+    }
+
+    run() {
+        this.installForwardsDescriptor();
+        this.installForwardsVirtualField();
+        /**
+         * Install a backwards field on a model as a consequence
+         * of having installed the forwards field on another model.
+         */
+        this.installBackwardsDescriptor();
+        this.installBackwardsVirtualField();
     }
 }
 
@@ -131,6 +166,10 @@ export function installField(field, fieldName, model, orm) {
  * @ignore
  */
 class Field {
+    get installerClass() {
+        return FieldInstallerTemplate;
+    }
+
     getClass() {
         return this.constructor;
     }
