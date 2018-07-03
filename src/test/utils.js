@@ -100,6 +100,9 @@ const PUBLISHERS_INITIAL = [
     {
         name: 'Autobiographies Inc',
     },
+    {
+        name: 'Paramount Pictures',
+    },
 ];
 
 const MOVIES_INITIAL = [
@@ -109,6 +112,7 @@ const MOVIES_INITIAL = [
         hasPremiered: true,
         rating: 9.2,
         meta: {},
+        publisherId: 2,
     },
 ];
 
@@ -127,7 +131,6 @@ export function createTestModels() {
             };
         }
     };
-
     Book.modelName = 'Book';
 
     const Author = class AuthorModel extends Model {
@@ -184,6 +187,11 @@ export function createTestModels() {
         hasPremiered: attr(),
         characters: attr(),
         meta: attr(),
+        publisherId: fk({
+            to: 'Publisher',
+            as: 'publisher',
+            relatedName: 'movie',
+        }),
     };
 
     return {

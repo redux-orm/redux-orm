@@ -84,9 +84,28 @@ class FieldInstallerTemplate {
         return this.field.getBackwardsFieldName(this.model);
     }
 
-    installForwardsDescriptor() {
-        if (!this.field.installsForwardsDescriptor) return;
+    run() {
+        if (this.field.installsForwardsDescriptor) {
+            this.installForwardsDescriptor();
+        }
+        if (this.field.installsForwardsVirtualField) {
+            this.installForwardsVirtualField();
+        }
+        /**
+         * Install a backwards field on a model as a consequence
+         * of having installed the forwards field on another model.
+         */
+        if (this.field.installsBackwardsDescriptor) {
+            this.installBackwardsDescriptor();
+        }
+        if (this.field.installsBackwardsVirtualField) {
+            this.installBackwardsVirtualField();
+        }
+    }
+}
 
+class DefaultFieldInstaller extends FieldInstallerTemplate {
+    installForwardsDescriptor() {
         Object.defineProperty(
             this.model.prototype,
             this.fieldName,
@@ -100,8 +119,6 @@ class FieldInstallerTemplate {
     }
 
     installForwardsVirtualField() {
-        if (!this.field.installsForwardsVirtualField) return;
-
         this.model.virtualFields[this.fieldName] = this.field.createForwardsVirtualField(
             this.fieldName,
             this.model,
@@ -111,8 +128,6 @@ class FieldInstallerTemplate {
     }
 
     installBackwardsDescriptor() {
-        if (!this.field.installsBackwardsField) return;
-
         const backwardsDescriptor = Object.getOwnPropertyDescriptor(
             this.toModel.prototype,
             this.backwardsFieldName
@@ -140,25 +155,12 @@ class FieldInstallerTemplate {
     }
 
     installBackwardsVirtualField() {
-        if (!this.field.installsBackwardsField) return;
-
         this.toModel.virtualFields[this.backwardsFieldName] = this.field.createBackwardsVirtualField(
             this.fieldName,
             this.model,
             this.toModel,
             this.throughModel
         );
-    }
-
-    run() {
-        this.installForwardsDescriptor();
-        this.installForwardsVirtualField();
-        /**
-         * Install a backwards field on a model as a consequence
-         * of having installed the forwards field on another model.
-         */
-        this.installBackwardsDescriptor();
-        this.installBackwardsVirtualField();
     }
 }
 
@@ -167,7 +169,7 @@ class FieldInstallerTemplate {
  */
 class Field {
     get installerClass() {
-        return FieldInstallerTemplate;
+        return DefaultFieldInstaller;
     }
 
     getClass() {
@@ -190,7 +192,11 @@ class Field {
         return false;
     }
 
-    get installsBackwardsField() {
+    get installsBackwardsDescriptor() {
+        return false;
+    }
+
+    get installsBackwardsVirtualField() {
         return false;
     }
 }
@@ -225,6 +231,7 @@ class RelationalField extends Field {
             this.relatedName = opts.relatedName;
             this.through = opts.through;
             this.throughFields = opts.throughFields;
+            this.as = opts.as;
         } else {
             [this.toModelName, this.relatedName] = args;
         }
@@ -267,6 +274,23 @@ class RelationalField extends Field {
  * @ignore
  */
 export class ForeignKey extends RelationalField {
+    get installerClass() {
+        return class ForeignKeyInstaller extends DefaultFieldInstaller {
+            installForwardsDescriptor() {
+                Object.defineProperty(
+                    this.model.prototype,
+                    this.field.as || this.fieldName, // use supplied name if possible
+                    this.field.createForwardsDescriptor(
+                        this.fieldName,
+                        this.model,
+                        this.toModel,
+                        this.throughModel
+                    )
+                );
+            }
+        };
+    }
+
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
         return forwardsManyToOneDescriptor(fieldName, toModel.modelName);
     }
@@ -275,7 +299,11 @@ export class ForeignKey extends RelationalField {
         return backwardsManyToOneDescriptor(fieldName, model.modelName);
     }
 
-    get installsBackwardsField() {
+    get installsBackwardsVirtualField() {
+        return true;
+    }
+
+    get installsBackwardsDescriptor() {
         return true;
     }
 
@@ -340,7 +368,11 @@ export class ManyToMany extends RelationalField {
         return true;
     }
 
-    get installsBackwardsField() {
+    get installsBackwardsDescriptor() {
+        return true;
+    }
+
+    get installsBackwardsVirtualField() {
         return true;
     }
 }
@@ -361,7 +393,11 @@ export class OneToOne extends RelationalField {
         return backwardsOneToOneDescriptor(fieldName, model.modelName);
     }
 
-    get installsBackwardsField() {
+    get installsBackwardsDescriptor() {
+        return true;
+    }
+
+    get installsBackwardsVirtualField() {
         return true;
     }
 }

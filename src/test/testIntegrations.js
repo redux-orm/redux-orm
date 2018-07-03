@@ -56,8 +56,8 @@ describe('Integration', () => {
             expect(state.Author.items).toHaveLength(3);
             expect(Object.keys(state.Author.itemsById)).toHaveLength(3);
 
-            expect(state.Publisher.items).toHaveLength(2);
-            expect(Object.keys(state.Publisher.itemsById)).toHaveLength(2);
+            expect(state.Publisher.items).toHaveLength(3);
+            expect(Object.keys(state.Publisher.itemsById)).toHaveLength(3);
 
             expect(state.Movie.items).toHaveLength(1);
             expect(Object.keys(state.Movie.itemsById)).toHaveLength(1);
@@ -511,6 +511,8 @@ describe('Integration', () => {
             const {
                 Book,
                 Author,
+                Movie,
+                Publisher,
             } = session;
 
             // Forward
@@ -526,6 +528,12 @@ describe('Integration', () => {
             relatedBooks._evaluate();
             expect(relatedBooks.rows).toContain(book.ref);
             expect(relatedBooks.modelClass).toBe(Book);
+
+            // Forward with 'as' option
+            const movie = Movie.first();
+            const { publisher, publisherId } = movie;
+            expect(publisher).toBeInstanceOf(Publisher);
+            expect(publisher.getId()).toBe(publisherId);
         });
 
         it('non-existing foreign key relationship descriptors return null', () => {
