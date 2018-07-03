@@ -268,6 +268,14 @@ class RelationalField extends Field {
         const ThisField = this.getClass();
         return new ThisField(model.modelName, fieldName);
     }
+
+    get installsBackwardsVirtualField() {
+        return true;
+    }
+
+    get installsBackwardsDescriptor() {
+        return true;
+    }
 }
 
 /**
@@ -297,14 +305,6 @@ export class ForeignKey extends RelationalField {
 
     createBackwardsDescriptor(fieldName, model, toModel, throughModel) {
         return backwardsManyToOneDescriptor(fieldName, model.modelName);
-    }
-
-    get installsBackwardsVirtualField() {
-        return true;
-    }
-
-    get installsBackwardsDescriptor() {
-        return true;
     }
 
     isForeignKeyTo(model) {
@@ -367,14 +367,6 @@ export class ManyToMany extends RelationalField {
     get installsForwardsVirtualField() {
         return true;
     }
-
-    get installsBackwardsDescriptor() {
-        return true;
-    }
-
-    get installsBackwardsVirtualField() {
-        return true;
-    }
 }
 
 /**
@@ -391,14 +383,6 @@ export class OneToOne extends RelationalField {
 
     createBackwardsDescriptor(fieldName, model, toModel, throughModel) {
         return backwardsOneToOneDescriptor(fieldName, model.modelName);
-    }
-
-    get installsBackwardsDescriptor() {
-        return true;
-    }
-
-    get installsBackwardsVirtualField() {
-        return true;
     }
 }
 
