@@ -41,6 +41,8 @@ export function installField(field, fieldName, model, orm) {
 }
 
 /**
+ * Defines algorithm for installing a field onto a model and related models.
+ * Conforms to the template method behavioral design pattern.
  * @private
  */
 class FieldInstallerTemplate {
@@ -104,6 +106,10 @@ class FieldInstallerTemplate {
     }
 }
 
+/**
+ * Default implementation for the template method in FieldInstallerTemplate.
+ * @private
+ */
 class DefaultFieldInstaller extends FieldInstallerTemplate {
     installForwardsDescriptor() {
         Object.defineProperty(
