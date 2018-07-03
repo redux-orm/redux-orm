@@ -554,6 +554,8 @@ describe('Integration', () => {
             const {
                 Book,
                 Author,
+                Movie,
+                Publisher,
             } = session;
 
             const book = Book.first();
@@ -563,6 +565,15 @@ describe('Integration', () => {
 
             expect(book.author).toEqual(newAuthor);
             expect(book.author.ref).toBe(newAuthor.ref);
+
+            // with 'as' option
+            const movie = Movie.first();
+            const newPublisher = Publisher.withId(0);
+            movie.publisher = newPublisher;
+
+            expect(movie.publisherId).toEqual(0);
+            expect(movie.publisher).toEqual(newPublisher);
+            expect(movie.publisher.ref).toBe(newPublisher.ref);
         });
 
         it('trying to set backwards foreign key (reverse many-to-one) field throws', () => {
