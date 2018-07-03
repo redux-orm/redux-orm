@@ -120,6 +120,21 @@ describe('Deprecations', () => {
             expect(consoleWarn.timesRun).toBe(2);
             expect(consoleWarn.lastMessage).toBe('Model.hasId has been deprecated. Please use Model.idExists instead.');
         });
+
+        it('Model.backend is deprecated', () => {
+            expect(consoleWarn.timesRun).toBe(0);
+            const { Book } = session;
+
+            Book.backend = () => 'retval';
+            expect(Book._getTableOpts()).toEqual('retval');
+            expect(consoleWarn.timesRun).toBe(1);
+            expect(consoleWarn.lastMessage).toBe('Model.backend is deprecated. Please rename to .options');
+
+            Book.backend = 'retval';
+            expect(Book._getTableOpts()).toEqual('retval');
+            expect(consoleWarn.timesRun).toBe(2);
+            expect(consoleWarn.lastMessage).toBe('Model.backend is deprecated. Please rename to .options');
+        });
     });
 
     describe('Without session', () => {

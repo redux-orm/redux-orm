@@ -1,4 +1,4 @@
-import { ORM, Model as BaseModel, attr } from '../';
+import { ORM, Model as BaseModel, QuerySet, attr } from '../';
 
 describe('Model', () => {
     describe('static method', () => {
@@ -33,10 +33,52 @@ describe('Model', () => {
             expect(Model.session).toBe(sessionMock);
         });
 
-        it('connect works correctly', () => {
+        it('connect defines session statically on Model', () => {
             expect(Model.session).toBeUndefined();
             Model.connect(sessionMock);
             expect(Model.session).toBe(sessionMock);
+        });
+
+        it('connect throws if not passing a session', () => {
+            expect(Model.session).toBeUndefined();
+            [1, '', [], {}].forEach((value) => (
+                expect(() => {
+                    Model.connect(value);
+                }).toThrowError('A model can only connect to instances of Session.')
+            ));
+        });
+
+        it('toString works correctly', () => {
+            expect(Model.toString()).toBe('ModelClass: Model');
+        });
+
+        it('query returns QuerySet', () => {
+            expect(Model.query).toBeInstanceOf(QuerySet);
+        });
+
+        it('getQuerySet returns QuerySet', () => {
+            expect(Model.getQuerySet()).toBeInstanceOf(QuerySet);
+        });
+
+        it('all returns QuerySet', () => {
+            expect(Model.all()).toBeInstanceOf(QuerySet);
+        });
+
+        it('markAccessed correctly proxies to Session', () => {
+            Model.connect(sessionMock);
+            Model.markAccessed([1, 3]);
+            expect(sessionMock.accessedModelInstances).toEqual({
+                Model: {
+                    1: true,
+                    3: true,
+                }
+            });
+        });
+
+        it('markFullTableScanned correctly proxies to Session', () => {
+            Model.connect(sessionMock);
+            Model.markFullTableScanned();
+            expect(sessionMock.fullTableScannedModels).toEqual(['Model']);
         });
     });
 
@@ -106,6 +148,16 @@ describe('Model', () => {
             const instance1 = new Model({ id: 0, object: {} });
             const instance2 = new Model({ id: 0, object: {} });
             expect(instance1.equals(instance2)).toBeFalsy();
+        });
+
+        it('constructing with random attributes assigns these attributes', () => {
+            const randomNumber = Math.random();
+            const model = new Model({
+                randomNumber,
+                someString: 'some string',
+            });
+            expect(model.randomNumber).toBe(randomNumber);
+            expect(model.someString).toBe('some string');
         });
     });
 });

@@ -147,6 +147,14 @@ describe('Integration', () => {
             })).toThrowError('Expected to find a single row in Model.get. Found 2.');
         });
 
+        it('updating arbitrary fields created during model construction works', () => {
+            const { Book } = session;
+            const book = new Book({ someNumber: 123 });
+            expect(book.someNumber).toBe(123);
+            book.someNumber = 321;
+            expect(book.someNumber).toBe(321);
+        });
+
         it('Models correctly create a new instance via upsert', () => {
             const { Book } = session;
             const book = Book.upsert({

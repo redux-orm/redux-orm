@@ -155,7 +155,7 @@ const Model = class Model {
      */
     static connect(session) {
         if (!(session instanceof Session)) {
-            throw Error('A model can only connect to a Session instance.');
+            throw Error('A model can only connect to instances of Session.');
         }
         this._session = session;
     }
