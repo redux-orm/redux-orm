@@ -1,5 +1,5 @@
-import { ORM, Session, Model, oneToOne, fk, many } from '../';
-import { createTestModels } from './utils';
+import { ORM, Session, Model, oneToOne, fk, many } from '../../';
+import { createTestModels } from '../helpers';
 
 describe('ORM', () => {
     it('constructor works', () => {

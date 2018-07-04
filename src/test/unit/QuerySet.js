@@ -1,5 +1,5 @@
-import { Model, ORM, QuerySet } from '../';
-import { createTestModels, createTestSessionWithData } from './utils';
+import { Model, ORM, QuerySet } from '../../';
+import { createTestModels, createTestSessionWithData } from '../helpers';
 
 describe('QuerySet tests', () => {
     let session;

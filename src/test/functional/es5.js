@@ -1,4 +1,4 @@
-const { Model, ORM } = require('../../lib'); // eslint-disable-line import/no-unresolved
+const { Model, ORM } = require('../../../lib'); // eslint-disable-line import/no-unresolved
 
 describe('ES5 library code', () => {
     describe('With ES6 client code', () => {

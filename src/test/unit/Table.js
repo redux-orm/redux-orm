@@ -1,7 +1,7 @@
 import deepFreeze from 'deep-freeze';
-import Table from '../db/Table';
-import { getBatchToken } from '../utils';
-import { FILTER, EXCLUDE, ORDER_BY } from '../constants';
+import Table from '../../db/Table';
+import { getBatchToken } from '../../utils';
+import { FILTER, EXCLUDE, ORDER_BY } from '../../constants';
 
 describe('Table', () => {
     describe('prototype methods', () => {

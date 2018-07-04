@@ -1,5 +1,5 @@
-import { Model, QuerySet, ORM, Backend, Schema, createSelector, createReducer } from '../';
-import { createTestSessionWithData, createTestORM } from './utils';
+import { Model, QuerySet, ORM, Backend, Schema, createSelector, createReducer } from '../../';
+import { createTestSessionWithData, createTestORM } from '../helpers';
 
 describe('Deprecations', () => {
     let session;
