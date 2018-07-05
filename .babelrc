@@ -1,6 +1,8 @@
 {
     "presets": [
-        "env",
+        ["env", {
+            "modules": false
+        }],
         "stage-2"
     ],
     "plugins": [
@@ -8,5 +10,11 @@
         ["transform-es2015-classes", {
             "loose": true
         }]
-    ]
+    ],
+    // https://github.com/facebook/jest/issues/3845
+    "env": {
+        "test": {
+            "plugins": ["transform-es2015-modules-commonjs"]
+        }
+    }
 }
