@@ -16,7 +16,7 @@
     "build:umd:min": "webpack --config webpack.prod.js",
     "build:docs": "jsdoc src -d docs -c ./jsdoc.conf.json --verbose",
     "build": "npm run clean && npm run transpile:es5 && npm run transpile:es && npm run build:umd && npm run build:umd:min && npm run build:docs",
-    "pub": "npm run lint && npm run test && npm run build && npm version patch && npm publish && git push origin && gulp deploy && npm run clean",
+    "pub": "npm run lint && npm run test && npm run build && npm run test:es5 && npm version patch && npm publish && git push origin && gulp deploy && npm run clean",
     "lint": "eslint src",
     "deploydocs": "npm run build && gulp deploy",
     "clean": "rimraf lib dist docs"

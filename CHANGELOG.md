@@ -1,5 +1,26 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.12.1
+
+* Our exported ES module in `es/` (`pkg.module`) is now ES5 compatible. ([#216](https://github.com/tommikaikkonen/redux-orm/issues/216), [#221](https://github.com/tommikaikkonen/redux-orm/issues/221))
+* You can supply an `as` option to foreign key fields (`fk()`) to have Redux-ORM create a separate field for their accessors so as to not override foreign key references ([#219](https://github.com/tommikaikkonen/redux-orm/pull/219)):
+```javascript
+class Movie extends Model {};
+Movie.fields = {
+    publisherId: fk({
+        to: 'Publisher',
+        as: 'publisher',
+        relatedName: 'movies',
+    }),
+};
+
+Publisher.create({ id: 123 });
+const movie = Movie.create({ publisherId: 123 });
+
+movie.publisherId // 123
+movie.publisher.id === movie.publisherId // true
+```
+
 ### 0.12.0
 
 - Fixed bug where using the ES5 version with ES6-based model classes would not work. [#213](https://github.com/tommikaikkonen/redux-orm/pull/213)
