@@ -1,20 +1,29 @@
 {
     "presets": [
-        ["env", {
-            "modules": false
-        }],
-        "stage-2"
+        "stage-2",
     ],
     "plugins": [
         "transform-runtime",
         ["transform-es2015-classes", {
-            "loose": true
+            "loose": true,
         }]
     ],
-    // https://github.com/facebook/jest/issues/3845
     "env": {
+        "es": {
+            "presets": [
+                ["env", {
+                    "modules": false,
+                }],
+            ],
+        },
+        "cjs": {
+            "presets": [
+                "env",
+            ],
+        },
+        // https://github.com/facebook/jest/issues/3845
         "test": {
-            "plugins": ["transform-es2015-modules-commonjs"]
-        }
+            "plugins": ["transform-es2015-modules-commonjs"],
+        },
     }
 }
