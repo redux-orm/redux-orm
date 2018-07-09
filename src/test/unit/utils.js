@@ -1,4 +1,4 @@
-import { arrayDiffActions } from '../utils';
+import { arrayDiffActions } from '../../utils';
 
 describe('Utils', () => {
     describe('arrayDiffActions', () => {

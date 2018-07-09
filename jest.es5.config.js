@@ -4,6 +4,6 @@ module.exports = {
         'js',
         'json',
     ],
-    testRegex: 'src/test/es5(.*)\\.(js)',
+    testRegex: 'src/test/functional/es5\\.(js)',
     transform: {},
 };

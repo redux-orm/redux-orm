@@ -1,4 +1,4 @@
-import { ORM, Model as BaseModel, QuerySet, attr } from '../';
+import { ORM, Model as BaseModel, QuerySet, attr } from '../../';
 
 describe('Model', () => {
     describe('static method', () => {

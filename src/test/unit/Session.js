@@ -1,6 +1,6 @@
-import { ORM } from '../';
-import { createTestModels, isSubclass } from './utils';
-import { CREATE } from '../constants';
+import { ORM } from '../../';
+import { createTestModels, isSubclass } from '../helpers';
+import { CREATE } from '../../constants';
 
 describe('Session', () => {
     let orm;

@@ -1,5 +1,5 @@
-import { Model, ORM, attr, many } from '../';
-import { createTestSessionWithData, measureMs } from './utils';
+import { Model, ORM, attr, many } from '../../';
+import { createTestSessionWithData, measureMs } from '../helpers';
 
 describe('Big Data Test', () => {
     let orm;
