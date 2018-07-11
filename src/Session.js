@@ -49,7 +49,7 @@ const Session = class Session {
         return this.modelData[modelName];
     }
 
-    markAccessed(modelName, modelIds = []) {
+    markAccessed(modelName, modelIds) {
         const data = this.getDataForModel(modelName);
         if (!data.accessedInstances) {
             data.accessedInstances = {};
@@ -95,7 +95,7 @@ const Session = class Session {
         const { status, state, payload } = result;
 
         if (status !== SUCCESS) {
-            throw new Error(`Applying update failed: ${result.toString()}`);
+            throw new Error(`Applying update failed with status ${status}. Payload: ${payload}`);
         }
 
         this.state = state;

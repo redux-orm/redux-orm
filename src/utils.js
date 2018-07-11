@@ -5,16 +5,16 @@ import intersection from 'lodash/intersection';
 import difference from 'lodash/difference';
 import { FILTER, EXCLUDE } from './constants';
 
+/**
+ * @module utils
+ */
+
 function warnDeprecated(msg) {
     const logger = typeof console.warn === 'function'
         ? console.warn.bind(console)
         : console.log.bind(console);
     return logger(msg);
 }
-
-/**
- * @module utils
- */
 
 function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);

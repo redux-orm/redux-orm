@@ -33,7 +33,7 @@ describe('Session', () => {
         expect(Cover.session).toBeUndefined();
         expect(Publisher.session).toBeUndefined();
 
-        const session = orm.session(emptyState);
+        const session = orm.session();
 
         expect(session.Book.session).toBe(session);
         expect(session.Cover.session).toBe(session);
@@ -44,7 +44,7 @@ describe('Session', () => {
     });
 
     it('exposes models as getter properties', () => {
-        const session = orm.session(emptyState);
+        const session = orm.session();
         expect(isSubclass(session.Book, Book)).toBe(true);
         expect(isSubclass(session.Author, Author)).toBe(true);
         expect(isSubclass(session.Cover, Cover)).toBe(true);
@@ -54,7 +54,7 @@ describe('Session', () => {
     });
 
     it('marks models when full table scan has been performed', () => {
-        const session = orm.session(emptyState);
+        const session = orm.session();
         expect(session.fullTableScannedModels).toHaveLength(0);
 
         session.markFullTableScanned(Book.modelName);
@@ -67,7 +67,7 @@ describe('Session', () => {
     });
 
     it('marks accessed model instances', () => {
-        const session = orm.session(emptyState);
+        const session = orm.session();
         expect(session.accessedModelInstances).toEqual({});
 
         session.markAccessed(Book.modelName, [0]);
@@ -87,10 +87,26 @@ describe('Session', () => {
         });
     });
 
+    it('throws when failing to apply updates', () => {
+        const session = orm.session();
+        session.db = {
+            update() {
+                return {
+                    payload: 123,
+                    status: 'failed',
+                    state: {},
+                };
+            }
+        };
+        expect(
+            () => session.applyUpdate({})
+        ).toThrowError('Applying update failed with status failed. Payload: 123');
+    });
+
     describe('gets the next state', () => {
         it('without any updates, the same state is returned', () => {
-            const session = orm.session(emptyState);
-            expect(session.state).toBe(emptyState);
+            const session = orm.session();
+            expect(session.state).toEqual(emptyState);
         });
 
         it('with updates, a new state is returned', () => {
@@ -118,21 +134,5 @@ describe('Session', () => {
             expect(nextState[Tag.modelName]).toBe(emptyState[Tag.modelName]);
             expect(nextState[Publisher.modelName]).toBe(emptyState[Publisher.modelName]);
         });
-    });
-
-    it('two concurrent sessions', () => {
-        const otherState = orm.getEmptyState();
-
-        const firstSession = orm.session(emptyState);
-        const secondSession = orm.session(otherState);
-
-        expect(firstSession.sessionBoundModels).toHaveLength(8);
-
-        expect(firstSession.Book).not.toBe(secondSession.Book);
-        expect(firstSession.Author).not.toBe(secondSession.Author);
-        expect(firstSession.Genre).not.toBe(secondSession.Genre);
-        expect(firstSession.Tag).not.toBe(secondSession.Tag);
-        expect(firstSession.Cover).not.toBe(secondSession.Cover);
-        expect(firstSession.Publisher).not.toBe(secondSession.Publisher);
     });
 });

@@ -100,6 +100,12 @@ describe('ORM', () => {
             expect(orm.get('Book')).toBe(Book);
         });
 
+        it('throws when trying to get inexistant model from registry', () => {
+            expect(() => orm.get('InexistantModel')).toThrowError(
+                'Did not find model InexistantModel from registry.'
+            );
+        });
+
         it('correctly sets model prototypes', () => {
             orm.register(Book, Author, Cover, Genre, Tag, Publisher);
             expect(Book.isSetUp).toBeFalsy();

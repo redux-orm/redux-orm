@@ -109,6 +109,22 @@ describe('Immutable session', () => {
         expect(session.Book.idExists(0)).toBe(false);
     });
 
+    it('Models with backwards virtual (1-to-n) key fields are correctly deleted', () => {
+        const { Author } = session;
+        expect(Author.count()).toBe(3);
+        Author.withId(0).delete();
+        expect(session.Author.count()).toBe(2);
+        expect(session.Author.idExists(0)).toBe(false);
+    });
+
+    it('Models with backwards virtual 1-to-1 key fields are correctly deleted', () => {
+        const { Cover } = session;
+        expect(Cover.count()).toBe(3);
+        Cover.withId(0).delete();
+        expect(session.Cover.count()).toBe(2);
+        expect(session.Cover.idExists(0)).toBe(false);
+    });
+
     it('Models correctly update when setting properties', () => {
         const { Book } = session;
         const book = Book.first();
@@ -154,7 +170,7 @@ describe('Immutable session', () => {
         expect(book.someNumber).toBe(321);
     });
 
-    it('Models correctly create a new instance via upsert', () => {
+    it('Models correctly create a new instance via upsert when not passing an ID', () => {
         const { Book } = session;
         const book = Book.upsert({
             name: 'New Book',
@@ -167,9 +183,23 @@ describe('Immutable session', () => {
         expect(book).toBeInstanceOf(Book);
     });
 
-    it('Models correctly update existing instance via upsert', () => {
+    it('Models correctly create a new instance via upsert when passing a non-existant ID', () => {
         const { Book } = session;
         const book = Book.upsert({
+            [Book.idAttribute]: 123123132,
+            name: 'New Book',
+            author: 0,
+            releaseYear: 2015,
+            publisher: 0,
+        });
+        expect(session.Book.count()).toBe(4);
+        expect(session.Book.last().ref).toBe(book.ref);
+        expect(book).toBeInstanceOf(Book);
+    });
+
+    it('Models correctly update existing instance via upsert', () => {
+        const { Book } = session;
+        const book = Book.create({
             name: 'New Book',
             author: 0,
             releaseYear: 2015,
@@ -179,15 +209,16 @@ describe('Immutable session', () => {
         expect(session.Book.last().ref).toBe(book.ref);
         expect(session.Book.last().releaseYear).toBe(2015);
 
+        const { ref: storedRef } = book;
         const nextBook = Book.upsert({
             [Book.idAttribute]: book.getId(),
             releaseYear: 2016,
         });
 
         expect(session.Book.count()).toBe(4);
-        expect(session.Book.last().ref).toBe(book.ref);
         expect(session.Book.last().ref).toBe(nextBook.ref);
         expect(session.Book.last().releaseYear).toBe(2016);
+        expect(session.Book.last().ref).not.toBe(storedRef);
         expect(book.ref).toBe(nextBook.ref);
         expect(nextBook).toBeInstanceOf(Book);
     });

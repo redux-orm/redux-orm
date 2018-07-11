@@ -135,6 +135,20 @@ describe('Deprecations', () => {
             expect(consoleWarn.timesRun).toBe(2);
             expect(consoleWarn.lastMessage).toBe('Model.backend is deprecated. Please rename to .options');
         });
+
+        it('Session#getNextState is deprecated', () => {
+            expect(consoleWarn.timesRun).toBe(0);
+
+            expect(session.getNextState()).toEqual(session.state);
+            expect(consoleWarn.timesRun).toBe(1);
+            expect(consoleWarn.lastMessage).toBe('Session.prototype.getNextState function is deprecated. Access the Session.prototype.state property instead.');
+        });
+
+        it('Session#reduce is deprecated', () => {
+            expect(() => session.reduce()).toThrowError(
+                'Session.prototype.reduce is removed. The Redux integration API is now decoupled from ORM and Session - see the 0.9 migration guide in the GitHub repo.'
+            );
+        });
     });
 
     describe('Without session', () => {

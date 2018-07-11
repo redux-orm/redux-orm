@@ -134,6 +134,9 @@ const Model = class Model {
         this.session.markAccessed(this.modelName, ids);
     }
 
+    /**
+     * @return {undefined}
+     */
     static markFullTableScanned() {
         this.session.markFullTableScanned(this.modelName);
     }
@@ -182,7 +185,7 @@ const Model = class Model {
     }
 
     /**
-     * @todo Document this method.
+     * @return {undefined}
      */
     static invalidateClassCache() {
         this.isSetUp = undefined;
