@@ -263,6 +263,15 @@ describe('ORM', () => {
             });
         });
 
+        it('immutably adapts schema spec to new model fields', () => {
+            orm.register(Book, Author, Cover, Genre, Tag, Publisher);
+            const coverFields = orm.generateSchemaSpec().tables.Cover.fields;
+            Cover.fields.tag = fk('Tag', 'covers');
+            expect(
+                orm.generateSchemaSpec().tables.Cover.fields
+            ).not.toEqual(coverFields);
+        });
+
         it('correctly starts a mutating session', () => {
             orm.register(Book, Author, Cover, Genre, Tag, Publisher);
             const initialState = orm.getEmptyState();
