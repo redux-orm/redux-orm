@@ -8,7 +8,6 @@ import {
     ForeignKey,
     ManyToMany,
     attr,
-    installField,
 } from './fields';
 
 import {
@@ -92,10 +91,18 @@ export class ORM {
 
                 Through.modelName = m2mName(thisModelName, fieldName);
 
+                const PlainForeignKey = class ThroughForeignKeyField extends ForeignKey {
+                    get installsBackwardsVirtualField() {
+                        return false;
+                    }
+                    get installsBackwardsDescriptor() {
+                        return false;
+                    }
+                };
                 Through.fields = {
                     id: attr(),
-                    [fromFieldName]: new ForeignKey(thisModelName),
-                    [toFieldName]: new ForeignKey(toModelName),
+                    [fromFieldName]: new PlainForeignKey(thisModelName),
+                    [toFieldName]: new PlainForeignKey(toModelName),
                 };
 
                 Through.invalidateClassCache();
@@ -126,40 +133,6 @@ export class ORM {
         this._setupModelPrototypes(this.registry);
         this._setupModelPrototypes(this.implicitThroughModels);
         return this.registry.concat(this.implicitThroughModels);
-    }
-
-    _attachQuerySetMethods(model) {
-        const { querySetClass } = model;
-        attachQuerySetMethods(model, querySetClass);
-    }
-
-    isFieldInstalled(modelName, fieldName) {
-        return this.installedFields.hasOwnProperty(modelName)
-            ? !!this.installedFields[modelName][fieldName]
-            : false;
-    }
-
-    setFieldInstalled(modelName, fieldName) {
-        if (!this.installedFields.hasOwnProperty(modelName)) {
-            this.installedFields[modelName] = {};
-        }
-        this.installedFields[modelName][fieldName] = true;
-    }
-
-    _setupModelPrototypes(models) {
-        models.forEach((model) => {
-            if (!model.isSetUp) {
-                const { fields } = model;
-                forOwn(fields, (fieldInstance, fieldName) => {
-                    if (!this.isFieldInstalled(model.modelName, fieldName)) {
-                        installField(fieldInstance, fieldName, model, this);
-                        this.setFieldInstalled(model.modelName, fieldName);
-                    }
-                });
-                this._attachQuerySetMethods(model);
-                model.isSetUp = true;
-            }
-        });
     }
 
     generateSchemaSpec() {
@@ -206,6 +179,58 @@ export class ORM {
      */
     mutableSession(state) {
         return new Session(this, this.getDatabase(), state, true);
+    }
+
+    /**
+     * @private
+     */
+    _setupModelPrototypes(models) {
+        models.forEach((model) => {
+            if (!model.isSetUp) {
+                const { fields, modelName, querySetClass } = model;
+                forOwn(fields, (field, fieldName) => {
+                    if (!this._isFieldInstalled(modelName, fieldName)) {
+                        this._installField(field, fieldName, model);
+                        this._setFieldInstalled(modelName, fieldName);
+                    }
+                });
+                attachQuerySetMethods(model, querySetClass);
+                model.isSetUp = true;
+            }
+        });
+    }
+
+    /**
+     * @private
+     */
+    _isFieldInstalled(modelName, fieldName) {
+        return this.installedFields.hasOwnProperty(modelName)
+            ? !!this.installedFields[modelName][fieldName]
+            : false;
+    }
+
+    /**
+     * @private
+     */
+    _setFieldInstalled(modelName, fieldName) {
+        if (!this.installedFields.hasOwnProperty(modelName)) {
+            this.installedFields[modelName] = {};
+        }
+        this.installedFields[modelName][fieldName] = true;
+    }
+
+    /**
+     * Installs a field on a model and its related models if necessary.
+     * @private
+     */
+    _installField(field, fieldName, model) {
+        const FieldInstaller = field.installerClass;
+        (new FieldInstaller({
+            field,
+            fieldName,
+            model,
+            orm: this,
+        })).run();
     }
 
     // DEPRECATED AND REMOVED METHODS

@@ -27,20 +27,6 @@ import {
  */
 
 /**
- * Installs a field on a model and its related models if necessary.
- * @private
- */
-export function installField(field, fieldName, model, orm) {
-    const FieldInstaller = field.installerClass;
-    (new FieldInstaller({
-        field,
-        fieldName,
-        model,
-        orm,
-    })).run();
-}
-
-/**
  * Defines algorithm for installing a field onto a model and related models.
  * Conforms to the template method behavioral design pattern.
  * @private
@@ -51,6 +37,15 @@ class FieldInstallerTemplate {
         this.fieldName = opts.fieldName;
         this.model = opts.model;
         this.orm = opts.orm;
+        /**
+         * the field itself has no knowledge of the model
+         * it is being installed upon; we need to inform it
+         * that it is a self-referencing field for the field
+         * to be able to make better informed decisions
+         */
+        if (this.field.references(this.model)) {
+            this.field.toModelName = 'this';
+        }
     }
 
     get toModel() {
@@ -182,7 +177,7 @@ class Field {
         return this.constructor;
     }
 
-    isForeignKeyTo(model) {
+    references(model) {
         return false;
     }
 
@@ -247,29 +242,6 @@ class RelationalField extends Field {
         return this.relatedName || reverseFieldName(model.modelName);
     }
 
-    getThroughFields(fieldName, model, toModel, throughModel) {
-        if (this.throughFields) {
-            const [fieldAName, fieldBName] = this.throughFields;
-            const fieldA = throughModel.fields[fieldAName];
-            return {
-                to: fieldA.isForeignKeyTo(toModel) ? fieldAName : fieldBName,
-                from: fieldA.isForeignKeyTo(toModel) ? fieldBName : fieldAName,
-            };
-        }
-        const toFieldName = findKey(
-            throughModel.fields,
-            field => field.isForeignKeyTo(toModel)
-        );
-        const fromFieldName = findKey(
-            throughModel.fields,
-            field => field.isForeignKeyTo(model)
-        );
-        return {
-            to: toFieldName,
-            from: fromFieldName,
-        };
-    }
-
     createBackwardsVirtualField(fieldName, model, toModel, throughModel) {
         const ThisField = this.getClass();
         return new ThisField(model.modelName, fieldName);
@@ -282,14 +254,13 @@ class RelationalField extends Field {
     get installsBackwardsDescriptor() {
         return true;
     }
-}
 
-/**
- * @ignore
- */
-export class ForeignKey extends RelationalField {
+    references(model) {
+        return this.toModelName === model.modelName;
+    }
+
     get installerClass() {
-        return class ForeignKeyInstaller extends DefaultFieldInstaller {
+        return class AliasedForwardsDescriptorInstaller extends DefaultFieldInstaller {
             installForwardsDescriptor() {
                 Object.defineProperty(
                     this.model.prototype,
@@ -304,17 +275,18 @@ export class ForeignKey extends RelationalField {
             }
         };
     }
+}
 
+/**
+ * @ignore
+ */
+export class ForeignKey extends RelationalField {
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
         return forwardsManyToOneDescriptor(fieldName, toModel.modelName);
     }
 
     createBackwardsDescriptor(fieldName, model, toModel, throughModel) {
         return backwardsManyToOneDescriptor(fieldName, model.modelName);
-    }
-
-    isForeignKeyTo(model) {
-        return this.toModelName === model.modelName;
     }
 }
 
@@ -372,6 +344,37 @@ export class ManyToMany extends RelationalField {
 
     get installsForwardsVirtualField() {
         return true;
+    }
+
+    get installsBackwardsVirtualField() {
+        return this.toModelName !== 'this';
+    }
+
+    get installsBackwardsDescriptor() {
+        return this.toModelName !== 'this';
+    }
+
+    getThroughFields(fieldName, model, toModel, throughModel) {
+        if (this.throughFields) {
+            const [fieldAName, fieldBName] = this.throughFields;
+            const fieldA = throughModel.fields[fieldAName];
+            return {
+                to: fieldA.references(toModel) ? fieldAName : fieldBName,
+                from: fieldA.references(toModel) ? fieldBName : fieldAName,
+            };
+        }
+        const toFieldName = findKey(
+            throughModel.fields,
+            field => field.references(toModel)
+        );
+        const fromFieldName = findKey(
+            throughModel.fields,
+            field => field.references(model)
+        );
+        return {
+            to: toFieldName,
+            from: fromFieldName,
+        };
     }
 }
 
