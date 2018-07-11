@@ -112,24 +112,9 @@ const Model = class Model {
         return {};
     }
 
-    static _getTableOpts() {
-        if (typeof this.backend === 'function') {
-            warnDeprecated('Model.backend is deprecated. Please rename to .options');
-            return this.backend();
-        } else if (this.backend) {
-            warnDeprecated('Model.backend is deprecated. Please rename to .options');
-            return this.backend;
-        } else if (typeof this.options === 'function') {
-            return this.options();
-        }
-        return this.options;
-    }
-
-    static get _sessionData() {
-        if (!this.session) return {};
-        return this.session.getDataForModel(this.modelName);
-    }
-
+    /**
+     * @return {undefined}
+     */
     static markAccessed(ids) {
         this.session.markAccessed(this.modelName, ids);
     }
@@ -200,70 +185,19 @@ const Model = class Model {
     }
 
     /**
-     * Returns a {@link QuerySet} containing all {@link Model} instances.
-     * @return {QuerySet} a QuerySet containing all {@link Model} instances
-     */
-    static all() {
-        return this.getQuerySet();
-    }
-
-    /**
-     * Update many-many relations for model.
-     * @param relations
-     * @return undefined
      * @private
      */
-    _refreshMany2Many(relations) {
-        const ThisModel = this.getClass();
-        const { fields, virtualFields, modelName } = ThisModel;
-
-        Object.keys(relations).forEach((name) => {
-            const reverse = !fields.hasOwnProperty(name);
-            const field = virtualFields[name];
-            const values = relations[name];
-
-            if (!Array.isArray(values)) {
-                throw new TypeError(`Failed to resolve many-to-many relationship: ${modelName}[${name}] must be an array (passed: ${values})`);
-            }
-
-            const normalizedNewIds = values.map(normalizeEntity);
-            const uniqueIds = uniq(normalizedNewIds);
-
-            if (normalizedNewIds.length !== uniqueIds.length) {
-                throw new Error(`Found duplicate id(s) when passing "${normalizedNewIds}" to ${ThisModel.modelName}.${name} value`);
-            }
-
-            const throughModelName = field.through || m2mName(ThisModel.modelName, name);
-            const ThroughModel = ThisModel.session[throughModelName];
-
-            let fromField;
-            let toField;
-
-            if (!reverse) {
-                ({ from: fromField, to: toField } = field.throughFields);
-            } else {
-                ({ from: toField, to: fromField } = field.throughFields);
-            }
-
-            const currentIds = ThroughModel.filter(through =>
-                through[fromField] === this[ThisModel.idAttribute]
-            ).toRefArray().map(ref => ref[toField]);
-
-            const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
-
-            if (diffActions) {
-                const {
-                    delete: idsToDelete,
-                    add: idsToAdd,
-                } = diffActions;
-                if (idsToDelete.length > 0) {
-                    this[name].remove(...idsToDelete);
-                }
-                if (idsToAdd.length > 0) {
-                    this[name].add(...idsToAdd);
-                }
-            }
-        });
+    static _getTableOpts() {
+        if (typeof this.backend === 'function') {
+            warnDeprecated('Model.backend is deprecated. Please rename to .options');
+            return this.backend();
+        } else if (this.backend) {
+            warnDeprecated('Model.backend is deprecated. Please rename to .options');
+            return this.backend;
+        } else if (typeof this.options === 'function') {
+            return this.options();
+        }
+        return this.options;
     }
 
     /**
@@ -623,6 +557,69 @@ const Model = class Model {
         });
     }
 
+    /**
+     * Update many-many relations for model.
+     * @param relations
+     * @return undefined
+     * @private
+     */
+    _refreshMany2Many(relations) {
+        const ThisModel = this.getClass();
+        const { fields, virtualFields, modelName } = ThisModel;
+
+        Object.keys(relations).forEach((name) => {
+            const reverse = !fields.hasOwnProperty(name);
+            const field = virtualFields[name];
+            const values = relations[name];
+
+            if (!Array.isArray(values)) {
+                throw new TypeError(`Failed to resolve many-to-many relationship: ${modelName}[${name}] must be an array (passed: ${values})`);
+            }
+
+            const normalizedNewIds = values.map(normalizeEntity);
+            const uniqueIds = uniq(normalizedNewIds);
+
+            if (normalizedNewIds.length !== uniqueIds.length) {
+                throw new Error(`Found duplicate id(s) when passing "${normalizedNewIds}" to ${ThisModel.modelName}.${name} value`);
+            }
+
+            const throughModelName = field.through || m2mName(ThisModel.modelName, name);
+            const ThroughModel = ThisModel.session[throughModelName];
+
+            let fromField;
+            let toField;
+
+            if (!reverse) {
+                ({ from: fromField, to: toField } = field.throughFields);
+            } else {
+                ({ from: toField, to: fromField } = field.throughFields);
+            }
+
+            const currentIds = ThroughModel.filter(through =>
+                through[fromField] === this[ThisModel.idAttribute]
+            ).toRefArray().map(ref => ref[toField]);
+
+            const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
+
+            if (diffActions) {
+                const {
+                    delete: idsToDelete,
+                    add: idsToAdd,
+                } = diffActions;
+                if (idsToDelete.length > 0) {
+                    this[name].remove(...idsToDelete);
+                }
+                if (idsToAdd.length > 0) {
+                    this[name].add(...idsToAdd);
+                }
+            }
+        });
+    }
+
+    /**
+     * @return {undefined}
+     * @private
+     */
     _onDelete() {
         const { virtualFields } = this.getClass();
         for (const key in virtualFields) { // eslint-disable-line
