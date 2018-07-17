@@ -366,11 +366,11 @@ describe('Many to many relationships', () => {
             ]);
             expect(Tag.withId('Technology').relatedTags.count()).toBe(1);
             expect(Tag.withId('Technology').relatedTags.toRefArray()).toEqual([
-               Tag.withId('Redux').ref
+                Tag.withId('Redux').ref
             ]);
             expect(Tag.withId('Redux').relatedTags.count()).toBe(1);
             expect(Tag.withId('Redux').relatedTags.toRefArray()).toEqual([
-               Tag.withId('Technology').ref
+                Tag.withId('Technology').ref
             ]);
         });
         it('removes relationships correctly', () => {
@@ -381,7 +381,7 @@ describe('Many to many relationships', () => {
             expect(Tag.withId('Technology').relatedTags.toRefArray()).toBe([]);
             expect(Tag.withId('Redux').relatedTags.count()).toBe(1);
             expect(Tag.withId('Redux').relatedTags.first()).toBe(
-               Tag.withId('Technology')
+                Tag.withId('Technology')
             );
         });
     });
