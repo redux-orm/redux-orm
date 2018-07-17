@@ -352,4 +352,37 @@ describe('Many to many relationships', () => {
             expect(User.withId('u1').links.toRefArray().map(row => row.name)).toEqual(['link1', 'link2']);
         });
     });
+    describe('self-referencing many field', () => {
+        it('adds relationships correctly', () => {
+            const { Tag, TagRelatedTags } = session;
+            expect(TagRelatedTags.count()).toBe(0);
+            Tag.withId('Technology').relatedTags.add('Redux');
+            expect(TagRelatedTags.all().toRefArray()).toEqual([
+                {
+                    id: 0,
+                    fromTagId: 'Technology',
+                    toTagId: 'Redux',
+                }
+            ]);
+            expect(Tag.withId('Technology').relatedTags.count()).toBe(1);
+            expect(Tag.withId('Technology').relatedTags.toRefArray()).toEqual([
+               Tag.withId('Redux').ref
+            ]);
+            expect(Tag.withId('Redux').relatedTags.count()).toBe(1);
+            expect(Tag.withId('Redux').relatedTags.toRefArray()).toEqual([
+               Tag.withId('Technology').ref
+            ]);
+        });
+        it('removes relationships correctly', () => {
+            const { Tag, TagRelatedTags } = session;
+            Tag.withId('Technology').relatedTags.add('Redux');
+            expect(TagRelatedTags.count()).toBe(1);
+            Tag.withId('Technology').relatedTags.remove('Redux');
+            expect(Tag.withId('Technology').relatedTags.toRefArray()).toBe([]);
+            expect(Tag.withId('Redux').relatedTags.count()).toBe(1);
+            expect(Tag.withId('Redux').relatedTags.first()).toBe(
+               Tag.withId('Technology')
+            );
+        });
+    });
 });
