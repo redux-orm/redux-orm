@@ -201,23 +201,27 @@ describe('Many to many relationships', () => {
 
                 // Forward (from many-to-many field declaration)
                 const user = User.get({ name: 'user0' });
-                const relatedTeams = user.teams;
+                const { teams: relatedTeams } = user;
                 expect(relatedTeams).toBeInstanceOf(QuerySet);
                 expect(relatedTeams.modelClass).toBe(Team);
                 expect(relatedTeams.count()).toBe(1);
 
                 // Backward
                 const team = Team.get({ name: 'team0' });
-                const relatedUsers = team.users;
+                const { users: relatedUsers } = team;
                 expect(relatedUsers).toBeInstanceOf(QuerySet);
                 expect(relatedUsers.modelClass).toBe(User);
                 expect(relatedUsers.count()).toBe(2);
 
-                expect(team.users.toRefArray().map(row => row.id)).toEqual(['u0', 'u1']);
-                expect(Team.withId('t2').users.toRefArray().map(row => row.id)).toEqual(['u1']);
+                expect(relatedUsers.toRefArray().map(row => row.id))
+                    .toEqual(['u0', 'u1']);
+                expect(Team.withId('t2').users.toRefArray().map(row => row.id))
+                    .toEqual(['u1']);
 
-                expect(user.teams.toRefArray().map(row => row.id)).toEqual([team.id]);
-                expect(User.withId('u1').teams.toRefArray().map(row => row.id)).toEqual(['t0', 't2']);
+                expect(relatedTeams.toRefArray().map(row => row.id))
+                    .toEqual([team.id]);
+                expect(User.withId('u1').teams.toRefArray().map(row => row.id))
+                    .toEqual(['t0', 't2']);
 
                 expect(User2Team.count()).toBe(3);
             };
@@ -354,35 +358,54 @@ describe('Many to many relationships', () => {
     });
     describe('self-referencing many field', () => {
         it('adds relationships correctly', () => {
-            const { Tag, TagRelatedTags } = session;
-            expect(TagRelatedTags.count()).toBe(0);
-            Tag.withId('Technology').relatedTags.add('Redux');
-            expect(TagRelatedTags.all().toRefArray()).toEqual([
+            const { Tag, TagSubTags } = session;
+            expect(TagSubTags.count()).toBe(0);
+            Tag.withId('Technology').subTags.add('Redux');
+            expect(TagSubTags.all().toRefArray()).toEqual([
                 {
                     id: 0,
                     fromTagId: 'Technology',
                     toTagId: 'Redux',
                 }
             ]);
-            expect(Tag.withId('Technology').relatedTags.count()).toBe(1);
-            expect(Tag.withId('Technology').relatedTags.toRefArray()).toEqual([
-                Tag.withId('Redux').ref
-            ]);
-            expect(Tag.withId('Redux').relatedTags.count()).toBe(1);
-            expect(Tag.withId('Redux').relatedTags.toRefArray()).toEqual([
-                Tag.withId('Technology').ref
-            ]);
+            expect(Tag.withId('Technology').subTags.count())
+                .toBe(1);
+            expect(Tag.withId('Technology').subTags.toRefArray())
+                .toEqual([
+                    Tag.withId('Redux').ref
+                ]);
+
+            expect(Tag.withId('Redux').subTags.count())
+                .toBe(0);
+            expect(Tag.withId('Redux').subTags.toRefArray())
+                .toEqual([]);
         });
+
         it('removes relationships correctly', () => {
-            const { Tag, TagRelatedTags } = session;
-            Tag.withId('Technology').relatedTags.add('Redux');
-            expect(TagRelatedTags.count()).toBe(1);
-            Tag.withId('Technology').relatedTags.remove('Redux');
-            expect(Tag.withId('Technology').relatedTags.toRefArray()).toBe([]);
-            expect(Tag.withId('Redux').relatedTags.count()).toBe(1);
-            expect(Tag.withId('Redux').relatedTags.first()).toBe(
-                Tag.withId('Technology')
-            );
+            const { Tag, TagSubTags } = session;
+            Tag.withId('Technology').subTags.add('Redux');
+            Tag.withId('Redux').subTags.add('Technology');
+
+            Tag.withId('Redux').subTags.remove('Technology');
+
+            expect(Tag.withId('Technology').subTags.toRefArray())
+                .toEqual([
+                    Tag.withId('Redux').ref
+                ]);
+            expect(TagSubTags.all().toRefArray())
+                .toEqual([
+                    {
+                        id: 0,
+                        fromTagId: 'Technology',
+                        toTagId: 'Redux',
+                    },
+                ]);
+            expect(Tag.withId('Technology').subTags.count())
+                .toBe(1);
+            expect(Tag.withId('Redux').subTags.toRefArray())
+                .toEqual([]);
+            expect(Tag.withId('Redux').subTags.count())
+                .toBe(0);
         });
     });
 });

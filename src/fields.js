@@ -11,6 +11,8 @@ import {
 
 import {
     m2mName,
+    m2mToFieldName,
+    m2mFromFieldName,
     reverseFieldName,
     reverseFieldErrorMessage,
 } from './utils';
@@ -363,6 +365,22 @@ export class ManyToMany extends RelationalField {
                 from: fieldA.references(toModel) ? fieldBName : fieldAName,
             };
         }
+        if (model.modelName === toModel.modelName) {
+            /**
+             * we have no way of determining the relationship's
+             * direction here, so we need to assume that the user
+             * did not use a custom through model
+             */
+            return {
+                to: m2mToFieldName(toModel.modelName),
+                from: m2mFromFieldName(model.modelName),
+            };
+        }
+
+        /**
+         * determine which field references which model
+         * and infer the directions from that
+         */
         const toFieldName = findKey(
             throughModel.fields,
             field => field.references(toModel)

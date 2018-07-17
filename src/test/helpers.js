@@ -169,7 +169,7 @@ export function createTestModels() {
     };
     Tag.fields = {
         name: attr(),
-        relatedTags: many('this'),
+        subTags: many('this'),
         synonymousTags: many('Tag'),
     };
 
