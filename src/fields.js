@@ -362,6 +362,7 @@ export class ManyToMany extends RelationalField {
              * we have no way of determining the relationship's
              * direction here, so we need to assume that the user
              * did not use a custom through model
+             * see ORM#registerManyToManyModelsFor
              */
             return {
                 to: m2mToFieldName(toModel.modelName),
@@ -470,10 +471,10 @@ export function attr(opts) {
  *
  * @global
  *
- * @param  {string|boolean} toModelNameOrObj - the `modelName` property of
- *                                           the Model that is the target of the
- *                                           foreign key, or an object with properties
- *                                           `to` and optionally `relatedName`.
+ * @param  {string|Object} toModelNameOrObj - the `modelName` property of
+ *                                            the Model that is the target of the
+ *                                            foreign key, or an object with properties
+ *                                            `to` and optionally `relatedName`.
  * @param {string} [relatedName] - if you didn't pass an object as the first argument,
  *                                 this is the property name that will be used to
  *                                 access a QuerySet the foreign key is defined from,
@@ -570,10 +571,10 @@ export function many(...args) {
  *
  * @global
  *
- * @param  {string|boolean} toModelNameOrObj - the `modelName` property of
- *                                           the Model that is the target of the
- *                                           foreign key, or an object with properties
- *                                           `to` and optionally `relatedName`.
+ * @param  {string|Object} toModelNameOrObj - the `modelName` property of
+ *                                            the Model that is the target of the
+ *                                            foreign key, or an object with properties
+ *                                            `to` and optionally `relatedName`.
  * @param {string} [relatedName] - if you didn't pass an object as the first argument,
  *                                 this is the property name that will be used to
  *                                 access a Model the foreign key is defined from,

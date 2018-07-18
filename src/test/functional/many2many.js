@@ -484,11 +484,7 @@ describe('Many to many relationships', () => {
             User.modelName = 'User';
             User.fields = {
                 id: attr(),
-                subscribed: many({
-                    to: 'User',
-                    as: 'subscribedTo',
-                    relatedName: 'subscribers',
-                }),
+                subscribed: many('User', 'subscribers'),
             };
             orm = new ORM();
             orm.register(User);
@@ -509,11 +505,11 @@ describe('Many to many relationships', () => {
                 user1 = session.User.withId('u1');
                 user2 = session.User.withId('u2');
 
-                expect(user0.subscribedTo.toRefArray().map(row => row.id))
+                expect(user0.subscribed.toRefArray().map(row => row.id))
                     .toEqual(['u2']);
-                expect(user1.subscribedTo.toRefArray().map(row => row.id))
+                expect(user1.subscribed.toRefArray().map(row => row.id))
                     .toEqual(['u0', 'u2']);
-                expect(user2.subscribedTo.toRefArray().map(row => row.id))
+                expect(user2.subscribed.toRefArray().map(row => row.id))
                     .toEqual(['u1']);
 
                 expect(UserSubscribed.count()).toBe(4);
@@ -521,9 +517,9 @@ describe('Many to many relationships', () => {
         });
 
         it('add forward many-many field', () => {
-            user0.subscribedTo.add(user2);
-            user1.subscribedTo.add(user0, user2);
-            user2.subscribedTo.add(user1);
+            user0.subscribed.add(user2);
+            user1.subscribed.add(user0, user2);
+            user2.subscribed.add(user1);
             validateRelationState();
         });
 
