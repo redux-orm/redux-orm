@@ -6,14 +6,6 @@ describe('Many to many relationships', () => {
     let orm;
     let state;
 
-    beforeEach(() => {
-        ({
-            session,
-            orm,
-            state,
-        } = createTestSessionWithData());
-    });
-
     describe('many-many forward/backward updates', () => {
         let Team;
         let User;
@@ -28,6 +20,7 @@ describe('Many to many relationships', () => {
             User.fields = {
                 id: attr(),
                 name: attr(),
+                subscribed: many('User', 'subscribers'),
             };
 
             Team = class extends Model {};
@@ -40,7 +33,7 @@ describe('Many to many relationships', () => {
 
             orm = new ORM();
             orm.register(User, Team);
-            session = orm.session(orm.getEmptyState());
+            session = orm.session();
 
             session.Team.create({ name: 'team0' });
             session.Team.create({ name: 'team1' });
@@ -356,8 +349,17 @@ describe('Many to many relationships', () => {
             expect(User.withId('u1').links.toRefArray().map(row => row.name)).toEqual(['link1', 'link2']);
         });
     });
-    describe('self-referencing many field', () => {
-        it('adds relationships correctly', () => {
+
+    describe('self-referencing many field with "this" as toModelName', () => {
+        beforeEach(() => {
+            ({
+                session,
+                orm,
+                state,
+            } = createTestSessionWithData());
+        });
+
+        it('adds relationships correctly when toModelName is "this"', () => {
             const { Tag, TagSubTags } = session;
             expect(TagSubTags.count()).toBe(0);
             Tag.withId('Technology').subTags.add('Redux');
@@ -381,7 +383,7 @@ describe('Many to many relationships', () => {
                 .toEqual([]);
         });
 
-        it('removes relationships correctly', () => {
+        it('removes relationships correctly when toModelName is "this"', () => {
             const { Tag, TagSubTags } = session;
             Tag.withId('Technology').subTags.add('Redux');
             Tag.withId('Redux').subTags.add('Technology');
@@ -406,6 +408,168 @@ describe('Many to many relationships', () => {
                 .toEqual([]);
             expect(Tag.withId('Redux').subTags.count())
                 .toBe(0);
+        });
+
+        it('querying backwards relationships works when toModelName is "this"', () => {
+            const { Tag } = session;
+            Tag.withId('Technology').subTags.add('Redux');
+
+            expect(Tag.withId('Redux').parentTags.toRefArray())
+                .toEqual([
+                    Tag.withId('Technology').ref
+                ]);
+            expect(Tag.withId('Redux').parentTags.count())
+                .toBe(1);
+            expect(Tag.withId('Technology').parentTags.toRefArray())
+                .toEqual([]);
+            expect(Tag.withId('Technology').parentTags.count())
+                .toBe(0);
+        });
+
+        it('adding relationships via backwards descriptor works when toModelName is "this"', () => {
+            const { Tag } = session;
+            Tag.withId('Redux').parentTags.add('Technology');
+
+            expect(Tag.withId('Redux').parentTags.toRefArray())
+                .toEqual([
+                    Tag.withId('Technology').ref
+                ]);
+            expect(Tag.withId('Redux').parentTags.count())
+                .toBe(1);
+            expect(Tag.withId('Technology').subTags.toRefArray())
+                .toEqual([
+                    Tag.withId('Redux').ref
+                ]);
+            expect(Tag.withId('Technology').subTags.count())
+                .toBe(1);
+        });
+
+        it('removing relationships via backwards descriptor works when toModelName is "this"', () => {
+            const { Tag, TagSubTags } = session;
+            Tag.withId('Technology').subTags.add('Redux');
+            Tag.withId('Redux').subTags.add('Technology');
+
+            Tag.withId('Technology').parentTags.remove('Redux');
+
+            expect(Tag.withId('Technology').subTags.toRefArray())
+                .toEqual([
+                    Tag.withId('Redux').ref
+                ]);
+            expect(TagSubTags.all().toRefArray())
+                .toEqual([
+                    {
+                        id: 0,
+                        fromTagId: 'Technology',
+                        toTagId: 'Redux',
+                    },
+                ]);
+            expect(Tag.withId('Technology').subTags.count())
+                .toBe(1);
+            expect(Tag.withId('Redux').subTags.toRefArray())
+                .toEqual([]);
+            expect(Tag.withId('Redux').subTags.count())
+                .toBe(0);
+        });
+    });
+
+    describe('self-referencing many field with modelName as toModelName', () => {
+        let User;
+        let user0;
+        let user1;
+        let user2;
+        let validateRelationState;
+
+        beforeEach(() => {
+            User = class extends Model {};
+            User.modelName = 'User';
+            User.fields = {
+                id: attr(),
+                subscribed: many({
+                    to: 'User',
+                    as: 'subscribedTo',
+                    relatedName: 'subscribers',
+                }),
+            };
+            orm = new ORM();
+            orm.register(User);
+            session = orm.session();
+
+            session.User.create({ id: 'u0' });
+            session.User.create({ id: 'u1' });
+            session.User.create({ id: 'u2' });
+
+            user0 = session.User.withId('u0');
+            user1 = session.User.withId('u1');
+            user2 = session.User.withId('u2');
+
+            validateRelationState = () => {
+                const { UserSubscribed } = session;
+
+                user0 = session.User.withId('u0');
+                user1 = session.User.withId('u1');
+                user2 = session.User.withId('u2');
+
+                expect(user0.subscribedTo.toRefArray().map(row => row.id))
+                    .toEqual(['u2']);
+                expect(user1.subscribedTo.toRefArray().map(row => row.id))
+                    .toEqual(['u0', 'u2']);
+                expect(user2.subscribedTo.toRefArray().map(row => row.id))
+                    .toEqual(['u1']);
+
+                expect(UserSubscribed.count()).toBe(4);
+            };
+        });
+
+        it('add forward many-many field', () => {
+            user0.subscribedTo.add(user2);
+            user1.subscribedTo.add(user0, user2);
+            user2.subscribedTo.add(user1);
+            validateRelationState();
+        });
+
+        it('update forward many-many field', () => {
+            user0.update({ subscribed: [user2] });
+            user1.update({ subscribed: [user0, user2] });
+            user2.update({ subscribed: [user1] });
+            validateRelationState();
+        });
+
+        it('add backward many-many field', () => {
+            user0.subscribers.add(user1);
+            user1.subscribers.add(user2);
+            user2.subscribers.add(user0, user1);
+            validateRelationState();
+        });
+
+        it('update backward many-many field', () => {
+            user0.update({ subscribers: [user1] });
+            user1.update({ subscribers: [user2] });
+            user2.update({ subscribers: [user0, user1] });
+            validateRelationState();
+        });
+
+        it('create with forward many-many field', () => {
+            session.User.all().delete();
+            expect(session.User.count()).toBe(0);
+            expect(session.UserSubscribed.count()).toBe(0);
+
+            session.User.create({ id: 'u0', subscribed: ['u2'] });
+            session.User.create({ id: 'u1', subscribed: ['u0', 'u2'] });
+            session.User.create({ id: 'u2', subscribed: ['u1'] });
+
+            validateRelationState();
+        });
+
+        it('create with backward many-many field', () => {
+            session.User.all().delete();
+            expect(session.User.count()).toBe(0);
+            expect(session.UserSubscribed.count()).toBe(0);
+
+            session.User.create({ id: 'u0', subscribers: ['u1'] });
+            session.User.create({ id: 'u1', subscribers: ['u2'] });
+            session.User.create({ id: 'u2', subscribers: ['u0', 'u1'] });
+
+            validateRelationState();
         });
     });
 });

@@ -348,14 +348,6 @@ export class ManyToMany extends RelationalField {
         return true;
     }
 
-    get installsBackwardsVirtualField() {
-        return this.toModelName !== 'this';
-    }
-
-    get installsBackwardsDescriptor() {
-        return this.toModelName !== 'this';
-    }
-
     getThroughFields(fieldName, model, toModel, throughModel) {
         if (this.throughFields) {
             const [fieldAName, fieldBName] = this.throughFields;

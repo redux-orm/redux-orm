@@ -232,11 +232,6 @@ describe('ORM', () => {
                     itemsById: {},
                     meta: {},
                 },
-                TagSynonymousTags: {
-                    items: [],
-                    itemsById: {},
-                    meta: {},
-                },
                 Publisher: {
                     items: [],
                     itemsById: {},

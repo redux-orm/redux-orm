@@ -88,6 +88,7 @@ export class ORM {
                     toModelName = fieldInstance.toModelName; // eslint-disable-line prefer-destructuring
                 }
 
+                const selfReferencing = thisModelName === toModelName;
                 const fromFieldName = m2mFromFieldName(thisModelName);
                 const toFieldName = m2mToFieldName(toModelName);
 
@@ -103,10 +104,13 @@ export class ORM {
                         return false;
                     }
                 };
+                const ForeignKeyClass = selfReferencing
+                    ? PlainForeignKey
+                    : ForeignKey;
                 Through.fields = {
                     id: attr(),
-                    [fromFieldName]: new PlainForeignKey(thisModelName),
-                    [toFieldName]: new PlainForeignKey(toModelName),
+                    [fromFieldName]: new ForeignKeyClass(thisModelName),
+                    [toFieldName]: new ForeignKeyClass(toModelName),
                 };
 
                 Through.invalidateClassCache();
