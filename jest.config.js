@@ -16,7 +16,10 @@ module.exports = {
         'js',
         'json',
     ],
-    testRegex: 'src/test/(.*)\\/(?!es5)(.*)\\.(js)',
+    testPathIgnorePatterns: [
+        'src/test/functional/es5\\.(js)',
+    ],
+    testRegex: 'src/test/(.*)/(.*)\\.(js)',
     transform: {
         '\\.js$': 'babel-jest',
     },
