@@ -64,6 +64,10 @@ export class ORM {
      */
     register(...models) {
         models.forEach((model) => {
+            if (model.modelName === undefined) {
+                throw new Error('A model was passed that doesn\'t have a modelName set');
+            }
+
             model.invalidateClassCache();
 
             this.registerManyToManyModelsFor(model);

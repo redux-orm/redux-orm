@@ -51,6 +51,14 @@ describe('ORM', () => {
             orm.register(A, B);
             expect(() => orm.getModelClasses()).toThrowError(/field/);
         });
+
+        it('correctly throws an error when a model does not have a modelName property', () => {
+            class A extends Model {}
+            const orm = new ORM();
+            expect(() => orm.register(A)).toThrowError(
+                "A model was passed that doesn't have a modelName set"
+            );
+        });
     });
 
     describe('simple orm', () => {
