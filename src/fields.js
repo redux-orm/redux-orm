@@ -241,7 +241,10 @@ class RelationalField extends Field {
     }
 
     getBackwardsFieldName(model) {
-        return this.relatedName || reverseFieldName(model.modelName);
+        return (
+            this.relatedName ||
+            reverseFieldName(model.modelName)
+        );
     }
 
     createBackwardsVirtualField(fieldName, model, toModel, throughModel) {
@@ -301,7 +304,10 @@ export class ManyToMany extends RelationalField {
     }
 
     getThroughModelName(fieldName, model) {
-        return this.through || m2mName(model.modelName, fieldName);
+        return (
+            this.through ||
+            m2mName(model.modelName, fieldName)
+        );
     }
 
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
@@ -357,6 +363,7 @@ export class ManyToMany extends RelationalField {
                 from: fieldA.references(toModel) ? fieldBName : fieldAName,
             };
         }
+
         if (model.modelName === toModel.modelName) {
             /**
              * we have no way of determining the relationship's
@@ -374,17 +381,16 @@ export class ManyToMany extends RelationalField {
          * determine which field references which model
          * and infer the directions from that
          */
-        const toFieldName = findKey(
-            throughModel.fields,
-            field => field.references(toModel)
+        const throughModelFieldReferencing = otherModel => (
+            findKey(
+                throughModel.fields,
+                field => field.references(otherModel)
+            )
         );
-        const fromFieldName = findKey(
-            throughModel.fields,
-            field => field.references(model)
-        );
+
         return {
-            to: toFieldName,
-            from: fromFieldName,
+            to: throughModelFieldReferencing(toModel),
+            from: throughModelFieldReferencing(model),
         };
     }
 }
@@ -394,7 +400,10 @@ export class ManyToMany extends RelationalField {
  */
 export class OneToOne extends RelationalField {
     getBackwardsFieldName(model) {
-        return this.relatedName || model.modelName.toLowerCase();
+        return (
+            this.relatedName ||
+            model.modelName.toLowerCase()
+        );
     }
 
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {

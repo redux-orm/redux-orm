@@ -80,18 +80,33 @@ export class ORM {
         const thisModelName = model.modelName;
 
         forOwn(fields, (fieldInstance, fieldName) => {
-            if (fieldInstance instanceof ManyToMany && !fieldInstance.through) {
-                let toModelName;
-                if (fieldInstance.toModelName === 'this') {
-                    toModelName = thisModelName;
-                } else {
-                    toModelName = fieldInstance.toModelName; // eslint-disable-line prefer-destructuring
+            if (!(fieldInstance instanceof ManyToMany)) {
+                return;
+            }
+
+            let toModelName;
+            if (fieldInstance.toModelName === 'this') {
+                toModelName = thisModelName;
+            } else {
+                toModelName = fieldInstance.toModelName; // eslint-disable-line prefer-destructuring
+            }
+
+            const selfReferencing = thisModelName === toModelName;
+            const fromFieldName = m2mFromFieldName(thisModelName);
+            const toFieldName = m2mToFieldName(toModelName);
+
+            if (fieldInstance.through) {
+                if (selfReferencing && !fieldInstance.throughFields) {
+                    throw new Error(
+                        'Self-referencing many-to-many relationship at ' +
+                        `"${thisModelName}.${fieldName}" using custom ` +
+                        `model "${fieldInstance.through}" has no ` +
+                        'throughFields key. Cannot determine which ' +
+                        'fields reference the instances partaking ' +
+                        'in the relationship.'
+                    );
                 }
-
-                const selfReferencing = thisModelName === toModelName;
-                const fromFieldName = m2mFromFieldName(thisModelName);
-                const toFieldName = m2mToFieldName(toModelName);
-
+            } else {
                 const Through = class ThroughModel extends Model {};
 
                 Through.modelName = m2mName(thisModelName, fieldName);

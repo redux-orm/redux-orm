@@ -348,6 +348,31 @@ describe('Many to many relationships', () => {
             expect(User.withId('u0').links.toRefArray().map(row => row.name)).toEqual(['link0']);
             expect(User.withId('u1').links.toRefArray().map(row => row.name)).toEqual(['link1', 'link2']);
         });
+
+        it('throws if self-referencing relationship without throughFields', () => {
+            const UserModel = class extends Model {};
+            UserModel.modelName = 'User';
+            UserModel.fields = {
+                id: attr(),
+                name: attr(),
+                users: many({
+                    to: 'User',
+                    through: 'User2User',
+                    relatedName: 'otherUsers',
+                }),
+            };
+            const User2UserModel = class extends Model {};
+            User2UserModel.modelName = 'User2User';
+            User2UserModel.fields = {
+                id: attr(),
+                name: attr(),
+            };
+
+            orm = new ORM();
+            expect(() => {
+                orm.register(UserModel, User2UserModel);
+            }).toThrowError('Self-referencing many-to-many relationship at "User.users" using custom model "User2User" has no throughFields key. Cannot determine which fields reference the instances partaking in the relationship.');
+        });
     });
 
     describe('self-referencing many field with "this" as toModelName', () => {
