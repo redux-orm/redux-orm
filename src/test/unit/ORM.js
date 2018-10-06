@@ -227,12 +227,7 @@ describe('ORM', () => {
                     itemsById: {},
                     meta: {},
                 },
-                TagRelatedTags: {
-                    items: [],
-                    itemsById: {},
-                    meta: {},
-                },
-                TagSynonymousTags: {
+                TagSubTags: {
                     items: [],
                     itemsById: {},
                     meta: {},

@@ -169,8 +169,9 @@ export function createTestModels() {
     };
     Tag.fields = {
         name: attr(),
-        relatedTags: many('this'),
-        synonymousTags: many('Tag'),
+        subTags: many('this', 'parentTags'),
+        // TODO: bidirectional many-to-many relations
+        // synonymousTags: many('Tag', 'synonymousTags'),
     };
 
     const Publisher = class PublisherModel extends Model {};

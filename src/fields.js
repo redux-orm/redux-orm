@@ -11,6 +11,8 @@ import {
 
 import {
     m2mName,
+    m2mToFieldName,
+    m2mFromFieldName,
     reverseFieldName,
     reverseFieldErrorMessage,
 } from './utils';
@@ -239,7 +241,10 @@ class RelationalField extends Field {
     }
 
     getBackwardsFieldName(model) {
-        return this.relatedName || reverseFieldName(model.modelName);
+        return (
+            this.relatedName ||
+            reverseFieldName(model.modelName)
+        );
     }
 
     createBackwardsVirtualField(fieldName, model, toModel, throughModel) {
@@ -299,7 +304,10 @@ export class ManyToMany extends RelationalField {
     }
 
     getThroughModelName(fieldName, model) {
-        return this.through || m2mName(model.modelName, fieldName);
+        return (
+            this.through ||
+            m2mName(model.modelName, fieldName)
+        );
     }
 
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
@@ -346,14 +354,6 @@ export class ManyToMany extends RelationalField {
         return true;
     }
 
-    get installsBackwardsVirtualField() {
-        return this.toModelName !== 'this';
-    }
-
-    get installsBackwardsDescriptor() {
-        return this.toModelName !== 'this';
-    }
-
     getThroughFields(fieldName, model, toModel, throughModel) {
         if (this.throughFields) {
             const [fieldAName, fieldBName] = this.throughFields;
@@ -363,17 +363,34 @@ export class ManyToMany extends RelationalField {
                 from: fieldA.references(toModel) ? fieldBName : fieldAName,
             };
         }
-        const toFieldName = findKey(
-            throughModel.fields,
-            field => field.references(toModel)
+
+        if (model.modelName === toModel.modelName) {
+            /**
+             * we have no way of determining the relationship's
+             * direction here, so we need to assume that the user
+             * did not use a custom through model
+             * see ORM#registerManyToManyModelsFor
+             */
+            return {
+                to: m2mToFieldName(toModel.modelName),
+                from: m2mFromFieldName(model.modelName),
+            };
+        }
+
+        /**
+         * determine which field references which model
+         * and infer the directions from that
+         */
+        const throughModelFieldReferencing = otherModel => (
+            findKey(
+                throughModel.fields,
+                field => field.references(otherModel)
+            )
         );
-        const fromFieldName = findKey(
-            throughModel.fields,
-            field => field.references(model)
-        );
+
         return {
-            to: toFieldName,
-            from: fromFieldName,
+            to: throughModelFieldReferencing(toModel),
+            from: throughModelFieldReferencing(model),
         };
     }
 }
@@ -383,7 +400,10 @@ export class ManyToMany extends RelationalField {
  */
 export class OneToOne extends RelationalField {
     getBackwardsFieldName(model) {
-        return this.relatedName || model.modelName.toLowerCase();
+        return (
+            this.relatedName ||
+            model.modelName.toLowerCase()
+        );
     }
 
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
@@ -460,10 +480,10 @@ export function attr(opts) {
  *
  * @global
  *
- * @param  {string|boolean} toModelNameOrObj - the `modelName` property of
- *                                           the Model that is the target of the
- *                                           foreign key, or an object with properties
- *                                           `to` and optionally `relatedName`.
+ * @param  {string|Object} toModelNameOrObj - the `modelName` property of
+ *                                            the Model that is the target of the
+ *                                            foreign key, or an object with properties
+ *                                            `to` and optionally `relatedName`.
  * @param {string} [relatedName] - if you didn't pass an object as the first argument,
  *                                 this is the property name that will be used to
  *                                 access a QuerySet the foreign key is defined from,
@@ -560,10 +580,10 @@ export function many(...args) {
  *
  * @global
  *
- * @param  {string|boolean} toModelNameOrObj - the `modelName` property of
- *                                           the Model that is the target of the
- *                                           foreign key, or an object with properties
- *                                           `to` and optionally `relatedName`.
+ * @param  {string|Object} toModelNameOrObj - the `modelName` property of
+ *                                            the Model that is the target of the
+ *                                            foreign key, or an object with properties
+ *                                            `to` and optionally `relatedName`.
  * @param {string} [relatedName] - if you didn't pass an object as the first argument,
  *                                 this is the property name that will be used to
  *                                 access a Model the foreign key is defined from,
