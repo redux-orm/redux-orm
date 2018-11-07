@@ -155,6 +155,9 @@ const Model = class Model {
      * @return {Session} The current {@link Session} instance.
      */
     static get session() {
+        if (typeof this._session === 'undefined') {
+            throw new Error('Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.');
+        }
         return this._session;
     }
 
