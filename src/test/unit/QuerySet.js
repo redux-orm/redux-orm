@@ -176,4 +176,11 @@ describe('QuerySet tests', () => {
         expect(sess.Book.unreleased().count()).toBe(1);
         expect(sess.Book.filter({ name: 'Clean Code' }).count()).toBe(1);
     });
+
+    it('should throw a custom error when user try to interact with database without a session', () => {
+        const { Book } = createTestModels();
+        expect(() => Book.getQuerySet().count()).toThrowError(
+            'Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.'
+        );
+    });
 });

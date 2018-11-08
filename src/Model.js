@@ -116,6 +116,9 @@ const Model = class Model {
      * @return {undefined}
      */
     static markAccessed(ids) {
+        if (typeof this._session === 'undefined') {
+            throw new Error('Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.');
+        }
         this.session.markAccessed(this.modelName, ids);
     }
 
@@ -123,6 +126,9 @@ const Model = class Model {
      * @return {undefined}
      */
     static markFullTableScanned() {
+        if (typeof this._session === 'undefined') {
+            throw new Error('Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.');
+        }
         this.session.markFullTableScanned(this.modelName);
     }
 
@@ -132,6 +138,9 @@ const Model = class Model {
      * @return {string} The id attribute of this {@link Model}.
      */
     static get idAttribute() {
+        if (typeof this._session === 'undefined') {
+            throw new Error('Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.');
+        }
         return this.session.db.describe(this.modelName).idAttribute;
     }
 
@@ -393,6 +402,9 @@ const Model = class Model {
      * @private
      */
     static _findDatabaseRows(lookupObj) {
+        if (typeof this._session === 'undefined') {
+            throw new Error('Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.');
+        }
         const querySpec = {
             table: this.modelName,
         };
@@ -468,6 +480,9 @@ const Model = class Model {
      * @return {undefined}
      */
     update(userMergeObj) {
+        if (typeof this.getClass().session === 'undefined') {
+            throw new Error('Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.');
+        }
         const mergeObj = { ...userMergeObj };
 
         const ThisModel = this.getClass();
@@ -553,6 +568,9 @@ const Model = class Model {
      * @return {undefined}
      */
     delete() {
+        if (typeof this.getClass().session === 'undefined') {
+            throw new Error('Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.');
+        }
         this._onDelete();
         this.getClass().session.applyUpdate({
             action: DELETE,

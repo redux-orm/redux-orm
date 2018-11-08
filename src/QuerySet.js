@@ -219,6 +219,9 @@ const QuerySet = class QuerySet {
      * @return {Array} rows corresponding to the QuerySet's clauses
      */
     _evaluate() {
+        if (typeof this.modelClass.session === 'undefined') {
+            throw new Error('Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.');
+        }
         if (!this._evaluated) {
             const {
                 session,

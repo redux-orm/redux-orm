@@ -80,6 +80,28 @@ describe('Model', () => {
             Model.markFullTableScanned();
             expect(sessionMock.fullTableScannedModels).toEqual(['Model']);
         });
+
+        it('should throw a custom error when user try to interact with database without a session', () => {
+            expect(() => Model.create({
+                id: 0,
+                name: 'Tommi',
+                number: 123,
+                boolean: false,
+            })).toThrowError(
+                'Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.'
+            );
+            expect(() => Model.withId(0).update({
+                id: 0,
+                name: 'Tommi',
+                number: 123,
+                boolean: true,
+            })).toThrowError(
+                'Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.'
+            );
+            expect(() => Model.withId(0).delete()).toThrowError(
+                'Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.'
+            );
+        });
     });
 
     describe('Instance methods', () => {
