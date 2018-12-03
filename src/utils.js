@@ -134,9 +134,11 @@ function normalizeEntity(entity) {
 }
 
 function reverseFieldErrorMessage(modelName, fieldName, toModelName, backwardsFieldName) {
-    return [`Reverse field ${backwardsFieldName} already defined`,
+    return [
+        `Reverse field ${backwardsFieldName} already defined`,
         ` on model ${toModelName}. To fix, set a custom related`,
-        ` name on ${modelName}.${fieldName}.`].join('');
+        ` name on ${modelName}.${fieldName}.`,
+    ].join('');
 }
 
 function objectShallowEquals(a, b) {

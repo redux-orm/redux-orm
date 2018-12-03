@@ -179,8 +179,11 @@ describe('QuerySet tests', () => {
 
     it('should throw a custom error when user try to interact with database without a session', () => {
         const { Book } = createTestModels();
-        expect(() => Book.getQuerySet().count()).toThrowError(
-            'Tried interact with the database without a session. Access session-specific classes of registered Models as properties of the session object.'
-        );
+        const errorMessage = 'Tried to query the Book model\'s table without a session. Create a session using `session = orm.session()` and use `session["Book"]` for querying instead.';
+        expect(() => Book.getQuerySet().count()).toThrowError(errorMessage);
+        expect(() => Book.getQuerySet().exists()).toThrowError(errorMessage);
+        expect(() => Book.getQuerySet().at(0)).toThrowError(errorMessage);
+        expect(() => Book.getQuerySet().first()).toThrowError(errorMessage);
+        expect(() => Book.getQuerySet().last()).toThrowError(errorMessage);
     });
 });

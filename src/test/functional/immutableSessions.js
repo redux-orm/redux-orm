@@ -159,7 +159,7 @@ describe('Immutable session', () => {
         });
         expect(() => Book.get({
             name: 'Clean Code'
-        })).toThrowError('Expected to find a single row in Model.get. Found 2.');
+        })).toThrowError('Expected to find a single row in `Book.get`. Found 2.');
     });
 
     it('updating arbitrary fields created during model construction works', () => {
