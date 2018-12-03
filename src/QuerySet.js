@@ -219,6 +219,13 @@ const QuerySet = class QuerySet {
      * @return {Array} rows corresponding to the QuerySet's clauses
      */
     _evaluate() {
+        if (typeof this.modelClass.session === 'undefined') {
+            throw new Error([
+                `Tried to query the ${this.modelClass.modelName} model's table without a session. `,
+                'Create a session using `session = orm.session()` and use ',
+                `\`session["${this.modelClass.modelName}"]\` for querying instead.`,
+            ].join(''));
+        }
         if (!this._evaluated) {
             const {
                 session,
@@ -324,9 +331,9 @@ const QuerySet = class QuerySet {
      */
     get withModels() {
         throw new Error(
-            'QuerySet.prototype.withModels is removed. ' +
-            'Use .toModelArray() or predicate functions that ' +
-            'instantiate Models from refs, e.g. new Model(ref).'
+            '`QuerySet.prototype.withModels` has been removed. ' +
+            'Use `.toModelArray()` or predicate functions that ' +
+            'instantiate Models from refs, e.g. `new Model(ref)`.'
         );
     }
 
@@ -335,7 +342,7 @@ const QuerySet = class QuerySet {
      */
     get withRefs() {
         warnDeprecated(
-            'QuerySet.prototype.withRefs is deprecated. ' +
+            '`QuerySet.prototype.withRefs` has been deprecated. ' +
             'Query building operates on refs only now.'
         );
         return undefined;
@@ -347,8 +354,8 @@ const QuerySet = class QuerySet {
      */
     map() {
         throw new Error(
-            'QuerySet.prototype.map is removed. ' +
-            'Call .toModelArray() or .toRefArray() first to map.'
+            '`QuerySet.prototype.map` has been removed. ' +
+            'Call `.toModelArray()` or `.toRefArray()` first to map.'
         );
     }
 
@@ -358,8 +365,8 @@ const QuerySet = class QuerySet {
      */
     forEach() {
         throw new Error(
-            'QuerySet.prototype.forEach is removed. ' +
-            'Call .toModelArray() or .toRefArray() first to iterate.'
+            '`QuerySet.prototype.forEach` has been removed. ' +
+            'Call `.toModelArray()` or `.toRefArray()` first to iterate.'
         );
     }
 };

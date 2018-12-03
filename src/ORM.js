@@ -263,8 +263,8 @@ export class ORM {
      */
     withMutations(state) {
         warnDeprecated(
-            'ORM.prototype.withMutations is deprecated. ' +
-            'Use ORM.prototype.mutableSession instead.'
+            '`ORM.prototype.withMutations` has been deprecated. ' +
+            'Use `ORM.prototype.mutableSession` instead.'
         );
         return this.mutableSession(state);
     }
@@ -274,8 +274,8 @@ export class ORM {
      */
     from(state) {
         warnDeprecated(
-            'ORM.prototype.from function is deprecated. ' +
-            'Use ORM.prototype.session instead.'
+            '`ORM.prototype.from` has been deprecated. ' +
+            'Use `ORM.prototype.session` instead.'
         );
         return this.session(state);
     }
@@ -285,8 +285,8 @@ export class ORM {
      */
     reducer() {
         warnDeprecated(
-            'ORM.prototype.reducer is deprecated. Access ' +
-            'the Session.prototype.state property instead.'
+            '`ORM.prototype.reducer` has been deprecated. Access ' +
+            'the `Session.prototype.state` property instead.'
         );
         return createReducer(this);
     }
@@ -296,7 +296,7 @@ export class ORM {
      */
     createSelector(...args) {
         warnDeprecated(
-            'ORM.prototype.createSelector is deprecated. ' +
+            '`ORM.prototype.createSelector` has been deprecated. ' +
             'Import `createSelector` from Redux-ORM instead.'
         );
         return createSelector(this, ...args);
@@ -307,8 +307,8 @@ export class ORM {
      */
     getDefaultState() {
         warnDeprecated(
-            'ORM.prototype.getDefaultState is deprecated. Use ' +
-            'the ORM.prototype.getEmptyState instead.'
+            '`ORM.prototype.getDefaultState` has been deprecated. Use ' +
+            '`ORM.prototype.getEmptyState` instead.'
         );
         return this.getEmptyState();
     }
@@ -318,7 +318,7 @@ export class ORM {
      */
     define() {
         throw new Error(
-            'ORM.prototype.define is removed. Please define a Model class.'
+            '`ORM.prototype.define` has been removed. Please define a Model class.'
         );
     }
 }

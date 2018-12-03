@@ -116,6 +116,13 @@ const Model = class Model {
      * @return {undefined}
      */
     static markAccessed(ids) {
+        if (typeof this._session === 'undefined') {
+            throw new Error([
+                `Tried to mark rows of the ${this.modelName} model as accessed without a session. `,
+                'Create a session using `session = orm.session()` and call ',
+                `\`session["${this.modelName}"].markAccessed\` instead.`,
+            ].join(''));
+        }
         this.session.markAccessed(this.modelName, ids);
     }
 
@@ -123,6 +130,13 @@ const Model = class Model {
      * @return {undefined}
      */
     static markFullTableScanned() {
+        if (typeof this._session === 'undefined') {
+            throw new Error([
+                `Tried to mark the ${this.modelName} model as full table scanned without a session. `,
+                'Create a session using `session = orm.session()` and call ',
+                `\`session["${this.modelName}"].markFullTableScanned\` instead.`,
+            ].join(''));
+        }
         this.session.markFullTableScanned(this.modelName);
     }
 
@@ -132,6 +146,13 @@ const Model = class Model {
      * @return {string} The id attribute of this {@link Model}.
      */
     static get idAttribute() {
+        if (typeof this._session === 'undefined') {
+            throw new Error([
+                `Tried to get the ${this.modelName} model's id attribute without a session. `,
+                'Create a session using `session = orm.session()` and access ',
+                `\`session["${this.modelName}"].idAttribute\` instead.`,
+            ].join(''));
+        }
         return this.session.db.describe(this.modelName).idAttribute;
     }
 
@@ -143,7 +164,7 @@ const Model = class Model {
      */
     static connect(session) {
         if (!(session instanceof Session)) {
-            throw Error('A model can only connect to instances of Session.');
+            throw new Error('A model can only be connected to instances of Session.');
         }
         this._session = session;
     }
@@ -189,10 +210,10 @@ const Model = class Model {
      */
     static _getTableOpts() {
         if (typeof this.backend === 'function') {
-            warnDeprecated('Model.backend is deprecated. Please rename to .options');
+            warnDeprecated('`Model.backend` has been deprecated. Please rename to `.options`.');
             return this.backend();
         } else if (this.backend) {
-            warnDeprecated('Model.backend is deprecated. Please rename to .options');
+            warnDeprecated('`Model.backend` has been deprecated. Please rename to `.options`.');
             return this.backend;
         } else if (typeof this.options === 'function') {
             return this.options();
@@ -210,6 +231,13 @@ const Model = class Model {
      * @return {Model} a new {@link Model} instance.
      */
     static create(userProps) {
+        if (typeof this._session === 'undefined') {
+            throw new Error([
+                `Tried to create a ${this.modelName} model instance without a session. `,
+                'Create a session using `session = orm.session()` and call ',
+                `\`session["${this.modelName}"].create\` instead.`,
+            ].join(''));
+        }
         const props = { ...userProps };
 
         const m2mRelations = {};
@@ -254,8 +282,8 @@ const Model = class Model {
             payload: props,
         });
 
-        const ModelClass = this;
-        const instance = new ModelClass(newEntry);
+        const ThisModel = this;
+        const instance = new ThisModel(newEntry);
         instance._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
         return instance;
     }
@@ -270,6 +298,14 @@ const Model = class Model {
      * @return {Model} a {@link Model} instance.
      */
     static upsert(userProps) {
+        if (typeof this.session === 'undefined') {
+            throw new Error([
+                `Tried to upsert a ${this.modelName} model instance without a session. `,
+                'Create a session using `session = orm.session()` and call ',
+                `\`session["${this.modelName}"].upsert\` instead.`,
+            ].join(''));
+        }
+
         const { idAttribute } = this;
         if (userProps.hasOwnProperty(idAttribute)) {
             const id = userProps[idAttribute];
@@ -322,7 +358,17 @@ const Model = class Model {
      * @return {Boolean} a boolean indicating if entity with `props` exists in the state
      */
     static exists(lookupObj) {
-        return Boolean(this._findDatabaseRows(lookupObj).length);
+        if (typeof this.session === 'undefined') {
+            throw new Error([
+                `Tried to check if a ${this.modelName} model instance exists without a session. `,
+                'Create a session using `session = orm.session()` and call ',
+                `\`session["${this.modelName}"].exists\` instead.`,
+            ].join(''));
+        }
+
+        return Boolean(
+            this._findDatabaseRows(lookupObj).length
+        );
     }
 
     /**
@@ -335,16 +381,16 @@ const Model = class Model {
      * @return {Model} a {@link Model} instance that matches the properties in `lookupObj`.
      */
     static get(lookupObj) {
-        const ModelClass = this;
+        const ThisModel = this;
 
         const rows = this._findDatabaseRows(lookupObj);
         if (rows.length === 0) {
             return null;
         } else if (rows.length > 1) {
-            throw new Error(`Expected to find a single row in Model.get. Found ${rows.length}.`);
+            throw new Error(`Expected to find a single row in \`${this.modelName}.get\`. Found ${rows.length}.`);
         }
 
-        return new ModelClass(rows[0]);
+        return new ThisModel(rows[0]);
     }
 
     /**
@@ -373,11 +419,11 @@ const Model = class Model {
      * @return {Object} a reference to the plain JS object in the store
      */
     get ref() {
-        const ModelClass = this.getClass();
+        const ThisModel = this.getClass();
 
         // eslint-disable-next-line no-underscore-dangle
-        return ModelClass._findDatabaseRows({
-            [ModelClass.idAttribute]: this.getId(),
+        return ThisModel._findDatabaseRows({
+            [ThisModel.idAttribute]: this.getId(),
         })[0];
     }
 
@@ -465,9 +511,16 @@ const Model = class Model {
      * @return {undefined}
      */
     update(userMergeObj) {
+        const ThisModel = this.getClass();
+        if (typeof ThisModel.session === 'undefined') {
+            throw new Error([
+                `Tried to update a ${ThisModel.modelName} model instance without a session. `,
+                'You cannot call `.update` on an instance that you did not receive from the database.',
+            ].join(''));
+        }
+
         const mergeObj = { ...userMergeObj };
 
-        const ThisModel = this.getClass();
         const { fields, virtualFields } = ThisModel;
 
         const m2mRelations = {};
@@ -550,8 +603,16 @@ const Model = class Model {
      * @return {undefined}
      */
     delete() {
+        const ThisModel = this.getClass();
+        if (typeof ThisModel.session === 'undefined') {
+            throw new Error([
+                `Tried to delete a ${ThisModel.modelName} model instance without a session. `,
+                'You cannot call `.delete` on an instance that you did not receive from the database.',
+            ].join(''));
+        }
+
         this._onDelete();
-        this.getClass().session.applyUpdate({
+        ThisModel.session.applyUpdate({
             action: DELETE,
             query: getByIdQuery(this),
         });
@@ -653,7 +714,7 @@ const Model = class Model {
      * @deprecated Please use {@link Model.idExists} instead.
      */
     static hasId(id) {
-        console.warn('Model.hasId has been deprecated. Please use Model.idExists instead.');
+        console.warn('`Model.hasId` has been deprecated. Please use `Model.idExists` instead.');
         return this.idExists(id);
     }
 
@@ -663,7 +724,7 @@ const Model = class Model {
      */
     getNextState() {
         throw new Error(
-            'Model.prototype.getNextState is removed. See the 0.9 ' +
+            '`Model.prototype.getNextState` has been removed. See the 0.9 ' +
             'migration guide on the GitHub repo.'
         );
     }

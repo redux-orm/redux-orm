@@ -166,8 +166,8 @@ const Session = class Session {
      */
     getNextState() {
         warnDeprecated(
-            'Session.prototype.getNextState function is deprecated. Access ' +
-            'the Session.prototype.state property instead.'
+            '`Session.prototype.getNextState` has been deprecated. Access ' +
+            'the `Session.prototype.state` property instead.'
         );
         return this.state;
     }
@@ -179,7 +179,7 @@ const Session = class Session {
      */
     reduce() {
         throw new Error(
-            'Session.prototype.reduce is removed. The Redux integration API ' +
+            '`Session.prototype.reduce` has been removed. The Redux integration API ' +
             'is now decoupled from ORM and Session - see the 0.9 migration guide ' +
             'in the GitHub repo.'
         );
