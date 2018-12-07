@@ -140,29 +140,31 @@ const Model = class Model {
         return {};
     }
 
-    static _getTableOpts() {
-        if (typeof this.backend === 'function') {
-            warnDeprecated('Model.backend is deprecated. Please rename to .options');
-            return this.backend();
-        } else if (this.backend) {
-            warnDeprecated('Model.backend is deprecated. Please rename to .options');
-            return this.backend;
-        } else if (typeof this.options === 'function') {
-            return this.options();
-        }
-        return this.options;
-    }
-
-    static get _sessionData() {
-        if (!this.session) return {};
-        return this.session.getDataForModel(this.modelName);
-    }
-
+    /**
+     * @return {undefined}
+     */
     static markAccessed(ids) {
+        if (typeof this._session === 'undefined') {
+            throw new Error([
+                `Tried to mark rows of the ${this.modelName} model as accessed without a session. `,
+                'Create a session using `session = orm.session()` and call ',
+                `\`session["${this.modelName}"].markAccessed\` instead.`,
+            ].join(''));
+        }
         this.session.markAccessed(this.modelName, ids);
     }
 
+    /**
+     * @return {undefined}
+     */
     static markFullTableScanned() {
+        if (typeof this._session === 'undefined') {
+            throw new Error([
+                `Tried to mark the ${this.modelName} model as full table scanned without a session. `,
+                'Create a session using `session = orm.session()` and call ',
+                `\`session["${this.modelName}"].markFullTableScanned\` instead.`,
+            ].join(''));
+        }
         this.session.markFullTableScanned(this.modelName);
     }
 
@@ -172,6 +174,13 @@ const Model = class Model {
      * @return {string} The id attribute of this {@link Model}.
      */
     static get idAttribute() {
+        if (typeof this._session === 'undefined') {
+            throw new Error([
+                `Tried to get the ${this.modelName} model's id attribute without a session. `,
+                'Create a session using `session = orm.session()` and access ',
+                `\`session["${this.modelName}"].idAttribute\` instead.`,
+            ].join(''));
+        }
         return this.session.db.describe(this.modelName).idAttribute;
     }
 
@@ -183,7 +192,7 @@ const Model = class Model {
      */
     static connect(session) {
         if (!(session instanceof Session)) {
-            throw Error('A model can only connect to instances of Session.');
+            throw new Error('A model can only be connected to instances of Session.');
         }
         this._session = session;
     }
@@ -210,7 +219,7 @@ const Model = class Model {
     }
 
     /**
-     * @todo Document this method.
+     * @return {undefined}
      */
     static invalidateClassCache() {
         this.isSetUp = undefined;
@@ -225,70 +234,19 @@ const Model = class Model {
     }
 
     /**
-     * Returns a {@link QuerySet} containing all {@link Model} instances.
-     * @return {QuerySet} a QuerySet containing all {@link Model} instances
-     */
-    static all() {
-        return this.getQuerySet();
-    }
-
-    /**
-     * Update many-many relations for model.
-     * @param relations
-     * @return undefined
      * @private
      */
-    _refreshMany2Many(relations) {
-        const ThisModel = this.getClass();
-        const { fields, virtualFields, modelName } = ThisModel;
-
-        Object.keys(relations).forEach((name) => {
-            const reverse = !fields.hasOwnProperty(name);
-            const field = virtualFields[name];
-            const values = relations[name];
-
-            if (!Array.isArray(values)) {
-                throw new TypeError(`Failed to resolve many-to-many relationship: ${modelName}[${name}] must be an array (passed: ${values})`);
-            }
-
-            const normalizedNewIds = values.map(normalizeEntity);
-            const uniqueIds = uniq(normalizedNewIds);
-
-            if (normalizedNewIds.length !== uniqueIds.length) {
-                throw new Error(`Found duplicate id(s) when passing "${normalizedNewIds}" to ${ThisModel.modelName}.${name} value`);
-            }
-
-            const throughModelName = field.through || m2mName(ThisModel.modelName, name);
-            const ThroughModel = ThisModel.session[throughModelName];
-
-            let fromField;
-            let toField;
-
-            if (!reverse) {
-                ({ from: fromField, to: toField } = field.throughFields);
-            } else {
-                ({ from: toField, to: fromField } = field.throughFields);
-            }
-
-            const currentIds = ThroughModel.filter(through =>
-                through[fromField] === this[ThisModel.idAttribute]
-            ).toRefArray().map(ref => ref[toField]);
-
-            const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
-
-            if (diffActions) {
-                const {
-                    delete: idsToDelete,
-                    add: idsToAdd,
-                } = diffActions;
-                if (idsToDelete.length > 0) {
-                    this[name].remove(...idsToDelete);
-                }
-                if (idsToAdd.length > 0) {
-                    this[name].add(...idsToAdd);
-                }
-            }
-        });
+    static _getTableOpts() {
+        if (typeof this.backend === 'function') {
+            warnDeprecated('`Model.backend` has been deprecated. Please rename to `.options`.');
+            return this.backend();
+        } else if (this.backend) {
+            warnDeprecated('`Model.backend` has been deprecated. Please rename to `.options`.');
+            return this.backend;
+        } else if (typeof this.options === 'function') {
+            return this.options();
+        }
+        return this.options;
     }
 
     /**
@@ -301,6 +259,13 @@ const Model = class Model {
      * @return {Model} a new {@link Model} instance.
      */
     static create(userProps) {
+        if (typeof this._session === 'undefined') {
+            throw new Error([
+                `Tried to create a ${this.modelName} model instance without a session. `,
+                'Create a session using `session = orm.session()` and call ',
+                `\`session["${this.modelName}"].create\` instead.`,
+            ].join(''));
+        }
         const props = { ...userProps };
 
         const m2mRelations = {};
@@ -345,8 +310,8 @@ const Model = class Model {
             payload: props,
         });
 
-        const ModelClass = this;
-        const instance = new ModelClass(newEntry);
+        const ThisModel = this;
+        const instance = new ThisModel(newEntry);
         instance._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
         return instance;
     }
@@ -361,6 +326,14 @@ const Model = class Model {
      * @return {Model} a {@link Model} instance.
      */
     static upsert(userProps) {
+        if (typeof this.session === 'undefined') {
+            throw new Error([
+                `Tried to upsert a ${this.modelName} model instance without a session. `,
+                'Create a session using `session = orm.session()` and call ',
+                `\`session["${this.modelName}"].upsert\` instead.`,
+            ].join(''));
+        }
+
         const { idAttribute } = this;
         if (userProps.hasOwnProperty(idAttribute)) {
             const id = userProps[idAttribute];
@@ -413,7 +386,17 @@ const Model = class Model {
      * @return {Boolean} a boolean indicating if entity with `props` exists in the state
      */
     static exists(lookupObj) {
-        return Boolean(this._findDatabaseRows(lookupObj).length);
+        if (typeof this.session === 'undefined') {
+            throw new Error([
+                `Tried to check if a ${this.modelName} model instance exists without a session. `,
+                'Create a session using `session = orm.session()` and call ',
+                `\`session["${this.modelName}"].exists\` instead.`,
+            ].join(''));
+        }
+
+        return Boolean(
+            this._findDatabaseRows(lookupObj).length
+        );
     }
 
     /**
@@ -426,16 +409,16 @@ const Model = class Model {
      * @return {Model} a {@link Model} instance that matches the properties in `lookupObj`.
      */
     static get(lookupObj) {
-        const ModelClass = this;
+        const ThisModel = this;
 
         const rows = this._findDatabaseRows(lookupObj);
         if (rows.length === 0) {
             return null;
         } else if (rows.length > 1) {
-            throw new Error(`Expected to find a single row in Model.get. Found ${rows.length}.`);
+            throw new Error(`Expected to find a single row in \`${this.modelName}.get\`. Found ${rows.length}.`);
         }
 
-        return new ModelClass(rows[0]);
+        return new ThisModel(rows[0]);
     }
 
     /**
@@ -464,11 +447,11 @@ const Model = class Model {
      * @return {Object} a reference to the plain JS object in the store
      */
     get ref() {
-        const ModelClass = this.getClass();
+        const ThisModel = this.getClass();
 
         // eslint-disable-next-line no-underscore-dangle
-        return ModelClass._findDatabaseRows({
-            [ModelClass.idAttribute]: this.getId(),
+        return ThisModel._findDatabaseRows({
+            [ThisModel.idAttribute]: this.getId(),
         })[0];
     }
 
@@ -556,9 +539,16 @@ const Model = class Model {
      * @return {undefined}
      */
     update(userMergeObj) {
+        const ThisModel = this.getClass();
+        if (typeof ThisModel.session === 'undefined') {
+            throw new Error([
+                `Tried to update a ${ThisModel.modelName} model instance without a session. `,
+                'You cannot call `.update` on an instance that you did not receive from the database.',
+            ].join(''));
+        }
+
         const mergeObj = { ...userMergeObj };
 
-        const ThisModel = this.getClass();
         const { fields, virtualFields } = ThisModel;
 
         const m2mRelations = {};
@@ -641,13 +631,84 @@ const Model = class Model {
      * @return {undefined}
      */
     delete() {
+        const ThisModel = this.getClass();
+        if (typeof ThisModel.session === 'undefined') {
+            throw new Error([
+                `Tried to delete a ${ThisModel.modelName} model instance without a session. `,
+                'You cannot call `.delete` on an instance that you did not receive from the database.',
+            ].join(''));
+        }
+
         this._onDelete();
-        this.getClass().session.applyUpdate({
+        ThisModel.session.applyUpdate({
             action: DELETE,
             query: getByIdQuery(this),
         });
     }
 
+    /**
+     * Update many-many relations for model.
+     * @param relations
+     * @return undefined
+     * @private
+     */
+    _refreshMany2Many(relations) {
+        const ThisModel = this.getClass();
+        const { fields, virtualFields, modelName } = ThisModel;
+
+        Object.keys(relations).forEach((name) => {
+            const reverse = !fields.hasOwnProperty(name);
+            const field = virtualFields[name];
+            const values = relations[name];
+
+            if (!Array.isArray(values)) {
+                throw new TypeError(`Failed to resolve many-to-many relationship: ${modelName}[${name}] must be an array (passed: ${values})`);
+            }
+
+            const normalizedNewIds = values.map(normalizeEntity);
+            const uniqueIds = uniq(normalizedNewIds);
+
+            if (normalizedNewIds.length !== uniqueIds.length) {
+                throw new Error(`Found duplicate id(s) when passing "${normalizedNewIds}" to ${ThisModel.modelName}.${name} value`);
+            }
+
+            const throughModelName = field.through || m2mName(ThisModel.modelName, name);
+            const ThroughModel = ThisModel.session[throughModelName];
+
+            let fromField;
+            let toField;
+
+            if (!reverse) {
+                ({ from: fromField, to: toField } = field.throughFields);
+            } else {
+                ({ from: toField, to: fromField } = field.throughFields);
+            }
+
+            const currentIds = ThroughModel.filter(through =>
+                through[fromField] === this[ThisModel.idAttribute]
+            ).toRefArray().map(ref => ref[toField]);
+
+            const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
+
+            if (diffActions) {
+                const {
+                    delete: idsToDelete,
+                    add: idsToAdd,
+                } = diffActions;
+                if (idsToDelete.length > 0) {
+                    this[name].remove(...idsToDelete);
+                }
+                if (idsToAdd.length > 0) {
+                    this[name].add(...idsToAdd);
+                }
+            }
+        });
+    }
+
+    /**
+     * @return {undefined}
+     * @private
+     */
     _onDelete() {
         const { virtualFields } = this.getClass();
         for (const key in virtualFields) { // eslint-disable-line
@@ -681,7 +742,7 @@ const Model = class Model {
      * @deprecated Please use {@link Model.idExists} instead.
      */
     static hasId(id) {
-        console.warn('Model.hasId has been deprecated. Please use Model.idExists instead.');
+        console.warn('`Model.hasId` has been deprecated. Please use `Model.idExists` instead.');
         return this.idExists(id);
     }
 
@@ -691,7 +752,7 @@ const Model = class Model {
      */
     getNextState() {
         throw new Error(
-            'Model.prototype.getNextState is removed. See the 0.9 ' +
+            '`Model.prototype.getNextState` has been removed. See the 0.9 ' +
             'migration guide on the GitHub repo.'
         );
     }
@@ -720,7 +781,7 @@ export default Model;
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Jul 05 2018 17:59:45 GMT+0200 (CEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Dec 07 2018 22:03:12 GMT+0100 (Mitteleuropäische Normalzeit)
 </footer>
 
 <script> prettyPrint(); </script>

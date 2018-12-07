@@ -39,6 +39,8 @@ import {
 
 import {
     m2mName,
+    m2mToFieldName,
+    m2mFromFieldName,
     reverseFieldName,
     reverseFieldErrorMessage,
 } from './utils';
@@ -55,20 +57,6 @@ import {
  */
 
 /**
- * Installs a field on a model and its related models if necessary.
- * @private
- */
-export function installField(field, fieldName, model, orm) {
-    const FieldInstaller = field.installerClass;
-    (new FieldInstaller({
-        field,
-        fieldName,
-        model,
-        orm,
-    })).run();
-}
-
-/**
  * Defines algorithm for installing a field onto a model and related models.
  * Conforms to the template method behavioral design pattern.
  * @private
@@ -79,6 +67,15 @@ class FieldInstallerTemplate {
         this.fieldName = opts.fieldName;
         this.model = opts.model;
         this.orm = opts.orm;
+        /**
+         * the field itself has no knowledge of the model
+         * it is being installed upon; we need to inform it
+         * that it is a self-referencing field for the field
+         * to be able to make better informed decisions
+         */
+        if (this.field.references(this.model)) {
+            this.field.toModelName = 'this';
+        }
     }
 
     get toModel() {
@@ -210,7 +207,7 @@ class Field {
         return this.constructor;
     }
 
-    isForeignKeyTo(model) {
+    references(model) {
         return false;
     }
 
@@ -272,30 +269,10 @@ class RelationalField extends Field {
     }
 
     getBackwardsFieldName(model) {
-        return this.relatedName || reverseFieldName(model.modelName);
-    }
-
-    getThroughFields(fieldName, model, toModel, throughModel) {
-        if (this.throughFields) {
-            const [fieldAName, fieldBName] = this.throughFields;
-            const fieldA = throughModel.fields[fieldAName];
-            return {
-                to: fieldA.isForeignKeyTo(toModel) ? fieldAName : fieldBName,
-                from: fieldA.isForeignKeyTo(toModel) ? fieldBName : fieldAName,
-            };
-        }
-        const toFieldName = findKey(
-            throughModel.fields,
-            field => field.isForeignKeyTo(toModel)
+        return (
+            this.relatedName ||
+            reverseFieldName(model.modelName)
         );
-        const fromFieldName = findKey(
-            throughModel.fields,
-            field => field.isForeignKeyTo(model)
-        );
-        return {
-            to: toFieldName,
-            from: fromFieldName,
-        };
     }
 
     createBackwardsVirtualField(fieldName, model, toModel, throughModel) {
@@ -310,14 +287,13 @@ class RelationalField extends Field {
     get installsBackwardsDescriptor() {
         return true;
     }
-}
 
-/**
- * @ignore
- */
-export class ForeignKey extends RelationalField {
+    references(model) {
+        return this.toModelName === model.modelName;
+    }
+
     get installerClass() {
-        return class ForeignKeyInstaller extends DefaultFieldInstaller {
+        return class AliasedForwardsDescriptorInstaller extends DefaultFieldInstaller {
             installForwardsDescriptor() {
                 Object.defineProperty(
                     this.model.prototype,
@@ -332,17 +308,18 @@ export class ForeignKey extends RelationalField {
             }
         };
     }
+}
 
+/**
+ * @ignore
+ */
+export class ForeignKey extends RelationalField {
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
         return forwardsManyToOneDescriptor(fieldName, toModel.modelName);
     }
 
     createBackwardsDescriptor(fieldName, model, toModel, throughModel) {
         return backwardsManyToOneDescriptor(fieldName, model.modelName);
-    }
-
-    isForeignKeyTo(model) {
-        return this.toModelName === model.modelName;
     }
 }
 
@@ -355,7 +332,10 @@ export class ManyToMany extends RelationalField {
     }
 
     getThroughModelName(fieldName, model) {
-        return this.through || m2mName(model.modelName, fieldName);
+        return (
+            this.through ||
+            m2mName(model.modelName, fieldName)
+        );
     }
 
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
@@ -401,6 +381,46 @@ export class ManyToMany extends RelationalField {
     get installsForwardsVirtualField() {
         return true;
     }
+
+    getThroughFields(fieldName, model, toModel, throughModel) {
+        if (this.throughFields) {
+            const [fieldAName, fieldBName] = this.throughFields;
+            const fieldA = throughModel.fields[fieldAName];
+            return {
+                to: fieldA.references(toModel) ? fieldAName : fieldBName,
+                from: fieldA.references(toModel) ? fieldBName : fieldAName,
+            };
+        }
+
+        if (model.modelName === toModel.modelName) {
+            /**
+             * we have no way of determining the relationship's
+             * direction here, so we need to assume that the user
+             * did not use a custom through model
+             * see ORM#registerManyToManyModelsFor
+             */
+            return {
+                to: m2mToFieldName(toModel.modelName),
+                from: m2mFromFieldName(model.modelName),
+            };
+        }
+
+        /**
+         * determine which field references which model
+         * and infer the directions from that
+         */
+        const throughModelFieldReferencing = otherModel => (
+            findKey(
+                throughModel.fields,
+                field => field.references(otherModel)
+            )
+        );
+
+        return {
+            to: throughModelFieldReferencing(toModel),
+            from: throughModelFieldReferencing(model),
+        };
+    }
 }
 
 /**
@@ -408,7 +428,10 @@ export class ManyToMany extends RelationalField {
  */
 export class OneToOne extends RelationalField {
     getBackwardsFieldName(model) {
-        return this.relatedName || model.modelName.toLowerCase();
+        return (
+            this.relatedName ||
+            model.modelName.toLowerCase()
+        );
     }
 
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
@@ -485,10 +508,10 @@ export function attr(opts) {
  *
  * @global
  *
- * @param  {string|boolean} toModelNameOrObj - the `modelName` property of
- *                                           the Model that is the target of the
- *                                           foreign key, or an object with properties
- *                                           `to` and optionally `relatedName`.
+ * @param  {string|Object} toModelNameOrObj - the `modelName` property of
+ *                                            the Model that is the target of the
+ *                                            foreign key, or an object with properties
+ *                                            `to` and optionally `relatedName`.
  * @param {string} [relatedName] - if you didn't pass an object as the first argument,
  *                                 this is the property name that will be used to
  *                                 access a QuerySet the foreign key is defined from,
@@ -585,10 +608,10 @@ export function many(...args) {
  *
  * @global
  *
- * @param  {string|boolean} toModelNameOrObj - the `modelName` property of
- *                                           the Model that is the target of the
- *                                           foreign key, or an object with properties
- *                                           `to` and optionally `relatedName`.
+ * @param  {string|Object} toModelNameOrObj - the `modelName` property of
+ *                                            the Model that is the target of the
+ *                                            foreign key, or an object with properties
+ *                                            `to` and optionally `relatedName`.
  * @param {string} [relatedName] - if you didn't pass an object as the first argument,
  *                                 this is the property name that will be used to
  *                                 access a Model the foreign key is defined from,
@@ -614,7 +637,7 @@ export function oneToOne(...args) {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Jul 05 2018 17:59:45 GMT+0200 (CEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Dec 07 2018 22:03:12 GMT+0100 (Mitteleuropäische Normalzeit)
 </footer>
 
 <script> prettyPrint(); </script>
