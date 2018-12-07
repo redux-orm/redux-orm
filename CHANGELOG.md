@@ -1,5 +1,14 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.12.2
+
+* Fixed self-referencing many-to-many relationships. They previously caused errors during initialization. ([#226](https://github.com/tommikaikkonen/redux-orm/pull/226))
+* Throw error when user attempts to register a model class without a `modelName` set. ([#231](https://github.com/tommikaikkonen/redux-orm/pull/231))
+* Throw error when user attempts to interact with the database without a `session`. ([#237](https://github.com/tommikaikkonen/redux-orm/pull/237))
+* Fixed tests not running on Windows. ([abe8723](https://github.com/tommikaikkonen/redux-orm/commit/abe87236b4c2755afd8946b70cb199c5aece50b5))
+* Drastically increased test coverage and split up tests to make them easier to digest. ([#220](https://github.com/tommikaikkonen/redux-orm/pull/220), [294d5f2](https://github.com/tommikaikkonen/redux-orm/commit/294d5f2a940499c80b613069dd955bb779926659))
+* Removed unused methods from Model. ([f9efb8b](https://github.com/tommikaikkonen/redux-orm/commit/f9efb8b2267a674dfea684c196ed13a665b75cdd))
+
 ### 0.12.1
 
 * Our exported ES module in `es/` (`pkg.module`) is now ES5 compatible. ([#216](https://github.com/tommikaikkonen/redux-orm/issues/216), [#221](https://github.com/tommikaikkonen/redux-orm/issues/221))
