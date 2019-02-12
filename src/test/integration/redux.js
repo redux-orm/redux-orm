@@ -14,8 +14,8 @@ describe('Redux integration', () => {
     let nextState;
     let ormReducer;
 
-    const CREATE_MOVIE = "CREATE_MOVIE";
-    const CREATE_PUBLISHER = "CREATE_PUBLISHER";
+    const CREATE_MOVIE = 'CREATE_MOVIE';
+    const CREATE_PUBLISHER = 'CREATE_PUBLISHER';
 
     const createModelReducers = () => {
         Author.reducer = jest.fn();
@@ -23,18 +23,20 @@ describe('Redux integration', () => {
         Cover.reducer = jest.fn();
         Genre.reducer = jest.fn();
         Tag.reducer = jest.fn();
-        Movie.reducer = jest.fn((action, Movie, session) => {
+        Movie.reducer = jest.fn((action, Model, session) => {
             switch (action.type) {
             case CREATE_MOVIE:
-                Movie.create(action.payload);
+                Model.create(action.payload);
                 break;
+            default: break;
             }
         });
-        Publisher.reducer = jest.fn((action, Publisher, session) => {
+        Publisher.reducer = jest.fn((action, Model, session) => {
             switch (action.type) {
             case CREATE_PUBLISHER:
-                Publisher.create(action.payload);
+                Model.create(action.payload);
                 break;
+            default: break;
             }
         });
     };
@@ -109,8 +111,8 @@ describe('Redux integration', () => {
         });
 
         it('arbitrary filters', () => {
-            const memoized = jest.fn(({ Movie }) => (
-                Movie.all()
+            const memoized = jest.fn(selectorSession => (
+                selectorSession.Movie
                     .filter(movie => movie.name === 'Getting started with filters')
                     .toRefArray()
             ));
@@ -133,8 +135,9 @@ describe('Redux integration', () => {
         });
 
         it('id lookups', () => {
-            const memoized = jest.fn(({ Movie }) => (
-                Movie.withId(0)
+            const memoized = jest.fn(selectorSession => (
+                selectorSession.Movie
+                    .withId(0)
             ));
             const selector = createSelector(orm, memoized);
             expect(typeof selector).toBe('function');
@@ -156,8 +159,8 @@ describe('Redux integration', () => {
         });
 
         it('empty QuerySets', () => {
-            const memoized = jest.fn(({ Movie }) => (
-                Movie
+            const memoized = jest.fn(selectorSession => (
+                selectorSession.Movie
                     .all()
                     .toModelArray()
             ));
@@ -182,8 +185,9 @@ describe('Redux integration', () => {
 
         it('Model updates', () => {
             const session = orm.session();
-            const memoized = jest.fn(({ Movie }) => (
-                Movie.withId(0)
+            const memoized = jest.fn(selectorSession => (
+                selectorSession.Movie
+                    .withId(0)
             ));
             const selector = createSelector(orm, memoized);
 
@@ -204,8 +208,9 @@ describe('Redux integration', () => {
 
         it('Model deletions', () => {
             const session = orm.session();
-            const memoized = jest.fn(({ Movie }) => (
-                Movie.withId(0)
+            const memoized = jest.fn(selectorSession => (
+                selectorSession.Movie
+                    .withId(0)
             ));
             const selector = createSelector(orm, memoized);
 
@@ -225,8 +230,8 @@ describe('Redux integration', () => {
         });
 
         it('foreign key descriptors', () => {
-            const memoized = jest.fn(({ Movie }) => (
-                Movie
+            const memoized = jest.fn(selectorSession => (
+                selectorSession.Movie
                     .all()
                     .toModelArray()
                     .reduce((map, movie) => ({
@@ -331,6 +336,5 @@ describe('Redux integration', () => {
             selector(otherUserState);
             expect(_selectorFunc.mock.calls).toHaveLength(2);
         });
-
     });
 });
