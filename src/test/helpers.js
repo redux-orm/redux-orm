@@ -193,7 +193,7 @@ export function createTestModels() {
         publisherId: fk({
             to: 'Publisher',
             as: 'publisher',
-            relatedName: 'movie',
+            relatedName: 'movies',
         }),
     };
 

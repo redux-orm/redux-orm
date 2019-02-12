@@ -9,7 +9,36 @@ describe('Redux integration', () => {
     let Tag;
     let Author;
     let Publisher;
+    let Movie;
     let emptyState;
+    let nextState;
+    let ormReducer;
+
+    const CREATE_MOVIE = "CREATE_MOVIE";
+    const CREATE_PUBLISHER = "CREATE_PUBLISHER";
+
+    const createModelReducers = () => {
+        Author.reducer = jest.fn();
+        Book.reducer = jest.fn();
+        Cover.reducer = jest.fn();
+        Genre.reducer = jest.fn();
+        Tag.reducer = jest.fn();
+        Movie.reducer = jest.fn((action, Movie, session) => {
+            switch (action.type) {
+            case CREATE_MOVIE:
+                Movie.create(action.payload);
+                break;
+            }
+        });
+        Publisher.reducer = jest.fn((action, Publisher, session) => {
+            switch (action.type) {
+            case CREATE_PUBLISHER:
+                Publisher.create(action.payload);
+                break;
+            }
+        });
+    };
+
     beforeEach(() => {
         ({
             Book,
@@ -17,26 +46,21 @@ describe('Redux integration', () => {
             Genre,
             Tag,
             Author,
+            Movie,
             Publisher,
         } = createTestModels());
         orm = new ORM();
-        orm.register(Book, Cover, Genre, Tag, Author, Publisher);
-        emptyState = orm.getEmptyState();
+        orm.register(Book, Cover, Genre, Tag, Author, Movie, Publisher);
+        ormReducer = createReducer(orm);
+        createModelReducers();
     });
 
     it('runs reducers if explicitly specified', () => {
-        Author.reducer = jest.fn();
-        Book.reducer = jest.fn();
-        Cover.reducer = jest.fn();
-        Genre.reducer = jest.fn();
-        Tag.reducer = jest.fn();
-        Publisher.reducer = jest.fn();
-
-        const reducer = createReducer(orm);
+        emptyState = orm.getEmptyState();
         const mockAction = {};
-        const nextState = reducer(emptyState, mockAction);
+        nextState = ormReducer(emptyState, mockAction);
 
-        expect(nextState).not.toBeUndefined();
+        expect(nextState).toBeDefined();
 
         expect(Author.reducer).toHaveBeenCalledTimes(1);
         expect(Book.reducer).toHaveBeenCalledTimes(1);
@@ -44,195 +68,269 @@ describe('Redux integration', () => {
         expect(Genre.reducer).toHaveBeenCalledTimes(1);
         expect(Tag.reducer).toHaveBeenCalledTimes(1);
         expect(Publisher.reducer).toHaveBeenCalledTimes(1);
+        expect(Movie.reducer).toHaveBeenCalledTimes(1);
     });
 
-    it('correctly creates a basic selector', () => {
-        let selectorTimesRun = 0;
-        const selector = createSelector(orm, () => selectorTimesRun++);
-        expect(typeof selector).toBe('function');
-
-        const state = orm.getEmptyState();
-
-        selector(state);
-        expect(selectorTimesRun).toBe(1);
-        selector(state);
-        expect(selectorTimesRun).toBe(1);
-        selector(orm.getEmptyState());
-        expect(selectorTimesRun).toBe(1);
-    });
-
-    it('correctly creates a selector that works with arbitrary filters', () => {
-        const session = orm.session(emptyState);
-        let selectorTimesRun = 0;
-        const selector = createSelector(orm, (memoizeSession) => {
-            selectorTimesRun++;
-            return memoizeSession.Book.all()
-                .filter({ name: 'Getting started with filters' })
-                .toRefArray();
+    it('correctly returns a different state when calling a reducer', () => {
+        nextState = ormReducer(emptyState, {
+            type: CREATE_MOVIE,
+            payload: {
+                id: 0,
+                name: 'Let there be a movie',
+            },
         });
-        expect(typeof selector).toBe('function');
-
-        selector(session.state);
-        expect(selectorTimesRun).toBe(1);
-        selector(session.state);
-        expect(selectorTimesRun).toBe(1);
-        session.Book.create({
-            name: 'Getting started with filters',
+        expect(nextState.Movie.itemsById).toEqual({
+            0: {
+                id: 0,
+                name: 'Let there be a movie',
+            }
         });
-        selector(session.state);
-        expect(selectorTimesRun).toBe(2);
-    });
-
-    it('correctly creates a selector that works with id lookups', () => {
-        const session = orm.session(emptyState);
-        let selectorTimesRun = 0;
-        const selector = createSelector(orm, (memoizeSession) => {
-            selectorTimesRun++;
-            return memoizeSession.Book.withId(0);
-        });
-        expect(typeof selector).toBe('function');
-
-        selector(session.state);
-        expect(selectorTimesRun).toBe(1);
-        selector(session.state);
-        expect(selectorTimesRun).toBe(1);
-        session.Book.create({
-            name: 'Getting started with id lookups',
-        });
-        selector(session.state);
-        expect(selectorTimesRun).toBe(2);
-    });
-
-    it('correctly creates a selector that works with empty QuerySets', () => {
-        const session = orm.session(emptyState);
-        let selectorTimesRun = 0;
-        const selector = createSelector(orm, (memoizeSession) => {
-            selectorTimesRun++;
-            return memoizeSession.Book.all().toModelArray();
-        });
-        expect(typeof selector).toBe('function');
-
-        selector(session.state);
-        expect(selectorTimesRun).toBe(1);
-        selector(session.state);
-        expect(selectorTimesRun).toBe(1);
-        session.Book.create({
-            name: 'Getting started with empty query sets',
-        });
-        selector(session.state);
-        expect(selectorTimesRun).toBe(2);
-    });
-
-    it('correctly creates a selector that works with other sessions\' insertions', () => {
-        const session = orm.session(emptyState);
-
-        let selectorTimesRun = 0;
-        const selector = createSelector(orm, (memoizeSession) => {
-            selectorTimesRun++;
-            return memoizeSession.Book.withId(0);
-        });
-        expect(typeof selector).toBe('function');
-
-        selector(session.state);
-        expect(selectorTimesRun).toBe(1);
-        selector(session.state);
-        expect(selectorTimesRun).toBe(1);
-
-        const book = session.Book.create({
-            name: 'Name after creation',
-        });
-
-        selector(session.state);
-        expect(selectorTimesRun).toBe(2);
-    });
-
-    it('correctly creates a selector that works with other sessions\' updates', () => {
-        const session = orm.session(emptyState);
-
-        let selectorTimesRun = 0;
-        const selector = createSelector(orm, (memoizeSession) => {
-            selectorTimesRun++;
-            return memoizeSession.Book.withId(0);
-        });
-        expect(typeof selector).toBe('function');
-
-        const book = session.Book.create({
-            name: 'Name after creation',
-        });
-
-        selector(session.state);
-        expect(selectorTimesRun).toBe(1);
-        selector(session.state);
-        expect(selectorTimesRun).toBe(1);
-
-        book.name = 'Updated name';
-        selector(session.state);
-        expect(selectorTimesRun).toBe(2);
-    });
-
-    it('correctly creates a selector that works with other sessions\' deletions', () => {
-        const session = orm.session(emptyState);
-
-        let selectorTimesRun = 0;
-        const selector = createSelector(orm, (memoizeSession) => {
-            selectorTimesRun++;
-            return memoizeSession.Book.withId(0);
-        });
-        expect(typeof selector).toBe('function');
-
-        const book = session.Book.create({
-            name: 'Name after creation',
-        });
-
-        selector(session.state);
-        expect(selectorTimesRun).toBe(1);
-        selector(session.state);
-        expect(selectorTimesRun).toBe(1);
-
-        book.delete();
-
-        selector(session.state);
-        expect(selectorTimesRun).toBe(2);
-    });
-
-    it('correctly creates a selector with input selectors', () => {
-        const _selectorFunc = jest.fn();
-
-        const selector = createSelector(
-            orm,
-            state => state.orm,
-            state => state.selectedUser,
-            _selectorFunc
-        );
-
-        const _state = orm.getEmptyState();
-
-        const appState = {
-            orm: _state,
-            selectedUser: 5,
-        };
-
-        expect(typeof selector).toBe('function');
-
-        selector(appState);
-        expect(_selectorFunc.mock.calls).toHaveLength(1);
-
-        const lastCall = _selectorFunc.mock.calls[_selectorFunc.mock.calls.length - 1];
-        expect(lastCall[0]).toBeInstanceOf(Session);
-        expect(lastCall[0].state).toBe(_state);
-        expect(lastCall[1]).toBe(5);
-
-        selector(appState);
-        expect(_selectorFunc.mock.calls).toHaveLength(1);
-
-        const otherUserState = Object.assign({}, appState, { selectedUser: 0 });
-
-        selector(otherUserState);
-        expect(_selectorFunc.mock.calls).toHaveLength(2);
     });
 
     it('calling reducer with undefined state doesn\'t throw', () => {
-        const reducer = createReducer(orm);
-        reducer(undefined, { type: '______init' });
+        ormReducer = createReducer(orm);
+        ormReducer(undefined, { type: '______init' });
+    });
+
+    describe('selectors memoize results as intended', () => {
+        it('basic selector', () => {
+            const memoized = jest.fn();
+            const selector = createSelector(orm, memoized);
+            expect(typeof selector).toBe('function');
+
+            selector(emptyState);
+            expect(memoized).toHaveBeenCalledTimes(1);
+            selector(emptyState);
+            expect(memoized).toHaveBeenCalledTimes(1);
+
+            // same empty state, but different reference
+            selector(orm.getEmptyState());
+            expect(memoized).toHaveBeenCalledTimes(1);
+        });
+
+        it('arbitrary filters', () => {
+            const memoized = jest.fn(({ Movie }) => (
+                Movie.all()
+                    .filter(movie => movie.name === 'Getting started with filters')
+                    .toRefArray()
+            ));
+            const selector = createSelector(orm, memoized);
+
+            selector(emptyState);
+            expect(memoized).toHaveBeenCalledTimes(1);
+            selector(emptyState);
+            expect(memoized).toHaveBeenCalledTimes(1);
+
+            nextState = ormReducer(emptyState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    name: 'Getting started with filters',
+                },
+            });
+
+            selector(nextState);
+            expect(memoized).toHaveBeenCalledTimes(2);
+        });
+
+        it('id lookups', () => {
+            const memoized = jest.fn(({ Movie }) => (
+                Movie.withId(0)
+            ));
+            const selector = createSelector(orm, memoized);
+            expect(typeof selector).toBe('function');
+
+            selector(emptyState);
+            expect(memoized).toHaveBeenCalledTimes(1);
+            selector(emptyState);
+            expect(memoized).toHaveBeenCalledTimes(1);
+
+            nextState = ormReducer(emptyState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    name: 'Getting started with id lookups',
+                },
+            });
+
+            selector(nextState);
+            expect(memoized).toHaveBeenCalledTimes(2);
+        });
+
+        it('empty QuerySets', () => {
+            const memoized = jest.fn(({ Movie }) => (
+                Movie
+                    .all()
+                    .toModelArray()
+            ));
+            const selector = createSelector(orm, memoized);
+            expect(typeof selector).toBe('function');
+
+            selector(emptyState);
+            expect(memoized).toHaveBeenCalledTimes(1);
+            selector(emptyState);
+            expect(memoized).toHaveBeenCalledTimes(1);
+
+            nextState = ormReducer(emptyState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    name: 'Getting started with empty query sets',
+                },
+            });
+
+            selector(nextState);
+            expect(memoized).toHaveBeenCalledTimes(2);
+        });
+
+        it('Model updates', () => {
+            const session = orm.session();
+            const memoized = jest.fn(({ Movie }) => (
+                Movie.withId(0)
+            ));
+            const selector = createSelector(orm, memoized);
+
+            const movie = session.Movie.create({
+                name: 'Name after creation',
+            });
+
+            selector(session.state);
+            expect(memoized).toHaveBeenCalledTimes(1);
+            selector(session.state);
+            expect(memoized).toHaveBeenCalledTimes(1);
+
+            movie.name = 'Updated name';
+
+            selector(session.state);
+            expect(memoized).toHaveBeenCalledTimes(2);
+        });
+
+        it('Model deletions', () => {
+            const session = orm.session();
+            const memoized = jest.fn(({ Movie }) => (
+                Movie.withId(0)
+            ));
+            const selector = createSelector(orm, memoized);
+
+            const movie = session.Movie.create({
+                name: 'Name after creation',
+            });
+
+            selector(session.state);
+            expect(memoized).toHaveBeenCalledTimes(1);
+            selector(session.state);
+            expect(memoized).toHaveBeenCalledTimes(1);
+
+            movie.delete();
+
+            selector(session.state);
+            expect(memoized).toHaveBeenCalledTimes(2);
+        });
+
+        it('foreign key descriptors', () => {
+            const memoized = jest.fn(({ Movie }) => (
+                Movie
+                    .all()
+                    .toModelArray()
+                    .reduce((map, movie) => ({
+                        ...map,
+                        [movie.id]: movie.publisher ? movie.publisher.ref : null,
+                    }), {})
+            ));
+            const selector = createSelector(orm, memoized);
+            expect(typeof selector).toBe('function');
+
+            expect(
+                selector(emptyState)
+            ).toEqual({});
+            expect(memoized).toHaveBeenCalledTimes(1);
+
+            nextState = ormReducer(emptyState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    id: 532,
+                    name: 'Getting started with FK descriptors',
+                    publisherId: 123,
+                },
+            });
+
+            expect(
+                selector(nextState)
+            ).toEqual({
+                532: null,
+            });
+            expect(memoized).toHaveBeenCalledTimes(2);
+
+            // random other publisher that should be of no interest
+            nextState = ormReducer(nextState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 999,
+                    name: 'random uninteresting publisher',
+                },
+            });
+
+            expect(
+                selector(nextState)
+            ).toEqual({
+                532: null,
+            });
+            expect(memoized).toHaveBeenCalledTimes(2);
+
+            nextState = ormReducer(nextState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                    name: 'publisher referenced by movie FK',
+                },
+            });
+
+            expect(
+                selector(nextState)
+            ).toEqual({
+                532: {
+                    id: 123,
+                    name: 'publisher referenced by movie FK',
+                },
+            });
+            expect(memoized).toHaveBeenCalledTimes(3);
+
+            const session = orm.session(nextState);
+            expect(session.Publisher.withId(123).movies.count()).toBe(1);
+        });
+
+        it('input selectors', () => {
+            const _selectorFunc = jest.fn();
+
+            const selector = createSelector(
+                orm,
+                state => state.orm,
+                state => state.selectedUser,
+                _selectorFunc
+            );
+
+            const _state = orm.getEmptyState();
+
+            const appState = {
+                orm: _state,
+                selectedUser: 5,
+            };
+
+            expect(typeof selector).toBe('function');
+
+            selector(appState);
+            expect(_selectorFunc.mock.calls).toHaveLength(1);
+
+            const lastCall = _selectorFunc.mock.calls[_selectorFunc.mock.calls.length - 1];
+            expect(lastCall[0]).toBeInstanceOf(Session);
+            expect(lastCall[0].state).toBe(_state);
+            expect(lastCall[1]).toBe(5);
+
+            selector(appState);
+            expect(_selectorFunc.mock.calls).toHaveLength(1);
+
+            const otherUserState = Object.assign({}, appState, { selectedUser: 0 });
+
+            selector(otherUserState);
+            expect(_selectorFunc.mock.calls).toHaveLength(2);
+        });
+
     });
 });
