@@ -230,21 +230,21 @@ describe('Redux integration', () => {
         });
 
         it('foreign key descriptors', () => {
-            const memoized = jest.fn(selectorSession => (
-                selectorSession.Movie
-                    .all()
-                    .toModelArray()
-                    .reduce((map, movie) => ({
-                        ...map,
-                        [movie.id]: movie.publisher ? movie.publisher.ref : null,
-                    }), {})
-            ));
+            const memoized = jest.fn((selectorSession) => {
+                const movie = selectorSession.Movie.withId(532);
+
+                // This test will pass if we query the publisher
+                //
+                // if (movie) {
+                //     const publisher = movie.publisher;
+                // }
+
+                return movie;
+            });
             const selector = createSelector(orm, memoized);
             expect(typeof selector).toBe('function');
 
-            expect(
-                selector(emptyState)
-            ).toEqual({});
+            expect(selector(emptyState, 532)).toEqual(null);
             expect(memoized).toHaveBeenCalledTimes(1);
 
             nextState = ormReducer(emptyState, {
@@ -256,11 +256,7 @@ describe('Redux integration', () => {
                 },
             });
 
-            expect(
-                selector(nextState)
-            ).toEqual({
-                532: null,
-            });
+            expect(selector(nextState, 532).publisher).toBeNull();
             expect(memoized).toHaveBeenCalledTimes(2);
 
             // random other publisher that should be of no interest
@@ -272,11 +268,7 @@ describe('Redux integration', () => {
                 },
             });
 
-            expect(
-                selector(nextState)
-            ).toEqual({
-                532: null,
-            });
+            expect(selector(nextState, 532).publisher).toBeNull();
             expect(memoized).toHaveBeenCalledTimes(2);
 
             nextState = ormReducer(nextState, {
@@ -287,13 +279,10 @@ describe('Redux integration', () => {
                 },
             });
 
-            expect(
-                selector(nextState)
-            ).toEqual({
-                532: {
-                    id: 123,
-                    name: 'publisher referenced by movie FK',
-                },
+            expect(selector(nextState, 532).publisher).not.toBeNull();
+            expect(selector(nextState, 532).publisher.ref).toEqual({
+                id: 123,
+                name: 'publisher referenced by movie FK',
             });
             expect(memoized).toHaveBeenCalledTimes(3);
 
