@@ -9,7 +9,9 @@ import {
     OneToOne,
     attr,
 } from './fields';
-import { CREATE, UPDATE, DELETE, FILTER } from './constants';
+import {
+    CREATE, UPDATE, DELETE, FILTER,
+} from './constants';
 import {
     normalizeEntity,
     arrayDiffActions,
@@ -212,10 +214,12 @@ const Model = class Model {
         if (typeof this.backend === 'function') {
             warnDeprecated('`Model.backend` has been deprecated. Please rename to `.options`.');
             return this.backend();
-        } else if (this.backend) {
+        }
+        if (this.backend) {
             warnDeprecated('`Model.backend` has been deprecated. Please rename to `.options`.');
             return this.backend;
-        } else if (typeof this.options === 'function') {
+        }
+        if (typeof this.options === 'function') {
             return this.options();
         }
         return this.options;
@@ -386,7 +390,8 @@ const Model = class Model {
         const rows = this._findDatabaseRows(lookupObj);
         if (rows.length === 0) {
             return null;
-        } else if (rows.length > 1) {
+        }
+        if (rows.length > 1) {
             throw new Error(`Expected to find a single row in \`${this.modelName}.get\`. Found ${rows.length}.`);
         }
 
@@ -562,8 +567,7 @@ const Model = class Model {
 
         // determine if model would have different related models after update
         updatedModel._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
-        const relationsEqual = Object.keys(m2mRelations).every(name =>
-            !arrayDiffActions(this[name], updatedModel[name])
+        const relationsEqual = Object.keys(m2mRelations).every(name => !arrayDiffActions(this[name], updatedModel[name])
         );
         const fieldsEqual = this.equals(updatedModel);
 
@@ -656,8 +660,7 @@ const Model = class Model {
                 ({ from: toField, to: fromField } = field.throughFields);
             }
 
-            const currentIds = ThroughModel.filter(through =>
-                through[fromField] === this[ThisModel.idAttribute]
+            const currentIds = ThroughModel.filter(through => through[fromField] === this[ThisModel.idAttribute]
             ).toRefArray().map(ref => ref[toField]);
 
             const diffActions = arrayDiffActions(currentIds, normalizedNewIds);

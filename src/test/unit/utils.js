@@ -1,4 +1,6 @@
-import { arrayDiffActions, warnDeprecated, m2mName, m2mFromFieldName, m2mToFieldName, reverseFieldName, normalizeEntity, objectShallowEquals, clauseFiltersByAttribute, attachQuerySetMethods } from '../../utils';
+import {
+    arrayDiffActions, warnDeprecated, m2mName, m2mFromFieldName, m2mToFieldName, reverseFieldName, normalizeEntity, objectShallowEquals, clauseFiltersByAttribute, attachQuerySetMethods
+} from '../../utils';
 import { FILTER } from '../../constants';
 import { Model, QuerySet, ORM } from '../../index';
 

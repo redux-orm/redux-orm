@@ -1,29 +1,48 @@
 {
-    "presets": [
-        "stage-2",
-    ],
+    "presets": [],
     "plugins": [
-        "transform-runtime",
-        ["transform-es2015-classes", {
-            "loose": true,
-        }]
+        "@babel/plugin-transform-runtime",
+        [
+            "@babel/plugin-transform-classes",
+            {
+                "loose": true
+            }
+        ],
+        "@babel/plugin-syntax-dynamic-import",
+        "@babel/plugin-syntax-import-meta",
+        "@babel/plugin-proposal-class-properties",
+        "@babel/plugin-proposal-json-strings",
+        [
+            "@babel/plugin-proposal-decorators",
+            {
+                "legacy": true
+            }
+        ],
+        "@babel/plugin-proposal-function-sent",
+        "@babel/plugin-proposal-export-namespace-from",
+        "@babel/plugin-proposal-numeric-separator",
+        "@babel/plugin-proposal-throw-expressions"
     ],
     "env": {
         "es": {
             "presets": [
-                ["env", {
-                    "modules": false,
-                }],
-            ],
+                [
+                    "@babel/preset-env",
+                    {
+                        "modules": false
+                    }
+                ]
+            ]
         },
         "cjs": {
             "presets": [
-                "env",
-            ],
+                "@babel/preset-env"
+            ]
         },
-        // https://github.com/facebook/jest/issues/3845
         "test": {
-            "plugins": ["transform-es2015-modules-commonjs"],
-        },
+            "plugins": [
+                "@babel/plugin-transform-modules-commonjs"
+            ]
+        }
     }
 }

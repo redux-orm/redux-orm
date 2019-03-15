@@ -1,4 +1,4 @@
-import { Model, ORM, QuerySet } from '../../';
+import { Model, ORM, QuerySet } from '../..';
 import { createTestModels, createTestSessionWithData } from '../helpers';
 
 describe('QuerySet tests', () => {
@@ -180,10 +180,10 @@ describe('QuerySet tests', () => {
     it('should throw a custom error when user try to interact with database without a session', () => {
         const { Book } = createTestModels();
         const errorMessage = 'Tried to query the Book model\'s table without a session. Create a session using `session = orm.session()` and use `session["Book"]` for querying instead.';
-        expect(() => Book.getQuerySet().count()).toThrowError(errorMessage);
-        expect(() => Book.getQuerySet().exists()).toThrowError(errorMessage);
-        expect(() => Book.getQuerySet().at(0)).toThrowError(errorMessage);
-        expect(() => Book.getQuerySet().first()).toThrowError(errorMessage);
-        expect(() => Book.getQuerySet().last()).toThrowError(errorMessage);
+        expect(() => Book.getQuerySet().count()).toThrow(errorMessage);
+        expect(() => Book.getQuerySet().exists()).toThrow(errorMessage);
+        expect(() => Book.getQuerySet().at(0)).toThrow(errorMessage);
+        expect(() => Book.getQuerySet().first()).toThrow(errorMessage);
+        expect(() => Book.getQuerySet().last()).toThrow(errorMessage);
     });
 });

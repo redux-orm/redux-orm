@@ -1,4 +1,6 @@
-import { ORM, Model as BaseModel, QuerySet, attr } from '../../';
+import {
+    ORM, Model as BaseModel, QuerySet, attr
+} from '../..';
 
 describe('Model', () => {
     describe('static method', () => {
@@ -44,7 +46,7 @@ describe('Model', () => {
             [1, '', [], {}].forEach((value) => (
                 expect(() => {
                     Model.connect(value);
-                }).toThrowError('A model can only be connected to instances of Session.')
+                }).toThrow('A model can only be connected to instances of Session.')
             ));
         });
 
@@ -88,22 +90,22 @@ describe('Model', () => {
                 number: 123,
                 boolean: false,
             };
-            expect(() => Model.create(attributes)).toThrowError(
+            expect(() => Model.create(attributes)).toThrow(
                 'Tried to create a UnitTestModel model instance without a session. Create a session using `session = orm.session()` and call `session["UnitTestModel"].create` instead.'
             );
-            expect(() => Model.upsert(attributes)).toThrowError(
+            expect(() => Model.upsert(attributes)).toThrow(
                 'Tried to upsert a UnitTestModel model instance without a session. Create a session using `session = orm.session()` and call `session["UnitTestModel"].upsert` instead.'
             );
-            expect(() => Model.exists(attributes)).toThrowError(
+            expect(() => Model.exists(attributes)).toThrow(
                 'Tried to check if a UnitTestModel model instance exists without a session. Create a session using `session = orm.session()` and call `session["UnitTestModel"].exists` instead.'
             );
-            expect(() => Model.withId(0)).toThrowError(
+            expect(() => Model.withId(0)).toThrow(
                 'Tried to get the UnitTestModel model\'s id attribute without a session. Create a session using `session = orm.session()` and access `session["UnitTestModel"].idAttribute` instead.'
             );
-            expect(() => (new Model()).update(attributes)).toThrowError(
+            expect(() => (new Model()).update(attributes)).toThrow(
                 'Tried to update a UnitTestModel model instance without a session. You cannot call `.update` on an instance that you did not receive from the database.'
             );
-            expect(() => (new Model()).delete()).toThrowError(
+            expect(() => (new Model()).delete()).toThrow(
                 'Tried to delete a UnitTestModel model instance without a session. You cannot call `.delete` on an instance that you did not receive from the database.'
             );
         });

@@ -1,4 +1,6 @@
-import { Model, QuerySet, ORM, attr, many, fk } from '../../';
+import {
+    Model, QuerySet, ORM, attr, many, fk
+} from '../..';
 import { createTestSessionWithData } from '../helpers';
 
 describe('Many to many relationships', () => {
@@ -371,7 +373,7 @@ describe('Many to many relationships', () => {
             orm = new ORM();
             expect(() => {
                 orm.register(UserModel, User2UserModel);
-            }).toThrowError('Self-referencing many-to-many relationship at "User.users" using custom model "User2User" has no throughFields key. Cannot determine which fields reference the instances partaking in the relationship.');
+            }).toThrow('Self-referencing many-to-many relationship at "User.users" using custom model "User2User" has no throughFields key. Cannot determine which fields reference the instances partaking in the relationship.');
         });
     });
 

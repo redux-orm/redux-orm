@@ -1,4 +1,6 @@
-import { Model, ORM, attr, many } from '../../';
+import {
+    Model, ORM, attr, many
+} from '../..';
 import { createTestSessionWithData, measureMs } from '../helpers';
 
 describe('Big Data Test', () => {

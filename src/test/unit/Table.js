@@ -142,9 +142,8 @@ describe('Table', () => {
             const clauses = [
                 {
                     type: FILTER,
-                    payload: (attrs) =>
-                        ['work', 'urgent']
-                            .indexOf(attrs[table.idAttribute]) > -1
+                    payload: (attrs) => ['work', 'urgent']
+                        .indexOf(attrs[table.idAttribute]) > -1
                 }
             ];
             const result = table.query(state, clauses);
