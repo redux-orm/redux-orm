@@ -4,8 +4,7 @@ const defaultEqualityCheck = (a, b) => a === b;
 export const eqCheck = defaultEqualityCheck;
 
 const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (
-    nextArgs.every((arg, index) =>
-        equalityCheck(arg, lastArgs[index])
+    nextArgs.every((arg, index) => equalityCheck(arg, lastArgs[index])
     )
 );
 

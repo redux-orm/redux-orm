@@ -1,5 +1,7 @@
 import deepFreeze from 'deep-freeze';
-import { Model, QuerySet, ORM, attr, many, fk } from '../../';
+import {
+    Model, QuerySet, ORM, attr, many, fk
+} from '../..';
 import { createTestSessionWithData } from '../helpers';
 
 describe('Immutable session', () => {
@@ -98,7 +100,7 @@ describe('Immutable session', () => {
             publisher: 0,
         };
 
-        expect(() => Book.create(newProps)).toThrowError('Book.genres');
+        expect(() => Book.create(newProps)).toThrow('Book.genres');
     });
 
     it('Models are correctly deleted', () => {
@@ -136,8 +138,8 @@ describe('Immutable session', () => {
     it('Model.toString works', () => {
         const { Book } = session;
         const book = Book.first();
-        expect(book.toString()).toBe('Book: {id: 0, name: Tommi Kaikkonen - an Autobiography, ' +
-        'releaseYear: 2050, author: 0, cover: 0, genres: [0, 1], tags: [Technology, Literary], publisher: 1}');
+        expect(book.toString()).toBe('Book: {id: 0, name: Tommi Kaikkonen - an Autobiography, '
+        + 'releaseYear: 2050, author: 0, cover: 0, genres: [0, 1], tags: [Technology, Literary], publisher: 1}');
     });
 
     it('withId returns null if model instance not found', () => {
@@ -159,7 +161,7 @@ describe('Immutable session', () => {
         });
         expect(() => Book.get({
             name: 'Clean Code'
-        })).toThrowError('Expected to find a single row in `Book.get`. Found 2.');
+        })).toThrow('Expected to find a single row in `Book.get`. Found 2.');
     });
 
     it('updating arbitrary fields created during model construction works', () => {
@@ -282,8 +284,8 @@ describe('Immutable session', () => {
         const oldRef2 = movie2.ref;
         movie2.equals = function characterAmountsEqual(otherModel) {
             return (
-                this._fields.characters.length ===
-                otherModel._fields.characters.length
+                this._fields.characters.length
+                === otherModel._fields.characters.length
             );
         };
 
@@ -418,7 +420,7 @@ describe('Immutable session', () => {
         const book = Book.withId(0);
 
         const existingId = 1;
-        expect(() => book.genres.add(existingId)).toThrowError(existingId.toString());
+        expect(() => book.genres.add(existingId)).toThrow(existingId.toString());
     });
 
     it('trying to set many-to-many fields throws', () => {
@@ -427,7 +429,7 @@ describe('Immutable session', () => {
 
         expect(() => {
             book.genres = 'whatever';
-        }).toThrowError('Tried setting a M2M field. Please use the related QuerySet methods add, remove and clear.');
+        }).toThrow('Tried setting a M2M field. Please use the related QuerySet methods add, remove and clear.');
     });
 
     it('updating related many-to-many entities through ids works', () => {
@@ -489,7 +491,7 @@ describe('Immutable session', () => {
         const { Book } = session;
         expect(() => {
             Book.create({ id: 457656121 });
-        }).not.toThrowError();
+        }).not.toThrow();
     });
 
     it('creating models throws when passing non-array many field', () => {
@@ -497,7 +499,7 @@ describe('Immutable session', () => {
         [null, undefined, 353, 'a string'].forEach(value => {
             expect(() => {
                 Book.create({ id: 457656121, genres: value });
-            }).toThrowError(`Failed to resolve many-to-many relationship: Book[genres] must be an array (passed: ${value})`);
+            }).toThrow(`Failed to resolve many-to-many relationship: Book[genres] must be an array (passed: ${value})`);
         });
     });
 
@@ -506,7 +508,7 @@ describe('Immutable session', () => {
         const book = Book.create({ id: 457656121 });
         expect(() => {
             book.update({ id: 457656121 });
-        }).not.toThrowError();
+        }).not.toThrow();
     });
 
     it('update throws with non-array many field', () => {
@@ -515,7 +517,7 @@ describe('Immutable session', () => {
         [null, undefined, 353, 'a string'].forEach(value => {
             expect(() => {
                 book.update({ genres: value });
-            }).toThrowError(`Failed to resolve many-to-many relationship: Book[genres] must be an array (passed: ${value})`);
+            }).toThrow(`Failed to resolve many-to-many relationship: Book[genres] must be an array (passed: ${value})`);
         });
     });
 
@@ -533,7 +535,7 @@ describe('Immutable session', () => {
         const book = Book.withId(0);
 
         const unexistingId = 2012384;
-        expect(() => book.genres.remove(0, unexistingId)).toThrowError(unexistingId.toString());
+        expect(() => book.genres.remove(0, unexistingId)).toThrow(unexistingId.toString());
     });
 
     it('clearing related many-to-many entities works', () => {
@@ -622,7 +624,7 @@ describe('Immutable session', () => {
         const book = Book.first();
         expect(() => {
             book.author.books = 'whatever';
-        }).toThrowError('Can\'t mutate a reverse many-to-one relation.');
+        }).toThrow('Can\'t mutate a reverse many-to-one relation.');
     });
 
     it('one-to-one relationship descriptors work', () => {
@@ -653,7 +655,7 @@ describe('Immutable session', () => {
         const book = Book.first();
         expect(() => {
             book.cover.book = 'whatever';
-        }).toThrowError('Can\'t mutate a reverse one-to-one relation.');
+        }).toThrow('Can\'t mutate a reverse one-to-one relation.');
     });
 
     it('applying no updates returns the same state reference', () => {

@@ -186,10 +186,9 @@ function manyToManyDescriptor(
              * selects all instances of other model that are referenced
              * by any instance of the current model
              */
-            const qs = OtherModel.filter(otherModelInstance =>
-                referencedOtherIds.has(
-                    otherModelInstance[OtherModel.idAttribute]
-                )
+            const qs = OtherModel.filter(otherModelInstance => referencedOtherIds.has(
+                otherModelInstance[OtherModel.idAttribute]
+            )
             );
 
             /**
@@ -205,8 +204,7 @@ function manyToManyDescriptor(
                     entities.map(normalizeEntity)
                 );
 
-                const existingQs = throughQs.filter(through =>
-                    idsToAdd.has(through[otherReferencingField])
+                const existingQs = throughQs.filter(through => idsToAdd.has(through[otherReferencingField])
                 );
 
                 if (existingQs.exists()) {
@@ -217,11 +215,10 @@ function manyToManyDescriptor(
                     throw new Error(`Tried to add already existing ${OtherModel.modelName} id(s) ${existingIds} to the ${ThisModel.modelName} instance with id ${thisId}`);
                 }
 
-                idsToAdd.forEach(id =>
-                    ThroughModel.create({
-                        [otherReferencingField]: id,
-                        [thisReferencingField]: thisId,
-                    })
+                idsToAdd.forEach(id => ThroughModel.create({
+                    [otherReferencingField]: id,
+                    [thisReferencingField]: thisId,
+                })
                 );
             };
 

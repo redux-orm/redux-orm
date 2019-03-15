@@ -1,4 +1,6 @@
-import { ORM, Session, Model, oneToOne, fk, many } from '../../';
+import {
+    ORM, Session, Model, oneToOne, fk, many
+} from '../..';
 import { createTestModels } from '../helpers';
 
 describe('ORM', () => {
@@ -19,7 +21,7 @@ describe('ORM', () => {
             };
             const orm = new ORM();
             orm.register(A, B);
-            expect(() => orm.getModelClasses()).toThrowError(/field/);
+            expect(() => orm.getModelClasses()).toThrow(/field/);
         });
 
         it('with multiple foreign keys to the same model without related name', () => {
@@ -34,7 +36,7 @@ describe('ORM', () => {
             };
             const orm = new ORM();
             orm.register(A, B);
-            expect(() => orm.getModelClasses()).toThrowError(/field/);
+            expect(() => orm.getModelClasses()).toThrow(/field/);
         });
 
         it('with multiple many-to-manys to the same model without related name', () => {
@@ -49,13 +51,13 @@ describe('ORM', () => {
             };
             const orm = new ORM();
             orm.register(A, B);
-            expect(() => orm.getModelClasses()).toThrowError(/field/);
+            expect(() => orm.getModelClasses()).toThrow(/field/);
         });
 
         it('correctly throws an error when a model does not have a modelName property', () => {
             class A extends Model {}
             const orm = new ORM();
-            expect(() => orm.register(A)).toThrowError(
+            expect(() => orm.register(A)).toThrow(
                 "A model was passed that doesn't have a modelName set"
             );
         });
@@ -109,7 +111,7 @@ describe('ORM', () => {
         });
 
         it('throws when trying to get inexistant model from registry', () => {
-            expect(() => orm.get('InexistantModel')).toThrowError(
+            expect(() => orm.get('InexistantModel')).toThrow(
                 'Did not find model InexistantModel from registry.'
             );
         });

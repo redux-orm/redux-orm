@@ -15,10 +15,10 @@ describe('ES5 library code', () => {
             let book;
             expect(() => {
                 book = session.Book.create({ id: 1, title: 'title' });
-            }).not.toThrowError();
+            }).not.toThrow();
             expect(() => {
                 book.update({ id: 1, title: 'new title' });
-            }).not.toThrowError();
+            }).not.toThrow();
         });
     });
 });

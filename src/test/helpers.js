@@ -1,6 +1,8 @@
 import ORM from '../ORM';
 import Model from '../Model';
-import { fk, many, oneToOne, attr } from '../fields';
+import {
+    fk, many, oneToOne, attr
+} from '../fields';
 
 /**
  * These utils create a database schema for testing.
@@ -256,4 +258,3 @@ export const measureMs = (start) => {
     const end = process.hrtime(start);
     return Math.round((end[0] * 1000) + (end[1] / 1000000));
 };
-

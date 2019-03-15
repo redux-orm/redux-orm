@@ -1,4 +1,6 @@
-import { Model, QuerySet, ORM, Backend, Schema, createSelector, createReducer } from '../../';
+import {
+    Model, QuerySet, ORM, Backend, Schema, createSelector, createReducer
+} from '../..';
 import { createTestSessionWithData, createTestORM } from '../helpers';
 
 describe('Deprecations', () => {
@@ -103,7 +105,7 @@ describe('Deprecations', () => {
         });
 
         it('ORM#define is deprecated', () => {
-            expect(() => orm.define()).toThrowError(
+            expect(() => orm.define()).toThrow(
                 '`ORM.prototype.define` has been removed. Please define a Model class.'
             );
         });
@@ -145,7 +147,7 @@ describe('Deprecations', () => {
         });
 
         it('Session#reduce is deprecated', () => {
-            expect(() => session.reduce()).toThrowError(
+            expect(() => session.reduce()).toThrow(
                 '`Session.prototype.reduce` has been removed. The Redux integration API is now decoupled from ORM and Session - see the 0.9 migration guide in the GitHub repo.'
             );
         });
@@ -165,20 +167,20 @@ describe('Deprecations', () => {
         });
 
         it('Backend is deprecated', () => {
-            expect(() => new Backend()).toThrowError(
+            expect(() => new Backend()).toThrow(
                 'Having a custom Backend instance is now unsupported. Documentation for database customization is upcoming, for now please look at the db folder in the source.'
             );
         });
 
         it('Schema is deprecated', () => {
-            expect(() => new Schema()).toThrowError(
+            expect(() => new Schema()).toThrow(
                 'Schema has been renamed to ORM. Please import ORM instead of Schema from Redux-ORM.'
             );
         });
 
         it('QuerySet#withModels is deprecated', () => {
             const bookQs = orm.get('Book').getQuerySet();
-            expect(() => bookQs.withModels).toThrowError(
+            expect(() => bookQs.withModels).toThrow(
                 '`QuerySet.prototype.withModels` has been removed. Use `.toModelArray()` or predicate functions that instantiate Models from refs, e.g. `new Model(ref)`.'
             );
         });
@@ -190,27 +192,27 @@ describe('Deprecations', () => {
             expect(bookQs.withRefs).toBe(undefined);
 
             expect(consoleWarn.timesRun).toBe(1);
-            expect(consoleWarn.lastMessage).toBe('`QuerySet.prototype.withRefs` has been deprecated. ' +
-            'Query building operates on refs only now.');
+            expect(consoleWarn.lastMessage).toBe('`QuerySet.prototype.withRefs` has been deprecated. '
+            + 'Query building operates on refs only now.');
         });
 
         it('QuerySet#map is deprecated', () => {
             const bookQs = Book.getQuerySet();
-            expect(() => bookQs.map()).toThrowError(
+            expect(() => bookQs.map()).toThrow(
                 '`QuerySet.prototype.map` has been removed. Call `.toModelArray()` or `.toRefArray()` first to map.'
             );
         });
 
         it('QuerySet#forEach is deprecated', () => {
             const bookQs = Book.getQuerySet();
-            expect(() => bookQs.forEach()).toThrowError(
+            expect(() => bookQs.forEach()).toThrow(
                 '`QuerySet.prototype.forEach` has been removed. Call `.toModelArray()` or `.toRefArray()` first to iterate.'
             );
         });
 
         it('Model#getNextState is deprecated', () => {
             const book = new Book();
-            expect(() => book.getNextState()).toThrowError(
+            expect(() => book.getNextState()).toThrow(
                 '`Model.prototype.getNextState` has been removed. See the 0.9 migration guide on the GitHub repo.'
             );
         });

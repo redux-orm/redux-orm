@@ -1,4 +1,6 @@
-import { ORM, Session, createReducer, createSelector } from '../../';
+import {
+    ORM, Session, createReducer, createSelector
+} from '../..';
 import { createTestModels } from '../helpers';
 
 describe('Redux integration', () => {

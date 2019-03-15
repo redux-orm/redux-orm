@@ -1,7 +1,9 @@
 import mapValues from 'lodash/mapValues';
 import ops from 'immutable-ops';
 
-import { CREATE, UPDATE, DELETE, SUCCESS } from '../constants';
+import {
+    CREATE, UPDATE, DELETE, SUCCESS,
+} from '../constants';
 
 import Table from './Table';
 
