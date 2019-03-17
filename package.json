@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "module": "es/index.js",
   "jsnext:main": "src/index.js",
+  "sideEffects": false,
   "scripts": {
     "test": "jest",
     "test:watch": "npm test -- --watch",
