@@ -1,6 +1,3 @@
-import forOwn from 'lodash/forOwn';
-import uniq from 'lodash/uniq';
-
 import Session from './Session';
 import QuerySet from './QuerySet';
 import {
@@ -75,9 +72,10 @@ const Model = class Model {
     }
 
     _initFields(props) {
-        this._fields = { ...props };
+        const propsObj = Object(props);
+        this._fields = { ...propsObj };
 
-        forOwn(props, (fieldValue, fieldName) => {
+        Object.entries(propsObj).forEach(([fieldName, fieldValue]) => {
             // In this case, we got a prop that wasn't defined as a field.
             // Assuming it's an arbitrary data field, making an instance-specific
             // descriptor for it.
@@ -642,7 +640,7 @@ const Model = class Model {
             }
 
             const normalizedNewIds = values.map(normalizeEntity);
-            const uniqueIds = uniq(normalizedNewIds);
+            const uniqueIds = [...new Set(normalizedNewIds)];
 
             if (normalizedNewIds.length !== uniqueIds.length) {
                 throw new Error(`Found duplicate id(s) when passing "${normalizedNewIds}" to ${ThisModel.modelName}.${name} value`);

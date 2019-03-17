@@ -1,8 +1,4 @@
-import forOwn from 'lodash/forOwn';
-import includes from 'lodash/includes';
 import ops from 'immutable-ops';
-import intersection from 'lodash/intersection';
-import difference from 'lodash/difference';
 import { FILTER, EXCLUDE } from './constants';
 
 /**
@@ -145,7 +141,7 @@ function objectShallowEquals(a, b) {
     let keysInA = 0;
 
     // eslint-disable-next-line consistent-return
-    forOwn(a, (value, key) => {
+    Object.entries(Object(a)).forEach(([key, value]) => {
         if (!b.hasOwnProperty(key) || b[key] !== value) {
             return false;
         }
@@ -156,9 +152,9 @@ function objectShallowEquals(a, b) {
 }
 
 function arrayDiffActions(sourceArr, targetArr) {
-    const itemsInBoth = intersection(sourceArr, targetArr);
-    const deleteItems = difference(sourceArr, itemsInBoth);
-    const addItems = difference(targetArr, itemsInBoth);
+    const itemsInBoth = sourceArr.filter(item => targetArr.includes(item));
+    const deleteItems = sourceArr.filter(item => !itemsInBoth.includes(item));
+    const addItems = targetArr.filter(item => !itemsInBoth.includes(item));
 
     if (deleteItems.length || addItems.length) {
         return {
@@ -205,7 +201,6 @@ export {
     reverseFieldErrorMessage,
     objectShallowEquals,
     ops,
-    includes,
     arrayDiffActions,
     getBatchToken,
     clauseFiltersByAttribute,

@@ -1,6 +1,3 @@
-import forOwn from 'lodash/forOwn';
-import find from 'lodash/find';
-
 import Session from './Session';
 import Model from './Model';
 import { createDatabase as defaultCreateDatabase } from './db';
@@ -79,7 +76,7 @@ export class ORM {
         const { fields } = model;
         const thisModelName = model.modelName;
 
-        forOwn(fields, (fieldInstance, fieldName) => {
+        Object.entries(fields).forEach(([fieldName, fieldInstance]) => {
             if (!(fieldInstance instanceof ManyToMany)) {
                 return;
             }
@@ -142,8 +139,8 @@ export class ORM {
      * @return {Model} the {@link Model} class, if found
      */
     get(modelName) {
-        const found = find(
-            this.registry.concat(this.implicitThroughModels),
+        const allModels = this.registry.concat(this.implicitThroughModels);
+        const found = Object.values(allModels).find(
             model => model.modelName === modelName
         );
 
@@ -212,7 +209,7 @@ export class ORM {
         models.forEach((model) => {
             if (!model.isSetUp) {
                 const { fields, modelName, querySetClass } = model;
-                forOwn(fields, (field, fieldName) => {
+                Object.entries(fields).forEach(([fieldName, field]) => {
                     if (!this._isFieldInstalled(modelName, fieldName)) {
                         this._installField(field, fieldName, model);
                         this._setFieldInstalled(modelName, fieldName);

@@ -1,5 +1,3 @@
-import findKey from 'lodash/findKey';
-
 import {
     attrDescriptor,
     forwardsManyToOneDescriptor,
@@ -382,10 +380,9 @@ export class ManyToMany extends RelationalField {
          * and infer the directions from that
          */
         const throughModelFieldReferencing = otherModel => (
-            findKey(
-                throughModel.fields,
-                field => field.references(otherModel)
-            )
+            Object.keys(throughModel.fields).find(someFieldName => (
+                throughModel.fields[someFieldName].references(otherModel)
+            ))
         );
 
         return {

@@ -1,5 +1,3 @@
-import every from 'lodash/every';
-
 const defaultEqualityCheck = (a, b) => a === b;
 export const eqCheck = defaultEqualityCheck;
 
@@ -35,7 +33,7 @@ const accessedModelInstancesAreEqual = (previous, ormState) => {
         accessedModelInstances,
     } = previous;
 
-    return every(accessedModelInstances, (accessedInstances, modelName) => {
+    return Object.entries(accessedModelInstances).every(([modelName, accessedInstances]) => {
         const { itemsById: previousRows } = previous.ormState[modelName];
         const { itemsById: rows } = ormState[modelName];
 

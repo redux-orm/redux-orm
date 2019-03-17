@@ -1,4 +1,3 @@
-import mapValues from 'lodash/mapValues';
 import ops from 'immutable-ops';
 
 import {
@@ -73,10 +72,16 @@ function update(tables, updateSpec, tx, state) {
 
 
 export function createDatabase(schemaSpec) {
-    const { tables: tablesSpec } = schemaSpec;
-    const tables = mapValues(tablesSpec, tableSpec => new Table(tableSpec));
+    const { tables: tableSpecs } = schemaSpec;
+    const tables = Object.entries(tableSpecs).reduce((map, [tableName, tableSpec]) => ({
+        ...map,
+        [tableName]: new Table(tableSpec),
+    }), {});
 
-    const getEmptyState = () => mapValues(tables, table => table.getEmptyState());
+    const getEmptyState = () => Object.entries(tables).reduce((map, [tableName, table]) => ({
+        ...map,
+        [tableName]: table.getEmptyState(),
+    }), {});
     return {
         getEmptyState,
         query: query.bind(null, tables),

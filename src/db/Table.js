@@ -5,7 +5,7 @@ import sortBy from 'lodash/sortBy';
 import ops from 'immutable-ops';
 
 import { FILTER, EXCLUDE, ORDER_BY } from '../constants';
-import { includes, clauseFiltersByAttribute, clauseReducesResultSetSize } from '../utils';
+import { clauseFiltersByAttribute, clauseReducesResultSetSize } from '../utils';
 
 
 const DEFAULT_OPTS = {
@@ -283,7 +283,7 @@ const Table = class Table {
         return ops.batch.merge(batchToken, {
             [arrName]: ops.batch.filter(
                 batchToken,
-                id => !includes(idsToDelete, id),
+                id => !idsToDelete.includes(id),
                 branch[arrName]
             ),
             [mapName]: ops.batch.omit(

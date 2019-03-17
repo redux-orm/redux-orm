@@ -1,6 +1,5 @@
 import {
     normalizeEntity,
-    includes,
 } from './utils';
 
 /**
@@ -258,7 +257,7 @@ function manyToManyDescriptor(
                         .map(through => through[otherReferencingField]);
 
                     const unexistingIds = [...idsToRemove].filter(
-                        id => !includes(entitiesToDeleteIds, id)
+                        id => !entitiesToDeleteIds.includes(id)
                     );
 
                     throw new Error(`Tried to delete non-existing ${OtherModel.modelName} id(s) ${unexistingIds} from the ${ThisModel.modelName} instance with id ${thisId}`);
