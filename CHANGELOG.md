@@ -1,5 +1,11 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.12.3
+
+* Updated dependencies, most notably Babel v7.
+* Set `sideEffects: false` in `package.json` for tree-shaking.
+* Replaced some internal usage of lodash by ES6 methods.
+
 ### 0.12.2
 
 * Fixed self-referencing many-to-many relationships. They previously caused errors during initialization. ([#226](https://github.com/tommikaikkonen/redux-orm/pull/226))
