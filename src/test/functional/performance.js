@@ -1,7 +1,26 @@
 import {
     Model, ORM, attr, many
 } from '../..';
-import { createTestSessionWithData, measureMs } from '../helpers';
+import {
+    createTestSessionWithData, measureMs, nTimes, avg, round
+} from '../helpers';
+
+const crypto = require('crypto');
+
+const PRECISION = 2;
+const logTime = (message, tookSeconds, maxSeconds, measurements) => {
+    let out = `${message} took ${tookSeconds}s / ${maxSeconds}s`;
+    if (measurements) {
+        const measurementSeconds = measurements
+            .map(m => round(m, PRECISION))
+            .map(m => `${m}s`)
+            .join(', ');
+        out += ` on average (${measurementSeconds} each)`;
+    }
+    console.log(out);
+};
+
+const randomName = () => crypto.randomBytes(16).toString('hex');
 
 describe('Big Data Test', () => {
     let orm;
@@ -21,34 +40,61 @@ describe('Big Data Test', () => {
 
     it('adds a big amount of items in acceptable time', () => {
         const { Item } = session;
-        const start = measureMs();
 
-        const amount = 10000;
-        for (let i = 0; i < amount; ++i) {
-            Item.create({ id: i, name: 'TestItem' });
-        }
-        const tookSeconds = measureMs(start) / 1000;
-        console.log(`Creating ${amount} objects took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 2.5 : 0.85);
+        const maxSeconds = process.env.TRAVIS ? 10 : 2;
+        const n = 5;
+        const amount = 50000;
+        const items = new Map(nTimes(amount * n).map((_value, index) => ([
+            index,
+            {
+                id: index,
+                name: randomName(),
+            },
+        ])));
+
+        const measurements = nTimes(n).map((_value, index) => {
+            const start = index * amount;
+            const end = start + amount;
+            return measureMs(() => {
+                for (let i = start; i < end; ++i) {
+                    Item.create(items.get(i));
+                }
+            });
+        }).map(ms => ms / 1000);
+
+        const tookSeconds = round(avg(measurements, n), PRECISION);
+        logTime(`Creating ${amount} objects`, tookSeconds, maxSeconds, measurements);
+        expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
 
     it('looks up items by id in a large table in acceptable time', () => {
         const { Item } = session;
 
-        const rowCount = 20000;
+        const maxSeconds = process.env.TRAVIS ? 5 : 2;
+        const n = 5;
+        const lookupCount = 50000;
+        const rowCount = n * lookupCount;
+
         for (let i = 0; i < rowCount; ++i) {
-            Item.create({ id: i, name: 'TestItem' });
+            Item.create({
+                id: i,
+                name: randomName(),
+            });
         }
 
-        const lookupCount = 10000;
-        const maxId = rowCount - 1;
-        const start = measureMs();
-        for (let j = maxId, n = maxId - lookupCount; j > n; --j) {
-            Item.withId(j);
-        }
-        const tookSeconds = measureMs(start) / 1000;
-        console.log(`Looking up ${lookupCount} objects by id took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 1 : 0.75);
+        const measurements = nTimes(n).map((_value, index) => {
+            const start = index * lookupCount;
+            const end = start + lookupCount;
+            return measureMs(() => {
+                for (let i = start; i < end; ++i) {
+                    Item.withId(i);
+                }
+            });
+        }).map(ms => ms / 1000);
+
+        const tookSeconds = round(avg(measurements, n), PRECISION);
+        logTime(`Looking up ${lookupCount} objects by id`, tookSeconds, maxSeconds, measurements);
+        expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
 });
 
@@ -71,17 +117,17 @@ describe('Many-to-many relationship performance', () => {
         session = orm.session(orm.getEmptyState());
     });
 
-    const createChildren = (amount) => {
-        for (let i = 0; i < amount; ++i) {
+    const createChildren = (start, end) => {
+        for (let i = start; i < end; ++i) {
             session.Child.create({
                 id: i,
-                name: 'TestChild',
+                name: randomName(),
             });
         }
     };
 
-    const assignChildren = (parent, amount) => {
-        for (let i = 0; i < amount; ++i) {
+    const assignChildren = (parent, start, end) => {
+        for (let i = start; i < end; ++i) {
             parent.children.add(i);
         }
     };
@@ -89,50 +135,78 @@ describe('Many-to-many relationship performance', () => {
     it('adds many-to-many relationships in acceptable time', () => {
         const { Child, Parent } = session;
 
-        createChildren(8000);
-        const parent = Parent.create({});
-        const start = measureMs();
-        const childAmount = 2500;
-        assignChildren(parent, childAmount);
+        const maxSeconds = process.env.TRAVIS ? 13.5 : 1;
+        let parent;
+        const n = 5;
+        const childAmount = 1000;
+        createChildren(0, 8000);
 
-        const tookSeconds = measureMs(start) / 1000;
-        console.log(`Adding ${childAmount} relations took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 13.5 : 4);
+        const measurements = nTimes(n).map((_value, index) => {
+            parent = Parent.create({
+                id: index,
+            });
+            return measureMs(() => {
+                assignChildren(parent, 0, childAmount);
+            });
+        }).map(ms => ms / 1000);
+
+        const tookSeconds = round(avg(measurements, n), PRECISION);
+        logTime(`Adding ${childAmount} m2n relationships`, tookSeconds, maxSeconds, measurements);
+        expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
 
     it('queries many-to-many relationships in acceptable time', () => {
         const { Child, Parent } = session;
 
-        createChildren(10000);
-        const parent = Parent.create({});
-        assignChildren(parent, 3000);
-
-        const start = measureMs();
+        const maxSeconds = process.env.TRAVIS ? 15 : 2;
+        const n = 5;
         const queryCount = 500;
-        for (let j = 0; j < queryCount; ++j) {
-            parent.children.count();
-        }
+        const parent = Parent.create({ id: 1 });
+        createChildren(0, 10000);
+        assignChildren(parent, 0, 3000);
 
-        const tookSeconds = measureMs(start) / 1000;
-        console.log(`Performing ${queryCount} queries took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 15 : 4);
+        const measurements = nTimes(n).map((_value, index) => (
+            measureMs(() => {
+                for (let i = 0; i < queryCount; ++i) {
+                    parent.children.count();
+                }
+            })
+        )).map(ms => ms / 1000);
+
+        const tookSeconds = round(avg(measurements, n), PRECISION);
+        logTime(`Performing ${queryCount} m2n relationship queries`, tookSeconds, maxSeconds, measurements);
+        expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
 
     it('removes many-to-many relationships in acceptable time', () => {
         const { Child, Parent } = session;
 
-        createChildren(10000);
-        const parent = Parent.create({});
-        assignChildren(parent, 2000);
+        const maxSeconds = process.env.TRAVIS ? 7.5 : 2;
+        const n = 5;
+        const removeCount = 500;
 
-        const removeCount = 1000;
-        const start = measureMs();
-        for (let j = 0; j < removeCount; ++j) {
-            parent.children.remove(j);
-        }
+        const parent = Parent.create({ id: 1 });
+        createChildren(0, removeCount * n);
+        assignChildren(parent, 0, removeCount * n);
 
-        const tookSeconds = measureMs(start) / 1000;
-        console.log(`Removing ${removeCount} relations took ${tookSeconds}s`);
-        expect(tookSeconds).toBeLessThanOrEqual(process.env.TRAVIS ? 15 : 4);
+        const measurements = nTimes(n).map((_value, index) => {
+            const start = removeCount * index;
+            const end = removeCount + start;
+            const ms = measureMs(() => {
+                for (let i = start; i < end; ++i) {
+                    parent.children.remove(i);
+                }
+            });
+            /**
+             * reassign children to parent (undo the above code)
+             * otherwise the removal will speed up the removal of further children
+             */
+            assignChildren(parent, start, end);
+            return ms;
+        }).map(ms => ms / 1000);
+
+        const tookSeconds = round(avg(measurements, n), PRECISION);
+        logTime(`Removing ${removeCount} m2n relationships`, tookSeconds, maxSeconds, measurements);
+        expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
 });

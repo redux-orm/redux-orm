@@ -1,8 +1,24 @@
+var path = require('path');
+
 module.exports = {
+    rootDir: path.resolve('./src/'),
+    testRegex: 'test/(.*)/(.*)\\.(js)',
+    moduleFileExtensions: ['js', 'json'],
+    testPathIgnorePatterns: [
+        'test/functional/es5\\.(js)',
+        'test/functional/performance\\.(js)',
+    ],
+    transform: {
+        '\\.js$': 'babel-jest',
+    },
     coverageDirectory: './coverage/',
     collectCoverage: true,
     collectCoverageFrom: [
-        'src/*.js',
+        '*.js',
+        '*/*.js',
+    ],
+    coveragePathIgnorePatterns: [
+        'test/*',
     ],
     coverageThreshold: {
         global: {
@@ -11,16 +27,5 @@ module.exports = {
             lines: 85,
             statements: 85,
         },
-    },
-    moduleFileExtensions: [
-        'js',
-        'json',
-    ],
-    testPathIgnorePatterns: [
-        'src/test/functional/es5\\.(js)',
-    ],
-    testRegex: 'src/test/(.*)/(.*)\\.(js)',
-    transform: {
-        '\\.js$': 'babel-jest',
     },
 };

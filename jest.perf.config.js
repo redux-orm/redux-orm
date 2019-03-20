@@ -2,8 +2,11 @@ var path = require('path');
 
 module.exports = {
     rootDir: path.resolve('./src/'),
-    testRegex: 'test/functional/es5\\.(js)',
+    testRegex: 'test/functional/performance\\.(js)',
     moduleFileExtensions: ['js', 'json'],
-    transform: {},
+    transform: {
+        '\\.js$': 'babel-jest',
+    },
     collectCoverage: false,
+    verbose: true,
 };

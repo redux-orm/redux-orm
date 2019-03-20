@@ -253,8 +253,30 @@ export function createTestSessionWithData(customORM) {
 
 export const isSubclass = (a, b) => a.prototype instanceof b;
 
-export const measureMs = (start) => {
-    if (!start) return process.hrtime();
-    const end = process.hrtime(start);
-    return Math.round((end[0] * 1000) + (end[1] / 1000000));
+export const measureMsSince = (startTime) => {
+    if (!startTime) {
+        return process.hrtime();
+    }
+    const endTime = process.hrtime(startTime);
+    return Math.round(
+        (endTime[0] * 1000) + (endTime[1] / 1000000)
+    );
+};
+
+export const nTimes = (n) => Array.from({ length: n });
+
+export function measureMs(fn) {
+    const start = measureMsSince();
+    fn(...arguments);
+    return measureMsSince(start);
+}
+
+export const avg = (arr, n) => {
+    const sum = arr.reduce((cur, summand) => cur + summand);
+    return sum / n;
+};
+
+export const round = (num, precision, base = 10) => {
+    const precisionFactor = base ** precision;
+    return Math.round(num * precisionFactor) / precisionFactor;
 };

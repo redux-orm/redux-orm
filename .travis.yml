@@ -9,6 +9,7 @@ script:
   - npm run build
   - "npm run test:es5"
   - npm run test
+  - "npm run test:perf"
 
 after_success:
   - codecov
