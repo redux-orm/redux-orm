@@ -1,63 +1,46 @@
+import { DEFAULT_TABLE_OPTIONS } from './constants';
+
 const defaultEqualityCheck = (a, b) => a === b;
 export const eqCheck = defaultEqualityCheck;
 
 const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (
-    nextArgs.every((arg, index) => equalityCheck(arg, lastArgs[index])
-    )
+    nextArgs.every((arg, index) => (
+        equalityCheck(arg, lastArgs[index])
+    ))
 );
 
 const rowsAreEqual = (ids, rowsA, rowsB) => (
     ids.every(id => rowsA[id] === rowsB[id])
 );
 
-const tablesAreEqual = (rowsA, rowsB) => {
-    const rowIdsA = Object.keys(rowsA);
-    const rowIdsB = Object.keys(rowsB);
-
-    if (rowIdsA.length !== rowIdsB.length) {
-        /**
-         * the table contains new rows or old ones were removed
-         * this immediately means the table has been updated
-         */
-        return false;
-    }
-
-    return (
-        rowsAreEqual(rowIdsA, rowsA, rowsB) &&
-        rowsAreEqual(rowIdsB, rowsA, rowsB)
-    );
-};
-
-const accessedModelInstancesAreEqual = (previous, ormState) => {
+const accessedModelInstancesAreEqual = (previous, ormState, orm) => {
     const {
         accessedModelInstances,
     } = previous;
 
     return Object.entries(accessedModelInstances).every(([modelName, accessedInstances]) => {
-        const { itemsById: previousRows } = previous.ormState[modelName];
-        const { itemsById: rows } = ormState[modelName];
+        // if the entire table has not been changed, we have nothing to do
+        if (previous.ormState[modelName] === ormState[modelName]) {
+            return true;
+        }
+
+        const ModelClass = orm.get(modelName);
+        const mapName = ModelClass.options.mapName || DEFAULT_TABLE_OPTIONS.mapName;
+
+        const { [mapName]: previousRows } = previous.ormState[modelName];
+        const { [mapName]: rows } = ormState[modelName];
 
         const accessedIds = Object.keys(accessedInstances);
         return rowsAreEqual(accessedIds, previousRows, rows);
     });
 };
 
-const fullTableScannedModelsAreEqual = (previous, ormState) => {
-    const {
-        fullTableScannedModels,
-    } = previous;
-
-    return fullTableScannedModels.every((modelName) => {
-        const { itemsById: previousRows } = previous.ormState[modelName];
-        const { itemsById: rows } = ormState[modelName];
-
-        /**
-         * all of this model's instances were checked against some condition
-         * invalidate them unless none of them have changed
-         */
-        return tablesAreEqual(previousRows, rows);
-    });
-};
+const fullTableScannedModelsAreEqual = (previous, ormState) => (
+    previous.fullTableScannedModels.every(modelName => (
+        previous.ormState[modelName]
+            === ormState[modelName]
+    ))
+);
 
 /**
  * A memoizer to use with redux-orm
@@ -133,8 +116,8 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
         if (
             selectorWasCalledBefore &&
             argsAreEqual(previous.args, args, argEqualityCheck) &&
-            accessedModelInstancesAreEqual(previous, ormState) &&
-            fullTableScannedModelsAreEqual(previous, ormState)
+            fullTableScannedModelsAreEqual(previous, ormState) &&
+            accessedModelInstancesAreEqual(previous, ormState, orm)
         ) {
             /**
              * the instances that were accessed as well as

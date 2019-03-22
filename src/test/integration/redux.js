@@ -1,5 +1,5 @@
 import {
-    ORM, Session, createReducer, createSelector
+    ORM, Session, Model as OrmModel, createReducer, createSelector
 } from '../..';
 import { createTestModels } from '../helpers';
 
@@ -301,6 +301,30 @@ describe('Redux integration', () => {
 
             const session = orm.session(nextState);
             expect(session.Publisher.withId(123).movies.count()).toBe(1);
+        });
+
+        it('custom Model table options', () => {
+            class CustomizedModel extends OrmModel {}
+            CustomizedModel.modelName = 'CustomizedModel';
+            CustomizedModel.options = {
+                mapName: 'custom map name',
+            };
+            const _orm = new ORM();
+            _orm.register(CustomizedModel);
+            const session = _orm.session();
+
+            const memoized = jest.fn(selectorSession => (
+                selectorSession.CustomizedModel.count()
+            ));
+            const selector = createSelector(_orm, memoized);
+
+            selector(session.state);
+            expect(memoized).toHaveBeenCalledTimes(1);
+            const movie = session.CustomizedModel.create({
+                name: 'Name after creation',
+            });
+            selector(session.state);
+            expect(memoized).toHaveBeenCalledTimes(2);
         });
 
         it('input selectors', () => {

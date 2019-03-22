@@ -4,15 +4,10 @@ import orderBy from 'lodash/orderBy';
 import sortBy from 'lodash/sortBy';
 import ops from 'immutable-ops';
 
-import { FILTER, EXCLUDE, ORDER_BY } from '../constants';
+import {
+    FILTER, EXCLUDE, ORDER_BY, DEFAULT_TABLE_OPTIONS,
+} from '../constants';
 import { clauseFiltersByAttribute, clauseReducesResultSetSize } from '../utils';
-
-
-const DEFAULT_OPTS = {
-    idAttribute: 'id',
-    arrName: 'items',
-    mapName: 'itemsById',
-};
 
 // Input is the current max id and the new id passed to the create action.
 // Both may be undefined. The current max id in the case that this is the first Model
@@ -60,7 +55,7 @@ const Table = class Table {
      *                                                 map.
      */
     constructor(userOpts) {
-        Object.assign(this, DEFAULT_OPTS, userOpts);
+        Object.assign(this, DEFAULT_TABLE_OPTIONS, userOpts);
     }
 
     /**
