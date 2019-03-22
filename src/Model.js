@@ -75,7 +75,7 @@ const Model = class Model {
         const propsObj = Object(props);
         this._fields = { ...propsObj };
 
-        Object.entries(propsObj).forEach(([fieldName, fieldValue]) => {
+        Object.keys(propsObj).forEach((fieldName) => {
             // In this case, we got a prop that wasn't defined as a field.
             // Assuming it's an arbitrary data field, making an instance-specific
             // descriptor for it.
