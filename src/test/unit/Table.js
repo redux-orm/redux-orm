@@ -28,6 +28,7 @@ describe('Table', () => {
                     },
                 },
                 meta: {},
+                indexes: {},
             });
             batchToken = getBatchToken();
             txInfo = { batchToken, withMutations: false };
@@ -47,6 +48,7 @@ describe('Table', () => {
                 items: [],
                 itemsById: {},
                 meta: {},
+                indexes: {},
             });
         });
 
@@ -137,6 +139,7 @@ describe('Table', () => {
                     },
                 },
                 meta: {},
+                indexes: {},
             });
             table = new Table({ idAttribute: 'name' });
             const clauses = [

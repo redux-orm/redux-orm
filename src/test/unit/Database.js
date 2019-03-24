@@ -24,11 +24,13 @@ describe('createDatabase', () => {
     it('getEmptyState', () => {
         expect(emptyState).toEqual({
             Book: {
+                indexes: {},
                 items: [],
                 itemsById: {},
                 meta: {},
             },
             Author: {
+                indexes: {},
                 items: [],
                 itemsById: {},
                 meta: {},
@@ -71,11 +73,13 @@ describe('createDatabase', () => {
                 meta: {
                     maxId: 0,
                 },
+                indexes: {},
             },
             Author: {
                 items: [],
                 itemsById: {},
                 meta: {},
+                indexes: {},
             },
         });
     });
@@ -104,11 +108,13 @@ describe('createDatabase', () => {
                 meta: {
                     maxId: 0,
                 },
+                indexes: {},
             },
             Author: {
                 items: [],
                 itemsById: {},
                 meta: {},
+                indexes: {},
             },
         });
 
@@ -145,11 +151,13 @@ describe('createDatabase', () => {
                 meta: {
                     maxId: 1,
                 },
+                indexes: {},
             },
             Author: {
                 items: [],
                 itemsById: {},
                 meta: {},
+                indexes: {},
             },
         });
     });
@@ -167,11 +175,13 @@ describe('createDatabase', () => {
                 meta: {
                     maxId: 0,
                 },
+                indexes: {},
             },
             Author: {
                 items: [],
                 itemsById: {},
                 meta: {},
+                indexes: {},
             },
         };
 
@@ -209,11 +219,13 @@ describe('createDatabase', () => {
                 meta: {
                     maxId: 0,
                 },
+                indexes: {},
             },
             Author: {
                 items: [],
                 itemsById: {},
                 meta: {},
+                indexes: {},
             },
         };
 

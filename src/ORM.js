@@ -24,6 +24,12 @@ const ORM_DEFAULTS = {
     createDatabase: defaultCreateDatabase,
 };
 
+const RESERVED_TABLE_OPTIONS = [
+    'indexes',
+    'meta',
+];
+const isReservedTableOption = word => RESERVED_TABLE_OPTIONS.includes(word);
+
 /**
  * ORM - the Object Relational Mapper.
  *
@@ -161,6 +167,10 @@ export class ORM {
         const tables = models.reduce((spec, modelClass) => {
             const tableName = modelClass.modelName;
             const tableSpec = modelClass._getTableOpts(); // eslint-disable-line no-underscore-dangle
+            Object.keys(tableSpec).forEach((key) => {
+                if (!isReservedTableOption(key)) return;
+                throw new Error(`Reserved keyword \`${key}\` used in ${tableName}.options.`);
+            });
             spec[tableName] = Object.assign({}, { fields: modelClass.fields }, tableSpec);
             return spec;
         }, {});

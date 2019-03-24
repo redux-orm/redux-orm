@@ -1,5 +1,3 @@
-import { DEFAULT_TABLE_OPTIONS } from './constants';
-
 const defaultEqualityCheck = (a, b) => a === b;
 export const eqCheck = defaultEqualityCheck;
 
@@ -24,8 +22,7 @@ const accessedModelInstancesAreEqual = (previous, ormState, orm) => {
             return true;
         }
 
-        const ModelClass = orm.get(modelName);
-        const mapName = ModelClass.options.mapName || DEFAULT_TABLE_OPTIONS.mapName;
+        const { mapName } = orm.getDatabase().describe(modelName);
 
         const { [mapName]: previousRows } = previous.ormState[modelName];
         const { [mapName]: rows } = ormState[modelName];

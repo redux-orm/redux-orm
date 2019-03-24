@@ -73,15 +73,20 @@ function update(tables, updateSpec, tx, state) {
 
 export function createDatabase(schemaSpec) {
     const { tables: tableSpecs } = schemaSpec;
-    const tables = Object.entries(tableSpecs).reduce((map, [tableName, tableSpec]) => ({
-        ...map,
-        [tableName]: new Table(tableSpec),
-    }), {});
+    const tables = Object.entries(tableSpecs)
+        .reduce((map, [tableName, tableSpec]) => ({
+            ...map,
+            [tableName]: new Table(tableSpec),
+        }), {});
 
-    const getEmptyState = () => Object.entries(tables).reduce((map, [tableName, table]) => ({
-        ...map,
-        [tableName]: table.getEmptyState(),
-    }), {});
+    const getEmptyState = () => (
+        Object.entries(tables)
+            .reduce((map, [tableName, table]) => ({
+                ...map,
+                [tableName]: table.getEmptyState(),
+            }), {})
+    );
+
     return {
         getEmptyState,
         query: query.bind(null, tables),

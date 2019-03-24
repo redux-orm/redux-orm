@@ -5,9 +5,18 @@ import sortBy from 'lodash/sortBy';
 import ops from 'immutable-ops';
 
 import {
-    FILTER, EXCLUDE, ORDER_BY, DEFAULT_TABLE_OPTIONS,
+    FILTER, EXCLUDE, ORDER_BY,
 } from '../constants';
 import { clauseFiltersByAttribute, clauseReducesResultSetSize } from '../utils';
+
+import { ForeignKey } from '../fields';
+
+const DEFAULT_TABLE_OPTIONS = {
+    idAttribute: 'id',
+    arrName: 'items',
+    mapName: 'itemsById',
+    fields: {},
+};
 
 // Input is the current max id and the new id passed to the create action.
 // Both may be undefined. The current max id in the case that this is the first Model
@@ -53,6 +62,7 @@ const Table = class Table {
      * @param  {string} [userOpts.mapName=itemsById] - the state attribute where the entity objects
      *                                                 are stored in a id to entity object
      *                                                 map.
+     * @param  {string} [userOpts.fields={}] - mapping of field key to {@link Field} object
      */
     constructor(userOpts) {
         Object.assign(this, DEFAULT_TABLE_OPTIONS, userOpts);
@@ -71,6 +81,11 @@ const Table = class Table {
         return branch[this.mapName][id];
     }
 
+    accessIds(branch, ids) {
+        const map = branch[this.mapName];
+        return ids.map(id => map[id]);
+    }
+
     idExists(branch, id) {
         return branch[this.mapName].hasOwnProperty(id);
     }
@@ -80,7 +95,7 @@ const Table = class Table {
     }
 
     accessList(branch) {
-        return branch[this.arrName].map(id => this.accessId(branch, id));
+        return this.accessIds(branch, this.accessIdList(branch));
     }
 
     getMaxId(branch) {
@@ -117,15 +132,47 @@ const Table = class Table {
         const reducer = (rows, clause) => {
             const { type, payload } = clause;
             if (!rows) {
+                /**
+                 * First time this reducer is called during query.
+                 * This is where we apply query optimizations.
+                 */
                 if (clauseFiltersByAttribute(clause, idAttribute)) {
+                    /**
+                     * Payload specified a primary key. Use PK index
+                     * to look up the single row identified by the PK.
+                     */
                     const id = payload[idAttribute];
-                    // Payload specified a primary key; Since that is
-                    // unique, we can directly return that.
                     return this.idExists(branch, id)
                         ? [this.accessId(branch, id)]
                         : [];
                 }
+                if (type === FILTER) {
+                    const indexes = Object.entries(branch.indexes);
+                    const accessedIndexes = [];
+                    indexes.forEach(([fkAttr, index]) => {
+                        if (clauseFiltersByAttribute(clause, fkAttr)) {
+                            /**
+                            * Payload specified a foreign key. Use FK index
+                            * to potentially decrease amount of accessed rows.
+                            */
+                            accessedIndexes.push(index[payload[fkAttr]] || []);
+                        }
+                    });
+                    /**
+                     * Calculate set of unique PK values corresponding to each
+                     * foreign key's attribute value. Then retrieve all those rows.
+                     */
+                    if (accessedIndexes.length) {
+                        const lastIndex = accessedIndexes.pop();
+                        const indexedIds = accessedIndexes.reduce(([result, index]) => {
+                            const indexSet = new Set(index);
+                            return result.filter(Set.prototype.has, indexSet);
+                        }, lastIndex);
+                        return reducer(this.accessIds(branch, indexedIds), clause);
+                    }
+                }
 
+                // Give up optimization: Retrieve all rows (full table scan).
                 return reducer(this.accessList(branch), clause);
             }
 
@@ -150,12 +197,23 @@ const Table = class Table {
 
     /**
      * Returns the default state for the data structure.
-     * @return {Object} The default state for this {@link Backend} instance's data structure
+     * @return {Object} The default state for this {@link ORM} instance's data structure
      */
     getEmptyState() {
-        return {
+        const pkIndex = {
             [this.arrName]: [],
             [this.mapName]: {},
+        };
+        const fkIndexes = Object.keys(this.fields)
+            .filter(attr => attr !== this.idAttribute)
+            .filter(attr => this.fields[attr] instanceof ForeignKey)
+            .reduce((indexes, fkAttr) => ({
+                ...indexes,
+                [fkAttr]: {},
+            }), {});
+        return {
+            ...pkIndex,
+            indexes: fkIndexes,
             meta: {},
         };
     }
@@ -198,18 +256,53 @@ const Table = class Table {
             ? entry
             : ops.batch.set(batchToken, this.idAttribute, id, entry);
 
+        const indexToPush = Object.keys(workingState.indexes).reduce((values, fkAttr) => {
+            if (!entry.hasOwnProperty(fkAttr)) return values;
+            values.push([fkAttr, entry[fkAttr]]);
+            return values;
+        }, []);
+
+
         if (withMutations) {
             ops.mutable.push(id, workingState[this.arrName]);
             ops.mutable.set(id, finalEntry, workingState[this.mapName]);
+            indexToPush.forEach(([attr, value]) => {
+                const attrIndex = workingState.indexes[attr];
+                if (attrIndex.hasOwnProperty(value)) {
+                    ops.mutable.push(id, attrIndex[value]);
+                } else {
+                    ops.mutable.set(value, [id], attrIndex);
+                }
+            });
             return {
                 state: workingState,
                 created: finalEntry,
             };
         }
 
+        const nextIndexes = ops.batch.merge(
+            batchToken,
+            indexToPush.reduce((indexMap, [attr, value]) => {
+                const attrIndex = workingState.indexes[attr];
+                indexMap[attr] = {};
+                if (attrIndex.hasOwnProperty(value)) {
+                    indexMap[attr][value] = ops.batch.push(batchToken, id, attrIndex[value]);
+                } else {
+                    indexMap[attr] = ops.batch.merge(batchToken, {
+                        [value]: [id],
+                    }, attrIndex);
+                }
+                return indexMap;
+            }, {}),
+            workingState.indexes
+        );
+
         const nextState = ops.batch.merge(batchToken, {
             [this.arrName]: ops.batch.push(batchToken, id, workingState[this.arrName]),
-            [this.mapName]: ops.batch.merge(batchToken, { [id]: finalEntry }, workingState[this.mapName]),
+            [this.mapName]: ops.batch.merge(batchToken, {
+                [id]: finalEntry,
+            }, workingState[this.mapName]),
+            indexes: nextIndexes,
         }, workingState);
 
         return {

@@ -198,46 +198,67 @@ describe('ORM', () => {
                     items: [],
                     itemsById: {},
                     meta: {},
+                    indexes: {
+                        author: {},
+                        publisher: {},
+                    },
                 },
                 BookGenres: {
                     items: [],
                     itemsById: {},
                     meta: {},
+                    indexes: {
+                        fromBookId: {},
+                        toGenreId: {},
+                    },
                 },
                 BookTags: {
                     items: [],
                     itemsById: {},
                     meta: {},
+                    indexes: {
+                        fromBookId: {},
+                        toTagId: {},
+                    },
                 },
                 Author: {
                     items: [],
                     itemsById: {},
                     meta: {},
+                    indexes: {},
                 },
                 Cover: {
                     items: [],
                     itemsById: {},
                     meta: {},
+                    indexes: {},
                 },
                 Genre: {
                     items: [],
                     itemsById: {},
                     meta: {},
+                    indexes: {},
                 },
                 Tag: {
                     items: [],
                     itemsById: {},
                     meta: {},
+                    indexes: {},
                 },
                 TagSubTags: {
                     items: [],
                     itemsById: {},
                     meta: {},
+                    indexes: {
+                        fromTagId: {},
+                        toTagId: {},
+                    },
                 },
                 Publisher: {
                     items: [],
                     itemsById: {},
                     meta: {},
+                    indexes: {},
                 },
             });
         });
@@ -248,6 +269,24 @@ describe('ORM', () => {
             const session = orm.mutableSession(initialState);
             expect(session).toBeInstanceOf(Session);
             expect(session.withMutations).toBe(true);
+        });
+
+        it('throws if reserved Table options are specified', () => {
+            class CustomizedModel extends Model {}
+            CustomizedModel.modelName = 'CustomizedModel';
+            CustomizedModel.options = {
+                indexes: {},
+            };
+            orm.register(CustomizedModel);
+            expect(() => {
+                orm.session();
+            }).toThrow("Reserved keyword `indexes` used in CustomizedModel.options.");
+            CustomizedModel.options = {
+                meta: {},
+            };
+            expect(() => {
+                orm.session();
+            }).toThrow("Reserved keyword `meta` used in CustomizedModel.options.");
         });
     });
 });
