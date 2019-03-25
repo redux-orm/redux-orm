@@ -110,6 +110,43 @@ const Table = class Table {
         return id + 1;
     }
 
+    /**
+     * Returns the default state for the data structure.
+     * @return {Object} The default state for this {@link ORM} instance's data structure
+     */
+    getEmptyState() {
+        const pkIndex = {
+            [this.arrName]: [],
+            [this.mapName]: {},
+        };
+        const fkIndexes = Object.keys(this.fields)
+            .filter(attr => attr !== this.idAttribute)
+            .filter(attr => this.fields[attr] instanceof ForeignKey)
+            .reduce((indexes, fkAttr) => ({
+                ...indexes,
+                [fkAttr]: {},
+            }), {});
+        return {
+            ...pkIndex,
+            indexes: fkIndexes,
+            meta: {},
+        };
+    }
+
+    setMeta(tx, branch, key, value) {
+        const { batchToken, withMutations } = tx;
+        if (withMutations) {
+            const res = ops.mutable.setIn(['meta', key], value, branch);
+            return res;
+        }
+
+        return ops.batch.setIn(batchToken, ['meta', key], value, branch);
+    }
+
+    getMeta(branch, key) {
+        return branch.meta[key];
+    }
+
     query(branch, clauses) {
         if (clauses.length === 0) {
             return this.accessList(branch);
@@ -155,7 +192,9 @@ const Table = class Table {
                             * Payload specified a foreign key. Use FK index
                             * to potentially decrease amount of accessed rows.
                             */
-                            accessedIndexes.push(index[payload[fkAttr]] || []);
+                            if (index.hasOwnProperty(payload[fkAttr])) {
+                                accessedIndexes.push(index[payload[fkAttr]]);
+                            }
                         }
                     });
                     /**
@@ -196,43 +235,6 @@ const Table = class Table {
     }
 
     /**
-     * Returns the default state for the data structure.
-     * @return {Object} The default state for this {@link ORM} instance's data structure
-     */
-    getEmptyState() {
-        const pkIndex = {
-            [this.arrName]: [],
-            [this.mapName]: {},
-        };
-        const fkIndexes = Object.keys(this.fields)
-            .filter(attr => attr !== this.idAttribute)
-            .filter(attr => this.fields[attr] instanceof ForeignKey)
-            .reduce((indexes, fkAttr) => ({
-                ...indexes,
-                [fkAttr]: {},
-            }), {});
-        return {
-            ...pkIndex,
-            indexes: fkIndexes,
-            meta: {},
-        };
-    }
-
-    setMeta(tx, branch, key, value) {
-        const { batchToken, withMutations } = tx;
-        if (withMutations) {
-            const res = ops.mutable.setIn(['meta', key], value, branch);
-            return res;
-        }
-
-        return ops.batch.setIn(batchToken, ['meta', key], value, branch);
-    }
-
-    getMeta(branch, key) {
-        return branch.meta[key];
-    }
-
-    /**
      * Returns the data structure including a new object `entry`
      * @param  {Object} tx - transaction info
      * @param  {Object} branch - the data structure state
@@ -256,8 +258,9 @@ const Table = class Table {
             ? entry
             : ops.batch.set(batchToken, this.idAttribute, id, entry);
 
-        const indexToPush = Object.keys(workingState.indexes).reduce((values, fkAttr) => {
+        const indexesToAppendTo = Object.keys(workingState.indexes).reduce((values, fkAttr) => {
             if (!entry.hasOwnProperty(fkAttr)) return values;
+            if (entry[fkAttr] === null) return values;
             values.push([fkAttr, entry[fkAttr]]);
             return values;
         }, []);
@@ -266,7 +269,8 @@ const Table = class Table {
         if (withMutations) {
             ops.mutable.push(id, workingState[this.arrName]);
             ops.mutable.set(id, finalEntry, workingState[this.mapName]);
-            indexToPush.forEach(([attr, value]) => {
+            // add id to indexes
+            indexesToAppendTo.forEach(([attr, value]) => {
                 const attrIndex = workingState.indexes[attr];
                 if (attrIndex.hasOwnProperty(value)) {
                     ops.mutable.push(id, attrIndex[value]);
@@ -280,9 +284,8 @@ const Table = class Table {
             };
         }
 
-        const nextIndexes = ops.batch.merge(
-            batchToken,
-            indexToPush.reduce((indexMap, [attr, value]) => {
+        const nextIndexes = indexesToAppendTo
+            .reduce((indexMap, [attr, value]) => {
                 const attrIndex = workingState.indexes[attr];
                 indexMap[attr] = {};
                 if (attrIndex.hasOwnProperty(value)) {
@@ -293,16 +296,18 @@ const Table = class Table {
                     }, attrIndex);
                 }
                 return indexMap;
-            }, {}),
-            workingState.indexes
-        );
+            }, {});
 
         const nextState = ops.batch.merge(batchToken, {
             [this.arrName]: ops.batch.push(batchToken, id, workingState[this.arrName]),
             [this.mapName]: ops.batch.merge(batchToken, {
                 [id]: finalEntry,
             }, workingState[this.mapName]),
-            indexes: nextIndexes,
+            indexes: ops.batch.merge(
+                batchToken,
+                nextIndexes,
+                workingState.indexes
+            ),
         }, workingState);
 
         return {
@@ -324,10 +329,6 @@ const Table = class Table {
     update(tx, branch, rows, mergeObj) {
         const { batchToken, withMutations } = tx;
 
-        const {
-            mapName,
-        } = this;
-
         const mapFunction = (row) => {
             const merge = withMutations ? ops.mutable.merge : ops.batch.merge(batchToken);
             return merge(mergeObj, row);
@@ -335,11 +336,89 @@ const Table = class Table {
 
         const set = withMutations ? ops.mutable.set : ops.batch.set(batchToken);
 
-        const newMap = rows.reduce((map, row) => {
+        const indexedAttrs = Object.keys(branch.indexes)
+            .filter(attr => mergeObj.hasOwnProperty(attr));
+        const indexIdsToAdd = [];
+        const indexIdsToDelete = [];
+
+        const nextMap = rows.reduce((map, row) => {
+            const prevAttrValues = indexedAttrs.reduce((valueMap, attr) => ({
+                ...valueMap,
+                [attr]: row[attr],
+            }), {});
             const result = mapFunction(row);
-            return set(result[this.idAttribute], result, map);
-        }, branch[mapName]);
-        return ops.batch.set(batchToken, mapName, newMap, branch);
+            const nextAttrValues = indexedAttrs.reduce((valueMap, attr) => ({
+                ...valueMap,
+                [attr]: result[attr],
+            }), {});
+            const id = result[this.idAttribute];
+            const nextRow = set(id, result, map);
+            indexedAttrs.forEach((attr) => {
+                const { [attr]: prevValue } = prevAttrValues;
+                const { [attr]: nextValue } = nextAttrValues;
+                if (prevValue === nextValue) {
+                    // attribute has not changed, no need to update any index
+                    return;
+                }
+                if (prevValue !== null) {
+                    // remove id from attribute's index for its old value
+                    indexIdsToDelete.push([attr, prevValue, id]);
+                }
+                if (nextValue !== null) {
+                    // add id to attribute's index for its new value
+                    indexIdsToAdd.push([attr, nextValue, id]);
+                }
+            });
+            return nextRow;
+        }, branch[this.mapName]);
+
+        let nextIndexes = branch.indexes;
+        if (withMutations) {
+            indexIdsToDelete.forEach(([attr, value, id]) => {
+                const arr = nextIndexes[attr][value];
+                const idx = arr.indexOf(id);
+                if (idx !== -1) {
+                    ops.mutable.splice(idx, 1, [], arr);
+                }
+            });
+            indexIdsToAdd.forEach(([attr, value, id]) => {
+                ops.mutable.push(id, nextIndexes[attr][value]);
+            });
+        } else {
+            nextIndexes = ops.batch.merge(
+                batchToken,
+                indexIdsToAdd.reduce((indexMap, [attr, value, id]) => {
+                    const attrIndex = branch.indexes[attr];
+                    indexMap[attr] = indexMap[attr] || {};
+                    indexMap[attr][value] = ops.batch.push(
+                        batchToken,
+                        id,
+                        indexMap[attr][value] || attrIndex[value] || []
+                    );
+                    return indexMap;
+                }, {}),
+                branch.indexes
+            );
+            nextIndexes = ops.batch.merge(
+                batchToken,
+                indexIdsToDelete.reduce((indexMap, [attr, value, id]) => {
+                    const attrIndex = branch.indexes[attr];
+                    indexMap[attr] = indexMap[attr] || {};
+                    indexMap[attr][value] = ops.batch.filter(
+                        batchToken,
+                        rowId => rowId === id,
+                        indexMap[attr][value] || attrIndex[value] || []
+                    );
+                    return indexMap;
+                }, {}),
+                nextIndexes
+            );
+        }
+
+        return ops.batch.merge(batchToken, {
+            [this.mapName]: nextMap,
+            indexes: nextIndexes,
+        }, branch);
     }
 
     /**
@@ -365,19 +444,52 @@ const Table = class Table {
 
                 ops.mutable.omit(id, branch[mapName]);
             });
+            // delete ids from all indexes
+            Object.values(branch.indexes).forEach(attrIndex => (
+                Object.values(attrIndex).forEach(valueIndex => (
+                    idsToDelete.forEach((id) => {
+                        const idx = valueIndex.indexOf(id);
+                        if (idx !== -1) {
+                            ops.mutable.splice(idx, 1, [], valueIndex);
+                        }
+                    })
+                ))
+            ));
             return branch;
         }
+
+        const nextIndexes = Object.entries(branch.indexes)
+            .reduce((indexMap, [attr, attrIndex]) => ({
+                ...indexMap,
+                [attr]: ops.batch.merge(
+                    batchToken,
+                    Object.entries(attrIndex).reduce((attrIndexMap, [value, valueIndex]) => ({
+                        ...attrIndexMap,
+                        [value]: ops.batch.filter(
+                            batchToken,
+                            id => !idsToDelete.includes(id),
+                            valueIndex
+                        ),
+                    }), {}),
+                    attrIndex
+                ),
+            }), {});
 
         return ops.batch.merge(batchToken, {
             [arrName]: ops.batch.filter(
                 batchToken,
                 id => !idsToDelete.includes(id),
-                branch[arrName]
+                branch[arrName],
             ),
             [mapName]: ops.batch.omit(
                 batchToken,
                 idsToDelete,
-                branch[mapName]
+                branch[mapName],
+            ),
+            indexes: ops.batch.merge(
+                batchToken,
+                nextIndexes,
+                branch.indexes,
             ),
         }, branch);
     }

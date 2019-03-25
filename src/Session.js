@@ -61,14 +61,12 @@ const Session = class Session {
 
     get accessedModelInstances() {
         return this.sessionBoundModels
-            .filter(({ modelName }) => !!this.getDataForModel(modelName).accessedInstances)
+            .filter(({ modelName }) => this.getDataForModel(modelName).accessedInstances)
             .reduce(
                 (result, { modelName }) => ({
                     ...result,
                     [modelName]: this.getDataForModel(modelName).accessedInstances,
-                }),
-                {}
-            );
+                }), {});
     }
 
     markFullTableScanned(modelName) {
@@ -78,8 +76,24 @@ const Session = class Session {
 
     get fullTableScannedModels() {
         return this.sessionBoundModels
-            .filter(({ modelName }) => !!this.getDataForModel(modelName).fullTableScanned)
+            .filter(({ modelName }) => this.getDataForModel(modelName).fullTableScanned)
             .map(({ modelName }) => modelName);
+    }
+
+    markAccessedIndexes([table, column, value]) {
+        const data = this.getDataForModel(table);
+        data.accessedIndexes = data.accessedIndexes || {};
+        data.accessedIndexes[column] = data.accessedIndexes[column] || [];
+        data.accessedIndexes[column].push(value);
+    }
+
+    get accessedIndexes() {
+        return this.sessionBoundModels
+            .filter(({ modelName }) => this.getDataForModel(modelName).accessedIndexes)
+            .reduce((result, { modelName }) => ({
+                ...result,
+                [modelName]: this.getDataForModel(modelName).accessedIndexes,
+            }), {});
     }
 
     /**
@@ -129,18 +143,29 @@ const Session = class Session {
         const accessedIds = new Set(rows.map(
             row => row[idAttribute]
         ));
+        const accessedIndexes = [];
 
         const anyClauseFilteredById = clauses.some((clause) => {
             if (!clauseFiltersByAttribute(clause, idAttribute)) {
                 return false;
             }
+            const id = clause.payload[idAttribute];
+            if (id === null) return false;
             /**
              * we previously knew which row we wanted to access,
              * so there was no need to scan the entire table
              */
-            const id = clause.payload[idAttribute];
             accessedIds.add(id);
             return true;
+        });
+
+        const { indexes } = this.state[table];
+        clauses.forEach((clause) => {
+            Object.keys(indexes).forEach((column) => {
+                if (!clauseFiltersByAttribute(clause, column)) return;
+                const value = clause.payload[column];
+                accessedIndexes.push([table, column, value]);
+            });
         });
 
         if (anyClauseFilteredById) {
@@ -150,6 +175,8 @@ const Session = class Session {
              * with the specified id has actually been accessed
              */
             this.markAccessed(table, accessedIds);
+        } else if (accessedIndexes.length) {
+            this.markAccessedIndexes(table, accessedIndexes);
         } else {
             /**
              * any other clause would have caused a full table scan,

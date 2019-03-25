@@ -13,10 +13,10 @@ const rowsAreEqual = (ids, rowsA, rowsB) => (
 
 const accessedModelInstancesAreEqual = (previous, ormState, orm) => {
     const {
-        accessedModelInstances,
+        accessedInstances,
     } = previous;
 
-    return Object.entries(accessedModelInstances).every(([modelName, accessedInstances]) => {
+    return Object.entries(accessedInstances).every(([modelName, instances]) => {
         // if the entire table has not been changed, we have nothing to do
         if (previous.ormState[modelName] === ormState[modelName]) {
             return true;
@@ -27,9 +27,24 @@ const accessedModelInstancesAreEqual = (previous, ormState, orm) => {
         const { [mapName]: previousRows } = previous.ormState[modelName];
         const { [mapName]: rows } = ormState[modelName];
 
-        const accessedIds = Object.keys(accessedInstances);
+        const accessedIds = Object.keys(instances);
         return rowsAreEqual(accessedIds, previousRows, rows);
     });
+};
+
+const accessedIndexesAreEqual = (previous, ormState) => {
+    const {
+        accessedIndexes,
+    } = previous;
+
+    return Object.entries(accessedIndexes).every(([modelName, indexes]) => (
+        Object.entries(indexes).every(([column, values]) => (
+            values.every(value => (
+                previous.ormState[modelName].indexes[column][value]
+                    === ormState[modelName].indexes[column][value]
+            ))
+        ))
+    ));
 };
 
 const fullTableScannedModelsAreEqual = (previous, ormState) => (
@@ -99,7 +114,8 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
         * during previous function call (contains only IDs of accessed instances)
         * format (e.g.): { Book: { 1: true, 3: true } }
         */
-        accessedModelInstances: {},
+        accessedInstances: {},
+        accessedIndexes: {},
     };
 
     return (...stateAndArgs) => {
@@ -114,6 +130,7 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
             selectorWasCalledBefore &&
             argsAreEqual(previous.args, args, argEqualityCheck) &&
             fullTableScannedModelsAreEqual(previous, ormState) &&
+            accessedIndexesAreEqual(previous, ormState) &&
             accessedModelInstancesAreEqual(previous, ormState, orm)
         ) {
             /**
@@ -135,7 +152,8 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
         previous.result = result;
 
         /* rows retrieved during function call */
-        previous.accessedModelInstances = session.accessedModelInstances;
+        previous.accessedInstances = session.accessedModelInstances;
+        previous.accessedIndexes = session.accessedIndexes;
         /* tables that had to be scanned completely */
         previous.fullTableScannedModels = session.fullTableScannedModels;
 

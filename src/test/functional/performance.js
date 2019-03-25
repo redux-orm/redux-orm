@@ -1,5 +1,5 @@
 import {
-    Model, ORM, attr, many
+    Model, ORM, attr, fk, many
 } from '../..';
 import {
     createTestSessionWithData, measureMs, nTimes, avg, round
@@ -32,9 +32,12 @@ describe('Big Data Test', () => {
         Item.fields = {
             id: attr(),
             name: attr(),
+            groupId: fk('ItemGroup', 'items')
         };
+        const ItemGroup = class extends Model {};
+        ItemGroup.modelName = 'ItemGroup';
         orm = new ORM();
-        orm.register(Item);
+        orm.register(Item, ItemGroup);
         session = orm.session(orm.getEmptyState());
     });
 
@@ -94,6 +97,38 @@ describe('Big Data Test', () => {
 
         const tookSeconds = round(avg(measurements, n), PRECISION);
         logTime(`Looking up ${lookupCount} objects by id`, tookSeconds, maxSeconds, measurements);
+        expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
+    });
+
+    it('looks up items by foreign key in a large table in acceptable time', () => {
+        const { Item, ItemGroup } = session;
+
+        const maxSeconds = process.env.TRAVIS ? 3 : 1.5;
+        const n = 5;
+        const withForeignKeyCount = 50000;
+        const rowCount = 100000;
+
+        const group = ItemGroup.create({
+            id: 12345,
+        });
+        for (let i = 0; i < rowCount; ++i) {
+            Item.create({
+                id: i,
+                name: randomName(),
+                groupId: (i < withForeignKeyCount)
+                    ? group.id
+                    : group.id + (i % 500),
+            });
+        }
+
+        const measurements = nTimes(n).map((_value, index) => (
+            measureMs(() => {
+                group.items.toModelArray().forEach(item => item.toString());
+            })
+        )).map(ms => ms / 1000);
+
+        const tookSeconds = round(avg(measurements, n), PRECISION);
+        logTime(`Looking up ${withForeignKeyCount} objects by foreign key`, tookSeconds, maxSeconds, measurements);
         expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
 });
@@ -182,7 +217,7 @@ describe('Many-to-many relationship performance', () => {
         const { Child, Parent } = session;
 
         const maxSeconds = process.env.TRAVIS ? 7.5 : 2;
-        const n = 5;
+        const n = 1;
         const removeCount = 500;
 
         const parent = Parent.create({ id: 1 });

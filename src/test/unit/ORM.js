@@ -280,13 +280,13 @@ describe('ORM', () => {
             orm.register(CustomizedModel);
             expect(() => {
                 orm.session();
-            }).toThrow("Reserved keyword `indexes` used in CustomizedModel.options.");
+            }).toThrow('Reserved keyword `indexes` used in CustomizedModel.options.');
             CustomizedModel.options = {
                 meta: {},
             };
             expect(() => {
                 orm.session();
-            }).toThrow("Reserved keyword `meta` used in CustomizedModel.options.");
+            }).toThrow('Reserved keyword `meta` used in CustomizedModel.options.');
         });
     });
 });
