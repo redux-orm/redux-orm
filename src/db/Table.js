@@ -207,17 +207,24 @@ const Table = class Table {
                             const indexSet = new Set(index);
                             return result.filter(Set.prototype.has, indexSet);
                         }, lastIndex);
-                        const indexesSatisfyClause = Object.keys(payload).every(
-                            filterAttr => indexAttrs.includes(filterAttr)
-                        );
-                        if (indexesSatisfyClause) {
+                        const newPayload = Object.keys(payload)
+                            .reduce((withoutIndexAttrs, filterAttr) => {
+                                if (!indexAttrs.includes(filterAttr)) {
+                                    withoutIndexAttrs[filterAttr] = payload[filterAttr];
+                                }
+                                return withoutIndexAttrs;
+                            }, {});
+                        if (Object.keys(newPayload).length === 0) {
                             /**
                              * No need to filter these rows any further.
                              * The used indexes satisfy this clause's conditions.
                              */
                             return this.accessIds(branch, indexedIds);
                         }
-                        return reducer(this.accessIds(branch, indexedIds), clause);
+                        return reducer(this.accessIds(branch, indexedIds), {
+                            ...clause,
+                            payload: newPayload,
+                        });
                     }
                 }
 
