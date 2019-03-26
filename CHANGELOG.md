@@ -1,5 +1,12 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.13.1
+
+* Don't filter needlessly after applying foreign key indexes. Prevents applying object-based filters again after already fully satisfying their conditions using indexes. ([41ece84](https://github.com/tommikaikkonen/redux-orm/commit/41ece841c2c4b35a880f84c9c985ede6c2904abb))
+* Remove attributes already looked up via index from filter clauses. After applying indexes, if additional filtering needs to occur, strip away the indexed columns from the filter object. ([278ff6f](https://github.com/tommikaikkonen/redux-orm/commit/278ff6f7d4c60880822f3cfbb11a21b2222529c1))
+
+Removed tests, coverage reports and other unneeded files from NPM package builds. This decreased our NPM package size to around 700 kB.
+
 ### 0.13.0
 
 * Automatically index foreign keys. Queries will be fulfilled by using foreign key indexes if possible. Only works for direct FK relationships. For instance, `book.authors` will be optimized if the `Author` model has a `fk({ to: 'Book', 'relatedName': 'authors' })` field. ([#250](https://github.com/tommikaikkonen/redux-orm/pull/250), [b9c1635](https://github.com/tommikaikkonen/redux-orm/commit/b9c16359f018dacfaaea8b5450693eea3263ffe9))
