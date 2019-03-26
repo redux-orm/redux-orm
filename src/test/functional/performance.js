@@ -167,6 +167,12 @@ describe('Many-to-many relationship performance', () => {
         }
     };
 
+    const unassignChildren = (parent, start, end) => {
+        for (let i = start; i < end; ++i) {
+            parent.children.remove(i);
+        }
+    };
+
     it('adds many-to-many relationships in acceptable time', () => {
         const { Child, Parent } = session;
 
@@ -180,9 +186,11 @@ describe('Many-to-many relationship performance', () => {
             parent = Parent.create({
                 id: index,
             });
-            return measureMs(() => {
+            const ms = measureMs(() => {
                 assignChildren(parent, 0, childAmount);
             });
+            unassignChildren(parent, 0, childAmount);
+            return ms;
         }).map(ms => ms / 1000);
 
         const tookSeconds = round(avg(measurements, n), PRECISION);
@@ -203,7 +211,7 @@ describe('Many-to-many relationship performance', () => {
         const measurements = nTimes(n).map((_value, index) => (
             measureMs(() => {
                 for (let i = 0; i < queryCount; ++i) {
-                    parent.children.count();
+                    parent.children.toRefArray();
                 }
             })
         )).map(ms => ms / 1000);
@@ -217,7 +225,7 @@ describe('Many-to-many relationship performance', () => {
         const { Child, Parent } = session;
 
         const maxSeconds = process.env.TRAVIS ? 7.5 : 2;
-        const n = 2;
+        const n = 5;
         const removeCount = 500;
 
         const parent = Parent.create({ id: 1 });
@@ -226,9 +234,7 @@ describe('Many-to-many relationship performance', () => {
         const measurements = nTimes(n).map((_value, index) => {
             assignChildren(parent, 0, removeCount);
             const ms = measureMs(() => {
-                for (let i = 0; i < removeCount; ++i) {
-                    parent.children.remove(i);
-                }
+                unassignChildren(parent, 0, removeCount);
             });
             return ms;
         }).map(ms => ms / 1000);

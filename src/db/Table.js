@@ -282,30 +282,32 @@ const Table = class Table {
             };
         }
 
-        const nextIndexes = indexesToAppendTo
-            .reduce((indexMap, [attr, value]) => {
-                const attrIndex = workingState.indexes[attr];
-                indexMap[attr] = {};
-                if (attrIndex.hasOwnProperty(value)) {
-                    indexMap[attr][value] = ops.batch.push(batchToken, id, attrIndex[value]);
-                } else {
-                    indexMap[attr] = ops.batch.merge(batchToken, {
-                        [value]: [id],
-                    }, attrIndex);
-                }
-                return indexMap;
-            }, {});
+        const nextIndexes = ops.batch.merge(
+            batchToken,
+            indexesToAppendTo
+                .reduce((indexMap, [attr, value]) => {
+                    indexMap[attr] = ops.batch.merge(
+                        batchToken,
+                        {
+                            [value]: ops.batch.push(
+                                batchToken,
+                                id,
+                                indexMap[attr][value] || []
+                            ),
+                        },
+                        indexMap[attr]
+                    );
+                    return indexMap;
+                }, { ...workingState.indexes }),
+            workingState.indexes
+        );
 
         const nextState = ops.batch.merge(batchToken, {
             [this.arrName]: ops.batch.push(batchToken, id, workingState[this.arrName]),
             [this.mapName]: ops.batch.merge(batchToken, {
                 [id]: finalEntry,
             }, workingState[this.mapName]),
-            indexes: ops.batch.merge(
-                batchToken,
-                nextIndexes,
-                workingState.indexes
-            ),
+            indexes: nextIndexes,
         }, workingState);
 
         return {
@@ -468,22 +470,25 @@ const Table = class Table {
             return branch;
         }
 
-        const nextIndexes = Object.entries(branch.indexes)
-            .reduce((indexMap, [attr, attrIndex]) => ({
-                ...indexMap,
-                [attr]: ops.batch.merge(
+        const nextIndexes = ops.batch.merge(
+            batchToken,
+            Object.entries(branch.indexes).reduce((indexMap, [attr, attrIndex]) => {
+                indexMap[attr] = ops.batch.merge(
                     batchToken,
-                    Object.entries(attrIndex).reduce((attrIndexMap, [value, valueIndex]) => ({
-                        ...attrIndexMap,
-                        [value]: ops.batch.filter(
+                    Object.entries(attrIndex).reduce((attrIndexMap, [value, valueIndex]) => {
+                        attrIndexMap[value] = ops.batch.filter(
                             batchToken,
                             id => !idsToDelete.includes(id),
                             valueIndex
-                        ),
-                    }), {}),
-                    attrIndex
-                ),
-            }), {});
+                        );
+                        return attrIndexMap;
+                    }, { ...indexMap[attr] }),
+                    indexMap[attr]
+                );
+                return indexMap;
+            }, { ...branch.indexes }),
+            branch.indexes
+        );
 
         return ops.batch.merge(batchToken, {
             [arrName]: ops.batch.filter(
