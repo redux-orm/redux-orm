@@ -1,2 +1,15 @@
 node_modules
 docs
+coverage
+.publish
+.github
+.codecov.yml
+.travis.yml
+gulpfile.js
+jest.config.js
+jest.es5.config.js
+jest.perf.config.js
+jsdoc.conf.json
+webpack.common.js
+webpack.dev.js
+webpack.prod.js

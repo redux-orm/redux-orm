@@ -12,8 +12,8 @@
     "test:es5": "jest --config=jest.es5.config.js",
     "test:perf": "jest --config=jest.perf.config.js",
     "prepublishOnly": "npm run build",
-    "transpile:cjs": "cross-env BABEL_ENV=cjs babel src --out-dir lib",
-    "transpile:es": "cross-env BABEL_ENV=es babel src --out-dir es",
+    "transpile:cjs": "cross-env BABEL_ENV=cjs babel src --out-dir lib --ignore */test",
+    "transpile:es": "cross-env BABEL_ENV=es babel src --out-dir es --ignore */test",
     "build:umd": "webpack --config webpack.dev.js",
     "build:umd:min": "webpack --config webpack.prod.js",
     "build:docs": "jsdoc src -d docs -c ./jsdoc.conf.json --verbose",
@@ -21,7 +21,7 @@
     "pub": "npm run lint && npm run test && npm run build && npm run test:es5 && npm version patch && npm publish && git push origin && gulp deploy && npm run clean",
     "lint": "eslint src",
     "deploydocs": "npm run build && gulp deploy",
-    "clean": "rimraf lib dist docs"
+    "clean": "rimraf lib es dist docs coverage"
   },
   "keywords": [
     "redux",
