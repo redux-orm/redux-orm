@@ -65,18 +65,17 @@ const fullTableScannedModelsAreEqual = (previous, ormState) => (
  *
  * Memoization algorithm operates like this:
  *
- * 1. Has the selector been run before? If not, go to 5.
+ * 1. Has the selector been run before? If not, go to 6.
  *
  * 2. If the selector has other input selectors in addition to the
  *    ORM state selector, check their results for equality with the previous results.
  *    If they aren't equal, go to 6.
  *
- * 3. Is the ORM state referentially equal to the previous ORM state the selector
- *    was called with? If no, go to 6.
+ * 3. Some filter queries may have required scanning entire tables during the last run.
+ *    If any of those tables have changed, go to 6.
  *
  * 4. Check which foreign key indexes the database has used to speed up queries
- *    during the last run.
- *    was called with? If no, go to 6.
+ *    during the last run. If any have changed, go to 6.
  *
  * 5. Check which Model's instances the selector has accessed during the last run.
  *    Check for equality with each of those states versus their states in the
