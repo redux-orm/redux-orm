@@ -1,6 +1,7 @@
 node_modules
 docs
 coverage
+src/test
 .publish
 .github
 .codecov.yml
@@ -13,3 +14,5 @@ jsdoc.conf.json
 webpack.common.js
 webpack.dev.js
 webpack.prod.js
+.eslintrc
+.eslintignore
