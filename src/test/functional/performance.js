@@ -70,7 +70,7 @@ describe('Big Data Test', () => {
         expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
 
-    it('looks up items by id in a large table in acceptable time', () => {
+    it('looks up items by primary key in a large table in acceptable time', () => {
         const { Item } = session;
 
         const maxSeconds = process.env.TRAVIS ? 5 : 2;
@@ -106,7 +106,7 @@ describe('Big Data Test', () => {
         const maxSeconds = process.env.TRAVIS ? 3 : 1.5;
         const n = 5;
         const withForeignKeyCount = 50000;
-        const rowCount = 100000;
+        const rowCount = 500000;
 
         const group = ItemGroup.create({
             id: 12345,
@@ -117,7 +117,7 @@ describe('Big Data Test', () => {
                 name: randomName(),
                 groupId: (i < withForeignKeyCount)
                     ? group.id
-                    : group.id + (i % 500),
+                    : null,
             });
         }
 
