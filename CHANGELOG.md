@@ -1,5 +1,11 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.13.0
+
+* Automatically index foreign keys. Queries will be fulfilled by using foreign key indexes if possible. Only works for direct FK relationships. For instance, `book.authors` will be optimized if the `Author` model has a `fk({ to: 'Book', 'relatedName': 'authors' })` field. ([#250](https://github.com/tommikaikkonen/redux-orm/pull/250), [b9c1635](https://github.com/tommikaikkonen/redux-orm/commit/b9c16359f018dacfaaea8b5450693eea3263ffe9))
+
+This release should be non-breaking, however it does slightly decrease performance of writes. Many-to-many queries (e.g. `child.parents`) are also less performant, but in theory it is now possible to optimize them by an order of magnitude (similar to SQL joins).
+
 ### 0.12.4
 
 * Fixed a bug with memoization when specifying a custom `mapName` using `Model.options`. ([0fb2aca](https://github.com/tommikaikkonen/redux-orm/commit/0fb2aca3a46c7fd653bf3f0d9c8c4f937b745e7c))
