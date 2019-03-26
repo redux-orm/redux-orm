@@ -8,9 +8,3 @@ export const ORDER_BY = 'REDUX_ORM_ORDER_BY';
 
 export const SUCCESS = 'SUCCESS';
 export const FAILURE = 'FAILURE';
-
-export const DEFAULT_TABLE_OPTIONS = {
-    idAttribute: 'id',
-    arrName: 'items',
-    mapName: 'itemsById',
-};

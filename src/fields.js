@@ -169,6 +169,10 @@ class DefaultFieldInstaller extends FieldInstallerTemplate {
  * @ignore
  */
 class Field {
+    constructor() {
+        this.index = false;
+    }
+
     get installerClass() {
         return DefaultFieldInstaller;
     }
@@ -207,7 +211,7 @@ class Field {
  */
 export class Attribute extends Field {
     constructor(opts) {
-        super(opts);
+        super();
         this.opts = opts || {};
 
         if (this.opts.hasOwnProperty('getDefault')) {
@@ -225,7 +229,7 @@ export class Attribute extends Field {
  */
 class RelationalField extends Field {
     constructor(...args) {
-        super(...args);
+        super();
         if (args.length === 1 && typeof args[0] === 'object') {
             const opts = args[0];
             this.toModelName = opts.to;
@@ -284,6 +288,11 @@ class RelationalField extends Field {
  * @ignore
  */
 export class ForeignKey extends RelationalField {
+    constructor(...args) {
+        super(...args);
+        this.index = true;
+    }
+
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
         return forwardsManyToOneDescriptor(fieldName, toModel.modelName);
     }

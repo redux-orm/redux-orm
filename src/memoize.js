@@ -1,5 +1,3 @@
-import { DEFAULT_TABLE_OPTIONS } from './constants';
-
 const defaultEqualityCheck = (a, b) => a === b;
 export const eqCheck = defaultEqualityCheck;
 
@@ -15,24 +13,38 @@ const rowsAreEqual = (ids, rowsA, rowsB) => (
 
 const accessedModelInstancesAreEqual = (previous, ormState, orm) => {
     const {
-        accessedModelInstances,
+        accessedInstances,
     } = previous;
 
-    return Object.entries(accessedModelInstances).every(([modelName, accessedInstances]) => {
+    return Object.entries(accessedInstances).every(([modelName, instances]) => {
         // if the entire table has not been changed, we have nothing to do
         if (previous.ormState[modelName] === ormState[modelName]) {
             return true;
         }
 
-        const ModelClass = orm.get(modelName);
-        const mapName = ModelClass.options.mapName || DEFAULT_TABLE_OPTIONS.mapName;
+        const { mapName } = orm.getDatabase().describe(modelName);
 
         const { [mapName]: previousRows } = previous.ormState[modelName];
         const { [mapName]: rows } = ormState[modelName];
 
-        const accessedIds = Object.keys(accessedInstances);
+        const accessedIds = Object.keys(instances);
         return rowsAreEqual(accessedIds, previousRows, rows);
     });
+};
+
+const accessedIndexesAreEqual = (previous, ormState) => {
+    const {
+        accessedIndexes,
+    } = previous;
+
+    return Object.entries(accessedIndexes).every(([modelName, indexes]) => (
+        Object.entries(indexes).every(([column, values]) => (
+            values.every(value => (
+                previous.ormState[modelName].indexes[column][value]
+                    === ormState[modelName].indexes[column][value]
+            ))
+        ))
+    ));
 };
 
 const fullTableScannedModelsAreEqual = (previous, ormState) => (
@@ -53,20 +65,23 @@ const fullTableScannedModelsAreEqual = (previous, ormState) => (
  *
  * Memoization algorithm operates like this:
  *
- * 1. Has the selector been run before? If not, go to 5.
+ * 1. Has the selector been run before? If not, go to 6.
  *
  * 2. If the selector has other input selectors in addition to the
  *    ORM state selector, check their results for equality with the previous results.
- *    If they aren't equal, go to 5.
+ *    If they aren't equal, go to 6.
  *
- * 3. Is the ORM state referentially equal to the previous ORM state the selector
- *    was called with? If yes, return the previous result.
+ * 3. Some filter queries may have required scanning entire tables during the last run.
+ *    If any of those tables have changed, go to 6.
  *
- * 4. Check which Model's instances the selector has accessed on previous runs.
+ * 4. Check which foreign key indexes the database has used to speed up queries
+ *    during the last run. If any have changed, go to 6.
+ *
+ * 5. Check which Model's instances the selector has accessed during the last run.
  *    Check for equality with each of those states versus their states in the
  *    previous ORM state. If all of them are equal, return the previous result.
  *
- * 5. Run the selector. Check the Session object used by the selector for
+ * 6. Run the selector. Check the Session object used by the selector for
  *    which Model's states were accessed, and merge them with the previously
  *    saved information about accessed models (if-else branching can change
  *    which models are accessed on different inputs). Save the ORM state and
@@ -82,30 +97,45 @@ const fullTableScannedModelsAreEqual = (previous, ormState) => (
  */
 export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
     const previous = {
-        /* result of the previous function call */
+        /* Result of the previous function call */
         result: null,
-        /* arguments to the previous function call (excluding ORM state) */
+        /* Arguments to the previous function call (excluding ORM state) */
         args: null,
         /**
-         * lets us know how the models looked like
-         * during the previous function call
+         * Snapshot of the previous database.
+         *
+         * Lets us know how the tables looked like
+         * during the previous function call.
          */
         ormState: null,
         /**
-        * array of names of models whose tables have been scanned completely
-        * during previous function call (contains only model names)
-        * format (e.g.): ['Book']
-        */
+         * Names of models whose tables have been scanned completely
+         * during previous function call (contains only model names)
+         * Format example: ['Book']
+         */
         fullTableScannedModels: [],
         /**
-        * map of which model instances have been accessed
-        * during previous function call (contains only IDs of accessed instances)
-        * format (e.g.): { Book: { 1: true, 3: true } }
-        */
-        accessedModelInstances: {},
+         * Map of which model instances have been accessed
+         * during previous function call.
+         * Contains only PKs of accessed instances.
+         * Format example: { Book: { 1: true, 3: true } }
+         */
+        accessedInstances: {},
+        /**
+         * Map of which attribute indexes have been accessed
+         * during previous function call.
+         * Contains only attributes that were actually filtered on.
+         * Author.withId(3).books would add 3 to the authorId index below.
+         * Format example: { Book: { authorId: [1, 2], publisherId: [5] } }
+         */
+        accessedIndexes: {},
     };
 
     return (...stateAndArgs) => {
+        /**
+         * The first argument to this function needs to be
+         * the ORM's reducer state in the user's Redux store.
+         */
         const [ormState, ...args] = stateAndArgs;
 
         const selectorWasCalledBefore = (
@@ -117,29 +147,40 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
             selectorWasCalledBefore &&
             argsAreEqual(previous.args, args, argEqualityCheck) &&
             fullTableScannedModelsAreEqual(previous, ormState) &&
+            accessedIndexesAreEqual(previous, ormState) &&
             accessedModelInstancesAreEqual(previous, ormState, orm)
         ) {
             /**
-             * the instances that were accessed as well as
-             * the arguments that were passed to func the previous time that
-             * func was called have not changed
+             * None of this selector's dependencies have changed
+             * since the last time that we called it.
              */
             return previous.result;
         }
 
-        /* previous result is no longer valid, update cached values */
+        /**
+         * The previous result is no longer valid.
+         * Begin updating cached values, starting with
+         * the arguments that we will pass to the selector.
+         */
         previous.args = args;
 
+        /**
+         * Start a session so that the selector can access the database.
+         * Make this session immutable. This way we can find out if
+         * the operations that the selector performs are cacheable.
+         */
         const session = orm.session(ormState);
         previous.ormState = ormState;
 
-        /* this is where we call the actual function */
+        /* This is where we call the actual function */
         const result = func(...[session, ...args]);
         previous.result = result;
 
-        /* rows retrieved during function call */
-        previous.accessedModelInstances = session.accessedModelInstances;
-        /* tables that had to be scanned completely */
+        /* Rows retrieved during function call */
+        previous.accessedInstances = session.accessedModelInstances;
+        /* Foreign key indexes that were used to speed up queries */
+        previous.accessedIndexes = session.accessedIndexes;
+        /* Tables that had to be scanned completely */
         previous.fullTableScannedModels = session.fullTableScannedModels;
 
         return result;

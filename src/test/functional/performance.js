@@ -1,5 +1,5 @@
 import {
-    Model, ORM, attr, many
+    Model, ORM, attr, fk, many
 } from '../..';
 import {
     createTestSessionWithData, measureMs, nTimes, avg, round
@@ -32,9 +32,12 @@ describe('Big Data Test', () => {
         Item.fields = {
             id: attr(),
             name: attr(),
+            groupId: fk('ItemGroup', 'items')
         };
+        const ItemGroup = class extends Model {};
+        ItemGroup.modelName = 'ItemGroup';
         orm = new ORM();
-        orm.register(Item);
+        orm.register(Item, ItemGroup);
         session = orm.session(orm.getEmptyState());
     });
 
@@ -96,6 +99,38 @@ describe('Big Data Test', () => {
         logTime(`Looking up ${lookupCount} objects by id`, tookSeconds, maxSeconds, measurements);
         expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
+
+    it('looks up items by foreign key in a large table in acceptable time', () => {
+        const { Item, ItemGroup } = session;
+
+        const maxSeconds = process.env.TRAVIS ? 3 : 1.5;
+        const n = 5;
+        const withForeignKeyCount = 50000;
+        const rowCount = 100000;
+
+        const group = ItemGroup.create({
+            id: 12345,
+        });
+        for (let i = 0; i < rowCount; ++i) {
+            Item.create({
+                id: i,
+                name: randomName(),
+                groupId: (i < withForeignKeyCount)
+                    ? group.id
+                    : group.id + (i % 500),
+            });
+        }
+
+        const measurements = nTimes(n).map((_value, index) => (
+            measureMs(() => {
+                group.items.toModelArray().forEach(item => item.toString());
+            })
+        )).map(ms => ms / 1000);
+
+        const tookSeconds = round(avg(measurements, n), PRECISION);
+        logTime(`Looking up ${withForeignKeyCount} objects by foreign key`, tookSeconds, maxSeconds, measurements);
+        expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
+    });
 });
 
 describe('Many-to-many relationship performance', () => {
@@ -132,6 +167,12 @@ describe('Many-to-many relationship performance', () => {
         }
     };
 
+    const unassignChildren = (parent, start, end) => {
+        for (let i = start; i < end; ++i) {
+            parent.children.remove(i);
+        }
+    };
+
     it('adds many-to-many relationships in acceptable time', () => {
         const { Child, Parent } = session;
 
@@ -145,9 +186,11 @@ describe('Many-to-many relationship performance', () => {
             parent = Parent.create({
                 id: index,
             });
-            return measureMs(() => {
+            const ms = measureMs(() => {
                 assignChildren(parent, 0, childAmount);
             });
+            unassignChildren(parent, 0, childAmount);
+            return ms;
         }).map(ms => ms / 1000);
 
         const tookSeconds = round(avg(measurements, n), PRECISION);
@@ -168,7 +211,7 @@ describe('Many-to-many relationship performance', () => {
         const measurements = nTimes(n).map((_value, index) => (
             measureMs(() => {
                 for (let i = 0; i < queryCount; ++i) {
-                    parent.children.count();
+                    parent.children.toRefArray();
                 }
             })
         )).map(ms => ms / 1000);
@@ -186,22 +229,13 @@ describe('Many-to-many relationship performance', () => {
         const removeCount = 500;
 
         const parent = Parent.create({ id: 1 });
-        createChildren(0, removeCount * n);
-        assignChildren(parent, 0, removeCount * n);
+        createChildren(0, removeCount);
 
         const measurements = nTimes(n).map((_value, index) => {
-            const start = removeCount * index;
-            const end = removeCount + start;
+            assignChildren(parent, 0, removeCount);
             const ms = measureMs(() => {
-                for (let i = start; i < end; ++i) {
-                    parent.children.remove(i);
-                }
+                unassignChildren(parent, 0, removeCount);
             });
-            /**
-             * reassign children to parent (undo the above code)
-             * otherwise the removal will speed up the removal of further children
-             */
-            assignChildren(parent, start, end);
             return ms;
         }).map(ms => ms / 1000);
 

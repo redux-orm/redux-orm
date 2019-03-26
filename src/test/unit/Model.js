@@ -1,10 +1,11 @@
 import {
-    ORM, Model as BaseModel, QuerySet, attr
+    ORM, Model as BaseModel, QuerySet, attr, fk,
 } from '../..';
 
 describe('Model', () => {
     describe('static method', () => {
         let Model;
+        let RelatedModel;
         let sessionMock;
         beforeEach(() => {
             // Get a fresh copy
@@ -12,9 +13,20 @@ describe('Model', () => {
             // won't survive longer than each test.
             Model = class UnitTestModel extends BaseModel {};
             Model.modelName = 'UnitTestModel';
+            Model.fields = {
+                id: attr(),
+                otherId: fk({
+                    to: 'OtherModel',
+                    as: 'other',
+                    relatedName: 'unitTestModels',
+                })
+            };
+
+            RelatedModel = class OtherModel extends BaseModel {};
+            RelatedModel.modelName = 'OtherModel';
 
             const orm = new ORM();
-            orm.register(Model);
+            orm.register(Model, RelatedModel);
             sessionMock = orm.session();
         });
 
@@ -83,6 +95,21 @@ describe('Model', () => {
             expect(sessionMock.fullTableScannedModels).toEqual(['UnitTestModel']);
         });
 
+        it('markAccessedIndexes correctly proxies to Session', () => {
+            Model.connect(sessionMock);
+            Model.markAccessedIndexes([
+                ['otherId', 1],
+                ['otherId', 2],
+                ['randomId', 3],
+            ]);
+            expect(sessionMock.accessedIndexes).toEqual({
+                UnitTestModel: {
+                    otherId: [1, 2],
+                    randomId: [3],
+                },
+            });
+        });
+
         it('should throw a custom error when user try to interact with database without a session', () => {
             const attributes = {
                 id: 0,
@@ -107,6 +134,15 @@ describe('Model', () => {
             );
             expect(() => (new Model()).delete()).toThrow(
                 'Tried to delete a UnitTestModel model instance without a session. You cannot call `.delete` on an instance that you did not receive from the database.'
+            );
+            expect(() => Model.markFullTableScanned()).toThrow(
+                'Tried to mark the UnitTestModel model as full table scanned without a session. Create a session using `session = orm.session()` and call `session["UnitTestModel"].markFullTableScanned` instead.'
+            );
+            expect(() => Model.markAccessed()).toThrow(
+                'Tried to mark rows of the UnitTestModel model as accessed without a session. Create a session using `session = orm.session()` and call `session["UnitTestModel"].markAccessed` instead.'
+            );
+            expect(() => Model.markAccessedIndexes()).toThrow(
+                'Tried to mark indexes for the UnitTestModel model as accessed without a session. Create a session using `session = orm.session()` and call `session["UnitTestModel"].markAccessedIndexes` instead.'
             );
         });
     });
@@ -187,6 +223,18 @@ describe('Model', () => {
             });
             expect(model.randomNumber).toBe(randomNumber);
             expect(model.someString).toBe('some string');
+        });
+
+        it('refresh from state refreshes fields', () => {
+            Model.connect(session);
+            const instance = new Model({ id: 0, someAttribute: 'some value' });
+            expect(instance.someAttribute).toBe('some value');
+            const ref = { someAttribute: 'other value' };
+            Object.defineProperty(instance, 'ref', {
+                get: () => ref,
+            });
+            instance.refreshFromState();
+            expect(instance.someAttribute).toBe('other value');
         });
     });
 });

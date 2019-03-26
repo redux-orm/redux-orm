@@ -5,9 +5,16 @@ import sortBy from 'lodash/sortBy';
 import ops from 'immutable-ops';
 
 import {
-    FILTER, EXCLUDE, ORDER_BY, DEFAULT_TABLE_OPTIONS,
+    FILTER, EXCLUDE, ORDER_BY,
 } from '../constants';
 import { clauseFiltersByAttribute, clauseReducesResultSetSize } from '../utils';
+
+const DEFAULT_TABLE_OPTIONS = {
+    idAttribute: 'id',
+    arrName: 'items',
+    mapName: 'itemsById',
+    fields: {},
+};
 
 // Input is the current max id and the new id passed to the create action.
 // Both may be undefined. The current max id in the case that this is the first Model
@@ -53,6 +60,7 @@ const Table = class Table {
      * @param  {string} [userOpts.mapName=itemsById] - the state attribute where the entity objects
      *                                                 are stored in a id to entity object
      *                                                 map.
+     * @param  {string} [userOpts.fields={}] - mapping of field key to {@link Field} object
      */
     constructor(userOpts) {
         Object.assign(this, DEFAULT_TABLE_OPTIONS, userOpts);
@@ -71,6 +79,11 @@ const Table = class Table {
         return branch[this.mapName][id];
     }
 
+    accessIds(branch, ids) {
+        const map = branch[this.mapName];
+        return ids.map(id => map[id]);
+    }
+
     idExists(branch, id) {
         return branch[this.mapName].hasOwnProperty(id);
     }
@@ -80,7 +93,7 @@ const Table = class Table {
     }
 
     accessList(branch) {
-        return branch[this.arrName].map(id => this.accessId(branch, id));
+        return this.accessIds(branch, this.accessIdList(branch));
     }
 
     getMaxId(branch) {
@@ -93,6 +106,43 @@ const Table = class Table {
 
     nextId(id) {
         return id + 1;
+    }
+
+    /**
+     * Returns the default state for the data structure.
+     * @return {Object} The default state for this {@link ORM} instance's data structure
+     */
+    getEmptyState() {
+        const pkIndex = {
+            [this.arrName]: [],
+            [this.mapName]: {},
+        };
+        const attrIndexes = Object.keys(this.fields)
+            .filter(attr => attr !== this.idAttribute)
+            .filter(attr => this.fields[attr].index)
+            .reduce((indexes, attr) => ({
+                ...indexes,
+                [attr]: {},
+            }), {});
+        return {
+            ...pkIndex,
+            indexes: attrIndexes,
+            meta: {},
+        };
+    }
+
+    setMeta(tx, branch, key, value) {
+        const { batchToken, withMutations } = tx;
+        if (withMutations) {
+            const res = ops.mutable.setIn(['meta', key], value, branch);
+            return res;
+        }
+
+        return ops.batch.setIn(batchToken, ['meta', key], value, branch);
+    }
+
+    getMeta(branch, key) {
+        return branch.meta[key];
     }
 
     query(branch, clauses) {
@@ -117,15 +167,49 @@ const Table = class Table {
         const reducer = (rows, clause) => {
             const { type, payload } = clause;
             if (!rows) {
+                /**
+                 * First time this reducer is called during query.
+                 * This is where we apply query optimizations.
+                 */
                 if (clauseFiltersByAttribute(clause, idAttribute)) {
+                    /**
+                     * Payload specified a primary key. Use PK index
+                     * to look up the single row identified by the PK.
+                     */
                     const id = payload[idAttribute];
-                    // Payload specified a primary key; Since that is
-                    // unique, we can directly return that.
                     return this.idExists(branch, id)
                         ? [this.accessId(branch, id)]
                         : [];
                 }
+                if (type === FILTER) {
+                    const indexes = Object.entries(branch.indexes);
+                    const accessedIndexes = [];
+                    indexes.forEach(([attr, index]) => {
+                        if (clauseFiltersByAttribute(clause, attr)) {
+                            /**
+                            * Payload specified an indexed attribute. Use index
+                            * to potentially decrease amount of accessed rows.
+                            */
+                            if (index.hasOwnProperty(payload[attr])) {
+                                accessedIndexes.push(index[payload[attr]]);
+                            }
+                        }
+                    });
+                    /**
+                     * Calculate set of unique PK values corresponding to each
+                     * foreign key's attribute value. Then retrieve all those rows.
+                     */
+                    if (accessedIndexes.length) {
+                        const lastIndex = accessedIndexes.pop();
+                        const indexedIds = accessedIndexes.reduce((result, index) => {
+                            const indexSet = new Set(index);
+                            return result.filter(Set.prototype.has, indexSet);
+                        }, lastIndex);
+                        return reducer(this.accessIds(branch, indexedIds), clause);
+                    }
+                }
 
+                // Give up optimization: Retrieve all rows (full table scan).
                 return reducer(this.accessList(branch), clause);
             }
 
@@ -146,32 +230,6 @@ const Table = class Table {
         };
 
         return optimallyOrderedClauses.reduce(reducer, undefined);
-    }
-
-    /**
-     * Returns the default state for the data structure.
-     * @return {Object} The default state for this {@link Backend} instance's data structure
-     */
-    getEmptyState() {
-        return {
-            [this.arrName]: [],
-            [this.mapName]: {},
-            meta: {},
-        };
-    }
-
-    setMeta(tx, branch, key, value) {
-        const { batchToken, withMutations } = tx;
-        if (withMutations) {
-            const res = ops.mutable.setIn(['meta', key], value, branch);
-            return res;
-        }
-
-        return ops.batch.setIn(batchToken, ['meta', key], value, branch);
-    }
-
-    getMeta(branch, key) {
-        return branch.meta[key];
     }
 
     /**
@@ -198,18 +256,58 @@ const Table = class Table {
             ? entry
             : ops.batch.set(batchToken, this.idAttribute, id, entry);
 
+        const indexesToAppendTo = Object.keys(workingState.indexes).reduce((values, fkAttr) => {
+            if (!entry.hasOwnProperty(fkAttr)) return values;
+            if (entry[fkAttr] === null) return values;
+            values.push([fkAttr, entry[fkAttr]]);
+            return values;
+        }, []);
+
+
         if (withMutations) {
             ops.mutable.push(id, workingState[this.arrName]);
             ops.mutable.set(id, finalEntry, workingState[this.mapName]);
+            // add id to indexes
+            indexesToAppendTo.forEach(([attr, value]) => {
+                const attrIndex = workingState.indexes[attr];
+                if (attrIndex.hasOwnProperty(value)) {
+                    ops.mutable.push(id, attrIndex[value]);
+                } else {
+                    ops.mutable.set(value, [id], attrIndex);
+                }
+            });
             return {
                 state: workingState,
                 created: finalEntry,
             };
         }
 
+        const nextIndexes = ops.batch.merge(
+            batchToken,
+            indexesToAppendTo
+                .reduce((indexMap, [attr, value]) => {
+                    indexMap[attr] = ops.batch.merge(
+                        batchToken,
+                        {
+                            [value]: ops.batch.push(
+                                batchToken,
+                                id,
+                                indexMap[attr][value] || []
+                            ),
+                        },
+                        indexMap[attr]
+                    );
+                    return indexMap;
+                }, { ...workingState.indexes }),
+            workingState.indexes
+        );
+
         const nextState = ops.batch.merge(batchToken, {
             [this.arrName]: ops.batch.push(batchToken, id, workingState[this.arrName]),
-            [this.mapName]: ops.batch.merge(batchToken, { [id]: finalEntry }, workingState[this.mapName]),
+            [this.mapName]: ops.batch.merge(batchToken, {
+                [id]: finalEntry,
+            }, workingState[this.mapName]),
+            indexes: nextIndexes,
         }, workingState);
 
         return {
@@ -231,22 +329,108 @@ const Table = class Table {
     update(tx, branch, rows, mergeObj) {
         const { batchToken, withMutations } = tx;
 
-        const {
-            mapName,
-        } = this;
-
-        const mapFunction = (row) => {
+        const mergeObjInto = (row) => {
             const merge = withMutations ? ops.mutable.merge : ops.batch.merge(batchToken);
             return merge(mergeObj, row);
         };
 
         const set = withMutations ? ops.mutable.set : ops.batch.set(batchToken);
 
-        const newMap = rows.reduce((map, row) => {
-            const result = mapFunction(row);
-            return set(result[this.idAttribute], result, map);
-        }, branch[mapName]);
-        return ops.batch.set(batchToken, mapName, newMap, branch);
+        const indexedAttrs = Object.keys(branch.indexes)
+            .filter(attr => mergeObj.hasOwnProperty(attr));
+        const indexIdsToAdd = [];
+        const indexIdsToDelete = [];
+
+        const nextMap = rows.reduce((map, row) => {
+            const prevAttrValues = indexedAttrs.reduce((valueMap, attr) => ({
+                ...valueMap,
+                [attr]: row[attr],
+            }), {});
+            const result = mergeObjInto(row);
+            const nextAttrValues = indexedAttrs.reduce((valueMap, attr) => ({
+                ...valueMap,
+                [attr]: result[attr],
+            }), {});
+            const id = result[this.idAttribute];
+            const nextRow = set(id, result, map);
+            indexedAttrs.forEach((attr) => {
+                const { [attr]: prevValue } = prevAttrValues;
+                const { [attr]: nextValue } = nextAttrValues;
+                if (prevValue === nextValue) {
+                    // attribute has not changed, no need to update any index
+                    return;
+                }
+                if (prevValue !== null) {
+                    // remove id from attribute's index for its old value
+                    indexIdsToDelete.push([attr, prevValue, id]);
+                }
+                if (nextValue !== null) {
+                    // add id to attribute's index for its new value
+                    indexIdsToAdd.push([attr, nextValue, id]);
+                }
+            });
+            return nextRow;
+        }, branch[this.mapName]);
+
+        let nextIndexes = branch.indexes;
+        if (withMutations) {
+            indexIdsToDelete.forEach(([attr, value, id]) => {
+                const arr = nextIndexes[attr][value];
+                const idx = arr.indexOf(id);
+                if (idx !== -1) {
+                    ops.mutable.splice(idx, 1, [], arr);
+                }
+            });
+            indexIdsToAdd.forEach(([attr, value, id]) => {
+                ops.mutable.push(id, nextIndexes[attr][value]);
+            });
+        } else {
+            if (indexIdsToAdd.length) {
+                nextIndexes = ops.batch.merge(
+                    batchToken,
+                    indexIdsToAdd.reduce((indexMap, [attr, value, id]) => {
+                        indexMap[attr] = ops.batch.merge(
+                            batchToken,
+                            {
+                                [value]: ops.batch.push(
+                                    batchToken,
+                                    id,
+                                    indexMap[attr][value] || []
+                                ),
+                            },
+                            indexMap[attr]
+                        );
+                        return indexMap;
+                    }, { ...nextIndexes }),
+                    nextIndexes
+                );
+            }
+            if (indexIdsToDelete.length) {
+                nextIndexes = ops.batch.merge(
+                    batchToken,
+                    indexIdsToDelete.reduce((indexMap, [attr, value, id]) => {
+                        indexMap[attr] = ops.batch.merge(
+                            batchToken,
+                            {
+                                [value]: ops.batch.filter(
+                                    batchToken,
+                                    rowId => rowId !== id,
+                                    indexMap[attr][value] || []
+                                ),
+                            },
+                            indexMap[attr]
+                        );
+                        return indexMap;
+                    }, { ...nextIndexes }),
+                    nextIndexes
+                );
+            }
+        }
+
+        return ops.batch.merge(batchToken, {
+            [this.mapName]: nextMap,
+            indexes: nextIndexes,
+        }, branch);
     }
 
     /**
@@ -272,19 +456,55 @@ const Table = class Table {
 
                 ops.mutable.omit(id, branch[mapName]);
             });
+            // delete ids from all indexes
+            Object.values(branch.indexes).forEach(attrIndex => (
+                Object.values(attrIndex).forEach(valueIndex => (
+                    idsToDelete.forEach((id) => {
+                        const idx = valueIndex.indexOf(id);
+                        if (idx !== -1) {
+                            ops.mutable.splice(idx, 1, [], valueIndex);
+                        }
+                    })
+                ))
+            ));
             return branch;
         }
+
+        const nextIndexes = ops.batch.merge(
+            batchToken,
+            Object.entries(branch.indexes).reduce((indexMap, [attr, attrIndex]) => {
+                indexMap[attr] = ops.batch.merge(
+                    batchToken,
+                    Object.entries(attrIndex).reduce((attrIndexMap, [value, valueIndex]) => {
+                        attrIndexMap[value] = ops.batch.filter(
+                            batchToken,
+                            id => !idsToDelete.includes(id),
+                            valueIndex
+                        );
+                        return attrIndexMap;
+                    }, { ...indexMap[attr] }),
+                    indexMap[attr]
+                );
+                return indexMap;
+            }, { ...branch.indexes }),
+            branch.indexes
+        );
 
         return ops.batch.merge(batchToken, {
             [arrName]: ops.batch.filter(
                 batchToken,
                 id => !idsToDelete.includes(id),
-                branch[arrName]
+                branch[arrName],
             ),
             [mapName]: ops.batch.omit(
                 batchToken,
                 idsToDelete,
-                branch[mapName]
+                branch[mapName],
+            ),
+            indexes: ops.batch.merge(
+                batchToken,
+                nextIndexes,
+                branch.indexes,
             ),
         }, branch);
     }

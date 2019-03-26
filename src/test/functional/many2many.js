@@ -55,9 +55,12 @@ describe('Many to many relationships', () => {
                 userFirst = session.User.first();
                 userLast = session.User.last();
 
-                expect(teamFirst.users.toRefArray().map(row => row.id)).toEqual([userFirst.id, userLast.id]);
-                expect(userFirst.teams.toRefArray().map(row => row.id)).toEqual([teamFirst.id]);
-                expect(userLast.teams.toRefArray().map(row => row.id)).toEqual([teamFirst.id]);
+                expect(teamFirst.users.toRefArray().map(row => row.id))
+                    .toEqual([userFirst.id, userLast.id]);
+                expect(userFirst.teams.toRefArray().map(row => row.id))
+                    .toEqual([teamFirst.id]);
+                expect(userLast.teams.toRefArray().map(row => row.id))
+                    .toEqual([teamFirst.id]);
 
                 expect(TeamUsers.count()).toBe(2);
             };

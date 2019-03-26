@@ -231,7 +231,7 @@ describe('Redux integration', () => {
             expect(memoized).toHaveBeenCalledTimes(2);
         });
 
-        it('foreign key descriptors', () => {
+        it('foreign key forward descriptors', () => {
             const memoized = jest.fn(selectorSession => (
                 selectorSession.Movie
                     .all()
@@ -253,7 +253,7 @@ describe('Redux integration', () => {
                 type: CREATE_MOVIE,
                 payload: {
                     id: 532,
-                    name: 'Getting started with FK descriptors',
+                    name: 'Movie for forward FK',
                     publisherId: 123,
                 },
             });
@@ -270,7 +270,7 @@ describe('Redux integration', () => {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 999,
-                    name: 'random uninteresting publisher',
+                    name: 'Publisher not referenced by movie',
                 },
             });
 
@@ -285,7 +285,7 @@ describe('Redux integration', () => {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 123,
-                    name: 'publisher referenced by movie FK',
+                    name: 'Publisher referenced by movie FK',
                 },
             });
 
@@ -294,13 +294,88 @@ describe('Redux integration', () => {
             ).toEqual({
                 532: {
                     id: 123,
-                    name: 'publisher referenced by movie FK',
+                    name: 'Publisher referenced by movie FK',
                 },
             });
             expect(memoized).toHaveBeenCalledTimes(3);
 
             const session = orm.session(nextState);
             expect(session.Publisher.withId(123).movies.count()).toBe(1);
+        });
+
+        it('foreign key backward descriptors', () => {
+            const memoized = jest.fn(selectorSession => {
+                const publisher = selectorSession.Publisher.withId(123);
+                if (!publisher) return [];
+                return publisher.movies.toRefArray()
+                    .map(movie => movie.id);
+            });
+            const selector = createSelector(orm, memoized);
+            expect(typeof selector).toBe('function');
+
+            // publisher does not exist yet
+            expect(
+                selector(emptyState)
+            ).toEqual([]);
+            expect(memoized).toHaveBeenCalledTimes(1);
+
+            nextState = ormReducer(emptyState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                    name: 'Publisher for backward FK',
+                },
+            });
+
+            expect(
+                selector(nextState)
+            ).toEqual([]);
+            expect(memoized).toHaveBeenCalledTimes(2);
+
+            nextState = ormReducer(nextState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    id: 532,
+                    name: 'Backward FK descriptors',
+                    publisherId: 123,
+                },
+            });
+
+            expect(
+                selector(nextState)
+            ).toEqual([532]);
+            expect(memoized).toHaveBeenCalledTimes(3);
+
+            // random other movie that should be of no interest
+            nextState = ormReducer(nextState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    id: 999,
+                    name: 'Some movie without a publisher',
+                },
+            });
+
+            expect(
+                selector(nextState)
+            ).toEqual([532]);
+            expect(memoized).toHaveBeenCalledTimes(3);
+
+            nextState = ormReducer(nextState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    id: 1000,
+                    publisherId: 123,
+                    name: 'Movie referencing the publisher by FK',
+                },
+            });
+
+            expect(
+                selector(nextState)
+            ).toEqual([532, 1000]);
+            expect(memoized).toHaveBeenCalledTimes(4);
+
+            const session = orm.session(nextState);
+            expect(session.Publisher.withId(123).movies.count()).toBe(2);
         });
 
         it('custom Model table options', () => {
