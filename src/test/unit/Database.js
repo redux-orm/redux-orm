@@ -247,4 +247,26 @@ describe('createDatabase', () => {
         expect(state.Book.items).toEqual([]);
         expect(state.Book.itemsById).toEqual({});
     });
+
+    it('throws upon unknown update type', () => {
+        const state = {
+            Book: {
+                items: [],
+                itemsById: {},
+                meta: {},
+                indexes: {},
+            },
+        };
+        const updateSpec = {
+            action: 'Wash the dishes',
+            query: {
+                table: 'Book',
+                clauses: [],
+            },
+        };
+        const tx = { batchToken: getBatchToken(), withMutations: false };
+        expect(() => {
+            db.update(updateSpec, tx, state);
+        }).toThrow('Database received unknown update type: Wash the dishes');
+    });
 });

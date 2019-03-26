@@ -217,26 +217,19 @@ describe('Many-to-many relationship performance', () => {
         const { Child, Parent } = session;
 
         const maxSeconds = process.env.TRAVIS ? 7.5 : 2;
-        const n = 1;
+        const n = 2;
         const removeCount = 500;
 
         const parent = Parent.create({ id: 1 });
-        createChildren(0, removeCount * n);
-        assignChildren(parent, 0, removeCount * n);
+        createChildren(0, removeCount);
 
         const measurements = nTimes(n).map((_value, index) => {
-            const start = removeCount * index;
-            const end = removeCount + start;
+            assignChildren(parent, 0, removeCount);
             const ms = measureMs(() => {
-                for (let i = start; i < end; ++i) {
+                for (let i = 0; i < removeCount; ++i) {
                     parent.children.remove(i);
                 }
             });
-            /**
-             * reassign children to parent (undo the above code)
-             * otherwise the removal will speed up the removal of further children
-             */
-            assignChildren(parent, start, end);
             return ms;
         }).map(ms => ms / 1000);
 

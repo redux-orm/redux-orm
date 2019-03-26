@@ -19,7 +19,7 @@ const Session = class Session {
         this.state = state || db.getEmptyState();
         this.initialState = this.state;
 
-        this.withMutations = !!withMutations;
+        this.withMutations = Boolean(withMutations);
         this.batchToken = batchToken || getBatchToken();
 
         this.modelData = {};
@@ -80,11 +80,17 @@ const Session = class Session {
             .map(({ modelName }) => modelName);
     }
 
-    markAccessedIndexes([table, column, value]) {
-        const data = this.getDataForModel(table);
-        data.accessedIndexes = data.accessedIndexes || {};
-        data.accessedIndexes[column] = data.accessedIndexes[column] || [];
-        data.accessedIndexes[column].push(value);
+    markAccessedIndexes(indexes) {
+        indexes.forEach(([table, attr, value]) => {
+            const data = this.getDataForModel(table);
+            if (!data.accessedIndexes) {
+                data.accessedIndexes = {};
+            }
+            data.accessedIndexes[attr] = [
+                ...(data.accessedIndexes[attr] || []),
+                value,
+            ];
+        });
     }
 
     get accessedIndexes() {
@@ -161,10 +167,10 @@ const Session = class Session {
 
         const { indexes } = this.state[table];
         clauses.forEach((clause) => {
-            Object.keys(indexes).forEach((column) => {
-                if (!clauseFiltersByAttribute(clause, column)) return;
-                const value = clause.payload[column];
-                accessedIndexes.push([table, column, value]);
+            Object.keys(indexes).forEach((attr) => {
+                if (!clauseFiltersByAttribute(clause, attr)) return;
+                const value = clause.payload[attr];
+                accessedIndexes.push([table, attr, value]);
             });
         });
 
@@ -176,7 +182,7 @@ const Session = class Session {
              */
             this.markAccessed(table, accessedIds);
         } else if (accessedIndexes.length) {
-            this.markAccessedIndexes(table, accessedIndexes);
+            this.markAccessedIndexes(accessedIndexes);
         } else {
             /**
              * any other clause would have caused a full table scan,

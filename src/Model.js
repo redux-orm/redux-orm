@@ -113,6 +113,10 @@ const Model = class Model {
     }
 
     /**
+     * Manually mark individual instances as accessed.
+     * This allows invalidating selector memoization within mutable sessions.
+     *
+     * @param {Array.<*>} ids - Array of primary key values
      * @return {undefined}
      */
     static markAccessed(ids) {
@@ -127,6 +131,9 @@ const Model = class Model {
     }
 
     /**
+     * Manually mark this model's table as scanned.
+     * This allows invalidating selector memoization within mutable sessions.
+     *
      * @return {undefined}
      */
     static markFullTableScanned() {
@@ -138,6 +145,28 @@ const Model = class Model {
             ].join(''));
         }
         this.session.markFullTableScanned(this.modelName);
+    }
+
+    /**
+     * Manually mark indexes as accessed.
+     * This allows invalidating selector memoization within mutable sessions.
+     *
+     * @param {Array.<Array.<*,*>>} indexes - Array of column-value pairs
+     * @return {undefined}
+     */
+    static markAccessedIndexes(indexes) {
+        if (typeof this._session === 'undefined') {
+            throw new Error([
+                `Tried to mark indexes for the ${this.modelName} model as accessed without a session. `,
+                'Create a session using `session = orm.session()` and call ',
+                `\`session["${this.modelName}"].markAccessedIndexes\` instead.`,
+            ].join(''));
+        }
+        this.session.markAccessedIndexes(
+            indexes.map(
+                ([attribute, value]) => [this.modelName, attribute, value]
+            )
+        );
     }
 
     /**
