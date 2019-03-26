@@ -1,5 +1,11 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.12.4
+
+* Fixed a bug with memoization when specifying a custom `mapName` using `Model.options`. ([0fb2aca](https://github.com/tommikaikkonen/redux-orm/commit/0fb2aca3a46c7fd653bf3f0d9c8c4f937b745e7c))
+* Optimized memoization by not scanning entire tables for equality but relying on the propagated table identity instead. ([0fb2aca](https://github.com/tommikaikkonen/redux-orm/commit/0fb2aca3a46c7fd653bf3f0d9c8c4f937b745e7c))
+* Optimized model initialization by using `Object.keys()` instead of `Object.entries()`. ([e371ac7](https://github.com/tommikaikkonen/redux-orm/commit/e371ac7161a541be41bfdaf22cd4689f1c486349))
+
 ### 0.12.3
 
 * Updated dependencies, most notably Babel v7.
