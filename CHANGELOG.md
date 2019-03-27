@@ -1,5 +1,12 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.13.2
+
+Optimized full bundles using `babel-plugin-lodash` and `lodash-webpack-plugin`:
+
+* `dist/redux-orm.min.js` decreased from 67.7 kB to 48.5 kB.
+* Gzipped size decreased from 18.5 kB to 13.1 kB.
+
 ### 0.13.1
 
 * Don't filter needlessly after applying foreign key indexes. Prevents applying object-based filters again after already fully satisfying their conditions using indexes. ([41ece84](https://github.com/tommikaikkonen/redux-orm/commit/41ece841c2c4b35a880f84c9c985ede6c2904abb))
