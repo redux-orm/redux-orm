@@ -1,4 +1,5 @@
 const path = require('path');
+const LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 
 module.exports = {
     entry: './src/index.js',
@@ -15,7 +16,13 @@ module.exports = {
                 test: /\.js$/,
                 loader: 'babel-loader',
                 exclude: /node_modules/,
+                options: {
+                    plugins: ['lodash'],
+                },
             },
         ],
     },
+    plugins: [
+        new LodashModuleReplacementPlugin,
+    ],
 };
