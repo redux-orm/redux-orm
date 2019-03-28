@@ -1,7 +1,7 @@
-import mapValues from 'lodash/mapValues';
 import {
     normalizeEntity,
     warnDeprecated,
+    mapValues,
 } from './utils';
 
 import {

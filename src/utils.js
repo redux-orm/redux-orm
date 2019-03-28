@@ -191,6 +191,14 @@ function clauseReducesResultSetSize({ type }) {
     return [FILTER, EXCLUDE].includes(type);
 }
 
+function mapValues(object, func) {
+    return Object.entries(object)
+        .reduce((newObject, [key, value]) => {
+            newObject[key] = func(value);
+            return newObject;
+        }, {});
+}
+
 export {
     attachQuerySetMethods,
     m2mName,
@@ -206,4 +214,5 @@ export {
     clauseFiltersByAttribute,
     clauseReducesResultSetSize,
     warnDeprecated,
+    mapValues,
 };
