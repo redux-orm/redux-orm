@@ -272,6 +272,7 @@ export function measureMs(fn) {
 }
 
 export const avg = (arr, n) => {
+    if (n === 0) return null;
     const sum = arr.reduce((cur, summand) => cur + summand);
     return sum / n;
 };

@@ -53,6 +53,7 @@ export class ORM {
         this.registry = [];
         this.implicitThroughModels = [];
         this.installedFields = {};
+        this.stateSelector = opts ? opts.stateSelector : null;
     }
 
     /**
