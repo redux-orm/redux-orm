@@ -2,9 +2,9 @@
 
 <div align="center">
 
-[![Build Status](https://img.shields.io/travis/tommikaikkonen/redux-orm.svg?style=flat-square)](https://travis-ci.org/tommikaikkonen/redux-orm)
+[![Build Status](https://img.shields.io/travis/redux-orm/redux-orm.svg?style=flat-square)](https://travis-ci.org/redux-orm/redux-orm)
 [![Codacy Grade](https://img.shields.io/codacy/grade/55fea9be60974a5c9b8f0459070dfefc.svg?style=flat-square)](https://www.codacy.com/app/haveyaseen/redux-orm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=tommikaikkonen/redux-orm&amp;utm_campaign=Badge_Grade)
-[![Coverage Status](https://img.shields.io/codecov/c/github/tommikaikkonen/redux-orm/master.svg?style=flat-square)](https://codecov.io/gh/tommikaikkonen/redux-orm/branch/master)
+[![Coverage Status](https://img.shields.io/codecov/c/github/redux-orm/redux-orm/master.svg?style=flat-square)](https://codecov.io/gh/redux-orm/redux-orm/branch/master)
 [![NPM package](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
 ![GitHub Release Date](https://img.shields.io/github/release-date/tommikaikkonen/redux-orm.svg?style=flat-square)
 [![NPM downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
