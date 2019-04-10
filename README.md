@@ -3,22 +3,14 @@
 <div align="center">
 
 [![Build Status](https://img.shields.io/travis/redux-orm/redux-orm.svg?style=flat-square)](https://travis-ci.org/redux-orm/redux-orm)
-[![Codacy Grade](https://img.shields.io/codacy/grade/55fea9be60974a5c9b8f0459070dfefc.svg?style=flat-square)](https://www.codacy.com/app/haveyaseen/redux-orm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=tommikaikkonen/redux-orm&amp;utm_campaign=Badge_Grade)
+[![Codacy Grade](https://img.shields.io/codacy/grade/d3ad7e3bd8264012953df9d1967bedaa.svg?style=flat-square)](https://www.codacy.com/app/redux-orm/redux-orm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=redux-orm/redux-orm&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://img.shields.io/codecov/c/github/redux-orm/redux-orm/master.svg?style=flat-square)](https://codecov.io/gh/redux-orm/redux-orm/branch/master)
 [![NPM package](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
-![GitHub Release Date](https://img.shields.io/github/release-date/tommikaikkonen/redux-orm.svg?style=flat-square)
+![GitHub Release Date](https://img.shields.io/github/release-date/redux-orm/redux-orm.svg?style=flat-square)
 [![NPM downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
 [![Gitter](https://badges.gitter.im/redux-orm/Lobby.svg?style=flat-square)](https://gitter.im/redux-orm/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ![NPM license](https://img.shields.io/npm/l/redux-orm.svg?style=flat-square)
 </div>
-
-See [a guide to creating a simple app with Redux-ORM](https://github.com/tommikaikkonen/redux-orm-primer) (includes the source). Its README is not updated for 0.9 yet but the [code has a branch for it](https://github.com/tommikaikkonen/redux-orm-primer/tree/migrate_to_0_9).
-
-**The 0.9.x versions bring big breaking changes to the API. Please look at the [migration guide](https://github.com/tommikaikkonen/redux-orm/wiki/0.9-Migration-Guide) if you're migrating from earlier versions.**
-
-Looking for the 0.8 docs? Read the [old README.md in the repo](https://github.com/tommikaikkonen/redux-orm/tree/3c36fa804d2810b2aaaad89ff1d99534b847ea35). For the API reference, clone the repo, `npm install`, `make build` and open up `index.html` in your browser. Sorry for the inconvenience.
-
-API can be unstable until 1.0.0. Minor version bumps before 1.0.0 can and will introduce breaking changes. They will be noted in the [changelog](https://github.com/tommikaikkonen/redux-orm/blob/master/CHANGELOG.md).
 
 ## Installation
 
@@ -26,14 +18,15 @@ API can be unstable until 1.0.0. Minor version bumps before 1.0.0 can and will i
 npm install redux-orm --save
 ```
 
-Or with a script tag
+Or with a script tag exposing a global called `ReduxOrm`:
 
 ```html
-<script src="https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.min.js"></script>
+<script src="https://unpkg.com/redux-orm/dist/redux-orm.min.js"></script>
 ```
 
-- [Browser build following master](https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.js)
-- [Browser build following master (minimized)](https://tommikaikkonen.github.io/redux-orm/dist/redux-orm.min.js)
+* [Browser build following master (minimized)](https://unpkg.com/redux-orm/dist/redux-orm.min.js)
+  * [JavaScript Source Map](https://unpkg.com/redux-orm/dist/redux-orm.min.js.map)
+* [Browser build following master](https://unpkg.com/redux-orm/dist/redux-orm.js) (only use if size does not matter)
 
 ### Polyfill
 
@@ -41,9 +34,11 @@ Redux-ORM uses some ES2015+ features, such as `Set`. If you are using Redux-ORM 
 
 ### Extensions
 
-- [`redux-orm-proptypes`](https://github.com/tommikaikkonen/redux-orm-proptypes): React PropTypes validation and defaultProps mixin for Redux-ORM Models
+* [`redux-orm-proptypes`](https://github.com/tommikaikkonen/redux-orm-proptypes): React PropTypes validation and defaultProps mixin for Redux-ORM Models
 
 ## Usage
+
+For a detailed walkthrough see [a guide to creating a simple app with Redux-ORM](https://github.com/tommikaikkonen/redux-orm-primer). Its not up-to-date yet but the [code has a branch for version 0.9](https://github.com/tommikaikkonen/redux-orm-primer/tree/migrate_to_0_9). The Redux docs have a [short section](https://redux.js.org/recipes/structuring-reducers/updating-normalized-data#redux-orm) on Redux-ORM as well.
 
 ### Declare Your Models
 
@@ -130,10 +125,9 @@ The initial database state is not mutated. A new database state with the updates
 const updatedDBState = session.state;
 ```
 
-
 ## Redux Integration
 
-To integrate Redux-ORM with Redux at the most basic level, you can define a reducer that instantiates a session from the database state held in the Redux atom, then when you've applied all of your updates, you can return the next state from the session.
+To integrate Redux-ORM with Redux at the most basic level, you can define a reducer that instantiates a session from the database state held in the Redux state slice, then when you've applied all of your updates, you can return the next state from the session.
 
 ```javascript
 import orm from './orm';
@@ -173,7 +167,7 @@ function ormReducer(dbState, action) {
 }
 ```
 
-Previously Redux-ORM advocated for reducers specific to Models by attaching a static `reducer` function on the Model class. If you want to define your update logic on the Model classes, you can specify a `reducer` static method on your model which accepts the action as the first argument, the session-specific Model as the second, and the whole session as the third.
+Previously we advocated for reducers specific to Models by attaching a static `reducer` function on the Model class. If you want to define your update logic on the Model classes, you can specify a `reducer` static method on your model which accepts the action as the first argument, the session-specific Model as the second, and the whole session as the third.
 
 ```javascript
 class Book extends Model {
@@ -218,7 +212,7 @@ import orm from './orm';
 const reducer = createReducer(orm);
 ```
 
-`createReducer` is really simple, so I'll just paste the source here.
+`createReducer` is really simple, so we'll just paste the source here.
 
 ```javascript
 function createReducer(orm, updater = defaultUpdater) {
@@ -344,7 +338,7 @@ First, a new session:
 ```javascript
 import { orm } from './models';
 
-const dbState = getState().db; // getState() returns the redux state.
+const dbState = store.getState().db; // getState() returns the Redux state
 const sess = orm.session(dbState);
 ```
 
@@ -367,7 +361,7 @@ book.name = 'Clean Code'
 book.name // 'Clean Code'
 
 sess.state === dbState
-// false.
+// false
 ```
 
 The update was applied, and because the session does not mutate the original state, it created a new one and swapped `sess.state` to point to the new one.
@@ -375,7 +369,6 @@ The update was applied, and because the session does not mutate the original sta
 Let's update the database state again through the ORM.
 
 ```javascript
-
 // Save this reference so we can compare.
 const updatedState = sess.state;
 
@@ -403,15 +396,15 @@ The ORM abstraction will never be as performant compared to writing reducers by 
 
 ### ORM
 
-See the full documentation for ORM [here](http://tommikaikkonen.github.io/redux-orm/global.html#ORM)
+See the full documentation for ORM [here](http://redux-orm.github.io/redux-orm/global.html#ORM)
 
-Instantiation
+#### Instantiation:
 
 ```javascript
 const orm = new ORM(); // no arguments needed.
 ```
 
-Instance methods:
+#### Instance methods:
 
 - `register(...models: Array<Model>)`: registers Model classes to the `ORM` instance.
 - `session(state: any)`: begins a new `Session` with `state`.
@@ -423,38 +416,38 @@ Instance methods:
 
 ### Model
 
-See the full documentation for `Model` [here](http://tommikaikkonen.github.io/redux-orm/Model.html).
+See the full documentation for `Model` [here](http://redux-orm.github.io/redux-orm/Model.html).
 
 **Instantiation**: Don't instantiate directly; use the class methods `create` and `upsert` as documented below.
 
 **Class Methods**:
 
-- `withId(id)`: gets the Model instance with id `id`.
-- `idExists(id)`: returns a boolean indicating if an entity with id `id` exists in the state.
-- `exists(matchObj)`: returns a boolean indicating if an entity whose properties match `matchObj` exists in the state.
-- `get(matchObj)`: gets a Model instance based on matching properties in `matchObj` (if you are sure there is only one matching instance).
-- `create(props)`: creates a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`.
-- `upsert(props)`: either creates a new Model instance with `props` or, in case an instance with the same id already exists, updates that one - in other words it's **create or update** behaviour.
+  * `withId(id)`: gets the Model instance with id `id`.
+  * `idExists(id)`: returns a boolean indicating if an entity with id `id` exists in the state.
+  * `exists(matchObj)`: returns a boolean indicating if an entity whose properties match `matchObj` exists in the state.
+  * `get(matchObj)`: gets a Model instance based on matching properties in `matchObj` (if you are sure there is only one matching instance).
+  * `create(props)`: creates a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`.
+  * `upsert(props)`: either creates a new Model instance with `props` or, in case an instance with the same id already exists, updates that one - in other words it's **create or update** behaviour.
 
-You will also have access to almost all [QuerySet instance methods](http://tommikaikkonen.github.io/redux-orm/QuerySet.html) from the class object for convenience, including `where` and the like.
+You will also have access to almost all [QuerySet instance methods](http://redux-orm.github.io/redux-orm/QuerySet.html) from the class object for convenience, including `where` and the like.
 
-**Instance Attributes**:
-- `ref`: returns a direct reference to the plain JavaScript object representing the Model instance in the store.
+#### Instance Attributes:
+  * `ref`: returns a direct reference to the plain JavaScript object representing the Model instance in the store.
 
-**Instance methods**:
+#### Instance methods:
 
-- `equals(otherModel)`: returns a boolean indicating equality with `otherModel`. Equality is determined by shallow comparison of both model's attributes.
-- `set(propertyName, value)`: updates `propertyName` to `value`. Returns `undefined`. Is equivalent to normal assignment.
-- `update(mergeObj)`: merges `mergeObj` with the Model instance properties. Returns `undefined`.
-- `delete()`: deletes the record for this Model instance in the database. Returns `undefined`.
+  * `equals(otherModel)`: returns a boolean indicating equality with `otherModel`. Equality is determined by shallow comparison of both model's attributes.
+  * `set(propertyName, value)`: updates `propertyName` to `value`. Returns `undefined`. Is equivalent to normal assignment.
+  * `update(mergeObj)`: merges `mergeObj` with the Model instance properties. Returns `undefined`.
+  * `delete()`: deletes the record for this Model instance in the database. Returns `undefined`.
 
-**Subclassing**:
+#### Subclassing:
 
 Use the ES6 syntax to subclass from `Model`. Any instance methods you declare will be available on Model instances. Any static methods you declare will be available on the Model class in Sessions.
 
 For the related fields declarations, either set the `fields` property on the class or declare a static getter that returns the field declarations like this:
 
-**Declaring `fields`**:
+#### Declaring `fields`:
 ```javascript
 class Book extends Model {
     static get fields() {
@@ -481,7 +474,7 @@ For `many` field declarations, accessing the field on a Model instance will retu
 
 When declaring model classes, always remember to set the `modelName` property. It needs to be set explicitly, because running your code through a mangler would otherwise break functionality. The `modelName` will be used to resolve all related fields. 
 
-**Declaring `modelName`**:
+#### Declaring `modelName`:
 ```javascript
 class Book extends Model {
     static get modelName() {
@@ -492,7 +485,7 @@ class Book extends Model {
 Book.modelName = 'Book';
 ```
 
-**Declaring `options`**
+#### Declaring `options`:
 
 If you need to specify options to the Redux-ORM database, you can declare a static `options` property on the Model class with an object key. Currently you can specify the id attribute name:
 
@@ -505,34 +498,36 @@ Book.options = {
 
 ### QuerySet
 
-See the full documentation for `QuerySet` [here](http://tommikaikkonen.github.io/redux-orm/QuerySet.html).
+See the full documentation for `QuerySet` [here](http://redux-orm.github.io/redux-orm/QuerySet.html).
 
 You can access all of these methods straight from a `Model` class, as if they were class methods on `Model`. In this case the functions will operate on a QuerySet that includes all the Model instances.
 
-**Instance methods**:
+#### Instance methods:
 
-- `toRefArray()`: returns the objects represented by the `QuerySet` as an array of plain JavaScript objects. The objects are direct references to the store.
-- `toModelArray()`: returns the objects represented by the `QuerySet` as an array of `Model` instances objects.
-- `count()`: returns the number of `Model` instances in the `QuerySet`.
-- `exists()`: return `true` if number of entities is more than 0, else `false`.
-- `filter(filterArg)`: returns a new `QuerySet` representing the records from the parent QuerySet that pass the filter. For `filterArg`, you can either pass an object that Redux-ORM tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not. The function receives a model instance as its sole argument.
-- `exclude` returns a new `QuerySet` represeting entities in the parent QuerySet that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function. The function receives a model instance as its sole argument.
-- `all()` returns a new `QuerySet` with the same entities.
-- `at(index)` returns an `Model` instance at the supplied `index` in the `QuerySet`.
-- `first()` returns an `Model` instance at the `0` index.
-- `last()` returns an `Model` instance at the `querySet.count() - 1` index.
-- `delete()` deleted all entities represented by the `QuerySet`.
-- `update(mergeObj)` updates all entities represented by the `QuerySet` based on the supplied object. The object will be merged with each entity.
+  * `toRefArray()`: returns the objects represented by the `QuerySet` as an array of plain JavaScript objects. The objects are direct references to the store.
+  * `toModelArray()`: returns the objects represented by the `QuerySet` as an array of `Model` instances objects.
+  * `count()`: returns the number of `Model` instances in the `QuerySet`.
+  * `exists()`: return `true` if number of entities is more than 0, else `false`.
+  * `filter(filterArg)`: returns a new `QuerySet` representing the records from the parent QuerySet that pass the filter. For `filterArg`, you can either pass an object that Redux-ORM tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not. The function receives a model instance as its sole argument.
+  * `exclude` returns a new `QuerySet` represeting entities in the parent QuerySet that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function. The function receives a model instance as its sole argument.
+  * `all()` returns a new `QuerySet` with the same entities.
+  * `at(index)` returns an `Model` instance at the supplied `index` in the `QuerySet`.
+  * `first()` returns an `Model` instance at the `0` index.
+  * `last()` returns an `Model` instance at the `querySet.count() - 1` index.
+  * `delete()` deleted all entities represented by the `QuerySet`.
+  * `update(mergeObj)` updates all entities represented by the `QuerySet` based on the supplied object. The object will be merged with each entity.
 
 ### Session
 
-See the full documentation for Session [here](http://tommikaikkonen.github.io/redux-orm/Session.html)
+See the full documentation for Session [here](http://redux-orm.github.io/redux-orm/Session.html)
 
-**Instantiation**: you don't need to do this yourself. Use `orm.session`.
+#### Instantiation:
 
-**Instance properties**:
+You don't need to do this yourself. Use `orm.session` (usually what you want) or `orm.mutableSession`.
 
-- `state`: the current database state in the session.
+#### Instance properties:
+
+  * `state`: the current database state in the session.
 
 Additionally, you can access all the registered Models in the schema for querying and updates as properties of this instance. For example, given a schema with `Book` and `Author` models,
 
@@ -540,15 +535,19 @@ Additionally, you can access all the registered Models in the schema for queryin
 const session = orm.session(state);
 session.Book // Model class: Book
 session.Author // Model class: Author
-session.Book.create({id: 5, name: 'Refactoring', release_year: 1999});
+session.Book.create({ id: 5, name: 'Refactoring', release_year: 1999 });
 ```
 
 ## Changelog
 
-Minor changes before v1.0.0 can include breaking changes.
+API is still unstable. Minor changes before v1.0.0 can and will include breaking changes, adhering to Semantic Versioning.
 
-See [`CHANGELOG.md`](https://github.com/tommikaikkonen/redux-orm/blob/master/CHANGELOG.md).
+See [`CHANGELOG.md`](https://github.com/redux-orm/redux-orm/blob/master/CHANGELOG.md).
+
+The 0.9.x versions brought big breaking changes to the API. Please look at the [migration guide](https://github.com/redux-orm/redux-orm/wiki/0.9-Migration-Guide) if you're migrating from earlier versions.
+
+Looking for the 0.8 docs? Read the [old README.md in the repo](https://github.com/redux-orm/redux-orm/tree/3c36fa804d2810b2aaaad89ff1d99534b847ea35). For the API reference, clone the repo, `npm install`, `make build` and open up `index.html` in your browser. Sorry for the inconvenience.
 
 ## License
 
-MIT. See [`LICENSE`](https://github.com/tommikaikkonen/redux-orm/blob/master/LICENSE).
+MIT. See [`LICENSE`](https://github.com/redux-orm/redux-orm/blob/master/LICENSE).
