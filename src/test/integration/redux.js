@@ -164,6 +164,83 @@ describe('Redux integration', () => {
             expect(memoized).toHaveBeenCalledTimes(2);
         });
 
+        it('id-based lookups with additional attributes', () => {
+            const memoized = jest.fn(selectorSession => {
+                const movie = selectorSession.Movie
+                    .filter({
+                        id: 123,
+                        name: 'Looking for this name',
+                    })
+                    .first();
+                return movie ? movie.ref.name : null;
+            });
+            const selector = createSelector(orm, memoized);
+            expect(typeof selector).toBe('function');
+
+            expect(
+                selector(emptyState)
+            ).toBe(null);
+            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(
+                selector(emptyState)
+            ).toBe(null);
+            expect(memoized).toHaveBeenCalledTimes(1);
+
+            nextState = ormReducer(emptyState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    id: 123,
+                    name: 'Looking for this name',
+                },
+            });
+
+            expect(
+                selector(nextState)
+            ).toBe('Looking for this name');
+            expect(memoized).toHaveBeenCalledTimes(2);
+
+            nextState = ormReducer(nextState, {
+                type: UPSERT_MOVIE,
+                payload: {
+                    id: 123,
+                    name: 'Looking for this name',
+                },
+            });
+
+            expect(
+                selector(nextState)
+            ).toBe('Looking for this name');
+            expect(memoized).toHaveBeenCalledTimes(2);
+
+            nextState = ormReducer(nextState, {
+                type: UPSERT_MOVIE,
+                payload: {
+                    id: 123,
+                    name: 'Some other name',
+                },
+            });
+
+            /* Different name should no longer satisfy filter condition. */
+            expect(
+                selector(nextState)
+            ).toBe(null);
+            expect(memoized).toHaveBeenCalledTimes(3);
+
+            nextState = ormReducer(nextState, {
+                type: UPSERT_MOVIE,
+                payload: {
+                    id: 123,
+                    name: 'Looking for this name',
+                },
+            });
+
+            /* Initial name should again satisfy filter condition. */
+            expect(
+                selector(nextState)
+            ).toBe('Looking for this name');
+            expect(memoized).toHaveBeenCalledTimes(4);
+        });
+
         it('empty QuerySets', () => {
             const memoized = jest.fn(selectorSession => (
                 selectorSession.Movie

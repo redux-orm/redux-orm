@@ -96,7 +96,7 @@ const fullTableScannedModelsAreEqual = (previous, ormState) => (
  * @return {Function} `func` memoized.
  */
 export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
-    const previous = {
+    let previous = {
         /* Result of the previous function call */
         result: null,
         /* Arguments to the previous function call (excluding ORM state) */
@@ -158,30 +158,33 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
         }
 
         /**
-         * The previous result is no longer valid.
-         * Begin updating cached values, starting with
-         * the arguments that we will pass to the selector.
-         */
-        previous.args = args;
-
-        /**
          * Start a session so that the selector can access the database.
          * Make this session immutable. This way we can find out if
          * the operations that the selector performs are cacheable.
          */
         const session = orm.session(ormState);
-        previous.ormState = ormState;
 
         /* This is where we call the actual function */
         const result = func(...[session, ...args]);
-        previous.result = result;
 
-        /* Rows retrieved during function call */
-        previous.accessedInstances = session.accessedModelInstances;
-        /* Foreign key indexes that were used to speed up queries */
-        previous.accessedIndexes = session.accessedIndexes;
-        /* Tables that had to be scanned completely */
-        previous.fullTableScannedModels = session.fullTableScannedModels;
+        /**
+         * The metadata for the previous call are no longer valid.
+         * Update cached values.
+         */
+        previous = {
+            /* Arguments that were passed to the selector */
+            args,
+            /* Selector result */
+            result,
+            /* Redux state slice for session.state */
+            ormState,
+            /* Rows retrieved by resolved primary key */
+            accessedInstances: session.accessedModelInstances,
+            /* Foreign key indexes that were used to speed up queries */
+            accessedIndexes: session.accessedIndexes,
+            /* Tables that had to be scanned completely */
+            fullTableScannedModels: session.fullTableScannedModels,
+        };
 
         return result;
     };

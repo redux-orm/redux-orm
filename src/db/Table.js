@@ -177,9 +177,29 @@ const Table = class Table {
                      * to look up the single row identified by the PK.
                      */
                     const id = payload[idAttribute];
-                    return this.idExists(branch, id)
-                        ? [this.accessId(branch, id)]
-                        : [];
+                    const remainingPayload = Object.keys(payload)
+                        .reduce((withoutPkAttr, filterAttr) => {
+                            if (filterAttr !== idAttribute) {
+                                withoutPkAttr[filterAttr] = payload[filterAttr];
+                            }
+                            return withoutPkAttr;
+                        }, {});
+                    const ids = this.idExists(branch, id) ? [id] : [];
+                    if (Object.keys(remainingPayload).length) {
+                        /**
+                         * Payload has additional, non-PK columns.
+                         * Filter accessed row by remaining payload (if one was found).
+                         */
+                        return reducer(this.accessIds(branch, ids), {
+                            ...clause,
+                            payload: remainingPayload,
+                        });
+                    }
+                    /**
+                     * No need to filter these rows any further.
+                     * The primary key value satisfies this clause's conditions.
+                     */
+                    return this.accessIds(branch, ids);
                 }
                 if (type === FILTER && typeof payload === 'object') {
                     const indexes = Object.entries(branch.indexes);
@@ -188,9 +208,9 @@ const Table = class Table {
                     indexes.forEach(([attr, index]) => {
                         if (clauseFiltersByAttribute(clause, attr)) {
                             /**
-                            * Payload specified an indexed attribute. Use index
-                            * to potentially decrease amount of accessed rows.
-                            */
+                             * Payload specified an indexed attribute. Use index
+                             * to potentially decrease amount of accessed rows.
+                             */
                             if (index.hasOwnProperty(payload[attr])) {
                                 accessedIndexes.push(index[payload[attr]]);
                                 indexAttrs.push(attr);
@@ -207,24 +227,28 @@ const Table = class Table {
                             const indexSet = new Set(index);
                             return result.filter(Set.prototype.has, indexSet);
                         }, lastIndex);
-                        const newPayload = Object.keys(payload)
+                        const remainingPayload = Object.keys(payload)
                             .reduce((withoutIndexAttrs, filterAttr) => {
                                 if (!indexAttrs.includes(filterAttr)) {
                                     withoutIndexAttrs[filterAttr] = payload[filterAttr];
                                 }
                                 return withoutIndexAttrs;
                             }, {});
-                        if (Object.keys(newPayload).length === 0) {
+                        if (Object.keys(remainingPayload).length) {
                             /**
-                             * No need to filter these rows any further.
-                             * The used indexes satisfy this clause's conditions.
+                             * Payload has additional, non-indexed columns.
+                             * Filter indexed rows by remaining payload (if any were found).
                              */
-                            return this.accessIds(branch, indexedIds);
+                            return reducer(this.accessIds(branch, indexedIds), {
+                                ...clause,
+                                payload: remainingPayload,
+                            });
                         }
-                        return reducer(this.accessIds(branch, indexedIds), {
-                            ...clause,
-                            payload: newPayload,
-                        });
+                        /**
+                         * No need to filter these rows any further.
+                         * The used indexes satisfy this clause's conditions.
+                         */
+                        return this.accessIds(branch, indexedIds);
                     }
                 }
 
