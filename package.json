@@ -30,7 +30,7 @@
   "author": "Tommi Kaikkonen <tommi.kaikkonen@aalto.fi>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tommikaikkonen/redux-orm.git"
+    "url": "https://github.com/redux-orm/redux-orm.git"
   },
   "license": "MIT",
   "devDependencies": {
