@@ -17,6 +17,7 @@ describe('Redux integration', () => {
     let ormReducer;
 
     const CREATE_MOVIE = 'CREATE_MOVIE';
+    const UPSERT_MOVIE = 'UPSERT_MOVIE';
     const CREATE_PUBLISHER = 'CREATE_PUBLISHER';
 
     const createModelReducers = () => {
@@ -29,6 +30,9 @@ describe('Redux integration', () => {
             switch (action.type) {
             case CREATE_MOVIE:
                 Model.create(action.payload);
+                break;
+            case UPSERT_MOVIE:
+                Model.upsert(action.payload);
                 break;
             default: break;
             }
@@ -57,10 +61,10 @@ describe('Redux integration', () => {
         orm.register(Book, Cover, Genre, Tag, Author, Movie, Publisher);
         ormReducer = createReducer(orm);
         createModelReducers();
+        emptyState = orm.getEmptyState();
     });
 
     it('runs reducers if explicitly specified', () => {
-        emptyState = orm.getEmptyState();
         const mockAction = {};
         nextState = ormReducer(emptyState, mockAction);
 
@@ -376,6 +380,78 @@ describe('Redux integration', () => {
 
             const session = orm.session(nextState);
             expect(session.Publisher.withId(123).movies.count()).toBe(2);
+        });
+
+        it('ordered foreign key backward descriptors', () => {
+            const memoized = jest.fn(selectorSession => {
+                const publisher = selectorSession.Publisher.withId(123);
+                if (!publisher) return [];
+                return publisher.movies
+                    .orderBy('name', 'asc')
+                    .toRefArray()
+                    .map(movie => movie.id);
+            });
+            const selector = createSelector(orm, memoized);
+            expect(typeof selector).toBe('function');
+
+            // publisher does not exist yet
+            expect(
+                selector(emptyState)
+            ).toEqual([]);
+            expect(memoized).toHaveBeenCalledTimes(1);
+
+            nextState = ormReducer(emptyState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                    name: 'Publisher for backward FK',
+                },
+            });
+
+            expect(
+                selector(nextState)
+            ).toEqual([]);
+            expect(memoized).toHaveBeenCalledTimes(2);
+
+            nextState = ormReducer(nextState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    id: 1,
+                    name: 'A - First in alphabet',
+                    publisherId: 123,
+                },
+            });
+
+            nextState = ormReducer(nextState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    id: 2,
+                    name: 'B - Second in alphabet',
+                    publisherId: 123,
+                },
+            });
+
+            expect(
+                selector(nextState)
+            ).toEqual([1, 2]);
+            expect(memoized).toHaveBeenCalledTimes(3);
+
+            /**
+             * Change first letter of name from 'A' to 'Z'.
+             * Selector should move this movie to the end now.
+             */
+            nextState = ormReducer(nextState, {
+                type: UPSERT_MOVIE,
+                payload: {
+                    id: 1,
+                    name: 'Z - Last in alphabet',
+                },
+            });
+
+            expect(
+                selector(nextState)
+            ).toEqual([2, 1]);
+            expect(memoized).toHaveBeenCalledTimes(4);
         });
 
         it('custom Model table options', () => {
