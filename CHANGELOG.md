@@ -71,17 +71,20 @@ movie.publisher.id === movie.publisherId // true
 ### 0.12.0
 
 * Fixed bug where using the ES5 version with ES6-based model classes would not work. [#213](https://github.com/redux-orm/redux-orm/pull/213)
-    * Unfortunately this hotfix contains a performance degradation, so only upgrade if you suffer from the above issue. We are working on an alternative solution.
+  * Unfortunately this hotfix contains a performance degradation, so only upgrade if you suffer from the above issue. We are working on an alternative solution.
 
 ### 0.11.0
 
 * Potential breaking changes to model API:
-    * `Model#equals` is now used by `Model#update` to prevent unnecessary updates in some cases when the intended updates would not change the current model. By default models will always be updated if any of the passed attributes have a different reference than the respective existing attribute. [#204](https://github.com/redux-orm/redux-orm/pull/204)
-    * `Model.withId` and resolving foreign key relationships no longer throw an error if the referenced model does not exist. Instead `null` is returned. [#210](https://github.com/redux-orm/redux-orm/pull/210)
-    * `Model.exists` now accepts passing a lookup object to check if any model instance matching the passed attributes exists. [#209](https://github.com/redux-orm/redux-orm/pull/209)
-    * `Model.hasId` has been replaced by `Model.idExists`. [#209](https://github.com/redux-orm/redux-orm/pull/209)
+  * `Model#equals` is now used by `Model#update` to prevent unnecessary updates in some cases when the intended updates would not change the current model. By default models will always be updated if any of the passed attributes have a different reference than the respective existing attribute. [#204](https://github.com/redux-orm/redux-orm/pull/204)
+  * `Model.withId` and resolving foreign key relationships no longer throw an error if the referenced model does not exist. Instead `null` is returned. [#210](https://github.com/redux-orm/redux-orm/pull/210)
+  * `Model.exists` now accepts passing a lookup object to check if any model instance matching the passed attributes exists. [#209](https://github.com/redux-orm/redux-orm/pull/209)
+  * `Model.hasId` has been replaced by `Model.idExists`. [#209](https://github.com/redux-orm/redux-orm/pull/209)
+
 * Fixed `QuerySet#toString`. [12ce882](https://github.com/redux-orm/redux-orm/commit/12ce882e9ed7fc1ba742e94feb10e82f0968de85)
+
 * Upgraded to reselect v3.0.1. [#208](https://github.com/redux-orm/redux-orm/pull/208)
+
 * Refactored `fields.js`, `descriptors.js` and small parts of `Model.js`. [#210](https://github.com/redux-orm/redux-orm/pull/210)
 
 ### 0.10.2
@@ -147,7 +150,6 @@ Adds **batched mutations.** This is a big performance improvement. Previously ad
 **Breaking changes**:
 
 * Removed `indexById` option from Backend. This means that data will always be stored in both an array of id's and a map of `id => entity`, which was the default setting. If you didn't explicitly set `indexById` to `false`, you don't need to change anything.
-
 * Batched mutations brought some internal changes. If you had custom `Backend` or `Session` classes, or have overridden `Model.getNextState`, please check out the diff.
 
 ### 0.7.0

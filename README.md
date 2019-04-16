@@ -26,6 +26,7 @@ Or with a script tag exposing a global called `ReduxOrm`:
 
 * [Browser build following master (minimized)](https://unpkg.com/redux-orm/dist/redux-orm.min.js)
   * [JavaScript Source Map](https://unpkg.com/redux-orm/dist/redux-orm.min.js.map)
+
 * [Browser build following master](https://unpkg.com/redux-orm/dist/redux-orm.js) (only use if size does not matter)
 
 ### Polyfill
@@ -406,13 +407,13 @@ const orm = new ORM(); // no arguments needed.
 
 #### Instance methods:
 
-- `register(...models: Array<Model>)`: registers Model classes to the `ORM` instance.
-- `session(state: any)`: begins a new `Session` with `state`.
+* `register(...models: Array<Model>)`: registers Model classes to the `ORM` instance.
+* `session(state: any)`: begins a new `Session` with `state`.
 
 ### Redux Integration
 
-- `createReducer(orm: ORM)`: returns a reducer function that can be plugged into Redux. The reducer will return the next state of the database given the provided action. You need to register your models before calling this.
-- `createSelector(orm: ORM, [...inputSelectors], selectorFunc)`: returns a memoized selector function for `selectorFunc`. `selectorFunc` receives `session` as the first argument, followed by any inputs from `inputSelectors`. Note that the first inputSelector must return the db-state to create a session from. Read the full documentation for details.
+* `createReducer(orm: ORM)`: returns a reducer function that can be plugged into Redux. The reducer will return the next state of the database given the provided action. You need to register your models before calling this.
+* `createSelector(orm: ORM, [...inputSelectors], selectorFunc)`: returns a memoized selector function for `selectorFunc`. `selectorFunc` receives `session` as the first argument, followed by any inputs from `inputSelectors`. Note that the first inputSelector must return the db-state to create a session from. Read the full documentation for details.
 
 ### Model
 
@@ -422,24 +423,24 @@ See the full documentation for `Model` [here](http://redux-orm.github.io/redux-o
 
 **Class Methods**:
 
-  * `withId(id)`: gets the Model instance with id `id`.
-  * `idExists(id)`: returns a boolean indicating if an entity with id `id` exists in the state.
-  * `exists(matchObj)`: returns a boolean indicating if an entity whose properties match `matchObj` exists in the state.
-  * `get(matchObj)`: gets a Model instance based on matching properties in `matchObj` (if you are sure there is only one matching instance).
-  * `create(props)`: creates a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`.
-  * `upsert(props)`: either creates a new Model instance with `props` or, in case an instance with the same id already exists, updates that one - in other words it's **create or update** behaviour.
+* `withId(id)`: gets the Model instance with id `id`.
+* `idExists(id)`: returns a boolean indicating if an entity with id `id` exists in the state.
+* `exists(matchObj)`: returns a boolean indicating if an entity whose properties match `matchObj` exists in the state.
+* `get(matchObj)`: gets a Model instance based on matching properties in `matchObj` (if you are sure there is only one matching instance).
+* `create(props)`: creates a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`.
+* `upsert(props)`: either creates a new Model instance with `props` or, in case an instance with the same id already exists, updates that one - in other words it's **create or update** behaviour.
 
 You will also have access to almost all [QuerySet instance methods](http://redux-orm.github.io/redux-orm/QuerySet.html) from the class object for convenience, including `where` and the like.
 
 #### Instance Attributes:
-  * `ref`: returns a direct reference to the plain JavaScript object representing the Model instance in the store.
+* `ref`: returns a direct reference to the plain JavaScript object representing the Model instance in the store.
 
 #### Instance methods:
 
-  * `equals(otherModel)`: returns a boolean indicating equality with `otherModel`. Equality is determined by shallow comparison of both model's attributes.
-  * `set(propertyName, value)`: updates `propertyName` to `value`. Returns `undefined`. Is equivalent to normal assignment.
-  * `update(mergeObj)`: merges `mergeObj` with the Model instance properties. Returns `undefined`.
-  * `delete()`: deletes the record for this Model instance in the database. Returns `undefined`.
+* `equals(otherModel)`: returns a boolean indicating equality with `otherModel`. Equality is determined by shallow comparison of both model's attributes.
+* `set(propertyName, value)`: updates `propertyName` to `value`. Returns `undefined`. Is equivalent to normal assignment.
+* `update(mergeObj)`: merges `mergeObj` with the Model instance properties. Returns `undefined`.
+* `delete()`: deletes the record for this Model instance in the database. Returns `undefined`.
 
 #### Subclassing:
 
@@ -504,18 +505,18 @@ You can access all of these methods straight from a `Model` class, as if they we
 
 #### Instance methods:
 
-  * `toRefArray()`: returns the objects represented by the `QuerySet` as an array of plain JavaScript objects. The objects are direct references to the store.
-  * `toModelArray()`: returns the objects represented by the `QuerySet` as an array of `Model` instances objects.
-  * `count()`: returns the number of `Model` instances in the `QuerySet`.
-  * `exists()`: return `true` if number of entities is more than 0, else `false`.
-  * `filter(filterArg)`: returns a new `QuerySet` representing the records from the parent QuerySet that pass the filter. For `filterArg`, you can either pass an object that Redux-ORM tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not. The function receives a model instance as its sole argument.
-  * `exclude` returns a new `QuerySet` represeting entities in the parent QuerySet that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function. The function receives a model instance as its sole argument.
-  * `all()` returns a new `QuerySet` with the same entities.
-  * `at(index)` returns an `Model` instance at the supplied `index` in the `QuerySet`.
-  * `first()` returns an `Model` instance at the `0` index.
-  * `last()` returns an `Model` instance at the `querySet.count() - 1` index.
-  * `delete()` deleted all entities represented by the `QuerySet`.
-  * `update(mergeObj)` updates all entities represented by the `QuerySet` based on the supplied object. The object will be merged with each entity.
+* `toRefArray()`: returns the objects represented by the `QuerySet` as an array of plain JavaScript objects. The objects are direct references to the store.
+* `toModelArray()`: returns the objects represented by the `QuerySet` as an array of `Model` instances objects.
+* `count()`: returns the number of `Model` instances in the `QuerySet`.
+* `exists()`: return `true` if number of entities is more than 0, else `false`.
+* `filter(filterArg)`: returns a new `QuerySet` representing the records from the parent QuerySet that pass the filter. For `filterArg`, you can either pass an object that Redux-ORM tries to match to the entities, or a function that returns `true` if you want to have it in the new `QuerySet`, `false` if not. The function receives a model instance as its sole argument.
+* `exclude` returns a new `QuerySet` represeting entities in the parent QuerySet that do not pass the filter. Similarly to `filter`, you may pass an object for matching (all entities that match will not be in the new `QuerySet`) or a function. The function receives a model instance as its sole argument.
+* `all()` returns a new `QuerySet` with the same entities.
+* `at(index)` returns an `Model` instance at the supplied `index` in the `QuerySet`.
+* `first()` returns an `Model` instance at the `0` index.
+* `last()` returns an `Model` instance at the `querySet.count() - 1` index.
+* `delete()` deleted all entities represented by the `QuerySet`.
+* `update(mergeObj)` updates all entities represented by the `QuerySet` based on the supplied object. The object will be merged with each entity.
 
 ### Session
 
@@ -527,7 +528,7 @@ You don't need to do this yourself. Use `orm.session` (usually what you want) or
 
 #### Instance properties:
 
-  * `state`: the current database state in the session.
+* `state`: the current database state in the session.
 
 Additionally, you can access all the registered Models in the schema for querying and updates as properties of this instance. For example, given a schema with `Book` and `Author` models,
 
