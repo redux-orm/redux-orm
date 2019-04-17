@@ -171,7 +171,10 @@ export class ORM {
                 if (!isReservedTableOption(key)) return;
                 throw new Error(`Reserved keyword \`${key}\` used in ${tableName}.options.`);
             });
-            spec[tableName] = Object.assign({}, { fields: modelClass.fields }, tableSpec);
+            spec[tableName] = {
+                fields: { ...modelClass.fields },
+                ...tableSpec,
+            };
             return spec;
         }, {});
         return { tables };
