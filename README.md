@@ -47,7 +47,7 @@ You can declare your models with the ES6 class syntax, extending from `Model`. Y
 
 ```javascript
 // models.js
-import {fk, many, attr, Model} from 'redux-orm';
+import { Model, fk, many, attr } from 'redux-orm';
 
 class Book extends Model {
     toString() {
@@ -61,8 +61,13 @@ Book.modelName = 'Book';
 Book.fields = {
     id: attr(), // non-relational field for any value; optional but highly recommended
     name: attr(),
+    // foreign key field
+    publisherId: fk({
+        to: 'Publisher',
+        as: 'publisher',
+        relatedName: 'books',
+    }),
     authors: many('Author', 'books'),
-    publisher: fk('Publisher', 'books'),
 };
 
 export default Book;
@@ -157,7 +162,7 @@ function ormReducer(dbState, action) {
         Book.withId(action.payload.bookId).authors.remove(action.payload.authorId);
         break;
     case 'ASSIGN_PUBLISHER':
-        Book.withId(action.payload.bookId).publisher = action.payload.publisherId;
+        Book.withId(action.payload.bookId).publisherId = action.payload.publisherId;
         break;
     }
 
@@ -191,7 +196,7 @@ class Book extends Model {
             Book.withId(action.payload.bookId).authors.remove(action.payload.authorId);
             break;
         case 'ASSIGN_PUBLISHER':
-            Book.withId(action.payload.bookId).publisher = action.payload.publisherId;
+            Book.withId(action.payload.bookId).publisherId = action.payload.publisherId;
             break;
         }
         // Return value is ignored.
@@ -255,15 +260,20 @@ const authorSelector = createSelector(
     dbStateSelector,
     session => {
         return session.Author.all().toModelArray().map(author => {
+            /**
+             * author is a model instance and exposes relationship accessors
+             * such as author.books …
+             *
+             * This gets a reference to the model's underlying object
+             * which has no such accessors, containing only raw attributes.
+             */
+            const { ref } = author;
+            // Object.keys(ref) === ['id', 'name']
 
-            // Returns a reference to the raw object in the store,
-            // so it doesn't include any reverse or m2m fields.
-            const obj = author.ref;
-            // Object.keys(obj) === ['id', 'name']
-
-            return Object.assign({}, obj, {
+            return {
+                ...ref,
                 books: author.books.toRefArray().map(book => book.name),
-            });
+            };
         });
     }
 );
@@ -293,22 +303,16 @@ import React from 'react';
 import { authorSelector } from './selectors';
 import { connect } from 'react-redux';
 
-class App extends React.PureComponent {
-    render() {
-        const authors = this.props.authors.map(author => {
-            return (
-                <li key={author.id}>
-                    {author.name} has written {author.books.join(', ')}
-                </li>
-            );
-        });
+function AuthorList({ authors }) {
+    const items = authors.map(author => (
+        <li key={author.id}>
+            {author.name} has written {author.books.join(', ')}
+        </li>
+    ));
 
-        return (
-            <ul>
-                {authors}
-            </ul>
-        );
-    }
+    return (
+        <ul>{items}</ul>
+    );
 }
 
 function mapStateToProps(state) {
@@ -317,7 +321,7 @@ function mapStateToProps(state) {
     };
 }
 
-export default connect(mapStateToProps)(App);
+export default connect(mapStateToProps)(AuthorList);
 ```
 
 ## Understanding Redux-ORM
@@ -373,7 +377,7 @@ Let's update the database state again through the ORM.
 // Save this reference so we can compare.
 const updatedState = sess.state;
 
-book.name = 'Patterns of Enterprise Application Architecture'
+book.name = 'Patterns of Enterprise Application Architecture';
 
 sess.state === updatedState
 // true. If possible, future updates are applied with mutations. If you want
@@ -467,13 +471,13 @@ Book.fields = {
 }
 ```
 
-All the fields `fk`, `oneToOne` and `many` take a single argument, the related model name. The fields will be available as properties on each `Model` instance. You can set related fields with the id value of the related instance, or the related instance itself. 
+All the fields `fk`, `oneToOne` and `many` take a single argument, the related model name. The fields will be available as properties on each `Model` instance. You can set related fields with the id value of the related instance, or the related instance itself.
 
 For `fk`, you can access the reverse relation through `author.bookSet`, where the related name is `${modelName}Set`. Same goes for `many`. For `oneToOne`, the reverse relation can be accessed by just the model name the field was declared on: `author.book`.
 
 For `many` field declarations, accessing the field on a Model instance will return a `QuerySet` with two additional methods: `add` and `remove`. They take 1 or more arguments, where the arguments are either Model instances or their id's. Calling these methods records updates that will be reflected in the next state.
 
-When declaring model classes, always remember to set the `modelName` property. It needs to be set explicitly, because running your code through a mangler would otherwise break functionality. The `modelName` will be used to resolve all related fields. 
+When declaring model classes, always remember to set the `modelName` property. It needs to be set explicitly, because running your code through a mangler would otherwise break functionality. The `modelName` will be used to resolve all related fields.
 
 #### Declaring `modelName`:
 ```javascript
@@ -488,12 +492,14 @@ Book.modelName = 'Book';
 
 #### Declaring `options`:
 
-If you need to specify options to the Redux-ORM database, you can declare a static `options` property on the Model class with an object key. Currently you can specify the id attribute name:
+If you need to specify options to the Redux-ORM database, you can declare a static `options` property on the Model class with an object key.
 
 ```javascript
-// This is the default value. 
+// These are the default values.
 Book.options = {
     idAttribute: 'id',
+    mapName: 'itemsById',
+    arrName: 'items',
 };
 ```
 
