@@ -128,12 +128,12 @@ describe('Deprecations', () => {
             const { Book } = session;
 
             Book.backend = () => 'retval';
-            expect(Book._getTableOpts()).toEqual('retval');
+            expect(Book.tableOptions()).toEqual('retval');
             expect(consoleWarn.timesRun).toBe(1);
             expect(consoleWarn.lastMessage).toBe('`Model.backend` has been deprecated. Please rename to `.options`.');
 
             Book.backend = 'retval';
-            expect(Book._getTableOpts()).toEqual('retval');
+            expect(Book.tableOptions()).toEqual('retval');
             expect(consoleWarn.timesRun).toBe(2);
             expect(consoleWarn.lastMessage).toBe('`Model.backend` has been deprecated. Please rename to `.options`.');
         });

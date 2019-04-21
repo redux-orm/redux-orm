@@ -235,9 +235,11 @@ const Model = class Model {
     }
 
     /**
+     * Returns parameters to be passed to {@link Table} instance.
+     *
      * @private
      */
-    static _getTableOpts() {
+    static tableOptions() {
         if (typeof this.backend === 'function') {
             warnDeprecated('`Model.backend` has been deprecated. Please rename to `.options`.');
             return this.backend();
