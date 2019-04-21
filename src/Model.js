@@ -589,33 +589,19 @@ const Model = class Model {
             ...mergeObj,
         };
 
-        const updatedModel = new ThisModel(this._fields);
-        updatedModel._initFields(mergedFields); // eslint-disable-line no-underscore-dangle
-
-        // determine if model would have different related models after update
-        updatedModel._refreshMany2Many(m2mRelations); // eslint-disable-line no-underscore-dangle
-        const relationsEqual = Object.keys(m2mRelations).every(name => !arrayDiffActions(this[name], updatedModel[name])
-        );
-        const fieldsEqual = this.equals(updatedModel);
-
+        const updatedModel = new ThisModel(mergedFields);
         // only update fields if they have changed (referentially)
-        if (!fieldsEqual) {
+        if (!this.equals(updatedModel)) {
             this._initFields(mergedFields);
-        }
-
-        // only update many-to-many relationships if any reference has changed
-        if (!relationsEqual) {
-            this._refreshMany2Many(m2mRelations);
-        }
-
-        // only apply the update if a field or relationship has changed
-        if (!fieldsEqual || !relationsEqual) {
             ThisModel.session.applyUpdate({
                 action: UPDATE,
                 query: getByIdQuery(this),
                 payload: mergeObj,
             });
         }
+
+        // update virtual fields
+        this._refreshMany2Many(m2mRelations);
     }
 
     /**
