@@ -24,10 +24,10 @@ Or with a script tag exposing a global called `ReduxOrm`:
 <script src="https://unpkg.com/redux-orm/dist/redux-orm.min.js"></script>
 ```
 
-* [Browser build following master (minimized)](https://unpkg.com/redux-orm/dist/redux-orm.min.js)
-  * [JavaScript Source Map](https://unpkg.com/redux-orm/dist/redux-orm.min.js.map)
+* [Latest browser build (minimized)](https://unpkg.com/redux-orm/dist/redux-orm.min.js)
+  * [Source Map](https://unpkg.com/redux-orm/dist/redux-orm.min.js.map)
 
-* [Browser build following master](https://unpkg.com/redux-orm/dist/redux-orm.js) (only use if size does not matter)
+* [Latest browser build](https://unpkg.com/redux-orm/dist/redux-orm.js) (only use if size does not matter)
 
 ### Polyfill
 
