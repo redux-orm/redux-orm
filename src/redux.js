@@ -1,6 +1,8 @@
 import { createSelectorCreator } from 'reselect';
 import createCachedSelector, { FlatMapCache } from 're-reselect';
 
+import ops from 'immutable-ops';
+
 import { memoize } from './memoize';
 
 import { ORM } from './ORM';
@@ -54,6 +56,7 @@ function createSelectorFromSpec(spec) {
 }
 
 const selectorCache = new Map();
+const SELECTOR_KEY = '@@_______REDUX_ORM_SELECTOR';
 
 /**
  * Returns a memoized selector based on passed arguments.
@@ -121,12 +124,17 @@ export function createSelector(...args) {
         if (arg instanceof ORM) return arg.stateSelector;
         if (arg instanceof SelectorSpec) {
             const ormSelectors = selectorCache.get(arg._orm) || {};
-            // TODO: deeper hierarchy for field selectors etc.
-            const selector = ormSelectors[arg.key] || createSelectorFromSpec(arg);
-            selectorCache.set(arg._orm, {
-                ...ormSelectors,
-                [arg.key]: selector,
-            });
+            let level = ormSelectors;
+            if (!arg.path || !arg.path.length) {
+                throw new Error('Failed to retrieve selector from cache: Empty selector path');
+            }
+            for (let i = 0; i < arg.path.length; ++i) {
+                if (!level) break;
+                level = level[arg.path[i]];
+            }
+            const selector = (level && level[SELECTOR_KEY]) || createSelectorFromSpec(arg);
+            ops.mutable.setIn([...arg.path, SELECTOR_KEY], selector, ormSelectors);
+            selectorCache.set(arg._orm, ormSelectors);
             return selector;
         }
         return arg;

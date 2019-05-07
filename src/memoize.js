@@ -169,8 +169,7 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
          */
         const session = orm.session(ormState);
 
-        const argsWithSession = args.map(arg => (isOrmState(arg) ? session : arg)
-        );
+        const argsWithSession = args.map(arg => (isOrmState(arg) ? session : arg));
         /* This is where we call the actual function */
         const result = func(...argsWithSession);
 
