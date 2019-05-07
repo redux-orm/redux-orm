@@ -69,14 +69,14 @@ describe('Shorthand selector specifications', () => {
 
     it('will recompute some model instances by ID array', () => {
         const publishers = createSelector(orm.Publisher);
-        expect(publishers(emptyState, []).length).toEqual(0);
+        expect(publishers(emptyState, [])).toHaveLength(0);
         expect(publishers.recomputations()).toEqual(1);
-        expect(publishers(emptyState, []).length).toEqual(0);
+        expect(publishers(emptyState, [])).toHaveLength(0);
         expect(publishers.recomputations()).toEqual(2);
         const zeroAndTwo = [0, 2];
-        expect(publishers(emptyState, zeroAndTwo).length).toEqual(0);
+        expect(publishers(emptyState, zeroAndTwo)).toHaveLength(0);
         expect(publishers.recomputations()).toEqual(3);
-        expect(publishers(emptyState, zeroAndTwo).length).toEqual(0);
+        expect(publishers(emptyState, zeroAndTwo)).toHaveLength(0);
         expect(publishers.recomputations()).toEqual(3);
         ormState = reducer(emptyState, {
             type: CREATE_PUBLISHER,
@@ -84,7 +84,7 @@ describe('Shorthand selector specifications', () => {
                 id: 1,
             },
         });
-        expect(publishers(ormState, zeroAndTwo).length).toEqual(0);
+        expect(publishers(ormState, zeroAndTwo)).toHaveLength(0);
         /**
          * Note that the above only recomputes because we need to
          * perform a full-table scan there, even if we knew before
@@ -98,17 +98,17 @@ describe('Shorthand selector specifications', () => {
                 id: 2,
             },
         });
-        expect(publishers(ormState, zeroAndTwo).length).toEqual(1);
+        expect(publishers(ormState, zeroAndTwo)).toHaveLength(1);
         expect(publishers.recomputations()).toEqual(5);
-        expect(publishers(ormState, zeroAndTwo).length).toEqual(1);
+        expect(publishers(ormState, zeroAndTwo)).toHaveLength(1);
         expect(publishers.recomputations()).toEqual(5);
     });
 
     it('will recompute all model instances', () => {
         const publishers = createSelector(orm.Publisher);
-        expect(publishers(emptyState).length).toEqual(0);
+        expect(publishers(emptyState)).toHaveLength(0);
         expect(publishers.recomputations()).toEqual(1);
-        expect(publishers(emptyState).length).toEqual(0);
+        expect(publishers(emptyState)).toHaveLength(0);
         expect(publishers.recomputations()).toEqual(1);
         ormState = reducer(emptyState, {
             type: CREATE_PUBLISHER,
@@ -116,7 +116,7 @@ describe('Shorthand selector specifications', () => {
                 id: 1,
             },
         });
-        expect(publishers(ormState).length).toEqual(1);
+        expect(publishers(ormState)).toHaveLength(1);
         expect(publishers.recomputations()).toEqual(2);
     });
 
