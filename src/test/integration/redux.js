@@ -13,12 +13,17 @@ describe('Redux integration', () => {
     let Publisher;
     let Movie;
     let emptyState;
-    let nextState;
-    let ormReducer;
+    let ormState;
+    const stateSelector = state => state;
+    let reducer;
+
+    let session;
+    let sessionOrm;
 
     const CREATE_MOVIE = 'CREATE_MOVIE';
     const UPSERT_MOVIE = 'UPSERT_MOVIE';
     const CREATE_PUBLISHER = 'CREATE_PUBLISHER';
+    const CREATE_CUSTOM_MODEL = 'CREATE_CUSTOM_MODEL';
 
     const createModelReducers = () => {
         Author.reducer = jest.fn();
@@ -26,7 +31,7 @@ describe('Redux integration', () => {
         Cover.reducer = jest.fn();
         Genre.reducer = jest.fn();
         Tag.reducer = jest.fn();
-        Movie.reducer = jest.fn((action, Model, session) => {
+        Movie.reducer = jest.fn((action, Model, _session) => {
             switch (action.type) {
             case CREATE_MOVIE:
                 Model.create(action.payload);
@@ -37,7 +42,7 @@ describe('Redux integration', () => {
             default: break;
             }
         });
-        Publisher.reducer = jest.fn((action, Model, session) => {
+        Publisher.reducer = jest.fn((action, Model, _session) => {
             switch (action.type) {
             case CREATE_PUBLISHER:
                 Model.create(action.payload);
@@ -57,18 +62,23 @@ describe('Redux integration', () => {
             Movie,
             Publisher,
         } = createTestModels());
-        orm = new ORM();
+        orm = new ORM({ stateSelector });
         orm.register(Book, Cover, Genre, Tag, Author, Movie, Publisher);
-        ormReducer = createReducer(orm);
+        reducer = createReducer(orm);
         createModelReducers();
         emptyState = orm.getEmptyState();
+        ormState = emptyState;
+
+        sessionOrm = Object.create(orm);
+        sessionOrm.stateSelector = state => session.state;
+        session = sessionOrm.session();
     });
 
     it('runs reducers if explicitly specified', () => {
         const mockAction = {};
-        nextState = ormReducer(emptyState, mockAction);
+        ormState = reducer(emptyState, mockAction);
 
-        expect(nextState).toBeDefined();
+        expect(ormState).toBeDefined();
 
         expect(Author.reducer).toHaveBeenCalledTimes(1);
         expect(Book.reducer).toHaveBeenCalledTimes(1);
@@ -80,14 +90,14 @@ describe('Redux integration', () => {
     });
 
     it('correctly returns a different state when calling a reducer', () => {
-        nextState = ormReducer(emptyState, {
+        ormState = reducer(emptyState, {
             type: CREATE_MOVIE,
             payload: {
                 id: 0,
                 name: 'Let there be a movie',
             },
         });
-        expect(nextState.Movie.itemsById).toEqual({
+        expect(ormState.Movie.itemsById).toEqual({
             0: {
                 id: 0,
                 name: 'Let there be a movie',
@@ -96,97 +106,99 @@ describe('Redux integration', () => {
     });
 
     it('calling reducer with undefined state doesn\'t throw', () => {
-        ormReducer = createReducer(orm);
-        ormReducer(undefined, { type: '______init' });
+        reducer = createReducer(orm);
+        reducer(undefined, { type: '______init' });
     });
 
     describe('selectors memoize results as intended', () => {
         it('basic selector', () => {
-            const memoized = jest.fn();
-            const selector = createSelector(orm, memoized);
+            const selector = createSelector(orm, () => {});
             expect(typeof selector).toBe('function');
 
             selector(emptyState);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
             selector(emptyState);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
 
             // same empty state, but different reference
             selector(orm.getEmptyState());
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
         });
 
         it('arbitrary filters', () => {
-            const memoized = jest.fn(selectorSession => (
-                selectorSession.Movie
-                    .filter(movie => movie.name === 'Getting started with filters')
-                    .toRefArray()
-            ));
-            const selector = createSelector(orm, memoized);
+            const selector = createSelector(
+                orm,
+                selectorSession => (
+                    selectorSession.Movie
+                        .filter(movie => movie.name === 'Getting started with filters')
+                        .toRefArray()
+                )
+            );
 
             selector(emptyState);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
             selector(emptyState);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
 
-            nextState = ormReducer(emptyState, {
+            ormState = reducer(emptyState, {
                 type: CREATE_MOVIE,
                 payload: {
                     name: 'Getting started with filters',
                 },
             });
 
-            selector(nextState);
-            expect(memoized).toHaveBeenCalledTimes(2);
+            selector(ormState);
+            expect(selector.recomputations()).toBe(2);
         });
 
         it('id lookups', () => {
-            const memoized = jest.fn(selectorSession => (
-                selectorSession.Movie
-                    .withId(0)
-            ));
-            const selector = createSelector(orm, memoized);
+            const selector = createSelector(
+                orm,
+                selectorSession => selectorSession.Movie.withId(0)
+            );
             expect(typeof selector).toBe('function');
 
             selector(emptyState);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
             selector(emptyState);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
 
-            nextState = ormReducer(emptyState, {
+            ormState = reducer(emptyState, {
                 type: CREATE_MOVIE,
                 payload: {
                     name: 'Getting started with id lookups',
                 },
             });
 
-            selector(nextState);
-            expect(memoized).toHaveBeenCalledTimes(2);
+            selector(ormState);
+            expect(selector.recomputations()).toBe(2);
         });
 
         it('id-based lookups with additional attributes', () => {
-            const memoized = jest.fn(selectorSession => {
-                const movie = selectorSession.Movie
-                    .filter({
-                        id: 123,
-                        name: 'Looking for this name',
-                    })
-                    .first();
-                return movie ? movie.ref.name : null;
-            });
-            const selector = createSelector(orm, memoized);
+            const selector = createSelector(
+                orm,
+                selectorSession => {
+                    const movie = selectorSession.Movie
+                        .filter({
+                            id: 123,
+                            name: 'Looking for this name',
+                        })
+                        .first();
+                    return movie ? movie.ref.name : null;
+                }
+            );
             expect(typeof selector).toBe('function');
 
             expect(
                 selector(emptyState)
             ).toBe(null);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
             expect(
                 selector(emptyState)
             ).toBe(null);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
 
-            nextState = ormReducer(emptyState, {
+            ormState = reducer(emptyState, {
                 type: CREATE_MOVIE,
                 payload: {
                     id: 123,
@@ -195,11 +207,11 @@ describe('Redux integration', () => {
             });
 
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toBe('Looking for this name');
-            expect(memoized).toHaveBeenCalledTimes(2);
+            expect(selector.recomputations()).toBe(2);
 
-            nextState = ormReducer(nextState, {
+            ormState = reducer(ormState, {
                 type: UPSERT_MOVIE,
                 payload: {
                     id: 123,
@@ -208,11 +220,11 @@ describe('Redux integration', () => {
             });
 
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toBe('Looking for this name');
-            expect(memoized).toHaveBeenCalledTimes(2);
+            expect(selector.recomputations()).toBe(2);
 
-            nextState = ormReducer(nextState, {
+            ormState = reducer(ormState, {
                 type: UPSERT_MOVIE,
                 payload: {
                     id: 123,
@@ -222,11 +234,11 @@ describe('Redux integration', () => {
 
             /* Different name should no longer satisfy filter condition. */
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toBe(null);
-            expect(memoized).toHaveBeenCalledTimes(3);
+            expect(selector.recomputations()).toBe(3);
 
-            nextState = ormReducer(nextState, {
+            ormState = reducer(ormState, {
                 type: UPSERT_MOVIE,
                 payload: {
                     id: 123,
@@ -236,101 +248,101 @@ describe('Redux integration', () => {
 
             /* Initial name should again satisfy filter condition. */
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toBe('Looking for this name');
-            expect(memoized).toHaveBeenCalledTimes(4);
+            expect(selector.recomputations()).toBe(4);
         });
 
         it('empty QuerySets', () => {
-            const memoized = jest.fn(selectorSession => (
-                selectorSession.Movie
-                    .all()
-                    .toModelArray()
-            ));
-            const selector = createSelector(orm, memoized);
+            const selector = createSelector(
+                orm,
+                selectorSession => (
+                    selectorSession.Movie
+                        .all()
+                        .toModelArray()
+                )
+            );
             expect(typeof selector).toBe('function');
 
             selector(emptyState);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
             selector(emptyState);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
 
-            nextState = ormReducer(emptyState, {
+            ormState = reducer(emptyState, {
                 type: CREATE_MOVIE,
                 payload: {
                     name: 'Getting started with empty query sets',
                 },
             });
 
-            selector(nextState);
-            expect(memoized).toHaveBeenCalledTimes(2);
+            selector(ormState);
+            expect(selector.recomputations()).toBe(2);
         });
 
         it('Model updates', () => {
-            const session = orm.session();
-            const memoized = jest.fn(selectorSession => (
-                selectorSession.Movie
-                    .withId(0)
-            ));
-            const selector = createSelector(orm, memoized);
+            const selector = createSelector(
+                orm,
+                selectorSession => selectorSession.Movie.withId(0)
+            );
 
             const movie = session.Movie.create({
                 name: 'Name after creation',
             });
 
             selector(session.state);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
             selector(session.state);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
 
             movie.name = 'Updated name';
 
             selector(session.state);
-            expect(memoized).toHaveBeenCalledTimes(2);
+            expect(selector.recomputations()).toBe(2);
         });
 
         it('Model deletions', () => {
-            const session = orm.session();
-            const memoized = jest.fn(selectorSession => (
-                selectorSession.Movie
-                    .withId(0)
-            ));
-            const selector = createSelector(orm, memoized);
+            const selector = createSelector(
+                orm,
+                selectorSession => selectorSession.Movie.withId(0)
+            );
 
             const movie = session.Movie.create({
                 name: 'Name after creation',
             });
 
             selector(session.state);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
             selector(session.state);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
 
             movie.delete();
 
             selector(session.state);
-            expect(memoized).toHaveBeenCalledTimes(2);
+            expect(selector.recomputations()).toBe(2);
         });
 
         it('foreign key forward descriptors', () => {
-            const memoized = jest.fn(selectorSession => (
-                selectorSession.Movie
-                    .all()
-                    .toModelArray()
-                    .reduce((map, movie) => ({
-                        ...map,
-                        [movie.id]: movie.publisher ? movie.publisher.ref : null,
-                    }), {})
-            ));
-            const selector = createSelector(orm, memoized);
+            const selector = createSelector(
+                orm,
+                selectorSession => (
+                    selectorSession.Movie
+                        .all()
+                        .toModelArray()
+                        .reduce((map, movie) => ({
+                            ...map,
+                            [movie.id]: movie.publisher ? movie.publisher.ref : null,
+                        }), {})
+                )
+            );
             expect(typeof selector).toBe('function');
 
             expect(
                 selector(emptyState)
             ).toEqual({});
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
 
-            nextState = ormReducer(emptyState, {
+            ormState = reducer(emptyState, {
                 type: CREATE_MOVIE,
                 payload: {
                     id: 532,
@@ -340,14 +352,14 @@ describe('Redux integration', () => {
             });
 
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toEqual({
                 532: null,
             });
-            expect(memoized).toHaveBeenCalledTimes(2);
+            expect(selector.recomputations()).toBe(2);
 
             // random other publisher that should be of no interest
-            nextState = ormReducer(nextState, {
+            ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 999,
@@ -356,13 +368,13 @@ describe('Redux integration', () => {
             });
 
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toEqual({
                 532: null,
             });
-            expect(memoized).toHaveBeenCalledTimes(2);
+            expect(selector.recomputations()).toBe(2);
 
-            nextState = ormReducer(nextState, {
+            ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 123,
@@ -371,36 +383,35 @@ describe('Redux integration', () => {
             });
 
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toEqual({
                 532: {
                     id: 123,
                     name: 'Publisher referenced by movie FK',
                 },
             });
-            expect(memoized).toHaveBeenCalledTimes(3);
-
-            const session = orm.session(nextState);
-            expect(session.Publisher.withId(123).movies.count()).toBe(1);
+            expect(selector.recomputations()).toBe(3);
         });
 
         it('foreign key backward descriptors', () => {
-            const memoized = jest.fn(selectorSession => {
-                const publisher = selectorSession.Publisher.withId(123);
-                if (!publisher) return [];
-                return publisher.movies.toRefArray()
-                    .map(movie => movie.id);
-            });
-            const selector = createSelector(orm, memoized);
+            const selector = createSelector(
+                orm,
+                selectorSession => {
+                    const publisher = selectorSession.Publisher.withId(123);
+                    if (!publisher) return [];
+                    return publisher.movies.toRefArray()
+                        .map(movie => movie.id);
+                }
+            );
             expect(typeof selector).toBe('function');
 
             // publisher does not exist yet
             expect(
                 selector(emptyState)
             ).toEqual([]);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
 
-            nextState = ormReducer(emptyState, {
+            ormState = reducer(emptyState, {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 123,
@@ -409,11 +420,11 @@ describe('Redux integration', () => {
             });
 
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toEqual([]);
-            expect(memoized).toHaveBeenCalledTimes(2);
+            expect(selector.recomputations()).toBe(2);
 
-            nextState = ormReducer(nextState, {
+            ormState = reducer(ormState, {
                 type: CREATE_MOVIE,
                 payload: {
                     id: 532,
@@ -423,12 +434,12 @@ describe('Redux integration', () => {
             });
 
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toEqual([532]);
-            expect(memoized).toHaveBeenCalledTimes(3);
+            expect(selector.recomputations()).toBe(3);
 
             // random other movie that should be of no interest
-            nextState = ormReducer(nextState, {
+            ormState = reducer(ormState, {
                 type: CREATE_MOVIE,
                 payload: {
                     id: 999,
@@ -437,11 +448,11 @@ describe('Redux integration', () => {
             });
 
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toEqual([532]);
-            expect(memoized).toHaveBeenCalledTimes(3);
+            expect(selector.recomputations()).toBe(3);
 
-            nextState = ormReducer(nextState, {
+            ormState = reducer(ormState, {
                 type: CREATE_MOVIE,
                 payload: {
                     id: 1000,
@@ -451,33 +462,32 @@ describe('Redux integration', () => {
             });
 
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toEqual([532, 1000]);
-            expect(memoized).toHaveBeenCalledTimes(4);
-
-            const session = orm.session(nextState);
-            expect(session.Publisher.withId(123).movies.count()).toBe(2);
+            expect(selector.recomputations()).toBe(4);
         });
 
         it('ordered foreign key backward descriptors', () => {
-            const memoized = jest.fn(selectorSession => {
-                const publisher = selectorSession.Publisher.withId(123);
-                if (!publisher) return [];
-                return publisher.movies
-                    .orderBy('name', 'asc')
-                    .toRefArray()
-                    .map(movie => movie.id);
-            });
-            const selector = createSelector(orm, memoized);
+            const selector = createSelector(
+                orm,
+                selectorSession => {
+                    const publisher = selectorSession.Publisher.withId(123);
+                    if (!publisher) return [];
+                    return publisher.movies
+                        .orderBy('name', 'asc')
+                        .toRefArray()
+                        .map(movie => movie.id);
+                }
+            );
             expect(typeof selector).toBe('function');
 
             // publisher does not exist yet
             expect(
                 selector(emptyState)
             ).toEqual([]);
-            expect(memoized).toHaveBeenCalledTimes(1);
+            expect(selector.recomputations()).toBe(1);
 
-            nextState = ormReducer(emptyState, {
+            ormState = reducer(emptyState, {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 123,
@@ -486,11 +496,11 @@ describe('Redux integration', () => {
             });
 
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toEqual([]);
-            expect(memoized).toHaveBeenCalledTimes(2);
+            expect(selector.recomputations()).toBe(2);
 
-            nextState = ormReducer(nextState, {
+            ormState = reducer(ormState, {
                 type: CREATE_MOVIE,
                 payload: {
                     id: 1,
@@ -499,7 +509,7 @@ describe('Redux integration', () => {
                 },
             });
 
-            nextState = ormReducer(nextState, {
+            ormState = reducer(ormState, {
                 type: CREATE_MOVIE,
                 payload: {
                     id: 2,
@@ -509,15 +519,15 @@ describe('Redux integration', () => {
             });
 
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toEqual([1, 2]);
-            expect(memoized).toHaveBeenCalledTimes(3);
+            expect(selector.recomputations()).toBe(3);
 
             /**
              * Change first letter of name from 'A' to 'Z'.
              * Selector should move this movie to the end now.
              */
-            nextState = ormReducer(nextState, {
+            ormState = reducer(ormState, {
                 type: UPSERT_MOVIE,
                 payload: {
                     id: 1,
@@ -526,69 +536,110 @@ describe('Redux integration', () => {
             });
 
             expect(
-                selector(nextState)
+                selector(ormState)
             ).toEqual([2, 1]);
-            expect(memoized).toHaveBeenCalledTimes(4);
+            expect(selector.recomputations()).toBe(4);
         });
 
         it('custom Model table options', () => {
-            class CustomizedModel extends OrmModel {}
-            CustomizedModel.modelName = 'CustomizedModel';
-            CustomizedModel.options = {
+            class CustomModel extends OrmModel {}
+            CustomModel.modelName = 'CustomModel';
+            CustomModel.options = {
                 mapName: 'custom map name',
             };
-            const _orm = new ORM();
-            _orm.register(CustomizedModel);
-            const session = _orm.session();
-
-            const memoized = jest.fn(selectorSession => (
-                selectorSession.CustomizedModel.count()
-            ));
-            const selector = createSelector(_orm, memoized);
-
-            selector(session.state);
-            expect(memoized).toHaveBeenCalledTimes(1);
-            const movie = session.CustomizedModel.create({
-                name: 'Name after creation',
+            CustomModel.reducer = jest.fn((action, Model, _session) => {
+                switch (action.type) {
+                case CREATE_CUSTOM_MODEL:
+                    Model.create(action.payload);
+                    break;
+                default: break;
+                }
             });
-            selector(session.state);
-            expect(memoized).toHaveBeenCalledTimes(2);
+            let _ormState;
+            const _stateSelector = state => _ormState;
+            const _orm = new ORM({ stateSelector: _stateSelector });
+            _orm.register(CustomModel);
+
+            const _reducer = createReducer(_orm);
+            _ormState = _orm.getEmptyState();
+
+            const selector = createSelector(
+                _orm,
+                selectorSession => selectorSession.CustomModel.count()
+            );
+
+            selector(_ormState);
+            expect(selector.recomputations()).toBe(1);
+            _ormState = _reducer(_ormState, {
+                type: CREATE_CUSTOM_MODEL,
+                payload: {
+                    id: 1,
+                },
+            });
+            selector(_ormState);
+            expect(selector.recomputations()).toBe(2);
         });
 
         it('input selectors', () => {
-            const _selectorFunc = jest.fn();
+            const memoized = jest.fn((_session, selectedMovie) => (
+                _session.Movie.idExists(selectedMovie)
+            ));
+
+            let appState;
+            const ormWithAppState = Object.create(orm);
+            ormWithAppState.stateSelector = state => appState.orm;
+
+            const _reducer = createReducer(ormWithAppState);
+            const _ormState = ormWithAppState.getEmptyState();
+            appState = {
+                orm: _ormState,
+                selectedMovie: 5,
+            };
 
             const selector = createSelector(
-                orm,
-                state => state.orm,
-                state => state.selectedUser,
-                _selectorFunc
+                ormWithAppState,
+                state => state.selectedMovie,
+                memoized
             );
-
-            const _state = orm.getEmptyState();
-
-            const appState = {
-                orm: _state,
-                selectedUser: 5,
-            };
 
             expect(typeof selector).toBe('function');
 
-            selector(appState);
-            expect(_selectorFunc.mock.calls).toHaveLength(1);
+            expect(
+                selector(appState)
+            ).toBe(false);
+            expect(selector.recomputations()).toBe(1);
 
-            const lastCall = _selectorFunc.mock.calls[_selectorFunc.mock.calls.length - 1];
+            const lastCall = memoized.mock.calls[memoized.mock.calls.length - 1];
             expect(lastCall[0]).toBeInstanceOf(Session);
-            expect(lastCall[0].state).toBe(_state);
             expect(lastCall[1]).toBe(5);
 
             selector(appState);
-            expect(_selectorFunc.mock.calls).toHaveLength(1);
+            expect(selector.recomputations()).toBe(1);
 
-            const otherUserState = Object.assign({}, appState, { selectedUser: 0 });
+            appState = {
+                ...appState,
+                selectedMovie: 0,
+            };
+            expect(
+                selector(appState)
+            ).toBe(false);
+            expect(selector.recomputations()).toBe(2);
 
-            selector(otherUserState);
-            expect(_selectorFunc.mock.calls).toHaveLength(2);
+            appState = {
+                ...appState,
+                orm: _reducer(_ormState, {
+                    type: CREATE_MOVIE,
+                    payload: {
+                        id: 0,
+                        name: 'Let there be a movie',
+                    },
+                }),
+            };
+
+            expect(
+                selector(appState)
+            ).toBe(true);
+            expect(selector.recomputations()).toBe(3);
         });
     });
 });

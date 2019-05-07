@@ -1,5 +1,5 @@
 import {
-    Model, QuerySet, ORM, Backend, Schema, createSelector, createReducer
+    Model, QuerySet, ORM, Backend, Schema,
 } from '../..';
 import { createTestSessionWithData, createTestORM } from '../helpers';
 
@@ -45,53 +45,6 @@ describe('Deprecations', () => {
 
             expect(consoleWarn.timesRun).toBe(1);
             expect(consoleWarn.lastMessage).toBe('`ORM.prototype.from` has been deprecated. Use `ORM.prototype.session` instead.');
-        });
-
-        it('ORM#reducer is deprecated', () => {
-            const { Book } = session;
-            Book.reducer = (action, modelClass, _session) => {
-                if (action.type !== 'CREATE_BOOK') return;
-                modelClass.create(action.payload);
-            };
-            expect(consoleWarn.timesRun).toBe(0);
-            const action = {
-                type: 'CREATE_BOOK',
-                payload: { name: 'New Book' },
-            };
-
-            expect(orm.reducer()(session.state, action))
-                .toEqual(createReducer(orm)(session.state, action));
-
-            expect(consoleWarn.timesRun).toBe(1);
-            expect(consoleWarn.lastMessage).toBe('`ORM.prototype.reducer` has been deprecated. Access the `Session.prototype.state` property instead.');
-        });
-
-        it('ORM#createSelector is deprecated', () => {
-            let selector1TimesRun = 0;
-            let selector2TimesRun = 0;
-            const { Book } = session;
-            const selector1 = createSelector(orm, (memoizeSession) => {
-                selector1TimesRun++;
-                return memoizeSession.Book.withId(0);
-            });
-
-            expect(consoleWarn.timesRun).toBe(0);
-            const selector2 = orm.createSelector((memoizeSession) => {
-                selector2TimesRun++;
-                return memoizeSession.Book.withId(0);
-            });
-            expect(consoleWarn.timesRun).toBe(1);
-            expect(consoleWarn.lastMessage).toBe('`ORM.prototype.createSelector` has been deprecated. Import `createSelector` from Redux-ORM instead.');
-
-            expect(selector1(session.state))
-                .toEqual(selector2(session.state));
-            expect(selector1TimesRun).toEqual(selector2TimesRun);
-
-            Book.withId(0).update({ name: 'Deprecated selector test' });
-
-            expect(selector1(session.state))
-                .toEqual(selector2(session.state));
-            expect(selector1TimesRun).toEqual(selector2TimesRun);
         });
 
         it('ORM#getDefaultState is deprecated', () => {

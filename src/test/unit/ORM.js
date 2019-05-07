@@ -2,6 +2,7 @@ import {
     ORM, Session, Model, oneToOne, fk, many
 } from '../..';
 import { createTestModels } from '../helpers';
+import { STATE_FLAG_KEY, STATE_FLAG_VALUE } from '../../constants';
 
 describe('ORM', () => {
     it('constructor works', () => {
@@ -194,6 +195,7 @@ describe('ORM', () => {
             const defaultState = orm.getEmptyState();
 
             expect(defaultState).toEqual({
+                [STATE_FLAG_KEY]: STATE_FLAG_VALUE,
                 Book: {
                     items: [],
                     itemsById: {},

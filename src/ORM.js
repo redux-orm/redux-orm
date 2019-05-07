@@ -7,10 +7,7 @@ import {
     attr,
 } from './fields';
 
-import {
-    createReducer,
-    createSelector,
-} from './redux';
+import { createModelSelectorSpec } from './selectors';
 
 import {
     m2mName,
@@ -76,6 +73,11 @@ export class ORM {
 
             this.registerManyToManyModelsFor(model);
             this.registry.push(model);
+
+            this[model.modelName] = createModelSelectorSpec({
+                model,
+                orm: this,
+            });
         });
     }
 
@@ -167,9 +169,8 @@ export class ORM {
         const models = this.getModelClasses();
         const tables = models.reduce((spec, modelClass) => {
             const tableName = modelClass.modelName;
-            const tableSpec = modelClass.tableOptions();
-            Object.keys(tableSpec).forEach((key) => {
-                if (!isReservedTableOption(key)) return;
+            const tableSpec = modelClass.tableOptions(); // eslint-disable-line no-underscore-dangle
+            Object.keys(tableSpec).filter(isReservedTableOption).forEach((key) => {
                 throw new Error(`Reserved keyword \`${key}\` used in ${tableName}.options.`);
             });
             spec[tableName] = {
@@ -290,28 +291,6 @@ export class ORM {
             'Use `ORM.prototype.session` instead.'
         );
         return this.session(state);
-    }
-
-    /**
-     * @deprecated Access {@link Session#state} instead.
-     */
-    reducer() {
-        warnDeprecated(
-            '`ORM.prototype.reducer` has been deprecated. Access ' +
-            'the `Session.prototype.state` property instead.'
-        );
-        return createReducer(this);
-    }
-
-    /**
-     * @deprecated Use `import { createSelector } from "redux-orm"` instead.
-     */
-    createSelector(...args) {
-        warnDeprecated(
-            '`ORM.prototype.createSelector` has been deprecated. ' +
-            'Import `createSelector` from Redux-ORM instead.'
-        );
-        return createSelector(this, ...args);
     }
 
     /**

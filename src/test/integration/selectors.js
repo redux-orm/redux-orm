@@ -3,11 +3,12 @@ import {
 } from '../..';
 import { createTestModels, avg } from '../helpers';
 
-describe('Selector memoization', () => {
+describe('Shorthand selector specifications', () => {
     let orm;
     let reducer;
     let emptyState;
-    let nextState;
+    let ormState;
+    const stateSelector = () => ormState;
     let Book;
     let Cover;
     let Genre;
@@ -29,83 +30,159 @@ describe('Selector memoization', () => {
             Movie,
             Publisher,
         } = createTestModels());
-        orm = new ORM({
-            stateSelector: (state) => state.orm,
-        });
+        orm = new ORM({ stateSelector });
         orm.register(Book, Cover, Genre, Tag, Author, Movie, Publisher);
         reducer = (state, action) => {
             const session = orm.session(state || orm.getEmptyState());
             switch (action.type) {
             case CREATE_MOVIE:
-                session.MOVIE.create(action.payload);
+                session.Movie.create(action.payload);
                 break;
             case CREATE_PUBLISHER:
-                session.PUBLISHER.create(action.payload);
+                session.Publisher.create(action.payload);
                 break;
+            default: break;
             }
             return session.state;
         };
-        nextState = emptyState = orm.getEmptyState();
+        emptyState = orm.getEmptyState();
+        ormState = emptyState;
     });
 
-    it('passes on input args', () => {
-        const ormState = state => state.orm;
+    it('will recompute single model instances', () => {
+        const publishers = createSelector(orm.Publisher);
+        expect(publishers(emptyState, 1)).toEqual(null);
+        expect(publishers.recomputations()).toEqual(1);
+        expect(publishers(emptyState, 1)).toEqual(null);
+        expect(publishers.recomputations()).toEqual(1);
+        ormState = reducer(emptyState, {
+            type: CREATE_PUBLISHER,
+            payload: {
+                id: 1,
+            },
+        });
+        expect(publishers(ormState, 1)).toEqual({
+            id: 1,
+        });
+        expect(publishers.recomputations()).toEqual(2);
+    });
+
+    it('will recompute some model instances by ID array', () => {
+        const publishers = createSelector(orm.Publisher);
+        expect(publishers(emptyState, []).length).toEqual(0);
+        expect(publishers.recomputations()).toEqual(1);
+        expect(publishers(emptyState, []).length).toEqual(0);
+        expect(publishers.recomputations()).toEqual(2);
+        const zeroAndTwo = [0, 2];
+        expect(publishers(emptyState, zeroAndTwo).length).toEqual(0);
+        expect(publishers.recomputations()).toEqual(3);
+        expect(publishers(emptyState, zeroAndTwo).length).toEqual(0);
+        expect(publishers.recomputations()).toEqual(3);
+        ormState = reducer(emptyState, {
+            type: CREATE_PUBLISHER,
+            payload: {
+                id: 1,
+            },
+        });
+        expect(publishers(ormState, zeroAndTwo).length).toEqual(0);
         /**
-         * The way we have to do it right now.
+         * Note that the above only recomputes because we need to
+         * perform a full-table scan there, even if we knew before
+         * exactly which IDs we wanted to access. This should
+         * be fixable by allowing arrays as filter arguments.
          */
-const old = createSelector(
-    orm,
-    ormState,
-    (state, id) => id,
-    ({ Publisher }, id) => (
-        avg(Publisher.withId(id).movies.map(movie => movie.rating))
-    ),
-);
-        /**
-         * This is the desired new functionality.
-         */
-        const publisherRatingAvg = createSelector(
+        expect(publishers.recomputations()).toEqual(4);
+        ormState = reducer(ormState, {
+            type: CREATE_PUBLISHER,
+            payload: {
+                id: 2,
+            },
+        });
+        expect(publishers(ormState, zeroAndTwo).length).toEqual(1);
+        expect(publishers.recomputations()).toEqual(5);
+        expect(publishers(ormState, zeroAndTwo).length).toEqual(1);
+        expect(publishers.recomputations()).toEqual(5);
+    });
+
+    it('will recompute all model instances', () => {
+        const publishers = createSelector(orm.Publisher);
+        expect(publishers(emptyState).length).toEqual(0);
+        expect(publishers.recomputations()).toEqual(1);
+        expect(publishers(emptyState).length).toEqual(0);
+        expect(publishers.recomputations()).toEqual(1);
+        ormState = reducer(emptyState, {
+            type: CREATE_PUBLISHER,
+            payload: {
+                id: 1,
+            },
+        });
+        expect(publishers(ormState).length).toEqual(1);
+        expect(publishers.recomputations()).toEqual(2);
+    });
+
+    it('throws for invalid arguments', () => {
+        expect(() => {
+            createSelector();
+        }).toThrow('Cannot create a selector without arguments.');
+        expect(() => {
+            createSelector(undefined);
+        }).toThrow('Failed to interpret selector argument: undefined');
+        expect(() => {
+            createSelector(null);
+        }).toThrow('Failed to interpret selector argument: null');
+        expect(() => {
+            createSelector({});
+        }).toThrow('Failed to interpret selector argument: {}');
+        expect(() => {
+            createSelector([]);
+        }).toThrow('Failed to interpret selector argument: []');
+        expect(() => {
+            createSelector(1);
+        }).toThrow('Failed to interpret selector argument: 1');
+        expect(() => {
+            createSelector('a');
+        }).toThrow('Failed to interpret selector argument: "a"');
+    });
+
+    /*
+    it('will compute related models', () => {
+        // The way we have to do it right now.
+        const old = createSelector(
             orm,
-            Publisher.movies,
+            (state, id) => id,
+            ({ Publisher }, id) => (
+                avg(Publisher.withId(id).movies.map(movie => movie.rating))
+            ),
+        );
+        // This is the desired new functionality.
+        const publisherRatingAvg = createSelector(
+            orm.Publisher.movies,
             (_, movies) => avg(movies.map(movie => movie.rating))
         );
         expect(() => publisherRatingAvg(emptyState, 0))
             .toThrow('Publisher with id 0 doesn\'t exist');
-        nextState = reducer(nextState, {
+        ormState = reducer(ormState, {
             type: CREATE_PUBLISHER,
             payload: {
                 id: 123,
             },
         });
-        expect(publisherRatingAvg(nextState, 123)).toEqual(null);
-        nextState = reducer(nextState, {
+        expect(publisherRatingAvg(ormState, 123)).toEqual(null);
+        ormState = reducer(ormState, {
             type: CREATE_MOVIE,
             payload: {
                 rating: 6,
                 publisher: 123,
             },
         });
-        nextState = reducer(nextState, {
+        ormState = reducer(ormState, {
             type: CREATE_MOVIE,
             payload: {
                 rating: 7,
                 publisher: 123,
             },
         });
-        expect(publisherRatingAvg(nextState, 123)).toEqual(6.5);
+        expect(publisherRatingAvg(ormState, 123)).toEqual(6.5);
     });
-
-//     it('orm.memo() works with a passed state selector', () => {
-
-//         const book = orm.memo(Book.withId);
-//         expect(book(emptyState, 1)).toBe(null);
-//         const nextState = reducer(emptyState, {
-//             id: 1,
-//             title: 'First book',
-//         });
-//         expect(book(nextState, 1).ref).toBe(
-//             orm.session(nextState).Book.withId(1).ref
-//         );
-//     });
-
+    */
 });
