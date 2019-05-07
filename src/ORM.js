@@ -74,9 +74,14 @@ export class ORM {
             this.registerManyToManyModelsFor(model);
             this.registry.push(model);
 
-            this[model.modelName] = createModelSelectorSpec({
-                model,
-                orm: this,
+            Object.defineProperty(this, model.modelName, {
+                get: () => {
+                    this._setupModelPrototypes(this.registry);
+                    return createModelSelectorSpec({
+                        model,
+                        orm: this,
+                    });
+                },
             });
         });
     }
@@ -221,18 +226,16 @@ export class ORM {
      * @private
      */
     _setupModelPrototypes(models) {
-        models.forEach((model) => {
-            if (!model.isSetUp) {
-                const { fields, modelName, querySetClass } = model;
-                Object.entries(fields).forEach(([fieldName, field]) => {
-                    if (!this._isFieldInstalled(modelName, fieldName)) {
-                        this._installField(field, fieldName, model);
-                        this._setFieldInstalled(modelName, fieldName);
-                    }
-                });
-                attachQuerySetMethods(model, querySetClass);
-                model.isSetUp = true;
-            }
+        models.filter(model => !model.isSetUp).forEach((model) => {
+            const { fields, modelName, querySetClass } = model;
+            Object.entries(fields).forEach(([fieldName, field]) => {
+                if (!this._isFieldInstalled(modelName, fieldName)) {
+                    this._installField(field, fieldName, model);
+                    this._setFieldInstalled(modelName, fieldName);
+                }
+            });
+            attachQuerySetMethods(model, querySetClass);
+            model.isSetUp = true;
         });
     }
 

@@ -166,8 +166,28 @@ describe('Shorthand selector specifications', () => {
             expect(publisherNames.recomputations()).toEqual(2);
         });
 
-        /*
-        it('will compute related models for single model instances', () => {
+        it('will compute forward FK model for single model instances', () => {
+            const moviePublisher = createSelector(orm.Movie.publisher);
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(moviePublisher(ormState, 1)).toEqual(null);
+            ormState = reducer(ormState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    id: 1,
+                    publisherId: 123,
+                },
+            });
+            expect(moviePublisher(ormState, 1)).toEqual({
+                id: 123,
+            });
+        });
+
+        it('will compute backward FK models for single model instances', () => {
             const publisherMovies = createSelector(orm.Publisher.movies);
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
@@ -180,25 +200,24 @@ describe('Shorthand selector specifications', () => {
                 type: CREATE_MOVIE,
                 payload: {
                     id: 1,
-                    publisher: 123,
+                    publisherId: 123,
                 },
             });
             expect(publisherMovies(ormState, 123)).toEqual([
-                { id: 1, publisher: 123 }
+                { id: 1, publisherId: 123 }
             ]);
             ormState = reducer(ormState, {
                 type: CREATE_MOVIE,
                 payload: {
                     id: 2,
-                    publisher: 123,
+                    publisherId: 123,
                 },
             });
             expect(publisherMovies(ormState, 123)).toEqual([
-                { id: 1, publisher: 123 },
-                { id: 2, publisher: 123 },
+                { id: 1, publisherId: 123 },
+                { id: 2, publisherId: 123 },
             ]);
         });
-        */
 
         it('will recompute attr fields for some model instances', () => {
             const publisherNames = createSelector(orm.Publisher.name);

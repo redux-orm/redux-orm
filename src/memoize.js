@@ -168,8 +168,9 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
          * the operations that the selector performs are cacheable.
          */
         const session = orm.session(ormState);
-
+        /* Replace all ORM state arguments by the session above */
         const argsWithSession = args.map(arg => (isOrmState(arg) ? session : arg));
+
         /* This is where we call the actual function */
         const result = func(...argsWithSession);
 

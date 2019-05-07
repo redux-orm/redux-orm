@@ -1,4 +1,7 @@
-// import { Attribute } from './fields';
+import {
+    Attribute, OneToOne, ForeignKey, ManyToMany,
+} from './fields';
+import QuerySet from './QuerySet';
 
 /**
  * @module selectors
@@ -112,18 +115,23 @@ export class FieldSelectorSpec extends SelectorSpec {
     }
 
     _getFieldValue(instance) {
-        return instance[this._fieldName];
-        /*
+        const { [this._fieldName]: value } = instance;
         if (this._field instanceof Attribute) {
-            return instance[this._fieldName];
-        } else if (this._field instanceof ForeignKey) {
-            return instance[this._fieldName];
-        } else if (this._field instanceof OneToOne) {
-            return instance[this._fieldName];
-        } else if (this._field instanceof ManyToMany) {
-            return instance[this._fieldName].toRefArray();
+            return value;
         }
-        */
+        if (this._field instanceof ForeignKey) {
+            if (value instanceof QuerySet) {
+                return value.toRefArray();
+            }
+            return value ? value.ref : null;
+        }
+        if (this._field instanceof OneToOne) {
+            return value;
+        }
+        if (this._field instanceof ManyToMany) {
+            return value.toRefArray();
+        }
+        throw new Error('Could not compute selector result: Unknown field type');
     }
 }
 
@@ -145,26 +153,27 @@ export function createModelSelectorSpec({ model, orm }) {
         orm,
         model,
     });
+
     Object.entries(model.fields).forEach(([fieldName, field]) => {
-        modelSelectorSpec[fieldName] = createFieldSelectorSpec({
+        modelSelectorSpec[field.as || fieldName] = createFieldSelectorSpec({
             modelSelectorSpec,
             model,
             field,
-            fieldName,
+            fieldName: field.as || fieldName,
             orm,
         });
     });
-    /*
+
     Object.entries(model.virtualFields).forEach(([fieldName, field]) => {
         if (modelSelectorSpec[fieldName]) return;
-        modelSelectorSpec[fieldName] = createFieldSelectorSpec({
+        modelSelectorSpec[field.as || fieldName] = createFieldSelectorSpec({
             modelSelectorSpec,
             model,
             field,
-            fieldName,
+            fieldName: field.as || fieldName,
             orm,
         });
     });
-    */
+
     return modelSelectorSpec;
 }
