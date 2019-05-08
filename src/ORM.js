@@ -76,7 +76,9 @@ export class ORM {
 
             Object.defineProperty(this, model.modelName, {
                 get: () => {
+                    // make sure virtualFields are set up
                     this._setupModelPrototypes(this.registry);
+
                     return createModelSelectorSpec({
                         model,
                         orm: this,

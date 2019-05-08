@@ -115,11 +115,11 @@ export function createSelector(...args) {
 
     const resultArg = args.pop();
     const dependencies = Array.isArray(args[0]) ? args[0] : args;
-    const orm = dependencies.find((arg) => { /* eslint-disable no-underscore-dangle */
+    const orm = dependencies.map((arg) => { /* eslint-disable no-underscore-dangle */
         if (arg instanceof ORM) return arg;
         if (arg instanceof SelectorSpec) return arg._orm;
-        return null;
-    });
+        return false;
+    }).find(Boolean);
     const argToSelector = (arg) => { /* eslint-disable no-underscore-dangle */
         if (arg instanceof ORM) return arg.stateSelector;
         if (arg instanceof SelectorSpec) {

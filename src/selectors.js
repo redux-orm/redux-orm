@@ -155,22 +155,24 @@ export function createModelSelectorSpec({ model, orm }) {
     });
 
     Object.entries(model.fields).forEach(([fieldName, field]) => {
-        modelSelectorSpec[field.as || fieldName] = createFieldSelectorSpec({
+        const accessorName = field.as || fieldName;
+        modelSelectorSpec[accessorName] = createFieldSelectorSpec({
             modelSelectorSpec,
             model,
             field,
-            fieldName: field.as || fieldName,
+            fieldName: accessorName,
             orm,
         });
     });
 
     Object.entries(model.virtualFields).forEach(([fieldName, field]) => {
-        if (modelSelectorSpec[fieldName]) return;
-        modelSelectorSpec[field.as || fieldName] = createFieldSelectorSpec({
+        const accessorName = field.as || fieldName;
+        if (modelSelectorSpec[accessorName]) return;
+        modelSelectorSpec[accessorName] = createFieldSelectorSpec({
             modelSelectorSpec,
             model,
             field,
-            fieldName: field.as || fieldName,
+            fieldName: accessorName,
             orm,
         });
     });
