@@ -55,9 +55,6 @@ function createSelectorFromSpec(spec) {
     });
 }
 
-const selectorCache = new Map();
-const SELECTOR_KEY = '@@_______REDUX_ORM_SELECTOR';
-
 function toORM(arg) { /* eslint-disable no-underscore-dangle */
     if (arg instanceof ORM) {
         return arg;
@@ -68,7 +65,13 @@ function toORM(arg) { /* eslint-disable no-underscore-dangle */
     return false;
 }
 
+const selectorCache = new Map();
+const SELECTOR_KEY = '@@_______REDUX_ORM_SELECTOR';
+
 function toSelector(arg) { /* eslint-disable no-underscore-dangle */
+    if (typeof arg === 'function') {
+        return arg;
+    }
     if (arg instanceof ORM) {
         return arg.stateSelector;
     }
@@ -108,7 +111,7 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
 
         return selector;
     }
-    return arg;
+    throw new Error(`Failed to interpret selector argument: ${JSON.stringify(arg)} of type ${typeof arg}`);
 }
 
 /**
@@ -178,7 +181,7 @@ export function createSelector(...args) {
         } else if (!orm.stateSelector) {
             throw new Error('Failed to resolve the current ORM database state. Please pass an object to the ORM constructor that specifies a `stateSelector` function.');
         } else if (typeof orm.stateSelector !== 'function') {
-            throw new Error('Failed to resolve the current ORM database state. Please pass a function when specifying the ORM\'s `stateSelector`.');
+            throw new Error(`Failed to resolve the current ORM database state. Please pass a function when specifying the ORM's \`stateSelector\`. Received: ${JSON.stringify(orm.stateSelector)} of type ${typeof orm.stateSelector}`);
         }
 
         return createSelectorCreator(memoize, undefined, orm)(
@@ -190,11 +193,8 @@ export function createSelector(...args) {
     if (resultArg instanceof ORM) {
         throw new Error('ORM instances cannot be the result function of selectors. You can access your models in the last function that you pass to `createSelector()`.');
     }
-    if (!(resultArg instanceof SelectorSpec)) {
-        throw new Error(`Failed to interpret selector argument: ${JSON.stringify(resultArg)}`);
-    }
     if (inputFuncs.length) {
-        console.warn(`Your input selectors (${JSON.stringify(inputFuncs)}) will be ignored: the passed result function does not require any input.`);
+        console.warn('Your input selectors will be ignored: the passed result function does not require any input.');
     }
 
     return toSelector(resultArg);

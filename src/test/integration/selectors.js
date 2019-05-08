@@ -20,6 +20,9 @@ describe('Shorthand selector specifications', () => {
     const CREATE_MOVIE = 'CREATE_MOVIE';
     const CREATE_PUBLISHER = 'CREATE_PUBLISHER';
 
+    const consoleWarn = jest.spyOn(global.console, 'warn')
+        .mockImplementation(msg => msg);
+
     beforeEach(() => {
         ({
             Book,
@@ -55,22 +58,73 @@ describe('Shorthand selector specifications', () => {
         }).toThrow('Cannot create a selector without arguments.');
         expect(() => {
             createSelector(undefined);
-        }).toThrow('Failed to interpret selector argument: undefined');
+        }).toThrow('Failed to interpret selector argument: undefined of type undefined');
         expect(() => {
             createSelector(null);
-        }).toThrow('Failed to interpret selector argument: null');
+        }).toThrow('Failed to interpret selector argument: null of type object');
         expect(() => {
             createSelector({});
-        }).toThrow('Failed to interpret selector argument: {}');
+        }).toThrow('Failed to interpret selector argument: {} of type object');
         expect(() => {
             createSelector([]);
-        }).toThrow('Failed to interpret selector argument: []');
+        }).toThrow('Failed to interpret selector argument: [] of type object');
         expect(() => {
             createSelector(1);
-        }).toThrow('Failed to interpret selector argument: 1');
+        }).toThrow('Failed to interpret selector argument: 1 of type number');
         expect(() => {
             createSelector('a');
-        }).toThrow('Failed to interpret selector argument: "a"');
+        }).toThrow('Failed to interpret selector argument: "a" of type string');
+    });
+
+    it('handles ORM instances and selector specs correctly', () => {
+        expect(() => {
+            createSelector(orm);
+        }).toThrow('ORM instances cannot be the result function of selectors. You can access your models in the last function that you pass to `createSelector()`.');
+        expect(() => {
+            createSelector(() => {}, orm);
+        }).toThrow('ORM instances cannot be the result function of selectors. You can access your models in the last function that you pass to `createSelector()`.');
+        expect(() => {
+            createSelector(() => {});
+        }).toThrow('Failed to resolve the current ORM database state. Please pass an ORM instance or an ORM selector as an argument to `createSelector()`.');
+        const ormWithoutStateSelector = new ORM();
+        expect(() => {
+            createSelector(ormWithoutStateSelector, () => {});
+        }).toThrow('Failed to resolve the current ORM database state. Please pass an object to the ORM constructor that specifies a `stateSelector` function.');
+        const ormWithInvalidStateSelector = new ORM({
+            stateSelector: 'I should be a function',
+        });
+        expect(() => {
+            createSelector(ormWithInvalidStateSelector, () => {});
+        }).toThrow('Failed to resolve the current ORM database state. Please pass a function when specifying the ORM\'s `stateSelector`. Received: "I should be a function" of type string');
+    });
+
+    it('warns when ignoring selectors', () => {
+        expect(consoleWarn).toHaveBeenCalledTimes(0);
+        createSelector(() => {}, orm.Publisher);
+        expect(consoleWarn).toHaveBeenCalledTimes(1);
+        expect(consoleWarn.mock.results[0].value).toEqual('Your input selectors will be ignored: the passed result function does not require any input.');
+    });
+
+    it('caches spec-based selectors by ORM', () => {
+        const authors = createSelector(orm.Author);
+        const _authors = createSelector(orm.Author);
+        expect(authors).toBe(_authors);
+
+        /**
+         * FIXME: Two concurrent ORMs are impossible to create.
+         * They throw when trying to redefine field properties.
+         *
+         * Maybe this is fixable by defining isSetup on model classes directly.
+         */
+        /**
+        const orm2 = new ORM({ stateSelector });
+        orm2.register(Book, Cover, Genre, Tag, Author, Movie, Publisher);
+        const authors2 = createSelector(orm2.Author);
+        const _authors2 = createSelector(orm2.Author);
+        expect(authors2).toBe(_authors2);
+
+        expect(authors).not.toBe(authors2);
+        */
     });
 
     describe('model selector specs', () => {
