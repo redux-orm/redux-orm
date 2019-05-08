@@ -58,6 +58,59 @@ function createSelectorFromSpec(spec) {
 const selectorCache = new Map();
 const SELECTOR_KEY = '@@_______REDUX_ORM_SELECTOR';
 
+function toORM(arg) { /* eslint-disable no-underscore-dangle */
+    if (arg instanceof ORM) {
+        return arg;
+    }
+    if (arg instanceof SelectorSpec) {
+        return arg._orm;
+    }
+    return false;
+}
+
+function toSelector(arg) { /* eslint-disable no-underscore-dangle */
+    if (arg instanceof ORM) {
+        return arg.stateSelector;
+    }
+    if (arg instanceof SelectorSpec) {
+        const { _orm: orm, path } = arg;
+        if (!path || !path.length) {
+            throw new Error('Failed to retrieve selector from cache: Empty selector path');
+        }
+        // the selector cache for the spec's ORM
+        const ormSelectors = selectorCache.get(orm) || {};
+
+        /**
+         * Drill down into selector map object by path.
+         *
+         * The selector itself is stored under a special SELECTOR_KEY
+         * so that we can store selectors below it as well.
+         */
+        let level = ormSelectors;
+        for (let i = 0; i < path.length; ++i) {
+            if (!level) break;
+            level = level[path[i]];
+        }
+        if (level && level[SELECTOR_KEY]) {
+            // Cache hit: the selector has been created before
+            return level[SELECTOR_KEY];
+        }
+
+        const selector = createSelectorFromSpec(arg);
+        // Save the selector at the path position
+        ops.mutable.setIn(
+            [...path, SELECTOR_KEY],
+            selector,
+            ormSelectors
+        );
+        // Save the selector map for the spec's ORM
+        selectorCache.set(orm, ormSelectors);
+
+        return selector;
+    }
+    return arg;
+}
+
 /**
  * Returns a memoized selector based on passed arguments.
  * This is similar to `reselect`'s `createSelector`,
@@ -115,31 +168,9 @@ export function createSelector(...args) {
 
     const resultArg = args.pop();
     const dependencies = Array.isArray(args[0]) ? args[0] : args;
-    const orm = dependencies.map((arg) => { /* eslint-disable no-underscore-dangle */
-        if (arg instanceof ORM) return arg;
-        if (arg instanceof SelectorSpec) return arg._orm;
-        return false;
-    }).find(Boolean);
-    const argToSelector = (arg) => { /* eslint-disable no-underscore-dangle */
-        if (arg instanceof ORM) return arg.stateSelector;
-        if (arg instanceof SelectorSpec) {
-            const ormSelectors = selectorCache.get(arg._orm) || {};
-            let level = ormSelectors;
-            if (!arg.path || !arg.path.length) {
-                throw new Error('Failed to retrieve selector from cache: Empty selector path');
-            }
-            for (let i = 0; i < arg.path.length; ++i) {
-                if (!level) break;
-                level = level[arg.path[i]];
-            }
-            const selector = (level && level[SELECTOR_KEY]) || createSelectorFromSpec(arg);
-            ops.mutable.setIn([...arg.path, SELECTOR_KEY], selector, ormSelectors);
-            selectorCache.set(arg._orm, ormSelectors);
-            return selector;
-        }
-        return arg;
-    };
-    const inputFuncs = dependencies.map(argToSelector);
+
+    const orm = dependencies.map(toORM).find(Boolean);
+    const inputFuncs = dependencies.map(toSelector);
 
     if (typeof resultArg === 'function') {
         if (!orm) {
@@ -155,20 +186,16 @@ export function createSelector(...args) {
             resultArg
         );
     }
+
     if (resultArg instanceof ORM) {
-        throw new Error(
-            'ORM instances cannot be the result function of selectors. You can access your models in the last function that you pass to `createSelector()`.'
-        );
+        throw new Error('ORM instances cannot be the result function of selectors. You can access your models in the last function that you pass to `createSelector()`.');
     }
     if (!(resultArg instanceof SelectorSpec)) {
-        throw new Error(
-            `Failed to interpret selector argument: ${JSON.stringify(resultArg)}`
-        );
+        throw new Error(`Failed to interpret selector argument: ${JSON.stringify(resultArg)}`);
     }
     if (inputFuncs.length) {
-        console.warn(
-            `Your input selectors (${JSON.stringify(inputFuncs)}) will be ignored: the passed result function does not require any input.`
-        );
+        console.warn(`Your input selectors (${JSON.stringify(inputFuncs)}) will be ignored: the passed result function does not require any input.`);
     }
-    return argToSelector(resultArg);
+
+    return toSelector(resultArg);
 }
