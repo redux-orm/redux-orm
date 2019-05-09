@@ -426,21 +426,78 @@ describe('Shorthand selector specifications', () => {
     });
 
     describe('mapping selector specs', () => {
-        it('will map selector outputs', () => {
+        it('will map selector outputs for forward foreign key selectors', () => {
             const movieRating = createSelector(orm.Movie.rating);
-            const publisherAverageRating = createSelector(
-                orm.Publisher.movies.map(movieRating),
-                ratings => (ratings ? avg(ratings) : null)
+            const publisherMovieRatings = createSelector(
+                orm.Publisher.movies.map(movieRating)
             );
-            expect(publisherAverageRating(emptyState, 0))
-                .toEqual(null);
+            expect(publisherMovieRatings(emptyState, 123))
+                .toEqual(null); // publisher doesn't exist yet
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 123,
                 },
             });
-            expect(publisherAverageRating(ormState, 123)).toEqual(null);
+            expect(publisherMovieRatings(ormState, 123)).toEqual([]);
+            ormState = reducer(ormState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    rating: 6,
+                    publisherId: 123,
+                },
+            });
+            ormState = reducer(ormState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    rating: 7,
+                    publisherId: 123,
+                },
+            });
+            expect(publisherMovieRatings(ormState, 123)).toEqual([6, 7]);
+        });
+
+        it('will map selector outputs for backward foreign key selectors', () => {
+            const publisherName = createSelector(orm.Publisher.name);
+            const moviePublisherName = createSelector(
+                orm.Movie.publisher.map(publisherName)
+            );
+            expect(moviePublisherName(emptyState, 1))
+                .toEqual(null); // movie doesn't exist yet
+            ormState = reducer(ormState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    id: 1,
+                    publisherId: 123,
+                },
+            });
+            expect(moviePublisherName(ormState, 1))
+                .toEqual(null); // publisher doesn't exist yet
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                    name: 'Redux-ORM studios',
+                },
+            });
+            expect(moviePublisherName(ormState, 1)).toEqual('Redux-ORM studios');
+        });
+
+        it('can be combined when used as input selectors ', () => {
+            const movieRating = createSelector(orm.Movie.rating);
+            const publisherAverageRating = createSelector(
+                orm.Publisher.movies.map(movieRating),
+                ratings => ratings && (ratings.length ? avg(ratings) : 'no movies')
+            );
+            expect(publisherAverageRating(emptyState, 123))
+                .toEqual(null); // publisher doesn't exist yet
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(publisherAverageRating(ormState, 123)).toEqual('no movies');
             ormState = reducer(ormState, {
                 type: CREATE_MOVIE,
                 payload: {

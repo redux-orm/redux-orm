@@ -1,5 +1,5 @@
 import {
-    Attribute, OneToOne, ForeignKey, ManyToMany,
+    OneToOne, ForeignKey, ManyToMany,
 } from './fields';
 import QuerySet from './QuerySet';
 
@@ -179,9 +179,6 @@ export class FieldSelectorSpec extends SelectorSpec {
 
     _getFieldValue(instance) {
         const { [this._fieldName]: value } = instance;
-        if (this._field instanceof Attribute) {
-            return value;
-        }
         if (this._field instanceof ForeignKey) {
             if (value instanceof QuerySet) {
                 return value.toRefArray();
@@ -194,7 +191,7 @@ export class FieldSelectorSpec extends SelectorSpec {
         if (this._field instanceof ManyToMany) {
             return value.toRefArray();
         }
-        throw new Error('Could not compute selector result: Unknown field type');
+        return value;
     }
 
     map(selector) {
