@@ -19,10 +19,6 @@ export class SelectorSpec {
         this._orm = orm;
     }
 
-    get key() {
-        throw new Error('Key needs to be overridden.');
-    }
-
     get cachePath() {
         const basePath = this._parent ? this._parent.cachePath : [];
         return [...basePath, this.key];
@@ -81,9 +77,6 @@ export class MapSelectorSpec extends SelectorSpec {
         this._field = field;
         this._fieldName = fieldName;
         this._selector = selector;
-        if (!(field instanceof ForeignKey)) {
-            throw new Error('Cannot create MapSelectorSpec for other fields than foreign key fields.');
-        }
     }
 
     get cachePath() {
@@ -102,16 +95,11 @@ export class MapSelectorSpec extends SelectorSpec {
                     .map(instance => this._getMappedValue(instance, session, state));
             }
             if (Array.isArray(idArg)) {
-                const { idAttribute } = ModelClass;
-                return ModelClass
-                    .filter(instance => idArg.includes(instance[idAttribute]))
-                    .toModelArray()
-                    .map(instance => this._getMappedValue(instance, session, state));
+                return idArg.map(id => (
+                    this._getMappedValue(ModelClass.withId(id), session, state)
+                ));
             }
-            const instance = ModelClass.withId(idArg);
-            return instance
-                ? this._getMappedValue(instance, session, state)
-                : null;
+            return this._getMappedValue(ModelClass.withId(idArg), session, state);
         };
     }
 
@@ -122,6 +110,7 @@ export class MapSelectorSpec extends SelectorSpec {
     }
 
     _getMappedValue(instance, session, state) {
+        if (!instance) return null;
         const { [this._fieldName]: value } = instance;
         const referencedModel = session[this._field.toModelName];
         const { idAttribute: mapIdAttribute } = referencedModel;
@@ -160,14 +149,11 @@ export class FieldSelectorSpec extends SelectorSpec {
                     .map(this._getFieldValue.bind(this));
             }
             if (Array.isArray(idArg)) {
-                const { idAttribute } = ModelClass;
-                return ModelClass
-                    .filter(instance => idArg.includes(instance[idAttribute]))
-                    .toModelArray()
-                    .map(this._getFieldValue.bind(this));
+                return idArg.map(id => (
+                    this._getFieldValue(ModelClass.withId(id))
+                ));
             }
-            const instance = ModelClass.withId(idArg);
-            return instance ? this._getFieldValue(instance) : null;
+            return this._getFieldValue(ModelClass.withId(idArg));
         };
     }
 
@@ -178,6 +164,7 @@ export class FieldSelectorSpec extends SelectorSpec {
     }
 
     _getFieldValue(instance) {
+        if (!instance) return null;
         const { [this._fieldName]: value } = instance;
         if (this._field instanceof ForeignKey) {
             if (value instanceof QuerySet) {
@@ -195,6 +182,16 @@ export class FieldSelectorSpec extends SelectorSpec {
     }
 
     map(selector) {
+        if (
+            !selector ||
+            typeof selector !== 'function' ||
+            !selector.recomputations
+        ) {
+            throw new Error(`\`map()\` requires a selector as an input. Received: ${JSON.stringify(selector)} of type ${typeof selector}`);
+        }
+        if (!(this._field instanceof ForeignKey)) {
+            throw new Error('Cannot map selectors for other fields than foreign key fields.');
+        }
         return new MapSelectorSpec({
             parent: this,
             model: this._model,

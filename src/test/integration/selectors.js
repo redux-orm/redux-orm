@@ -239,9 +239,11 @@ describe('Shorthand selector specifications', () => {
             expect(publisherNames(emptyState, [])).toEqual([]);
             expect(publisherNames.recomputations()).toEqual(2);
             const zeroAndTwo = [0, 2];
-            expect(publisherNames(emptyState, zeroAndTwo)).toEqual([]);
+            expect(publisherNames(emptyState, zeroAndTwo))
+                .toEqual([null, null]);
             expect(publisherNames.recomputations()).toEqual(3);
-            expect(publisherNames(emptyState, zeroAndTwo)).toEqual([]);
+            expect(publisherNames(emptyState, zeroAndTwo))
+                .toEqual([null, null]);
             expect(publisherNames.recomputations()).toEqual(3);
             ormState = reducer(emptyState, {
                 type: CREATE_PUBLISHER,
@@ -250,7 +252,8 @@ describe('Shorthand selector specifications', () => {
                     name: 'Publisher name!'
                 },
             });
-            expect(publisherNames(ormState, zeroAndTwo)).toEqual([]);
+            expect(publisherNames(ormState, zeroAndTwo))
+                .toEqual([null, null]);
             expect(publisherNames.recomputations()).toEqual(4);
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
@@ -259,7 +262,8 @@ describe('Shorthand selector specifications', () => {
                     name: 'Other publisher name!'
                 },
             });
-            expect(publisherNames(ormState, zeroAndTwo)).toEqual(['Other publisher name!']);
+            expect(publisherNames(ormState, zeroAndTwo))
+                .toEqual([null, 'Other publisher name!']);
             expect(publisherNames.recomputations()).toEqual(5);
         });
 
@@ -358,6 +362,48 @@ describe('Shorthand selector specifications', () => {
             });
         });
 
+        it('will compute forward oneToOne model for some model instances', () => {
+            const bookCover = createSelector(orm.Book.cover);
+            ormState = reducer(ormState, {
+                type: CREATE_COVER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(bookCover(ormState, [1])).toEqual([null]);
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 1,
+                    cover: 123,
+                },
+            });
+            expect(bookCover(ormState, [1])).toEqual([{
+                id: 123,
+            }]);
+        });
+
+        it('will compute forward oneToOne model for all model instances', () => {
+            const bookCover = createSelector(orm.Book.cover);
+            ormState = reducer(ormState, {
+                type: CREATE_COVER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(bookCover(ormState)).toEqual([]);
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 1,
+                    cover: 123,
+                },
+            });
+            expect(bookCover(ormState)).toEqual([{
+                id: 123,
+            }]);
+        });
+
         it('will compute backward oneToOne model for single model instances', () => {
             const coverBook = createSelector(orm.Cover.book);
             ormState = reducer(ormState, {
@@ -378,6 +424,50 @@ describe('Shorthand selector specifications', () => {
                 id: 1,
                 cover: 123,
             });
+        });
+
+        it('will compute backward oneToOne model for some model instances', () => {
+            const coverBook = createSelector(orm.Cover.book);
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 1,
+                    cover: 123,
+                },
+            });
+            expect(coverBook(ormState, [123])).toEqual([null]);
+            ormState = reducer(ormState, {
+                type: CREATE_COVER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(coverBook(ormState, [123])).toEqual([{
+                id: 1,
+                cover: 123,
+            }]);
+        });
+
+        it('will compute backward oneToOne model for all model instances', () => {
+            const coverBook = createSelector(orm.Cover.book);
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 1,
+                    cover: 123,
+                },
+            });
+            expect(coverBook(ormState)).toEqual([]);
+            ormState = reducer(ormState, {
+                type: CREATE_COVER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(coverBook(ormState)).toEqual([{
+                id: 1,
+                cover: 123,
+            }]);
         });
     });
 
@@ -403,6 +493,52 @@ describe('Shorthand selector specifications', () => {
             }]);
         });
 
+        it('will compute forward manyToMany models for some model instances', () => {
+            const authorPublishers = createSelector(orm.Author.publishers);
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(authorPublishers(ormState, [1])).toEqual([null]);
+            ormState = reducer(ormState, {
+                type: CREATE_AUTHOR,
+                payload: {
+                    id: 1,
+                    publishers: [123],
+                },
+            });
+            expect(authorPublishers(ormState, [1])).toEqual([
+                [{
+                    id: 123,
+                }]
+            ]);
+        });
+
+        it('will compute forward manyToMany models for all model instances', () => {
+            const authorPublishers = createSelector(orm.Author.publishers);
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(authorPublishers(ormState)).toEqual([]);
+            ormState = reducer(ormState, {
+                type: CREATE_AUTHOR,
+                payload: {
+                    id: 1,
+                    publishers: [123],
+                },
+            });
+            expect(authorPublishers(ormState)).toEqual([
+                [{
+                    id: 123,
+                }]
+            ]);
+        });
+
         it('will compute backward manyToMany models for single model instances', () => {
             const publisherAuthors = createSelector(orm.Publisher.authors);
             ormState = reducer(ormState, {
@@ -423,10 +559,64 @@ describe('Shorthand selector specifications', () => {
                 id: 1,
             }]);
         });
+
+        it('will compute backward manyToMany models for some model instances', () => {
+            const publisherAuthors = createSelector(orm.Publisher.authors);
+            ormState = reducer(ormState, {
+                type: CREATE_AUTHOR,
+                payload: {
+                    id: 1,
+                    publishers: [123],
+                },
+            });
+            expect(publisherAuthors(ormState, [123])).toEqual([null]);
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(publisherAuthors(ormState, [123])).toEqual([
+                [{
+                    id: 1,
+                }]
+            ]);
+        });
+
+        it('will compute backward manyToMany models for all model instances', () => {
+            const publisherAuthors = createSelector(orm.Publisher.authors);
+            ormState = reducer(ormState, {
+                type: CREATE_AUTHOR,
+                payload: {
+                    id: 1,
+                    publishers: [123],
+                },
+            });
+            expect(publisherAuthors(ormState)).toEqual([]);
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(publisherAuthors(ormState)).toEqual([
+                [{
+                    id: 1,
+                }]
+            ]);
+        });
     });
 
     describe('mapping selector specs', () => {
-        it('will map selector outputs for forward foreign key selectors', () => {
+        it('will throw for non foreign key fields', () => {
+            expect(() => orm.Publisher.movies.map(null))
+                .toThrow('`map()` requires a selector as an input. Received: null of type object');
+            const publisherName = createSelector(orm.Publisher.name);
+            expect(() => orm.Author.publishers.map(publisherName))
+                .toThrow('Cannot map selectors for other fields than foreign key fields');
+        });
+
+        it('will map selector outputs for forward foreign key selectors and single instances', () => {
             const movieRating = createSelector(orm.Movie.rating);
             const publisherMovieRatings = createSelector(
                 orm.Publisher.movies.map(movieRating)
@@ -457,7 +647,77 @@ describe('Shorthand selector specifications', () => {
             expect(publisherMovieRatings(ormState, 123)).toEqual([6, 7]);
         });
 
-        it('will map selector outputs for backward foreign key selectors', () => {
+        it('will map selector outputs for forward foreign key selectors and some instances', () => {
+            const movieRating = createSelector(orm.Movie.rating);
+            const publisherMovieRatings = createSelector(
+                orm.Publisher.movies.map(movieRating)
+            );
+            expect(publisherMovieRatings(emptyState, [123]))
+                .toEqual([null]); // publisher doesn't exist yet
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(publisherMovieRatings(ormState, [123])).toEqual([
+                [],
+            ]);
+            ormState = reducer(ormState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    rating: 6,
+                    publisherId: 123,
+                },
+            });
+            ormState = reducer(ormState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    rating: 7,
+                    publisherId: 123,
+                },
+            });
+            expect(publisherMovieRatings(ormState, [123])).toEqual([
+                [6, 7],
+            ]);
+        });
+
+        it('will map selector outputs for forward foreign key selectors and all instances', () => {
+            const movieRating = createSelector(orm.Movie.rating);
+            const publisherMovieRatings = createSelector(
+                orm.Publisher.movies.map(movieRating)
+            );
+            expect(publisherMovieRatings(emptyState))
+                .toEqual([]); // publisher doesn't exist yet
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(publisherMovieRatings(ormState)).toEqual([
+                [],
+            ]);
+            ormState = reducer(ormState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    rating: 6,
+                    publisherId: 123,
+                },
+            });
+            ormState = reducer(ormState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    rating: 7,
+                    publisherId: 123,
+                },
+            });
+            expect(publisherMovieRatings(ormState)).toEqual([
+                [6, 7],
+            ]);
+        });
+
+        it('will map selector outputs for backward foreign key selectors and single instance', () => {
             const publisherName = createSelector(orm.Publisher.name);
             const moviePublisherName = createSelector(
                 orm.Movie.publisher.map(publisherName)
@@ -481,6 +741,58 @@ describe('Shorthand selector specifications', () => {
                 },
             });
             expect(moviePublisherName(ormState, 1)).toEqual('Redux-ORM studios');
+        });
+
+        it('will map selector outputs for backward foreign key selectors and some instances', () => {
+            const publisherName = createSelector(orm.Publisher.name);
+            const moviePublisherName = createSelector(
+                orm.Movie.publisher.map(publisherName)
+            );
+            expect(moviePublisherName(emptyState, [1]))
+                .toEqual([null]); // movie doesn't exist yet
+            ormState = reducer(ormState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    id: 1,
+                    publisherId: 123,
+                },
+            });
+            expect(moviePublisherName(ormState, [1]))
+                .toEqual([null]); // publisher doesn't exist yet
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                    name: 'Redux-ORM studios',
+                },
+            });
+            expect(moviePublisherName(ormState, [1])).toEqual(['Redux-ORM studios']);
+        });
+
+        it('will map selector outputs for backward foreign key selectors and all instances', () => {
+            const publisherName = createSelector(orm.Publisher.name);
+            const moviePublisherName = createSelector(
+                orm.Movie.publisher.map(publisherName)
+            );
+            expect(moviePublisherName(emptyState))
+                .toEqual([]); // movie doesn't exist yet
+            ormState = reducer(ormState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    id: 1,
+                    publisherId: 123,
+                },
+            });
+            expect(moviePublisherName(ormState))
+                .toEqual([null]); // publisher doesn't exist yet
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                    name: 'Redux-ORM studios',
+                },
+            });
+            expect(moviePublisherName(ormState)).toEqual(['Redux-ORM studios']);
         });
 
         it('can be combined when used as input selectors ', () => {
