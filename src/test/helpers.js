@@ -271,10 +271,10 @@ export function measureMs(fn) {
     return measureMsSince(start);
 }
 
-export const avg = (arr, n) => {
-    if (n === 0) return null;
+export const avg = (arr) => {
+    if (arr.length === 0) return null;
     const sum = arr.reduce((cur, summand) => cur + summand);
-    return sum / n;
+    return sum / arr.length;
 };
 
 export const round = (num, precision, base = 10) => {

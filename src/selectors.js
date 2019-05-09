@@ -23,8 +23,8 @@ export class SelectorSpec {
         throw new Error('Key needs to be overridden.');
     }
 
-    get path() {
-        const basePath = this._parent ? this._parent.path : [];
+    get cachePath() {
+        const basePath = this._parent ? this._parent.cachePath : [];
         return [...basePath, this.key];
     }
 }
@@ -69,6 +69,69 @@ export class ModelSelectorSpec extends SelectorSpec {
         return (state, idArg) => (
             (typeof idArg === 'undefined') ? ALL_INSTANCES : idArg
         );
+    }
+}
+
+export class MapSelectorSpec extends SelectorSpec {
+    constructor({
+        model, field, fieldName, selector, ...other
+    }) {
+        super(other);
+        this._model = model;
+        this._field = field;
+        this._fieldName = fieldName;
+        this._selector = selector;
+        if (!(field instanceof ForeignKey)) {
+            throw new Error('Cannot create MapSelectorSpec for other fields than foreign key fields.');
+        }
+    }
+
+    get cachePath() {
+        return null;
+    }
+
+    get dependencies() {
+        return [this._orm, idArgSelector, state => state];
+    }
+
+    get resultFunc() {
+        return (session, idArg, state) => {
+            const { [this._model.modelName]: ModelClass } = session;
+            if (typeof idArg === 'undefined') {
+                return ModelClass.all().toModelArray()
+                    .map(instance => this._getMappedValue(instance, session, state));
+            }
+            if (Array.isArray(idArg)) {
+                const { idAttribute } = ModelClass;
+                return ModelClass
+                    .filter(instance => idArg.includes(instance[idAttribute]))
+                    .toModelArray()
+                    .map(instance => this._getMappedValue(instance, session, state));
+            }
+            const instance = ModelClass.withId(idArg);
+            return instance
+                ? this._getMappedValue(instance, session, state)
+                : null;
+        };
+    }
+
+    get keySelector() {
+        return (state, idArg) => (
+            (typeof idArg === 'undefined') ? ALL_INSTANCES : idArg
+        );
+    }
+
+    _getMappedValue(instance, session, state) {
+        const { [this._fieldName]: value } = instance;
+        const referencedModel = session[this._field.toModelName];
+        const { idAttribute: mapIdAttribute } = referencedModel;
+        if (value instanceof QuerySet) {
+            return value.toRefArray()
+                .map(ref => this._selector(state, ref[mapIdAttribute]));
+        }
+        return value
+            ? this._selector(state, value.ref[mapIdAttribute])
+            : null;
     }
 }
 
@@ -132,6 +195,17 @@ export class FieldSelectorSpec extends SelectorSpec {
             return value.toRefArray();
         }
         throw new Error('Could not compute selector result: Unknown field type');
+    }
+
+    map(selector) {
+        return new MapSelectorSpec({
+            parent: this,
+            model: this._model,
+            orm: this._orm,
+            field: this._field,
+            fieldName: this._fieldName,
+            selector,
+        });
     }
 }
 

@@ -202,7 +202,7 @@ describe('Shorthand selector specifications', () => {
         });
     });
 
-    describe('field selector specs', () => {
+    describe('attr field selector specs', () => {
         it('will recompute attr fields for single model instances', () => {
             const publisherNames = createSelector(orm.Publisher.name);
             expect(publisherNames(emptyState, 1)).toEqual(null);
@@ -220,6 +220,56 @@ describe('Shorthand selector specifications', () => {
             expect(publisherNames.recomputations()).toEqual(2);
         });
 
+        it('will recompute attr fields for some model instances', () => {
+            const publisherNames = createSelector(orm.Publisher.name);
+            expect(publisherNames(emptyState, [])).toEqual([]);
+            expect(publisherNames.recomputations()).toEqual(1);
+            expect(publisherNames(emptyState, [])).toEqual([]);
+            expect(publisherNames.recomputations()).toEqual(2);
+            const zeroAndTwo = [0, 2];
+            expect(publisherNames(emptyState, zeroAndTwo)).toEqual([]);
+            expect(publisherNames.recomputations()).toEqual(3);
+            expect(publisherNames(emptyState, zeroAndTwo)).toEqual([]);
+            expect(publisherNames.recomputations()).toEqual(3);
+            ormState = reducer(emptyState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 1,
+                    name: 'Publisher name!'
+                },
+            });
+            expect(publisherNames(ormState, zeroAndTwo)).toEqual([]);
+            expect(publisherNames.recomputations()).toEqual(4);
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 2,
+                    name: 'Other publisher name!'
+                },
+            });
+            expect(publisherNames(ormState, zeroAndTwo)).toEqual(['Other publisher name!']);
+            expect(publisherNames.recomputations()).toEqual(5);
+        });
+
+        it('will recompute attr fields for all model instances', () => {
+            const publisherNames = createSelector(orm.Publisher.name);
+            expect(publisherNames(emptyState)).toEqual([]);
+            expect(publisherNames.recomputations()).toEqual(1);
+            expect(publisherNames(emptyState)).toEqual([]);
+            expect(publisherNames.recomputations()).toEqual(1);
+            ormState = reducer(emptyState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 1,
+                    name: 'Publisher name!'
+                },
+            });
+            expect(publisherNames(ormState)).toEqual(['Publisher name!']);
+            expect(publisherNames.recomputations()).toEqual(2);
+        });
+    });
+
+    describe('foreign key field selector specs', () => {
         it('will compute forward FK model for single model instances', () => {
             const moviePublisher = createSelector(orm.Movie.publisher);
             ormState = reducer(ormState, {
@@ -272,95 +322,43 @@ describe('Shorthand selector specifications', () => {
                 { id: 2, publisherId: 123 },
             ]);
         });
+    });
 
-        it('will recompute attr fields for some model instances', () => {
-            const publisherNames = createSelector(orm.Publisher.name);
-            expect(publisherNames(emptyState, [])).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(1);
-            expect(publisherNames(emptyState, [])).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(2);
-            const zeroAndTwo = [0, 2];
-            expect(publisherNames(emptyState, zeroAndTwo)).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(3);
-            expect(publisherNames(emptyState, zeroAndTwo)).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(3);
-            ormState = reducer(emptyState, {
-                type: CREATE_PUBLISHER,
-                payload: {
-                    id: 1,
-                    name: 'Publisher name!'
-                },
-            });
-            expect(publisherNames(ormState, zeroAndTwo)).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(4);
-            ormState = reducer(ormState, {
-                type: CREATE_PUBLISHER,
-                payload: {
-                    id: 2,
-                    name: 'Other publisher name!'
-                },
-            });
-            expect(publisherNames(ormState, zeroAndTwo)).toEqual(['Other publisher name!']);
-            expect(publisherNames.recomputations()).toEqual(5);
-        });
+    describe('one to one field selector specs', () => {});
+    describe('many to many field selector specs', () => {});
 
-        it('will recompute attr fields for all model instances', () => {
-            const publisherNames = createSelector(orm.Publisher.name);
-            expect(publisherNames(emptyState)).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(1);
-            expect(publisherNames(emptyState)).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(1);
-            ormState = reducer(emptyState, {
-                type: CREATE_PUBLISHER,
-                payload: {
-                    id: 1,
-                    name: 'Publisher name!'
-                },
-            });
-            expect(publisherNames(ormState)).toEqual(['Publisher name!']);
-            expect(publisherNames.recomputations()).toEqual(2);
-        });
 
-        /*
-        it('will compute related models', () => {
-            // The way we have to do it right now.
-            const old = createSelector(
-                orm,
-                (state, id) => id,
-                ({ Publisher }, id) => (
-                    avg(Publisher.withId(id).movies.map(movie => movie.rating))
-                ),
+    describe('mapping selector specs', () => {
+        it('will map selector outputs', () => {
+            const movieRating = createSelector(orm.Movie.rating);
+            const publisherAverageRating = createSelector(
+                orm.Publisher.movies.map(movieRating),
+                ratings => (ratings ? avg(ratings) : null)
             );
-            // This is the desired new functionality.
-            const publisherRatingAvg = createSelector(
-                orm.Publisher.movies,
-                (_, movies) => avg(movies.map(movie => movie.rating))
-            );
-            expect(() => publisherRatingAvg(emptyState, 0))
-                .toThrow('Publisher with id 0 doesn\'t exist');
+            expect(publisherAverageRating(emptyState, 0))
+                .toEqual(null);
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 123,
                 },
             });
-            expect(publisherRatingAvg(ormState, 123)).toEqual(null);
+            expect(publisherAverageRating(ormState, 123)).toEqual(null);
             ormState = reducer(ormState, {
                 type: CREATE_MOVIE,
                 payload: {
                     rating: 6,
-                    publisher: 123,
+                    publisherId: 123,
                 },
             });
             ormState = reducer(ormState, {
                 type: CREATE_MOVIE,
                 payload: {
                     rating: 7,
-                    publisher: 123,
+                    publisherId: 123,
                 },
             });
-            expect(publisherRatingAvg(ormState, 123)).toEqual(6.5);
+            expect(publisherAverageRating(ormState, 123)).toEqual(6.5);
         });
-        */
     });
 });

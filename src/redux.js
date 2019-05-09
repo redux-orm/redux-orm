@@ -76,38 +76,41 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
         return arg.stateSelector;
     }
     if (arg instanceof SelectorSpec) {
-        const { _orm: orm, path } = arg;
-        if (!path || !path.length) {
-            throw new Error('Failed to retrieve selector from cache: Empty selector path');
-        }
-        // the selector cache for the spec's ORM
-        const ormSelectors = selectorCache.get(orm) || {};
+        const { _orm: orm, cachePath } = arg;
+        let ormSelectors;
+        if (cachePath && cachePath.length) {
+            // the selector cache for the spec's ORM
+            ormSelectors = selectorCache.get(orm) || {};
 
-        /**
-         * Drill down into selector map object by path.
-         *
-         * The selector itself is stored under a special SELECTOR_KEY
-         * so that we can store selectors below it as well.
-         */
-        let level = ormSelectors;
-        for (let i = 0; i < path.length; ++i) {
-            if (!level) break;
-            level = level[path[i]];
-        }
-        if (level && level[SELECTOR_KEY]) {
-            // Cache hit: the selector has been created before
-            return level[SELECTOR_KEY];
+            /**
+            * Drill down into selector map object by cachePath.
+            *
+            * The selector itself is stored under a special SELECTOR_KEY
+            * so that we can store selectors below it as well.
+            */
+            let level = ormSelectors;
+            for (let i = 0; i < cachePath.length; ++i) {
+                if (!level) break;
+                level = level[cachePath[i]];
+            }
+            if (level && level[SELECTOR_KEY]) {
+                // Cache hit: the selector has been created before
+                return level[SELECTOR_KEY];
+            }
         }
 
         const selector = createSelectorFromSpec(arg);
-        // Save the selector at the path position
-        ops.mutable.setIn(
-            [...path, SELECTOR_KEY],
-            selector,
-            ormSelectors
-        );
-        // Save the selector map for the spec's ORM
-        selectorCache.set(orm, ormSelectors);
+
+        if (cachePath && cachePath.length) {
+            // Save the selector at the cachePath position
+            ops.mutable.setIn(
+                [...cachePath, SELECTOR_KEY],
+                selector,
+                ormSelectors
+            );
+            // Save the selector map for the spec's ORM
+            selectorCache.set(orm, ormSelectors);
+        }
 
         return selector;
     }
