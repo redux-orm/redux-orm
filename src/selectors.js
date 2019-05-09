@@ -189,7 +189,7 @@ export class FieldSelectorSpec extends SelectorSpec {
             return value ? value.ref : null;
         }
         if (this._field instanceof OneToOne) {
-            return value;
+            return value ? value.ref : null;
         }
         if (this._field instanceof ManyToMany) {
             return value.toRefArray();

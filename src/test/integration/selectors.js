@@ -19,6 +19,9 @@ describe('Shorthand selector specifications', () => {
 
     const CREATE_MOVIE = 'CREATE_MOVIE';
     const CREATE_PUBLISHER = 'CREATE_PUBLISHER';
+    const CREATE_BOOK = 'CREATE_BOOK';
+    const CREATE_COVER = 'CREATE_COVER';
+    const CREATE_AUTHOR = 'CREATE_AUTHOR';
 
     const consoleWarn = jest.spyOn(global.console, 'warn')
         .mockImplementation(msg => msg);
@@ -43,6 +46,15 @@ describe('Shorthand selector specifications', () => {
                 break;
             case CREATE_PUBLISHER:
                 session.Publisher.create(action.payload);
+                break;
+            case CREATE_BOOK:
+                session.Book.create(action.payload);
+                break;
+            case CREATE_COVER:
+                session.Cover.create(action.payload);
+                break;
+            case CREATE_AUTHOR:
+                session.Author.create(action.payload);
                 break;
             default: break;
             }
@@ -324,9 +336,94 @@ describe('Shorthand selector specifications', () => {
         });
     });
 
-    describe('one to one field selector specs', () => {});
-    describe('many to many field selector specs', () => {});
+    describe('one to one field selector specs', () => {
+        it('will compute forward oneToOne model for single model instances', () => {
+            const bookCover = createSelector(orm.Book.cover);
+            ormState = reducer(ormState, {
+                type: CREATE_COVER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(bookCover(ormState, 1)).toEqual(null);
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 1,
+                    cover: 123,
+                },
+            });
+            expect(bookCover(ormState, 1)).toEqual({
+                id: 123,
+            });
+        });
 
+        it('will compute backward oneToOne model for single model instances', () => {
+            const coverBook = createSelector(orm.Cover.book);
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 1,
+                    cover: 123,
+                },
+            });
+            expect(coverBook(ormState, 123)).toEqual(null);
+            ormState = reducer(ormState, {
+                type: CREATE_COVER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(coverBook(ormState, 123)).toEqual({
+                id: 1,
+                cover: 123,
+            });
+        });
+    });
+
+    describe('many to many field selector specs', () => {
+        it('will compute forward manyToMany models for single model instances', () => {
+            const authorPublishers = createSelector(orm.Author.publishers);
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(authorPublishers(ormState, 1)).toEqual(null);
+            ormState = reducer(ormState, {
+                type: CREATE_AUTHOR,
+                payload: {
+                    id: 1,
+                    publishers: [123],
+                },
+            });
+            expect(authorPublishers(ormState, 1)).toEqual([{
+                id: 123,
+            }]);
+        });
+
+        it('will compute backward manyToMany models for single model instances', () => {
+            const publisherAuthors = createSelector(orm.Publisher.authors);
+            ormState = reducer(ormState, {
+                type: CREATE_AUTHOR,
+                payload: {
+                    id: 1,
+                    publishers: [123],
+                },
+            });
+            expect(publisherAuthors(ormState, 123)).toEqual(null);
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(publisherAuthors(ormState, 123)).toEqual([{
+                id: 1,
+            }]);
+        });
+    });
 
     describe('mapping selector specs', () => {
         it('will map selector outputs', () => {

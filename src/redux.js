@@ -83,11 +83,11 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
             ormSelectors = selectorCache.get(orm) || {};
 
             /**
-            * Drill down into selector map object by cachePath.
-            *
-            * The selector itself is stored under a special SELECTOR_KEY
-            * so that we can store selectors below it as well.
-            */
+             * Drill down into selector map object by cachePath.
+             *
+             * The selector itself is stored under a special SELECTOR_KEY
+             * so that we can store selectors below it as well.
+             */
             let level = ormSelectors;
             for (let i = 0; i < cachePath.length; ++i) {
                 if (!level) break;
