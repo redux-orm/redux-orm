@@ -75,7 +75,8 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
     }
     if (arg instanceof SelectorSpec) {
         const { _orm: orm, cachePath } = arg;
-        let ormSelectors, level;
+        let ormSelectors;
+        let level;
         if (cachePath && cachePath.length) {
             // the selector cache for the spec's ORM
             if (!selectorCache.has(orm)) {
