@@ -79,8 +79,8 @@ export class MapSelectorSpec extends SelectorSpec {
         this._selector = selector;
     }
 
-    get cachePath() {
-        return null;
+    get key() {
+        return this._selector;
     }
 
     get dependencies() {

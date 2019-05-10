@@ -1,8 +1,6 @@
 import { createSelectorCreator } from 'reselect';
 import createCachedSelector, { FlatMapCache } from 're-reselect';
 
-import ops from 'immutable-ops';
-
 import { memoize } from './memoize';
 
 import { ORM } from './ORM';
@@ -66,7 +64,7 @@ function toORM(arg) { /* eslint-disable no-underscore-dangle */
 }
 
 const selectorCache = new Map();
-const SELECTOR_KEY = '@@_______REDUX_ORM_SELECTOR';
+const SELECTOR_KEY = Symbol('REDUX_ORM_SELECTOR');
 
 function toSelector(arg) { /* eslint-disable no-underscore-dangle */
     if (typeof arg === 'function') {
@@ -80,7 +78,10 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
         let ormSelectors;
         if (cachePath && cachePath.length) {
             // the selector cache for the spec's ORM
-            ormSelectors = selectorCache.get(orm) || {};
+            if (!selectorCache.has(orm)) {
+                selectorCache.set(orm, new Map());
+            }
+            ormSelectors = selectorCache.get(orm);
 
             /**
              * Drill down into selector map object by cachePath.
@@ -89,13 +90,14 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
              * so that we can store selectors below it as well.
              */
             let level = ormSelectors;
-            for (let i = 0; i < cachePath.length; ++i) {
+            let i;
+            for (i = 0; i < cachePath.length; ++i) {
                 if (!level) break;
-                level = level[cachePath[i]];
+                level = level.get(cachePath[i]);
             }
-            if (level && level[SELECTOR_KEY]) {
+            if (level && i === cachePath.length && level.has(SELECTOR_KEY)) {
                 // Cache hit: the selector has been created before
-                return level[SELECTOR_KEY];
+                return level.get(SELECTOR_KEY);
             }
         }
 
@@ -103,13 +105,14 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
 
         if (cachePath && cachePath.length) {
             // Save the selector at the cachePath position
-            ops.mutable.setIn(
-                [...cachePath, SELECTOR_KEY],
-                selector,
-                ormSelectors
-            );
-            // Save the selector map for the spec's ORM
-            selectorCache.set(orm, ormSelectors);
+            let level = ormSelectors;
+            for (let i = 0; i < cachePath.length; ++i) {
+                if (!level.has(cachePath[i])) {
+                    level.set(cachePath[i], new Map());
+                }
+                level = level.get(cachePath[i]);
+            }
+            level.set(SELECTOR_KEY, selector);
         }
 
         return selector;

@@ -611,6 +611,10 @@ describe('Shorthand selector specifications', () => {
         it('will throw for non foreign key fields', () => {
             expect(() => orm.Publisher.movies.map(null))
                 .toThrow('`map()` requires a selector as an input. Received: null of type object');
+            expect(() => orm.Publisher.movies.map(() => {}))
+                .toThrow('`map()` requires a selector as an input. Received: undefined of type function');
+            expect(() => orm.Author.name.map(createSelector(orm, () => {})))
+                .toThrow('Cannot map selectors for other fields than foreign key fields');
             const publisherName = createSelector(orm.Publisher.name);
             expect(() => orm.Author.publishers.map(publisherName))
                 .toThrow('Cannot map selectors for other fields than foreign key fields');
