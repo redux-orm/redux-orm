@@ -75,7 +75,7 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
     }
     if (arg instanceof SelectorSpec) {
         const { _orm: orm, cachePath } = arg;
-        let ormSelectors;
+        let ormSelectors, level;
         if (cachePath && cachePath.length) {
             // the selector cache for the spec's ORM
             if (!selectorCache.has(orm)) {
@@ -84,18 +84,19 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
             ormSelectors = selectorCache.get(orm);
 
             /**
-             * Drill down into selector map object by cachePath.
+             * Drill down into selector map by cachePath.
              *
              * The selector itself is stored under a special SELECTOR_KEY
              * so that we can store selectors below it as well.
              */
-            let level = ormSelectors;
-            let i;
-            for (i = 0; i < cachePath.length; ++i) {
-                if (!level) break;
+            level = ormSelectors;
+            for (let i = 0; i < cachePath.length; ++i) {
+                if (!level.has(cachePath[i])) {
+                    level.set(cachePath[i], new Map());
+                }
                 level = level.get(cachePath[i]);
             }
-            if (level && i === cachePath.length && level.has(SELECTOR_KEY)) {
+            if (level && level.has(SELECTOR_KEY)) {
                 // Cache hit: the selector has been created before
                 return level.get(SELECTOR_KEY);
             }
@@ -105,13 +106,6 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
 
         if (cachePath && cachePath.length) {
             // Save the selector at the cachePath position
-            let level = ormSelectors;
-            for (let i = 0; i < cachePath.length; ++i) {
-                if (!level.has(cachePath[i])) {
-                    level.set(cachePath[i], new Map());
-                }
-                level = level.get(cachePath[i]);
-            }
             level.set(SELECTOR_KEY, selector);
         }
 
