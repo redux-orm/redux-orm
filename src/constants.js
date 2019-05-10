@@ -9,5 +9,4 @@ export const ORDER_BY = 'REDUX_ORM_ORDER_BY';
 export const SUCCESS = 'SUCCESS';
 export const FAILURE = 'FAILURE';
 
-export const STATE_FLAG_KEY = '@@_______REDUX_ORM_STATE';
-export const STATE_FLAG_VALUE = Symbol('REDUX_ORM_STATE');
+export const STATE_FLAG = Symbol('REDUX_ORM_STATE_FLAG');

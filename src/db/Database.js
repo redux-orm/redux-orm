@@ -2,15 +2,15 @@ import ops from 'immutable-ops';
 
 import {
     CREATE, UPDATE, DELETE, SUCCESS,
-    STATE_FLAG_KEY, STATE_FLAG_VALUE,
+    STATE_FLAG,
 } from '../constants';
 
 import Table from './Table';
 
 const BASE_EMPTY_STATE = {};
-Object.defineProperty(BASE_EMPTY_STATE, STATE_FLAG_KEY, {
+Object.defineProperty(BASE_EMPTY_STATE, STATE_FLAG, {
     enumerable: true,
-    value: STATE_FLAG_VALUE,
+    value: STATE_FLAG,
 });
 
 function replaceTableState(tableName, newTableState, tx, state) {

@@ -1,4 +1,4 @@
-import { STATE_FLAG_KEY } from './constants';
+import { STATE_FLAG } from './constants';
 
 const defaultEqualityCheck = (a, b) => a === b;
 export const eqCheck = defaultEqualityCheck;
@@ -6,7 +6,7 @@ export const eqCheck = defaultEqualityCheck;
 const isOrmState = arg => (
     arg &&
     typeof arg === 'object' &&
-    arg.hasOwnProperty(STATE_FLAG_KEY)
+    arg.hasOwnProperty(STATE_FLAG)
 );
 
 const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (

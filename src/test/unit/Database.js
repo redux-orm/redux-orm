@@ -4,7 +4,7 @@ import Table from '../../db/Table';
 import { getBatchToken } from '../../utils';
 import {
     FILTER, CREATE, UPDATE, DELETE, SUCCESS,
-    STATE_FLAG_KEY, STATE_FLAG_VALUE
+    STATE_FLAG,
 } from '../../constants';
 
 describe('createDatabase', () => {
@@ -24,7 +24,7 @@ describe('createDatabase', () => {
 
     it('getEmptyState', () => {
         expect(emptyState).toEqual({
-            [STATE_FLAG_KEY]: STATE_FLAG_VALUE,
+            [STATE_FLAG]: STATE_FLAG,
             Book: {
                 indexes: {},
                 items: [],
@@ -67,7 +67,7 @@ describe('createDatabase', () => {
         expect(payload).toBe(props);
         expect(state).not.toBe(emptyState);
         expect(state).toEqual({
-            [STATE_FLAG_KEY]: STATE_FLAG_VALUE,
+            [STATE_FLAG]: STATE_FLAG,
             Book: {
                 items: [0],
                 itemsById: {
@@ -100,7 +100,7 @@ describe('createDatabase', () => {
         expect(payload).toEqual({ id: 0, name: 'Example Book' });
         expect(state).not.toBe(emptyState);
         expect(state).toEqual({
-            [STATE_FLAG_KEY]: STATE_FLAG_VALUE,
+            [STATE_FLAG]: STATE_FLAG,
             Book: {
                 items: [0],
                 itemsById: {
@@ -140,7 +140,7 @@ describe('createDatabase', () => {
         expect(payload2).toEqual({ id: 1, name: 'Example Book Two' });
         expect(state2).toBe(state);
         expect(state2).toEqual({
-            [STATE_FLAG_KEY]: STATE_FLAG_VALUE,
+            [STATE_FLAG]: STATE_FLAG,
             Book: {
                 items: [0, 1],
                 itemsById: {
