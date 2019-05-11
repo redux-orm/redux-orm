@@ -35,10 +35,7 @@ import {
     attr,
 } from './fields';
 
-import {
-    createReducer,
-    createSelector,
-} from './redux';
+import { createModelSelectorSpec } from './selectors';
 
 import {
     m2mName,
@@ -81,6 +78,7 @@ export class ORM {
         this.registry = [];
         this.implicitThroughModels = [];
         this.installedFields = {};
+        this.stateSelector = opts ? opts.stateSelector : null;
     }
 
     /**
@@ -103,6 +101,18 @@ export class ORM {
 
             this.registerManyToManyModelsFor(model);
             this.registry.push(model);
+
+            Object.defineProperty(this, model.modelName, {
+                get: () => {
+                    // make sure virtualFields are set up
+                    this._setupModelPrototypes(this.registry);
+
+                    return createModelSelectorSpec({
+                        model,
+                        orm: this,
+                    });
+                },
+            });
         });
     }
 
@@ -194,12 +204,14 @@ export class ORM {
         const models = this.getModelClasses();
         const tables = models.reduce((spec, modelClass) => {
             const tableName = modelClass.modelName;
-            const tableSpec = modelClass._getTableOpts(); // eslint-disable-line no-underscore-dangle
-            Object.keys(tableSpec).forEach((key) => {
-                if (!isReservedTableOption(key)) return;
+            const tableSpec = modelClass.tableOptions(); // eslint-disable-line no-underscore-dangle
+            Object.keys(tableSpec).filter(isReservedTableOption).forEach((key) => {
                 throw new Error(`Reserved keyword \`${key}\` used in ${tableName}.options.`);
             });
-            spec[tableName] = Object.assign({}, { fields: modelClass.fields }, tableSpec);
+            spec[tableName] = {
+                fields: { ...modelClass.fields },
+                ...tableSpec,
+            };
             return spec;
         }, {});
         return { tables };
@@ -244,18 +256,16 @@ export class ORM {
      * @private
      */
     _setupModelPrototypes(models) {
-        models.forEach((model) => {
-            if (!model.isSetUp) {
-                const { fields, modelName, querySetClass } = model;
-                Object.entries(fields).forEach(([fieldName, field]) => {
-                    if (!this._isFieldInstalled(modelName, fieldName)) {
-                        this._installField(field, fieldName, model);
-                        this._setFieldInstalled(modelName, fieldName);
-                    }
-                });
-                attachQuerySetMethods(model, querySetClass);
-                model.isSetUp = true;
-            }
+        models.filter(model => !model.isSetUp).forEach((model) => {
+            const { fields, modelName, querySetClass } = model;
+            Object.entries(fields).forEach(([fieldName, field]) => {
+                if (!this._isFieldInstalled(modelName, fieldName)) {
+                    this._installField(field, fieldName, model);
+                    this._setFieldInstalled(modelName, fieldName);
+                }
+            });
+            attachQuerySetMethods(model, querySetClass);
+            model.isSetUp = true;
         });
     }
 
@@ -317,28 +327,6 @@ export class ORM {
     }
 
     /**
-     * @deprecated Access {@link Session#state} instead.
-     */
-    reducer() {
-        warnDeprecated(
-            '`ORM.prototype.reducer` has been deprecated. Access ' +
-            'the `Session.prototype.state` property instead.'
-        );
-        return createReducer(this);
-    }
-
-    /**
-     * @deprecated Use `import { createSelector } from "redux-orm"` instead.
-     */
-    createSelector(...args) {
-        warnDeprecated(
-            '`ORM.prototype.createSelector` has been deprecated. ' +
-            'Import `createSelector` from Redux-ORM instead.'
-        );
-        return createSelector(this, ...args);
-    }
-
-    /**
      * @deprecated Use {@link ORM#getEmptyState} instead.
      */
     getDefaultState() {
@@ -377,13 +365,13 @@ export default ORM;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-descriptors.html">descriptors</a></li><li><a href="module-fields.html">fields</a></li><li><a href="module-redux.html">redux</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="ORM.html">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#attr">attr</a></li><li><a href="global.html#createReducer">createReducer</a></li><li><a href="global.html#createSelector">createSelector</a></li><li><a href="global.html#fk">fk</a></li><li><a href="global.html#many">many</a></li><li><a href="global.html#oneToOne">oneToOne</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-descriptors.html">descriptors</a></li><li><a href="module-fields.html">fields</a></li><li><a href="module-redux.html">redux</a></li><li><a href="module-selectors.html">selectors</a></li><li><a href="module-utils.html">utils</a></li></ul><h3>Classes</h3><ul><li><a href="Model.html">Model</a></li><li><a href="ORM.html">ORM</a></li><li><a href="QuerySet.html">QuerySet</a></li><li><a href="Session.html">Session</a></li></ul><h3>Global</h3><ul><li><a href="global.html#attr">attr</a></li><li><a href="global.html#createReducer">createReducer</a></li><li><a href="global.html#createSelector">createSelector</a></li><li><a href="global.html#fk">fk</a></li><li><a href="global.html#many">many</a></li><li><a href="global.html#oneToOne">oneToOne</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Tue Apr 16 2019 18:07:49 GMT+0200 (CEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat May 11 2019 19:01:08 GMT+0200 (CEST)
 </footer>
 
 <script> prettyPrint(); </script>
