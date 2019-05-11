@@ -341,10 +341,10 @@ describe('Shorthand selector specifications', () => {
                 { id: 1, publisherId: 123 }
             ]);
             expect(publisherMovies(ormState, [123])).toEqual([
-                [ { id: 1, publisherId: 123 } ],
+                [{ id: 1, publisherId: 123 }],
             ]);
             expect(publisherMovies(ormState)).toEqual([
-                [ { id: 1, publisherId: 123 } ],
+                [{ id: 1, publisherId: 123 }],
             ]);
             ormState = reducer(ormState, {
                 type: CREATE_MOVIE,
