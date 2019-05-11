@@ -181,7 +181,7 @@ export class FieldSelectorSpec extends ModelBasedSelectorSpec {
         return value;
     }
 
-    map(selector) {
+    map(selector) { /* eslint-disable no-underscore-dangle */
         if (selector instanceof ModelSelectorSpec) {
             if (this.toModelName === selector._model.modelName) {
                 throw new Error(`Cannot select models in a \`map()\` call. If you just want the \`${this._accessorName}\` as a ref array then you can simply drop the \`map()\`. Otherwise make sure you're passing a field selector of the form \`${this.toModelName}.<field>\` or a custom selector instead.`);
@@ -194,7 +194,7 @@ export class FieldSelectorSpec extends ModelBasedSelectorSpec {
             }
         } else if (
             !selector ||
-            typeof selector === 'function' &&
+            typeof selector !== 'function' ||
             !selector.recomputations
         ) {
             throw new Error(`\`map()\` requires a selector as an input. Received: ${JSON.stringify(selector)} of type ${typeof selector}`);
