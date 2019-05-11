@@ -1,7 +1,8 @@
 import {
-    OneToOne, ForeignKey, ManyToMany,
+    ForeignKey, ManyToMany, RelationalField,
 } from './fields';
 import QuerySet from './QuerySet';
+import Model from './Model';
 
 /**
  * @module selectors
@@ -68,14 +69,38 @@ export class ModelSelectorSpec extends SelectorSpec {
     }
 }
 
-export class MapSelectorSpec extends SelectorSpec {
+class ModelBasedSelectorSpec extends SelectorSpec {
     constructor({
-        model, field, fieldName, selector, ...other
+        model, ...other
     }) {
         super(other);
         this._model = model;
+    }
+
+    get resultFunc() {
+        return (session, idArg, ...other) => {
+            const { [this._model.modelName]: ModelClass } = session;
+            if (typeof idArg === 'undefined') {
+                return ModelClass.all().toModelArray()
+                    .map(instance => this.valueForInstance(instance, session, ...other));
+            }
+            if (Array.isArray(idArg)) {
+                return idArg.map(id => (
+                    this.valueForInstance(ModelClass.withId(id), session, ...other)
+                ));
+            }
+            return this.valueForInstance(ModelClass.withId(idArg), session, ...other);
+        };
+    }
+}
+
+export class MapSelectorSpec extends ModelBasedSelectorSpec {
+    constructor({
+        field, accessorName, selector, ...other
+    }) {
+        super(other);
         this._field = field;
-        this._fieldName = fieldName;
+        this._accessorName = accessorName;
         this._selector = selector;
     }
 
@@ -87,31 +112,15 @@ export class MapSelectorSpec extends SelectorSpec {
         return [this._orm, idArgSelector, state => state];
     }
 
-    get resultFunc() {
-        return (session, idArg, state) => {
-            const { [this._model.modelName]: ModelClass } = session;
-            if (typeof idArg === 'undefined') {
-                return ModelClass.all().toModelArray()
-                    .map(instance => this._getMappedValue(instance, session, state));
-            }
-            if (Array.isArray(idArg)) {
-                return idArg.map(id => (
-                    this._getMappedValue(ModelClass.withId(id), session, state)
-                ));
-            }
-            return this._getMappedValue(ModelClass.withId(idArg), session, state);
-        };
-    }
-
     get keySelector() {
         return (state, idArg) => (
             (typeof idArg === 'undefined') ? ALL_INSTANCES : idArg
         );
     }
 
-    _getMappedValue(instance, session, state) {
+    valueForInstance(instance, session, state) {
         if (!instance) return null;
-        const { [this._fieldName]: value } = instance;
+        const { [this._accessorName]: value } = instance;
         const referencedModel = session[this._field.toModelName];
         const { idAttribute: mapIdAttribute } = referencedModel;
         if (value instanceof QuerySet) {
@@ -124,37 +133,23 @@ export class MapSelectorSpec extends SelectorSpec {
     }
 }
 
-export class FieldSelectorSpec extends SelectorSpec {
+export class FieldSelectorSpec extends ModelBasedSelectorSpec {
     constructor({
-        model, field, fieldName, ...other
+        field, fieldModel, accessorName, isVirtual, ...other
     }) {
         super(other);
-        this._model = model;
         this._field = field;
-        this._fieldName = fieldName;
+        this._fieldModel = fieldModel;
+        this._accessorName = accessorName;
+        this._isVirtual = isVirtual;
     }
 
     get key() {
-        return this._fieldName;
+        return this._accessorName;
     }
 
     get dependencies() {
         return [this._orm, idArgSelector];
-    }
-
-    get resultFunc() {
-        return ({ [this._model.modelName]: ModelClass }, idArg) => {
-            if (typeof idArg === 'undefined') {
-                return ModelClass.all().toModelArray()
-                    .map(this._getFieldValue.bind(this));
-            }
-            if (Array.isArray(idArg)) {
-                return idArg.map(id => (
-                    this._getFieldValue(ModelClass.withId(id))
-                ));
-            }
-            return this._getFieldValue(ModelClass.withId(idArg));
-        };
     }
 
     get keySelector() {
@@ -163,19 +158,23 @@ export class FieldSelectorSpec extends SelectorSpec {
         );
     }
 
-    _getFieldValue(instance) {
+    valueForInstance(instance, session) {
         if (!instance) return null;
-        const { [this._fieldName]: value } = instance;
-        if (this._field instanceof ForeignKey) {
-            if (value instanceof QuerySet) {
-                return value.toRefArray();
-            }
+        let value;
+        if (this._parent instanceof ModelSelectorSpec) {
+            value = instance[this._accessorName];
+        } else if (this._parent instanceof FieldSelectorSpec) {
+            const {
+                [this._parent.toModelName]: ParentToModel,
+            } = session;
+            const parentRef = this._parent.valueForInstance(instance, session);
+            const parentInstance = parentRef ? new ParentToModel(parentRef) : null;
+            value = parentInstance ? parentInstance[this._accessorName] : null;
+        }
+        if (value instanceof Model) {
             return value ? value.ref : null;
         }
-        if (this._field instanceof OneToOne) {
-            return value ? value.ref : null;
-        }
-        if (this._field instanceof ManyToMany) {
+        if (value instanceof QuerySet) {
             return value.toRefArray();
         }
         return value;
@@ -189,30 +188,93 @@ export class FieldSelectorSpec extends SelectorSpec {
         ) {
             throw new Error(`\`map()\` requires a selector as an input. Received: ${JSON.stringify(selector)} of type ${typeof selector}`);
         }
-        if (!(this._field instanceof ForeignKey)) {
-            throw new Error('Cannot map selectors for other fields than foreign key fields.');
+        if (
+            !(this._field instanceof ForeignKey) &&
+            !(this._field instanceof ManyToMany)
+        ) {
+            throw new Error('Cannot map selectors for non-collection fields');
         }
         return new MapSelectorSpec({
             parent: this,
             model: this._model,
             orm: this._orm,
             field: this._field,
-            fieldName: this._fieldName,
+            accessorName: this._accessorName,
             selector,
         });
+    }
+
+    get toModelName() {
+        return (this._field.toModelName === 'this')
+            ? this._fieldModel.modelName
+            : this._field.toModelName;
     }
 }
 
 function createFieldSelectorSpec({
-    modelSelectorSpec, model, field, fieldName, orm,
+    parent, model, field, accessorName, orm, isVirtual,
 }) {
-    return new FieldSelectorSpec({
-        parent: modelSelectorSpec,
+    const fieldSelectorSpec = new FieldSelectorSpec({
+        parent,
         model,
         orm,
         field,
-        fieldName,
+        accessorName,
+        isVirtual,
     });
+    /* Do not even try to create field selectors below attributes. */
+    if (!(field instanceof RelationalField)) {
+        // "orm.Author.name.publisher" would be nonsense
+        return fieldSelectorSpec;
+    }
+    /* Prevent field selectors below collections. */
+    if (parent instanceof FieldSelectorSpec) { /* eslint-disable no-underscore-dangle */
+        if (
+            // "orm.Author.books.publisher" would be nonsense
+            (parent._field instanceof ForeignKey && parent._isVirtual) ||
+            // "orm.Genre.books.publisher" would be nonsense
+            (parent._field instanceof ManyToMany)
+        ) {
+            throw new Error(`Cannot create a selector for \`${parent._accessorName}.${accessorName}\` because \`${parent._accessorName}\` is a collection field.`);
+        }
+    }
+    const { toModelName } = field;
+    if (!toModelName) return fieldSelectorSpec;
+    const toModel = orm.get(
+        toModelName === 'this' ? model.modelName : toModelName
+    );
+    Object.entries(toModel.fields).forEach(([relatedFieldName, relatedField]) => {
+        const fieldAccessorName = relatedField.as || relatedFieldName;
+        Object.defineProperty(fieldSelectorSpec, fieldAccessorName, {
+            get: () => createFieldSelectorSpec({
+                parent: fieldSelectorSpec,
+                model,
+                fieldModel: toModel,
+                field: relatedField,
+                accessorName: fieldAccessorName,
+                orm,
+                isVirtual: false,
+            }),
+        });
+    });
+    Object.entries(toModel.virtualFields).forEach(([relatedFieldName, relatedField]) => {
+        const fieldAccessorName = relatedField.as || relatedFieldName;
+        if (fieldSelectorSpec.hasOwnProperty(fieldAccessorName)) {
+            return;
+        }
+        Object.defineProperty(fieldSelectorSpec, fieldAccessorName, {
+            get: () => createFieldSelectorSpec({
+                parent: fieldSelectorSpec,
+                model,
+                fieldModel: toModel,
+                field: relatedField,
+                accessorName: fieldAccessorName,
+                orm,
+                isVirtual: true,
+            }),
+        });
+    });
+    return fieldSelectorSpec;
 }
 
 export function createModelSelectorSpec({ model, orm }) {
@@ -223,25 +285,35 @@ export function createModelSelectorSpec({ model, orm }) {
     });
 
     Object.entries(model.fields).forEach(([fieldName, field]) => {
-        const accessorName = field.as || fieldName;
-        modelSelectorSpec[accessorName] = createFieldSelectorSpec({
-            modelSelectorSpec,
-            model,
-            field,
-            fieldName: accessorName,
-            orm,
+        const fieldAccessorName = field.as || fieldName;
+        Object.defineProperty(modelSelectorSpec, fieldAccessorName, {
+            get: () => createFieldSelectorSpec({
+                parent: modelSelectorSpec,
+                model,
+                fieldModel: model,
+                field,
+                accessorName: fieldAccessorName,
+                orm,
+                isVirtual: false,
+            }),
         });
     });
 
     Object.entries(model.virtualFields).forEach(([fieldName, field]) => {
-        const accessorName = field.as || fieldName;
-        if (modelSelectorSpec[accessorName]) return;
-        modelSelectorSpec[accessorName] = createFieldSelectorSpec({
-            modelSelectorSpec,
-            model,
-            field,
-            fieldName: accessorName,
-            orm,
+        const fieldAccessorName = field.as || fieldName;
+        if (modelSelectorSpec.hasOwnProperty(fieldAccessorName)) {
+            return;
+        }
+        Object.defineProperty(modelSelectorSpec, fieldAccessorName, {
+            get: () => createFieldSelectorSpec({
+                parent: modelSelectorSpec,
+                model,
+                fieldModel: model,
+                field,
+                accessorName: fieldAccessorName,
+                orm,
+                isVirtual: true,
+            }),
         });
     });
 

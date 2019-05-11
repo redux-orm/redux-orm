@@ -1,5 +1,5 @@
 import {
-    ORM, Session, createSelector
+    ORM, Session, Model, fk, createSelector
 } from '../..';
 import { createTestModels, avg } from '../helpers';
 
@@ -607,6 +607,85 @@ describe('Shorthand selector specifications', () => {
         });
     });
 
+    describe('chained relational field specs', () => {
+        it('will not exist for collection fields', () => {
+            expect(() => orm.Author.books.tags)
+                .toThrow('Cannot create a selector for `books.tags` because `books` is a collection field.');
+            expect(() => orm.Author.books.publisher)
+                .toThrow('Cannot create a selector for `books.publisher` because `books` is a collection field.');
+            expect(() => orm.Author.publishers.books)
+                .toThrow('Cannot create a selector for `publishers.books` because `publishers` is a collection field.');
+            expect(() => orm.Book.tags.subTags)
+                .toThrow('Cannot create a selector for `tags.subTags` because `tags` is a collection field.');
+        });
+
+        it('will exist for recursive fields', () => {
+            expect(orm.Book.cover.book.cover.book)
+                .not.toBeUndefined();
+            const _orm = new ORM({ stateSelector });
+            class TreeNode extends Model {}
+            TreeNode.modelName = 'TreeNode';
+            TreeNode.fields = {
+                parent: fk('TreeNode', 'subtrees'),
+            };
+            _orm.register(TreeNode);
+            expect(() => _orm.TreeNode.subtrees.parent)
+                .toThrow('Cannot create a selector for `subtrees.parent` because `subtrees` is a collection field.');
+            expect(_orm.TreeNode.parent.parent)
+                .not.toBeUndefined();
+            expect(_orm.TreeNode.parent.parent.parent.parent)
+                .not.toBeUndefined();
+        });
+
+        it('will recompute for single model instances', () => {
+            const coverAuthors = createSelector(
+                orm.Cover.book.publisher.authors
+            );
+            expect(coverAuthors(emptyState, 1)).toEqual(null);
+            expect(coverAuthors.recomputations()).toEqual(1);
+            expect(coverAuthors(emptyState, 1)).toEqual(null);
+            expect(coverAuthors.recomputations()).toEqual(1);
+            ormState = reducer(emptyState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 4,
+                },
+            });
+            expect(coverAuthors(ormState, 1)).toEqual(null);
+            expect(coverAuthors.recomputations()).toEqual(2);
+            ormState = reducer(ormState, {
+                type: CREATE_AUTHOR,
+                payload: {
+                    id: 3,
+                    publishers: [4],
+                },
+            });
+            expect(coverAuthors(ormState, 1)).toEqual(null);
+            expect(coverAuthors.recomputations()).toEqual(3);
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 2,
+                    author: 3,
+                    cover: 1,
+                    publisher: 4,
+                },
+            });
+            expect(coverAuthors(ormState, 1)).toEqual(null);
+            expect(coverAuthors.recomputations()).toEqual(4);
+            ormState = reducer(ormState, {
+                type: CREATE_COVER,
+                payload: {
+                    id: 1,
+                },
+            });
+            expect(coverAuthors(ormState, 1)).toEqual([
+                { id: 3 }
+            ]);
+            expect(coverAuthors.recomputations()).toEqual(5);
+        });
+    });
+
     describe('mapping selector specs', () => {
         it('will throw for non foreign key fields', () => {
             expect(() => orm.Publisher.movies.map(null))
@@ -614,10 +693,9 @@ describe('Shorthand selector specifications', () => {
             expect(() => orm.Publisher.movies.map(() => null))
                 .toThrow('`map()` requires a selector as an input. Received: undefined of type function');
             expect(() => orm.Author.name.map(createSelector(orm, () => {})))
-                .toThrow('Cannot map selectors for other fields than foreign key fields');
-            const publisherName = createSelector(orm.Publisher.name);
-            expect(() => orm.Author.publishers.map(publisherName))
-                .toThrow('Cannot map selectors for other fields than foreign key fields');
+                .toThrow('Cannot map selectors for non-collection fields');
+            expect(() => orm.Book.cover.map(createSelector(orm, () => {})))
+                .toThrow('Cannot map selectors for non-collection fields');
         });
 
         it('will map selector outputs for forward foreign key selectors and single instances', () => {
@@ -719,84 +797,6 @@ describe('Shorthand selector specifications', () => {
             expect(publisherMovieRatings(ormState)).toEqual([
                 [6, 7],
             ]);
-        });
-
-        it('will map selector outputs for backward foreign key selectors and single instance', () => {
-            const publisherName = createSelector(orm.Publisher.name);
-            const moviePublisherName = createSelector(
-                orm.Movie.publisher.map(publisherName)
-            );
-            expect(moviePublisherName(emptyState, 1))
-                .toEqual(null); // movie doesn't exist yet
-            ormState = reducer(ormState, {
-                type: CREATE_MOVIE,
-                payload: {
-                    id: 1,
-                    publisherId: 123,
-                },
-            });
-            expect(moviePublisherName(ormState, 1))
-                .toEqual(null); // publisher doesn't exist yet
-            ormState = reducer(ormState, {
-                type: CREATE_PUBLISHER,
-                payload: {
-                    id: 123,
-                    name: 'Redux-ORM studios',
-                },
-            });
-            expect(moviePublisherName(ormState, 1)).toEqual('Redux-ORM studios');
-        });
-
-        it('will map selector outputs for backward foreign key selectors and some instances', () => {
-            const publisherName = createSelector(orm.Publisher.name);
-            const moviePublisherName = createSelector(
-                orm.Movie.publisher.map(publisherName)
-            );
-            expect(moviePublisherName(emptyState, [1]))
-                .toEqual([null]); // movie doesn't exist yet
-            ormState = reducer(ormState, {
-                type: CREATE_MOVIE,
-                payload: {
-                    id: 1,
-                    publisherId: 123,
-                },
-            });
-            expect(moviePublisherName(ormState, [1]))
-                .toEqual([null]); // publisher doesn't exist yet
-            ormState = reducer(ormState, {
-                type: CREATE_PUBLISHER,
-                payload: {
-                    id: 123,
-                    name: 'Redux-ORM studios',
-                },
-            });
-            expect(moviePublisherName(ormState, [1])).toEqual(['Redux-ORM studios']);
-        });
-
-        it('will map selector outputs for backward foreign key selectors and all instances', () => {
-            const publisherName = createSelector(orm.Publisher.name);
-            const moviePublisherName = createSelector(
-                orm.Movie.publisher.map(publisherName)
-            );
-            expect(moviePublisherName(emptyState))
-                .toEqual([]); // movie doesn't exist yet
-            ormState = reducer(ormState, {
-                type: CREATE_MOVIE,
-                payload: {
-                    id: 1,
-                    publisherId: 123,
-                },
-            });
-            expect(moviePublisherName(ormState))
-                .toEqual([null]); // publisher doesn't exist yet
-            ormState = reducer(ormState, {
-                type: CREATE_PUBLISHER,
-                payload: {
-                    id: 123,
-                    name: 'Redux-ORM studios',
-                },
-            });
-            expect(moviePublisherName(ormState)).toEqual(['Redux-ORM studios']);
         });
 
         it('can be combined when used as input selectors ', () => {

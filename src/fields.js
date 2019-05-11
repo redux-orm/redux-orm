@@ -227,7 +227,7 @@ export class Attribute extends Field {
 /**
  * @ignore
  */
-class RelationalField extends Field {
+export class RelationalField extends Field {
     constructor(...args) {
         super();
         if (args.length === 1 && typeof args[0] === 'object') {
