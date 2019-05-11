@@ -1,6 +1,13 @@
 import { createSelectorCreator } from 'reselect';
+import createCachedSelector, { FlatMapCache } from 're-reselect';
 
 import { memoize } from './memoize';
+
+import { ORM } from './ORM';
+import {
+    SelectorSpec,
+    MapSelectorSpec,
+} from './selectors';
 
 /**
  * @module redux
@@ -37,6 +44,80 @@ export function createReducer(orm, updater = defaultUpdater) {
     };
 }
 
+function createSelectorFromSpec(spec) {
+    return createCachedSelector(
+        spec.dependencies,
+        spec.resultFunc
+    )(spec.keySelector, {
+        cacheObject: new FlatMapCache(),
+        selectorCreator: createSelector, // eslint-disable-line no-use-before-define
+    });
+}
+
+function toORM(arg) { /* eslint-disable no-underscore-dangle */
+    if (arg instanceof ORM) {
+        return arg;
+    }
+    if (arg instanceof SelectorSpec) {
+        return arg._orm;
+    }
+    return false;
+}
+
+const selectorCache = new Map();
+const SELECTOR_KEY = Symbol('REDUX_ORM_SELECTOR');
+
+function toSelector(arg) { /* eslint-disable no-underscore-dangle */
+    if (typeof arg === 'function') {
+        return arg;
+    }
+    if (arg instanceof ORM) {
+        return arg.stateSelector;
+    }
+    if (arg instanceof MapSelectorSpec) {
+        arg._selector = toSelector(arg._selector);
+    }
+    if (arg instanceof SelectorSpec) {
+        const { _orm: orm, cachePath } = arg;
+        let ormSelectors;
+        let level;
+        if (cachePath && cachePath.length) {
+            // the selector cache for the spec's ORM
+            if (!selectorCache.has(orm)) {
+                selectorCache.set(orm, new Map());
+            }
+            ormSelectors = selectorCache.get(orm);
+
+            /**
+             * Drill down into selector map by cachePath.
+             *
+             * The selector itself is stored under a special SELECTOR_KEY
+             * so that we can store selectors below it as well.
+             */
+            level = ormSelectors;
+            for (let i = 0; i < cachePath.length; ++i) {
+                if (!level.has(cachePath[i])) {
+                    level.set(cachePath[i], new Map());
+                }
+                level = level.get(cachePath[i]);
+            }
+            if (level && level.has(SELECTOR_KEY)) {
+                // Cache hit: the selector has been created before
+                return level.get(SELECTOR_KEY);
+            }
+        }
+
+        const selector = createSelectorFromSpec(arg);
+
+        if (cachePath && cachePath.length) {
+            // Save the selector at the cachePath position
+            level.set(SELECTOR_KEY, selector);
+        }
+
+        return selector;
+    }
+    throw new Error(`Failed to interpret selector argument: ${JSON.stringify(arg)} of type ${typeof arg}`);
+}
 
 /**
  * Returns a memoized selector based on passed arguments.
@@ -84,15 +165,42 @@ export function createReducer(orm, updater = defaultUpdater) {
  *
  * @global
  *
- * @param {ORM} orm - the ORM instance
  * @param  {...Function} args - zero or more input selectors
  *                              and the selector function.
  * @return {Function} memoized selector
  */
-export function createSelector(orm, ...args) {
-    if (args.length === 1) {
-        return memoize(args[0], undefined, orm);
+export function createSelector(...args) {
+    if (!args.length) {
+        throw new Error('Cannot create a selector without arguments.');
     }
 
-    return createSelectorCreator(memoize, undefined, orm)(...args);
+    const resultArg = args.pop();
+    const dependencies = Array.isArray(args[0]) ? args[0] : args;
+
+    const orm = dependencies.map(toORM).find(Boolean);
+    const inputFuncs = dependencies.map(toSelector);
+
+    if (typeof resultArg === 'function') {
+        if (!orm) {
+            throw new Error('Failed to resolve the current ORM database state. Please pass an ORM instance or an ORM selector as an argument to `createSelector()`.');
+        } else if (!orm.stateSelector) {
+            throw new Error('Failed to resolve the current ORM database state. Please pass an object to the ORM constructor that specifies a `stateSelector` function.');
+        } else if (typeof orm.stateSelector !== 'function') {
+            throw new Error(`Failed to resolve the current ORM database state. Please pass a function when specifying the ORM's \`stateSelector\`. Received: ${JSON.stringify(orm.stateSelector)} of type ${typeof orm.stateSelector}`);
+        }
+
+        return createSelectorCreator(memoize, undefined, orm)(
+            [orm.stateSelector, ...inputFuncs],
+            resultArg
+        );
+    }
+
+    if (resultArg instanceof ORM) {
+        throw new Error('ORM instances cannot be the result function of selectors. You can access your models in the last function that you pass to `createSelector()`.');
+    }
+    if (inputFuncs.length) {
+        console.warn('Your input selectors will be ignored: the passed result function does not require any input.');
+    }
+
+    return toSelector(resultArg);
 }

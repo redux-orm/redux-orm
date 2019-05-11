@@ -1,10 +1,19 @@
+import { STATE_FLAG } from './constants';
+
 const defaultEqualityCheck = (a, b) => a === b;
 export const eqCheck = defaultEqualityCheck;
 
+const isOrmState = arg => (
+    arg &&
+    typeof arg === 'object' &&
+    arg.hasOwnProperty(STATE_FLAG)
+);
+
 const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (
-    nextArgs.every((arg, index) => (
-        equalityCheck(arg, lastArgs[index])
-    ))
+    nextArgs.filter(arg => !isOrmState(arg))
+        .every((arg, index) => (
+            equalityCheck(arg, lastArgs[index])
+        ))
 );
 
 const rowsAreEqual = (ids, rowsA, rowsB) => (
@@ -138,11 +147,7 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
          */
         const [ormState, ...args] = stateAndArgs;
 
-        const selectorWasCalledBefore = (
-            previous.args &&
-            previous.ormState
-        );
-
+        const selectorWasCalledBefore = Boolean(previous.args);
         if (
             selectorWasCalledBefore &&
             argsAreEqual(previous.args, args, argEqualityCheck) &&
@@ -163,9 +168,11 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
          * the operations that the selector performs are cacheable.
          */
         const session = orm.session(ormState);
+        /* Replace all ORM state arguments by the session above */
+        const argsWithSession = args.map(arg => (isOrmState(arg) ? session : arg));
 
         /* This is where we call the actual function */
-        const result = func(...[session, ...args]);
+        const result = func(...argsWithSession);
 
         /**
          * The metadata for the previous call are no longer valid.

@@ -65,7 +65,7 @@ describe('Big Data Test', () => {
             });
         }).map(ms => ms / 1000);
 
-        const tookSeconds = round(avg(measurements, n), PRECISION);
+        const tookSeconds = round(avg(measurements), PRECISION);
         logTime(`Creating ${amount} objects`, tookSeconds, maxSeconds, measurements);
         expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
@@ -95,7 +95,7 @@ describe('Big Data Test', () => {
             });
         }).map(ms => ms / 1000);
 
-        const tookSeconds = round(avg(measurements, n), PRECISION);
+        const tookSeconds = round(avg(measurements), PRECISION);
         logTime(`Looking up ${lookupCount} objects by id`, tookSeconds, maxSeconds, measurements);
         expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
@@ -127,7 +127,7 @@ describe('Big Data Test', () => {
             })
         )).map(ms => ms / 1000);
 
-        const tookSeconds = round(avg(measurements, n), PRECISION);
+        const tookSeconds = round(avg(measurements), PRECISION);
         logTime(`Looking up ${withForeignKeyCount} objects by foreign key`, tookSeconds, maxSeconds, measurements);
         expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
@@ -193,7 +193,7 @@ describe('Many-to-many relationship performance', () => {
             return ms;
         }).map(ms => ms / 1000);
 
-        const tookSeconds = round(avg(measurements, n), PRECISION);
+        const tookSeconds = round(avg(measurements), PRECISION);
         logTime(`Adding ${childAmount} m2n relationships`, tookSeconds, maxSeconds, measurements);
         expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
@@ -216,7 +216,7 @@ describe('Many-to-many relationship performance', () => {
             })
         )).map(ms => ms / 1000);
 
-        const tookSeconds = round(avg(measurements, n), PRECISION);
+        const tookSeconds = round(avg(measurements), PRECISION);
         logTime(`Performing ${queryCount} m2n relationship queries`, tookSeconds, maxSeconds, measurements);
         expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });
@@ -239,7 +239,7 @@ describe('Many-to-many relationship performance', () => {
             return ms;
         }).map(ms => ms / 1000);
 
-        const tookSeconds = round(avg(measurements, n), PRECISION);
+        const tookSeconds = round(avg(measurements), PRECISION);
         logTime(`Removing ${removeCount} m2n relationships`, tookSeconds, maxSeconds, measurements);
         expect(tookSeconds).toBeLessThanOrEqual(maxSeconds);
     });

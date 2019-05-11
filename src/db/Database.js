@@ -2,10 +2,16 @@ import ops from 'immutable-ops';
 
 import {
     CREATE, UPDATE, DELETE, SUCCESS,
+    STATE_FLAG,
 } from '../constants';
 
 import Table from './Table';
 
+const BASE_EMPTY_STATE = {};
+Object.defineProperty(BASE_EMPTY_STATE, STATE_FLAG, {
+    enumerable: true,
+    value: STATE_FLAG,
+});
 
 function replaceTableState(tableName, newTableState, tx, state) {
     const { batchToken, withMutations } = tx;
@@ -84,7 +90,7 @@ export function createDatabase(schemaSpec) {
             .reduce((map, [tableName, table]) => ({
                 ...map,
                 [tableName]: table.getEmptyState(),
-            }), {})
+            }), BASE_EMPTY_STATE)
     );
 
     return {
