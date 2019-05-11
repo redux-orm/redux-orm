@@ -6,6 +6,7 @@ import { memoize } from './memoize';
 import { ORM } from './ORM';
 import {
     SelectorSpec,
+    MapSelectorSpec,
 } from './selectors';
 
 /**
@@ -72,6 +73,9 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
     }
     if (arg instanceof ORM) {
         return arg.stateSelector;
+    }
+    if (arg instanceof MapSelectorSpec) {
+        arg._selector = toSelector(arg._selector);
     }
     if (arg instanceof SelectorSpec) {
         const { _orm: orm, cachePath } = arg;

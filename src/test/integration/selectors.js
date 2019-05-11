@@ -698,6 +698,40 @@ describe('Shorthand selector specifications', () => {
                 .toThrow('Cannot map selectors for non-collection fields');
         });
 
+        it('will throw for non-matching specs', () => {
+            expect(() => orm.Author.books.map(orm.Book))
+                .toThrow('Cannot select models in a `map()` call. If you just want the `books` as a ref array then you can simply drop the `map()`. Otherwise make sure you\'re passing a field selector of the form `Book.<field>` or a custom selector instead.');
+            expect(() => orm.Author.books.map(orm.Movie))
+                .toThrow('Cannot select `Movie` models in this `map()` call. Make sure you\'re passing a field selector of the form `Book.<field>` or a custom selector instead.');
+            expect(() => orm.Author.books.map(orm.Movie.name))
+                .toThrow('Cannot select fields of the `Movie` model in this `map()` call. Make sure you\'re passing a field selector of the form `Book.<field>` or a custom selector instead.');
+        });
+
+        it('will create selectors from passed specs', () => {
+            const publisherMovieNames = createSelector(
+                orm.Publisher.movies.map(orm.Movie.name)
+            );
+            expect(publisherMovieNames(emptyState, 123))
+                .toEqual(null); // publisher doesn't exist yet
+            ormState = reducer(emptyState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(publisherMovieNames(ormState, 123))
+                .toEqual([]);
+            ormState = reducer(ormState, {
+                type: CREATE_MOVIE,
+                payload: {
+                    name: 'A movie',
+                    publisherId: 123,
+                },
+            });
+            expect(publisherMovieNames(ormState, 123))
+                .toEqual(['A movie']);
+        });
+
         it('will map selector outputs for forward foreign key selectors and single instances', () => {
             const movieRating = createSelector(orm.Movie.rating);
             const publisherMovieRatings = createSelector(

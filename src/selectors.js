@@ -182,9 +182,19 @@ export class FieldSelectorSpec extends ModelBasedSelectorSpec {
     }
 
     map(selector) {
-        if (
+        if (selector instanceof ModelSelectorSpec) {
+            if (this.toModelName === selector._model.modelName) {
+                throw new Error(`Cannot select models in a \`map()\` call. If you just want the \`${this._accessorName}\` as a ref array then you can simply drop the \`map()\`. Otherwise make sure you're passing a field selector of the form \`${this.toModelName}.<field>\` or a custom selector instead.`);
+            } else {
+                throw new Error(`Cannot select \`${selector._model.modelName}\` models in this \`map()\` call. Make sure you're passing a field selector of the form \`${this.toModelName}.<field>\` or a custom selector instead.`);
+            }
+        } else if (selector instanceof FieldSelectorSpec) {
+            if (this.toModelName !== selector._model.modelName) {
+                throw new Error(`Cannot select fields of the \`${selector._model.modelName}\` model in this \`map()\` call. Make sure you're passing a field selector of the form \`${this.toModelName}.<field>\` or a custom selector instead.`);
+            }
+        } else if (
             !selector ||
-            typeof selector !== 'function' ||
+            typeof selector === 'function' &&
             !selector.recomputations
         ) {
             throw new Error(`\`map()\` requires a selector as an input. Received: ${JSON.stringify(selector)} of type ${typeof selector}`);
