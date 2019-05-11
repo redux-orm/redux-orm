@@ -265,6 +265,9 @@ describe('Shorthand selector specifications', () => {
             expect(publisherNames(ormState, zeroAndTwo))
                 .toEqual([null, 'Other publisher name!']);
             expect(publisherNames.recomputations()).toEqual(5);
+            expect(publisherNames(ormState, zeroAndTwo))
+                .toEqual([null, 'Other publisher name!']);
+            expect(publisherNames.recomputations()).toEqual(5);
         });
 
         it('will compute attr fields for all model instances', () => {
@@ -280,6 +283,8 @@ describe('Shorthand selector specifications', () => {
                     name: 'Publisher name!'
                 },
             });
+            expect(publisherNames(ormState)).toEqual(['Publisher name!']);
+            expect(publisherNames.recomputations()).toEqual(2);
             expect(publisherNames(ormState)).toEqual(['Publisher name!']);
             expect(publisherNames.recomputations()).toEqual(2);
         });
@@ -313,6 +318,11 @@ describe('Shorthand selector specifications', () => {
             expect(moviePublisher(ormState)).toEqual([
                 { id: 123 },
             ]);
+            expect(moviePublisher.recomputations()).toEqual(6);
+            expect(moviePublisher(ormState, 1)).toEqual(
+                { id: 123 },
+            );
+            expect(moviePublisher.recomputations()).toEqual(6);
         });
 
         it('will compute backward FK models', () => {
@@ -400,6 +410,11 @@ describe('Shorthand selector specifications', () => {
             expect(bookCover(ormState)).toEqual([
                 { id: 123 },
             ]);
+            expect(bookCover.recomputations()).toBe(6);
+            expect(bookCover(ormState, 1)).toEqual(
+                { id: 123 },
+            );
+            expect(bookCover.recomputations()).toBe(6);
         });
 
         it('will compute backward oneToOne models', () => {
@@ -436,6 +451,12 @@ describe('Shorthand selector specifications', () => {
                     cover: 123,
                 },
             ]);
+            expect(coverBook.recomputations()).toBe(6);
+            expect(coverBook(ormState, 123)).toEqual({
+                id: 1,
+                cover: 123,
+            });
+            expect(coverBook.recomputations()).toBe(6);
         });
     });
 
@@ -471,6 +492,11 @@ describe('Shorthand selector specifications', () => {
                     { id: 123 },
                 ],
             ]);
+            expect(authorPublishers.recomputations()).toBe(6);
+            expect(authorPublishers(ormState, 1)).toEqual([
+                { id: 123 },
+            ]);
+            expect(authorPublishers.recomputations()).toBe(6);
         });
 
         it('will compute backward manyToMany models', () => {
@@ -504,6 +530,11 @@ describe('Shorthand selector specifications', () => {
                     { id: 1 },
                 ],
             ]);
+            expect(publisherAuthors.recomputations()).toBe(6);
+            expect(publisherAuthors(ormState, 123)).toEqual([
+                { id: 1 },
+            ]);
+            expect(publisherAuthors.recomputations()).toBe(6);
         });
     });
 
@@ -579,6 +610,10 @@ describe('Shorthand selector specifications', () => {
                     id: 1,
                 },
             });
+            expect(coverAuthors(ormState, 1)).toEqual([
+                { id: 3 }
+            ]);
+            expect(coverAuthors.recomputations()).toEqual(5);
             expect(coverAuthors(ormState, 1)).toEqual([
                 { id: 3 }
             ]);
