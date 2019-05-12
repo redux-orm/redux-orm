@@ -18,6 +18,7 @@
     "build:docs": "jsdoc src -d docs -c ./jsdoc.conf.json --verbose",
     "build": "npm run clean && npm run transpile:cjs && npm run transpile:es && npm run build:umd && npm run build:umd:min && npm run build:docs",
     "pub": "npm run ensure-clean-tree && npm run ensure-version-not-published && npm run lint && npm run test && npm run build && npm run test:es5 && npm publish && git push origin && gulp deploy && npm run clean",
+    "pub:next": "npm run ensure-clean-tree && npm run ensure-version-not-published && npm run lint && npm run test && npm run build && npm run test:es5 && npm publish --tag next && git push origin && gulp deploy && npm run clean",
     "ensure-version-not-published": "[ -z \"$(npm info $(npm list | head -n 1 | cut -d ' ' -f1) 2> /dev/null)\" ] || (echo \"Error: $(npm list | head -n 1 | cut -d ' ' -f1) has already been published.\" && false)",
     "ensure-clean-tree": "[ -z \"$(git status -s)\" ] || (echo \"Error: There are uncommitted changes in the git repostory.\" && false)",
     "lint": "eslint src",
