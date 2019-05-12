@@ -16,9 +16,11 @@ describe('Shorthand selector specifications', () => {
     let Author;
     let Publisher;
     let Movie;
+    const zeroAndTwo = [0, 2];
 
     const CREATE_MOVIE = 'CREATE_MOVIE';
     const CREATE_PUBLISHER = 'CREATE_PUBLISHER';
+    const UPSERT_PUBLISHER = 'UPSERT_PUBLISHER';
     const CREATE_BOOK = 'CREATE_BOOK';
     const CREATE_COVER = 'CREATE_COVER';
     const CREATE_AUTHOR = 'CREATE_AUTHOR';
@@ -46,6 +48,9 @@ describe('Shorthand selector specifications', () => {
                 break;
             case CREATE_PUBLISHER:
                 session.Publisher.create(action.payload);
+                break;
+            case UPSERT_PUBLISHER:
+                session.Publisher.upsert(action.payload);
                 break;
             case CREATE_BOOK:
                 session.Book.create(action.payload);
@@ -140,87 +145,184 @@ describe('Shorthand selector specifications', () => {
     });
 
     describe('model selector specs', () => {
+        let publishers;
+
+        beforeEach(() => {
+            publishers = createSelector(orm.Publisher);
+        });
+
+        it('return correct values for empty state', () => {
+            expect(publishers(emptyState, 1)).toEqual(null);
+            expect(publishers.recomputations()).toEqual(1);
+            expect(publishers(emptyState, 1)).toEqual(null);
+            expect(publishers.recomputations()).toEqual(1);
+
+            expect(publishers(emptyState, zeroAndTwo)).toEqual([null, null]);
+            expect(publishers.recomputations()).toEqual(2);
+            expect(publishers(emptyState, zeroAndTwo)).toEqual([null, null]);
+            expect(publishers.recomputations()).toEqual(2);
+
+            expect(publishers(emptyState, [])).toEqual([]);
+            expect(publishers.recomputations()).toEqual(3);
+            expect(publishers(emptyState, [])).toEqual([]);
+            expect(publishers.recomputations()).toEqual(4);
+
+            expect(publishers(emptyState)).toEqual([]);
+            expect(publishers.recomputations()).toEqual(5);
+            expect(publishers(emptyState)).toEqual([]);
+            expect(publishers.recomputations()).toEqual(5);
+        });
+
         it('will recompute single instances', () => {
-            const publishers = createSelector(orm.Publisher);
-            expect(publishers(emptyState, 1)).toEqual(null);
-            expect(publishers.recomputations()).toEqual(1);
-            expect(publishers(emptyState, 1)).toEqual(null);
-            expect(publishers.recomputations()).toEqual(1);
             ormState = reducer(emptyState, {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 1,
+                    name: 'First publisher',
                 },
             });
             expect(publishers(ormState, 1)).toEqual({
                 id: 1,
+                name: 'First publisher',
             });
-            expect(publishers.recomputations()).toEqual(2);
+            expect(publishers.recomputations()).toEqual(1);
+            expect(publishers(ormState, 1)).toEqual({
+                id: 1,
+                name: 'First publisher',
+            });
+            expect(publishers.recomputations()).toEqual(1);
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 2,
+                    name: 'Second publisher',
+                },
+            });
+            expect(publishers(ormState, 1)).toEqual({
+                id: 1,
+                name: 'First publisher',
+            });
+            expect(publishers(ormState, 2)).toEqual({
+                id: 2,
+                name: 'Second publisher',
+            });
+            ormState = reducer(ormState, {
+                type: UPSERT_PUBLISHER,
+                payload: {
+                    id: 1,
+                    name: 'New name',
+                },
+            });
+            expect(publishers(ormState, 1)).toEqual({
+                id: 1,
+                name: 'New name',
+            });
         });
 
         it('will recompute some model instances by ID array', () => {
-            const publishers = createSelector(orm.Publisher);
-            expect(publishers(emptyState, [])).toEqual([]);
-            expect(publishers.recomputations()).toEqual(1);
-            expect(publishers(emptyState, [])).toEqual([]);
-            expect(publishers.recomputations()).toEqual(2);
-            const zeroAndTwo = [0, 2];
-            expect(publishers(emptyState, zeroAndTwo)).toEqual([]);
-            expect(publishers.recomputations()).toEqual(3);
-            expect(publishers(emptyState, zeroAndTwo)).toEqual([]);
-            expect(publishers.recomputations()).toEqual(3);
             ormState = reducer(emptyState, {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 1,
                 },
             });
-            expect(publishers(ormState, zeroAndTwo)).toEqual([]);
+            expect(publishers(ormState, zeroAndTwo)).toEqual([null, null]);
             /**
             * Note that the above only recomputes because we need to
             * perform a full-table scan there, even if we knew before
             * exactly which IDs we wanted to access. This should
             * be fixable by allowing arrays as filter arguments.
             */
-            expect(publishers.recomputations()).toEqual(4);
+            expect(publishers.recomputations()).toEqual(1);
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 2,
                 },
             });
-            expect(publishers(ormState, zeroAndTwo)).toHaveLength(1);
-            expect(publishers.recomputations()).toEqual(5);
-            expect(publishers(ormState, zeroAndTwo)).toHaveLength(1);
-            expect(publishers.recomputations()).toEqual(5);
+            expect(publishers(ormState, zeroAndTwo)).toEqual([
+                null,
+                { id: 2 },
+            ]);
+            expect(publishers.recomputations()).toEqual(2);
+            expect(publishers(ormState, zeroAndTwo)).toEqual([
+                null,
+                { id: 2 },
+            ]);
+            expect(publishers.recomputations()).toEqual(2);
         });
 
         it('will recompute all model instances', () => {
-            const publishers = createSelector(orm.Publisher);
-            expect(publishers(emptyState)).toEqual([]);
-            expect(publishers.recomputations()).toEqual(1);
-            expect(publishers(emptyState)).toEqual([]);
-            expect(publishers.recomputations()).toEqual(1);
             ormState = reducer(emptyState, {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 1,
+                    name: 'First publisher',
                 },
             });
             expect(publishers(ormState)).toEqual([
-                { id: 1 }
+                { id: 1, name: 'First publisher' }
+            ]);
+            expect(publishers.recomputations()).toEqual(1);
+            expect(publishers(ormState)).toEqual([
+                { id: 1, name: 'First publisher' }
+            ]);
+            expect(publishers.recomputations()).toEqual(1);
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 2,
+                    name: 'Second publisher',
+                },
+            });
+            expect(publishers(ormState)).toEqual([
+                { id: 1, name: 'First publisher' },
+                { id: 2, name: 'Second publisher' },
+            ]);
+            expect(publishers.recomputations()).toEqual(2);
+            ormState = reducer(ormState, {
+                type: UPSERT_PUBLISHER,
+                payload: {
+                    id: 2,
+                },
+            });
+            // Update should not have happened!
+            expect(publishers(ormState)).toEqual([
+                { id: 1, name: 'First publisher' },
+                { id: 2, name: 'Second publisher' },
             ]);
             expect(publishers.recomputations()).toEqual(2);
         });
     });
 
     describe('attr field selector specs', () => {
-        it('will compute attr fields for single model instances', () => {
-            const publisherNames = createSelector(orm.Publisher.name);
+        let publisherNames;
+
+        beforeEach(() => {
+            publisherNames = createSelector(orm.Publisher.name);
+        });
+
+        it('return correct values for empty state', () => {
             expect(publisherNames(emptyState, 1)).toEqual(null);
             expect(publisherNames.recomputations()).toEqual(1);
             expect(publisherNames(emptyState, 1)).toEqual(null);
             expect(publisherNames.recomputations()).toEqual(1);
+            expect(publisherNames(emptyState)).toEqual([]);
+            expect(publisherNames.recomputations()).toEqual(2);
+            expect(publisherNames(emptyState)).toEqual([]);
+            expect(publisherNames(emptyState, zeroAndTwo))
+                .toEqual([null, null]);
+            expect(publisherNames.recomputations()).toEqual(3);
+            expect(publisherNames(emptyState, zeroAndTwo))
+                .toEqual([null, null]);
+            expect(publisherNames.recomputations()).toEqual(3);
+            expect(publisherNames(emptyState, [])).toEqual([]);
+            expect(publisherNames.recomputations()).toEqual(4);
+            expect(publisherNames(emptyState, [])).toEqual([]);
+            expect(publisherNames.recomputations()).toEqual(5);
+        });
+
+        it('will compute attr fields', () => {
             ormState = reducer(emptyState, {
                 type: CREATE_PUBLISHER,
                 payload: {
@@ -229,79 +331,43 @@ describe('Shorthand selector specifications', () => {
                 },
             });
             expect(publisherNames(ormState, 1)).toEqual('Publisher name!');
-            expect(publisherNames.recomputations()).toEqual(2);
-        });
-
-        it('will compute attr fields for some model instances', () => {
-            const publisherNames = createSelector(orm.Publisher.name);
-            expect(publisherNames(emptyState, [])).toEqual([]);
             expect(publisherNames.recomputations()).toEqual(1);
-            expect(publisherNames(emptyState, [])).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(2);
-            const zeroAndTwo = [0, 2];
-            expect(publisherNames(emptyState, zeroAndTwo))
-                .toEqual([null, null]);
-            expect(publisherNames.recomputations()).toEqual(3);
-            expect(publisherNames(emptyState, zeroAndTwo))
-                .toEqual([null, null]);
-            expect(publisherNames.recomputations()).toEqual(3);
-            ormState = reducer(emptyState, {
-                type: CREATE_PUBLISHER,
-                payload: {
-                    id: 1,
-                    name: 'Publisher name!'
-                },
-            });
             expect(publisherNames(ormState, zeroAndTwo))
                 .toEqual([null, null]);
-            expect(publisherNames.recomputations()).toEqual(4);
-            ormState = reducer(ormState, {
-                type: CREATE_PUBLISHER,
-                payload: {
-                    id: 2,
-                    name: 'Other publisher name!'
-                },
-            });
-            expect(publisherNames(ormState, zeroAndTwo))
-                .toEqual([null, 'Other publisher name!']);
-            expect(publisherNames.recomputations()).toEqual(5);
-            expect(publisherNames(ormState, zeroAndTwo))
-                .toEqual([null, 'Other publisher name!']);
-            expect(publisherNames.recomputations()).toEqual(5);
-        });
-
-        it('will compute attr fields for all model instances', () => {
-            const publisherNames = createSelector(orm.Publisher.name);
-            expect(publisherNames(emptyState)).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(1);
-            expect(publisherNames(emptyState)).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(1);
-            ormState = reducer(emptyState, {
-                type: CREATE_PUBLISHER,
-                payload: {
-                    id: 1,
-                    name: 'Publisher name!'
-                },
-            });
-            expect(publisherNames(ormState)).toEqual(['Publisher name!']);
             expect(publisherNames.recomputations()).toEqual(2);
             expect(publisherNames(ormState)).toEqual(['Publisher name!']);
-            expect(publisherNames.recomputations()).toEqual(2);
+            expect(publisherNames.recomputations()).toEqual(3);
         });
     });
 
     describe('foreign key field selector specs', () => {
+        let moviePublisher;
+        let publisherMovies;
+
+        beforeEach(() => {
+            moviePublisher = createSelector(orm.Movie.publisher);
+            publisherMovies = createSelector(orm.Publisher.movies);
+        });
+
+        it('return correct values for empty state', () => {
+            expect(moviePublisher(ormState, 1)).toEqual(null);
+            expect(moviePublisher(ormState, [1])).toEqual([null]);
+            expect(moviePublisher(ormState)).toEqual([]);
+
+            expect(publisherMovies(ormState, 123)).toEqual(null);
+            expect(publisherMovies(ormState, [123])).toEqual([
+                null,
+            ]);
+            expect(publisherMovies(ormState)).toEqual([]);
+        });
+
         it('will compute forward FK models', () => {
-            const moviePublisher = createSelector(orm.Movie.publisher);
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
                     id: 123,
                 },
             });
-            expect(moviePublisher(ormState, 1)).toEqual(null);
-            expect(moviePublisher(ormState, [1])).toEqual([null]);
-            expect(moviePublisher(ormState)).toEqual([]);
             ormState = reducer(ormState, {
                 type: CREATE_MOVIE,
                 payload: {
@@ -318,15 +384,14 @@ describe('Shorthand selector specifications', () => {
             expect(moviePublisher(ormState)).toEqual([
                 { id: 123 },
             ]);
-            expect(moviePublisher.recomputations()).toEqual(6);
+            expect(moviePublisher.recomputations()).toEqual(3);
             expect(moviePublisher(ormState, 1)).toEqual(
                 { id: 123 },
             );
-            expect(moviePublisher.recomputations()).toEqual(6);
+            expect(moviePublisher.recomputations()).toEqual(3);
         });
 
         it('will compute backward FK models', () => {
-            const publisherMovies = createSelector(orm.Publisher.movies);
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
@@ -383,8 +448,15 @@ describe('Shorthand selector specifications', () => {
     });
 
     describe('one to one field selector specs', () => {
+        let bookCover;
+        let coverBook;
+
+        beforeEach(() => {
+            bookCover = createSelector(orm.Book.cover);
+            coverBook = createSelector(orm.Cover.book);
+        });
+
         it('will compute forward oneToOne models', () => {
-            const bookCover = createSelector(orm.Book.cover);
             ormState = reducer(ormState, {
                 type: CREATE_COVER,
                 payload: {
@@ -418,7 +490,6 @@ describe('Shorthand selector specifications', () => {
         });
 
         it('will compute backward oneToOne models', () => {
-            const coverBook = createSelector(orm.Cover.book);
             ormState = reducer(ormState, {
                 type: CREATE_BOOK,
                 payload: {
@@ -461,8 +532,15 @@ describe('Shorthand selector specifications', () => {
     });
 
     describe('many to many field selector specs', () => {
+        let authorPublishers;
+        let publisherAuthors;
+
+        beforeEach(() => {
+            authorPublishers = createSelector(orm.Author.publishers);
+            publisherAuthors = createSelector(orm.Publisher.authors);
+        });
+
         it('will compute forward manyToMany models', () => {
-            const authorPublishers = createSelector(orm.Author.publishers);
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
@@ -500,7 +578,6 @@ describe('Shorthand selector specifications', () => {
         });
 
         it('will compute backward manyToMany models', () => {
-            const publisherAuthors = createSelector(orm.Publisher.authors);
             ormState = reducer(ormState, {
                 type: CREATE_AUTHOR,
                 payload: {

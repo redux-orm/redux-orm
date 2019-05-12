@@ -46,16 +46,10 @@ export class ModelSelectorSpec extends SelectorSpec {
                 return ModelClass.all().toRefArray();
             }
             if (Array.isArray(idArg)) {
-                const { idAttribute } = ModelClass;
-                /**
-                 * TODO: we might want to allow passing arrays of property values
-                 * for faster matching of indexed columns; this might be the
-                 * key to allowing fast joins anyways, and could potentially
-                 * be re-used for any type of indexed value lookup
-                 */
-                return ModelClass
-                    .filter(instance => idArg.includes(instance[idAttribute]))
-                    .toRefArray();
+                return idArg.map((id) => {
+                    const instance = ModelClass.withId(id);
+                    return instance ? instance.ref : null;
+                });
             }
             const instance = ModelClass.withId(idArg);
             return instance ? instance.ref : null;

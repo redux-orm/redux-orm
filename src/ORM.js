@@ -176,7 +176,7 @@ export class ORM {
         const models = this.getModelClasses();
         const tables = models.reduce((spec, modelClass) => {
             const tableName = modelClass.modelName;
-            const tableSpec = modelClass.tableOptions(); // eslint-disable-line no-underscore-dangle
+            const tableSpec = modelClass.tableOptions();
             Object.keys(tableSpec).filter(isReservedTableOption).forEach((key) => {
                 throw new Error(`Reserved keyword \`${key}\` used in ${tableName}.options.`);
             });
