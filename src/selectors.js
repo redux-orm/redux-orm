@@ -14,10 +14,15 @@ function idArgSelector(state, idArg) {
     return idArg;
 }
 
+const ID_ARG_KEY_SELECTOR = (state, idArg) => (
+    (typeof idArg === 'undefined') ? ALL_INSTANCES : idArg
+);
+
 export class SelectorSpec {
     constructor({ parent, orm }) {
         this._parent = parent;
         this._orm = orm;
+        this.keySelector = ID_ARG_KEY_SELECTOR;
     }
 
     get cachePath() {
@@ -54,12 +59,6 @@ export class ModelSelectorSpec extends SelectorSpec {
             const instance = ModelClass.withId(idArg);
             return instance ? instance.ref : null;
         };
-    }
-
-    get keySelector() {
-        return (state, idArg) => (
-            (typeof idArg === 'undefined') ? ALL_INSTANCES : idArg
-        );
     }
 }
 
@@ -106,12 +105,6 @@ export class MapSelectorSpec extends ModelBasedSelectorSpec {
         return [this._orm, idArgSelector, state => state];
     }
 
-    get keySelector() {
-        return (state, idArg) => (
-            (typeof idArg === 'undefined') ? ALL_INSTANCES : idArg
-        );
-    }
-
     valueForInstance(instance, session, state) {
         if (!instance) return null;
         const {
@@ -145,12 +138,6 @@ export class FieldSelectorSpec extends ModelBasedSelectorSpec {
 
     get dependencies() {
         return [this._orm, idArgSelector];
-    }
-
-    get keySelector() {
-        return (state, idArg) => (
-            (typeof idArg === 'undefined') ? ALL_INSTANCES : idArg
-        );
     }
 
     valueForInstance(instance, session) {

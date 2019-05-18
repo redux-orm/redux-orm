@@ -153,24 +153,16 @@ describe('Shorthand selector specifications', () => {
 
         it('return correct values for empty state', () => {
             expect(publishers(emptyState, 1)).toEqual(null);
-            expect(publishers.recomputations()).toEqual(1);
             expect(publishers(emptyState, 1)).toEqual(null);
-            expect(publishers.recomputations()).toEqual(1);
 
             expect(publishers(emptyState, zeroAndTwo)).toEqual([null, null]);
-            expect(publishers.recomputations()).toEqual(2);
             expect(publishers(emptyState, zeroAndTwo)).toEqual([null, null]);
-            expect(publishers.recomputations()).toEqual(2);
 
             expect(publishers(emptyState, [])).toEqual([]);
-            expect(publishers.recomputations()).toEqual(3);
             expect(publishers(emptyState, [])).toEqual([]);
-            expect(publishers.recomputations()).toEqual(4);
 
             expect(publishers(emptyState)).toEqual([]);
-            expect(publishers.recomputations()).toEqual(5);
             expect(publishers(emptyState)).toEqual([]);
-            expect(publishers.recomputations()).toEqual(5);
         });
 
         it('will recompute single instances', () => {
@@ -185,12 +177,10 @@ describe('Shorthand selector specifications', () => {
                 id: 1,
                 name: 'First publisher',
             });
-            expect(publishers.recomputations()).toEqual(1);
             expect(publishers(ormState, 1)).toEqual({
                 id: 1,
                 name: 'First publisher',
             });
-            expect(publishers.recomputations()).toEqual(1);
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
@@ -233,7 +223,6 @@ describe('Shorthand selector specifications', () => {
             * exactly which IDs we wanted to access. This should
             * be fixable by allowing arrays as filter arguments.
             */
-            expect(publishers.recomputations()).toEqual(1);
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
@@ -244,12 +233,10 @@ describe('Shorthand selector specifications', () => {
                 null,
                 { id: 2 },
             ]);
-            expect(publishers.recomputations()).toEqual(2);
             expect(publishers(ormState, zeroAndTwo)).toEqual([
                 null,
                 { id: 2 },
             ]);
-            expect(publishers.recomputations()).toEqual(2);
         });
 
         it('will recompute all model instances', () => {
@@ -263,11 +250,9 @@ describe('Shorthand selector specifications', () => {
             expect(publishers(ormState)).toEqual([
                 { id: 1, name: 'First publisher' }
             ]);
-            expect(publishers.recomputations()).toEqual(1);
             expect(publishers(ormState)).toEqual([
                 { id: 1, name: 'First publisher' }
             ]);
-            expect(publishers.recomputations()).toEqual(1);
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
@@ -279,7 +264,6 @@ describe('Shorthand selector specifications', () => {
                 { id: 1, name: 'First publisher' },
                 { id: 2, name: 'Second publisher' },
             ]);
-            expect(publishers.recomputations()).toEqual(2);
             ormState = reducer(ormState, {
                 type: UPSERT_PUBLISHER,
                 payload: {
@@ -291,7 +275,6 @@ describe('Shorthand selector specifications', () => {
                 { id: 1, name: 'First publisher' },
                 { id: 2, name: 'Second publisher' },
             ]);
-            expect(publishers.recomputations()).toEqual(2);
         });
     });
 
@@ -304,22 +287,15 @@ describe('Shorthand selector specifications', () => {
 
         it('return correct values for empty state', () => {
             expect(publisherNames(emptyState, 1)).toEqual(null);
-            expect(publisherNames.recomputations()).toEqual(1);
             expect(publisherNames(emptyState, 1)).toEqual(null);
-            expect(publisherNames.recomputations()).toEqual(1);
             expect(publisherNames(emptyState)).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(2);
             expect(publisherNames(emptyState)).toEqual([]);
             expect(publisherNames(emptyState, zeroAndTwo))
                 .toEqual([null, null]);
-            expect(publisherNames.recomputations()).toEqual(3);
             expect(publisherNames(emptyState, zeroAndTwo))
                 .toEqual([null, null]);
-            expect(publisherNames.recomputations()).toEqual(3);
             expect(publisherNames(emptyState, [])).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(4);
             expect(publisherNames(emptyState, [])).toEqual([]);
-            expect(publisherNames.recomputations()).toEqual(5);
         });
 
         it('will compute attr fields', () => {
@@ -331,12 +307,9 @@ describe('Shorthand selector specifications', () => {
                 },
             });
             expect(publisherNames(ormState, 1)).toEqual('Publisher name!');
-            expect(publisherNames.recomputations()).toEqual(1);
             expect(publisherNames(ormState, zeroAndTwo))
                 .toEqual([null, null]);
-            expect(publisherNames.recomputations()).toEqual(2);
             expect(publisherNames(ormState)).toEqual(['Publisher name!']);
-            expect(publisherNames.recomputations()).toEqual(3);
         });
     });
 
@@ -384,11 +357,9 @@ describe('Shorthand selector specifications', () => {
             expect(moviePublisher(ormState)).toEqual([
                 { id: 123 },
             ]);
-            expect(moviePublisher.recomputations()).toEqual(3);
             expect(moviePublisher(ormState, 1)).toEqual(
                 { id: 123 },
             );
-            expect(moviePublisher.recomputations()).toEqual(3);
         });
 
         it('will compute backward FK models', () => {
@@ -482,11 +453,9 @@ describe('Shorthand selector specifications', () => {
             expect(bookCover(ormState)).toEqual([
                 { id: 123 },
             ]);
-            expect(bookCover.recomputations()).toBe(6);
             expect(bookCover(ormState, 1)).toEqual(
                 { id: 123 },
             );
-            expect(bookCover.recomputations()).toBe(6);
         });
 
         it('will compute backward oneToOne models', () => {
@@ -522,12 +491,10 @@ describe('Shorthand selector specifications', () => {
                     cover: 123,
                 },
             ]);
-            expect(coverBook.recomputations()).toBe(6);
             expect(coverBook(ormState, 123)).toEqual({
                 id: 1,
                 cover: 123,
             });
-            expect(coverBook.recomputations()).toBe(6);
         });
     });
 
@@ -570,11 +537,9 @@ describe('Shorthand selector specifications', () => {
                     { id: 123 },
                 ],
             ]);
-            expect(authorPublishers.recomputations()).toBe(6);
             expect(authorPublishers(ormState, 1)).toEqual([
                 { id: 123 },
             ]);
-            expect(authorPublishers.recomputations()).toBe(6);
         });
 
         it('will compute backward manyToMany models', () => {
@@ -607,11 +572,9 @@ describe('Shorthand selector specifications', () => {
                     { id: 1 },
                 ],
             ]);
-            expect(publisherAuthors.recomputations()).toBe(6);
             expect(publisherAuthors(ormState, 123)).toEqual([
                 { id: 1 },
             ]);
-            expect(publisherAuthors.recomputations()).toBe(6);
         });
     });
 
@@ -650,9 +613,7 @@ describe('Shorthand selector specifications', () => {
                 orm.Cover.book.publisher.authors
             );
             expect(coverAuthors(emptyState, 1)).toEqual(null);
-            expect(coverAuthors.recomputations()).toEqual(1);
             expect(coverAuthors(emptyState, 1)).toEqual(null);
-            expect(coverAuthors.recomputations()).toEqual(1);
             ormState = reducer(emptyState, {
                 type: CREATE_PUBLISHER,
                 payload: {
@@ -660,7 +621,6 @@ describe('Shorthand selector specifications', () => {
                 },
             });
             expect(coverAuthors(ormState, 1)).toEqual(null);
-            expect(coverAuthors.recomputations()).toEqual(2);
             ormState = reducer(ormState, {
                 type: CREATE_AUTHOR,
                 payload: {
@@ -669,7 +629,6 @@ describe('Shorthand selector specifications', () => {
                 },
             });
             expect(coverAuthors(ormState, 1)).toEqual(null);
-            expect(coverAuthors.recomputations()).toEqual(3);
             ormState = reducer(ormState, {
                 type: CREATE_BOOK,
                 payload: {
@@ -680,7 +639,6 @@ describe('Shorthand selector specifications', () => {
                 },
             });
             expect(coverAuthors(ormState, 1)).toEqual(null);
-            expect(coverAuthors.recomputations()).toEqual(4);
             ormState = reducer(ormState, {
                 type: CREATE_COVER,
                 payload: {
@@ -690,11 +648,9 @@ describe('Shorthand selector specifications', () => {
             expect(coverAuthors(ormState, 1)).toEqual([
                 { id: 3 }
             ]);
-            expect(coverAuthors.recomputations()).toEqual(5);
             expect(coverAuthors(ormState, 1)).toEqual([
                 { id: 3 }
             ]);
-            expect(coverAuthors.recomputations()).toEqual(5);
         });
     });
 

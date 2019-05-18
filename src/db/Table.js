@@ -299,13 +299,12 @@ const Table = class Table {
             ? entry
             : ops.batch.set(batchToken, this.idAttribute, id, entry);
 
-        const indexesToAppendTo = Object.keys(workingState.indexes).reduce((values, fkAttr) => {
-            if (!entry.hasOwnProperty(fkAttr)) return values;
-            if (entry[fkAttr] === null) return values;
-            values.push([fkAttr, entry[fkAttr]]);
-            return values;
-        }, []);
-
+        const indexesToAppendTo = Object.keys(workingState.indexes)
+            .filter(fkAttr => (
+                entry.hasOwnProperty(fkAttr) &&
+                entry[fkAttr] !== null
+            ))
+            .map(fkAttr => ([fkAttr, entry[fkAttr]]));
 
         if (withMutations) {
             ops.mutable.push(id, workingState[this.arrName]);
