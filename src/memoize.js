@@ -172,7 +172,7 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
         const argsWithSession = args.map(arg => (isOrmState(arg) ? session : arg));
 
         /* This is where we call the actual function */
-        const result = func(...argsWithSession);
+        const result = func.apply(null, argsWithSession); // eslint-disable-line prefer-spread
 
         /**
          * The metadata for the previous call are no longer valid.
