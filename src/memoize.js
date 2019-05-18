@@ -10,10 +10,10 @@ const isOrmState = arg => (
 );
 
 const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (
-    nextArgs.filter(arg => !isOrmState(arg))
-        .every((arg, index) => (
-            equalityCheck(arg, lastArgs[index])
-        ))
+    nextArgs.every((arg, index) => (
+        (isOrmState(arg) && isOrmState(lastArgs[index])) ||
+        equalityCheck(arg, lastArgs[index])
+    ))
 );
 
 const rowsAreEqual = (ids, rowsA, rowsB) => (
