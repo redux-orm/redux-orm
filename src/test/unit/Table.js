@@ -1,7 +1,7 @@
 import deepFreeze from 'deep-freeze';
+import { EXCLUDE, FILTER, ORDER_BY } from '../../constants';
 import Table from '../../db/Table';
 import { getBatchToken } from '../../utils';
-import { FILTER, EXCLUDE, ORDER_BY } from '../../constants';
 
 describe('Table', () => {
     describe('prototype methods', () => {
@@ -156,7 +156,10 @@ describe('Table', () => {
         });
 
         it('orderBy works correctly with prop argument', () => {
-            const clauses = [{ type: ORDER_BY, payload: [['data'], ['inc']] }];
+            const clauses = [{
+                type: ORDER_BY,
+                payload: [['data'], ['asc']],
+            }];
             const result = table.query(state, clauses);
             expect(result.map(row => row.data)).toEqual(['awesomedata', 'cooldata', 'verycooldata!']);
         });
@@ -165,6 +168,56 @@ describe('Table', () => {
             const clauses = [{ type: ORDER_BY, payload: [row => row.data, undefined] }];
             const result = table.query(state, clauses);
             expect(result.map(row => row.data)).toEqual(['awesomedata', 'cooldata', 'verycooldata!']);
+        });
+
+        it('orderBy works correctly with true orders', () => {
+            const clauses = [{
+                type: ORDER_BY,
+                payload: [['data'], [true]],
+            }];
+            const result = table.query(state, clauses);
+            expect(result.map(row => row.data))
+                .toEqual(['awesomedata', 'cooldata', 'verycooldata!']);
+        });
+
+        it('orderBy works correctly with false orders', () => {
+            const clauses = [{
+                type: ORDER_BY,
+                payload: [['data'], [false]],
+            }];
+            const result = table.query(state, clauses);
+            expect(result.map(row => row.data))
+                .toEqual(['verycooldata!', 'cooldata', 'awesomedata']);
+        });
+
+        it('orderBy works correctly with non-array arguments', () => {
+            const clauses = [{
+                type: ORDER_BY,
+                payload: ['data', false],
+            }];
+            const result = table.query(state, clauses);
+            expect(result.map(row => row.data))
+                .toEqual(['verycooldata!', 'cooldata', 'awesomedata']);
+        });
+
+        it('orderBy works correctly with mixed orders', () => {
+            const clauses = [{
+                type: ORDER_BY,
+                payload: [[row => (row.data.includes('cool') ? 1 : 0), 'id'], [false, 'asc']],
+            }];
+            const result = table.query(state, clauses);
+            expect(result.map(row => row.data))
+                .toEqual(['cooldata', 'verycooldata!', 'awesomedata']);
+        });
+
+        it('orderBy works correctly without orders', () => {
+            const clauses = [{
+                type: ORDER_BY,
+                payload: ['id'],
+            }];
+            const result = table.query(state, clauses);
+            expect(result.map(row => row.data))
+                .toEqual(['cooldata', 'verycooldata!', 'awesomedata']);
         });
 
         it('exclude works correctly with object argument', () => {
