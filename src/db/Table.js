@@ -1,12 +1,10 @@
-import reject from 'lodash/reject';
+import ops from 'immutable-ops';
 import filter from 'lodash/filter';
 import orderBy from 'lodash/orderBy';
+import reject from 'lodash/reject';
 import sortBy from 'lodash/sortBy';
-import ops from 'immutable-ops';
 
-import {
-    FILTER, EXCLUDE, ORDER_BY,
-} from '../constants';
+import { EXCLUDE, FILTER, ORDER_BY } from '../constants';
 import { clauseFiltersByAttribute, clauseReducesResultSetSize } from '../utils';
 
 const DEFAULT_TABLE_OPTIONS = {
@@ -45,6 +43,19 @@ function idSequencer(_currMax, userPassedId) {
         newMax, // new max id
         newId, // id to use for row creation
     ];
+}
+
+/**
+ * Adapt order directions array to @{lodash.orderBy} API.
+ * @param {Array<Boolean|'asc'|'desc'>} orders? - an array of optional order query directions as provided to {@Link {QuerySet.orderBy}}
+ * @return {Array<'asc'|'desc'>|undefined} A normalized ordering array or null if non was provided.
+ */
+function normalizeOrders(orders) {
+    if (orders === undefined) {
+        return undefined;
+    }
+    const convert = order => (order === false ? 'desc' : 'asc');
+    return Array.isArray(orders) ? orders.map(convert) : convert(orders);
 }
 
 /**
@@ -265,7 +276,7 @@ const Table = class Table {
             }
             case ORDER_BY: {
                 const [iteratees, orders] = payload;
-                return orderBy(rows, iteratees, orders);
+                return orderBy(rows, iteratees, normalizeOrders(orders));
             }
             default:
                 return rows;
