@@ -38,6 +38,7 @@ describe('ES5 library code', () => {
             }).not.toThrow();
         });
 
+        /*
         it('Selectors can be created from selector specs', () => {
             const bookAuthor = createSelector(orm.Book.author);
             expect(bookAuthor(session.state, 1)).toBe(null);
@@ -46,5 +47,6 @@ describe('ES5 library code', () => {
             session.Author.create({ id: 123 });
             expect(bookAuthor(session.state, 1)).toEqual({ id: 123 });
         });
+        */
     });
 });
