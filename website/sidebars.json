@@ -1,0 +1,49 @@
+{
+  "docs": {
+    "Introduction": [
+      "introduction/getting-started",
+      "introduction/installation",
+      "introduction/core-concepts",
+      "introduction/learning-resources"
+    ],
+    "Basics": [
+      "basics/basic-tutorial"
+    ],
+    "Advanced Tutorial": [
+      "advanced/advanced-tutorial"
+    ],
+    "Recipes": [
+      "recipes/writing-tests"
+    ],
+    "FAQ": [
+      "faq/performance"
+    ],
+    "Other": [
+      "troubleshooting"
+    ],
+    "API Reference": [
+      "api/api-reference",
+      "api/orm",
+      "api/model",
+      "api/queryset",
+      "api/session",
+      {
+        "type": "subcategory",
+        "label": "Descriptors",
+        "ids": [
+          "api/attr",
+          "api/onetoone",
+          "api/fk",
+          "api/many"
+        ]
+      },{
+        "type": "subcategory",
+        "label": "Redux Integration",
+        "ids": [
+          "api/createreducer",
+          "api/createselector"
+        ]
+      }
+    ]
+  }
+}
