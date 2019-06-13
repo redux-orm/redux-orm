@@ -99,7 +99,7 @@ const FeaturesTop = props => (
             {
                 content:
                     'Redux-ORM is fast. **All queries are lazily-evaluated** and come with a built-in **support for memoization**.',
-                image: imgUrl('lightweight.png'),
+                image: imgUrl('lightweight.svg'),
                 imageAlign: 'top',
                 title: 'Lightweight',
             },
@@ -119,7 +119,7 @@ const FeaturesTop = props => (
             {
                 content:
                     'Redux-ORM comes with a set of configuration and extension options, ranging from simple identifier tweaks to **custom database engines**.',
-                image: imgUrl('wrench.png'),
+                image: imgUrl('flexible.svg'),
                 imageAlign: 'top',
                 title: 'Flexible',
             },

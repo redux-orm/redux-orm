@@ -38,7 +38,7 @@ const siteConfig = {
         accentColor3: '#ffabb0',
     },
 
-    copyright: '',
+    copyright: 'Copyright (c) 2019-present Redux-ORM documentation authors.',
 
     highlight: {
         theme: 'monokai',
