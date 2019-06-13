@@ -26,8 +26,6 @@ gulp.task('deploy', () => gulp.src([
 );
 
 gulp.task('generate-docusaurus-docs', (done) => {
-    const docusaurusDocPage = (name, content) => `---\nid: ${name.toLowerCase()}\ntitle: ${name}\nsidebar_label: ${name}\nhide_title: true\n---\n\n${content}`;
-
     const includedClasses = ['ORM', 'Model', 'QuerySet', 'Session'];
 
     /* get template data */
@@ -45,21 +43,21 @@ gulp.task('generate-docusaurus-docs', (done) => {
         return functionNames;
     }, []);
 
-    /* create a documentation file for each class */
-    classes.forEach((className) => {
-        const template = `{{#class name="${className}"}}{{>docs}}{{/class}}`;
-        console.log(`rendering ${className}, template: ${template}`);
+    const render = (type, name) => {
+        const template = `{{#${type} name="${name}"}}{{>docs}}{{/${type}}}`;
+
+        console.log(`rendering ${name}, template: ${template}`);
+
         const output = jsdoc2md.renderSync({ data: templateData, template });
-        fs.writeFileSync(path.resolve('docs/api', `${className}.md`), docusaurusDocPage(className, output));
-    });
+        const docusaurusDocPage = content => `---\nid: ${name.toLowerCase()}\ntitle: ${name}\nsidebar_label: ${name}\nhide_title: true\n---\n\n${content}`;
+        fs.writeFileSync(path.resolve('docs/api', `${name}.md`), docusaurusDocPage(output));
+    };
+
+    /* create a documentation file for each class */
+    classes.forEach(className => render('class', className));
 
     /* create a documentation file for each function */
-    functions.forEach((functionName) => {
-        const template = `{{#function name="${functionName}"}}{{>docs}}{{/function}}`;
-        console.log(`rendering ${functionName}, template: ${template}`);
-        const output = jsdoc2md.renderSync({ data: templateData, template });
-        fs.writeFileSync(path.resolve('docs/api', `${functionName}.md`), docusaurusDocPage(functionName, output));
-    });
+    functions.forEach(functionName => render('function', functionName));
 
     return done();
 });
