@@ -225,6 +225,16 @@ export class Attribute extends Field {
 }
 
 /**
+ * @private
+ */
+function normalizeModelReference(modelNameOrClass) {
+    if (!modelNameOrClass || typeof modelNameOrClass === 'string') {
+        return modelNameOrClass;
+    }
+    return modelNameOrClass.modelName;
+}
+
+/**
  * @ignore
  */
 export class RelationalField extends Field {
@@ -232,13 +242,13 @@ export class RelationalField extends Field {
         super();
         if (args.length === 1 && typeof args[0] === 'object') {
             const opts = args[0];
-            this.toModelName = opts.to;
+            this.toModelName = normalizeModelReference(opts.to);
             this.relatedName = opts.relatedName;
-            this.through = opts.through;
+            this.through = normalizeModelReference(opts.through);
             this.throughFields = opts.throughFields;
             this.as = opts.as;
         } else {
-            [this.toModelName, this.relatedName] = args;
+            [this.toModelName, this.relatedName] = [normalizeModelReference(args[0]), args[1]];
         }
     }
 
