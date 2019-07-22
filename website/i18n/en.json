@@ -13,11 +13,11 @@
         "title": "attr",
         "sidebar_label": "attr"
       },
-      "api/createreducer": {
+      "api/createReducer": {
         "title": "createReducer",
         "sidebar_label": "createReducer"
       },
-      "api/createselector": {
+      "api/createSelector": {
         "title": "createSelector",
         "sidebar_label": "createSelector"
       },
@@ -29,19 +29,19 @@
         "title": "many",
         "sidebar_label": "many"
       },
-      "api/model": {
+      "api/Model": {
         "title": "Model",
         "sidebar_label": "Model"
       },
-      "api/onetoone": {
+      "api/oneToOne": {
         "title": "oneToOne",
         "sidebar_label": "oneToOne"
       },
-      "api/orm": {
+      "api/ORM": {
         "title": "ORM",
         "sidebar_label": "ORM"
       },
-      "api/queryset": {
+      "api/QuerySet": {
         "title": "QuerySet",
         "sidebar_label": "QuerySet"
       },
@@ -49,7 +49,7 @@
         "title": "API Reference",
         "sidebar_label": "API Reference"
       },
-      "api/session": {
+      "api/Session": {
         "title": "Session",
         "sidebar_label": "Session"
       },

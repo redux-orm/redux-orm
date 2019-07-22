@@ -23,16 +23,16 @@
     ],
     "API Reference": [
       "api/api-reference",
-      "api/orm",
-      "api/model",
-      "api/queryset",
-      "api/session",
+      "api/ORM",
+      "api/Model",
+      "api/QuerySet",
+      "api/Session",
       {
         "type": "subcategory",
         "label": "Descriptors",
         "ids": [
           "api/attr",
-          "api/onetoone",
+          "api/oneToOne",
           "api/fk",
           "api/many"
         ]
@@ -40,8 +40,8 @@
         "type": "subcategory",
         "label": "Redux Integration",
         "ids": [
-          "api/createreducer",
-          "api/createselector"
+          "api/createReducer",
+          "api/createSelector"
         ]
       }
     ]

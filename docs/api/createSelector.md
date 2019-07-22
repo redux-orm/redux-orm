@@ -1,5 +1,5 @@
 ---
-id: createselector
+id: createSelector
 title: createSelector
 sidebar_label: createSelector
 hide_title: true
@@ -7,7 +7,7 @@ hide_title: true
 
 <a name="createSelector"></a>
 
-## createSelector(...args) ⇒ <code>function</code>
+## `createSelector(...args)` ⇒ `function`
 Returns a memoized selector based on passed arguments.
 This is similar to `reselect`'s `createSelector`,
 except you can also pass a single function to be memoized.
@@ -52,9 +52,9 @@ This way you can use the `PureRenderMixin` in your React components
 for performance gains.
 
 **Kind**: global function  
-**Returns**: <code>function</code> - memoized selector  
+**Returns**: `function` - memoized selector  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| ...args | <code>function</code> | zero or more input selectors                              and the selector function. |
+| ...args | `function` | zero or more input selectors                              and the selector function. |
 
