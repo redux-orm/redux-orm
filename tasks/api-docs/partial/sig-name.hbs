@@ -7,7 +7,7 @@
 {{#if @methodSign}}{{#if (isEvent)}} {{@methodSign}}{{else}}{{@methodSign}}{{/if}}{{/if~}}
 {{{@codeClose}~}}
 {{#if @returnSymbol}}{{@returnSymbol}}{{/if~}}
-{{#if @returnTypes}} `{{sanitize @returnTypes}}` {{/if~}}
+{{#if @returnTypes}} {{@returnTypes}} {{/if~}}
 {{#if @suffix}} {{@suffix}}{{/if~}}
 {{{@depClose}~}}
 {{~/sig}}{{/if~}}

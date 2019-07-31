@@ -9,13 +9,6 @@
         "title": "Advanced Tutorial: Intro",
         "sidebar_label": "Advanced Tutorial: Intro"
       },
-      "api/db/Database": {
-        "title": "api/db/Database"
-      },
-      "api/db/Table": {
-        "title": "Table",
-        "sidebar_label": "Table"
-      },
       "api/module_descriptors": {
         "title": "Descriptors",
         "sidebar_label": "Descriptors"
@@ -47,6 +40,10 @@
       "api/Session": {
         "title": "Session",
         "sidebar_label": "Session"
+      },
+      "api/Table": {
+        "title": "Table",
+        "sidebar_label": "Table"
       },
       "api/module_utils": {
         "title": "Utils",

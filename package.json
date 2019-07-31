@@ -16,6 +16,7 @@
     "build:umd": "webpack --config webpack.dev.js",
     "build:umd:min": "webpack --config webpack.prod.js",
     "build:docs": "jsdoc src -d docs -c ./jsdoc.conf.json --verbose",
+    "build:api-docs": "gulp api-docs",
     "build": "npm run clean && npm run transpile:cjs && npm run transpile:es && npm run build:umd && npm run build:umd:min && npm run build:docs",
     "pub": "npm run ensure-clean-tree && npm run ensure-version-not-published && npm run lint && npm run test && npm run build && npm run test:es5 && npm publish && git push origin && gulp deploy && npm run clean",
     "pub:next": "npm run ensure-clean-tree && npm run ensure-version-not-published && npm run lint && npm run test && npm run build && npm run test:es5 && npm publish --tag next && git push origin && gulp deploy && npm run clean",
@@ -67,6 +68,7 @@
     "eslint-plugin-import": "^2.17.3",
     "eslint-plugin-jest": "^22.6.4",
     "gulp": "^4.0.2",
+    "gulp-clean": "^0.4.0",
     "gulp-gh-pages": "https://github.com/tekd/gulp-gh-pages/tarball/9ebafeb4011982c98038d8e90373fe7ed91e3f88",
     "gulp-rename": "^1.4.0",
     "jest": "^24.8.0",
@@ -77,7 +79,8 @@
     "rimraf": "^2.6.3",
     "webpack": "^4.32.2",
     "webpack-cli": "^3.3.2",
-    "webpack-merge": "^4.2.1"
+    "webpack-merge": "^4.2.1",
+    "gulp-util": "latest"
   },
   "dependencies": {
     "@babel/runtime": "^7.0.0",

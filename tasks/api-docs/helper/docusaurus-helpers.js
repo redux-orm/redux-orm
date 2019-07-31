@@ -1,13 +1,13 @@
 const links                 = {};
 exports.isStatic            = isStatic;
-exports.docusaurusAnchor    = docusaurusAnchor;
 exports.sanitize            = sanitize;
+exports.capitalize          = capitalize;
+exports.docusaurusAnchor    = docusaurusAnchor;
 exports.docusaurusGuessLink = docusaurusGuessLink;
 exports.docusaurusParseLink = docusaurusParseLink;
-exports.docusaurusLink      = docusaursLink;
-exports.capitalize          = capitalize;
+exports.docusaurusLink      = docusaurusLink;
 
-function docusaursLink(
+function docusaurusLink(
     parent, prefix, accessSymbol, name, methodSign, returnTypes, scope) {
 
   const parentAndSymbol = scope === 'instance' ?
@@ -81,11 +81,6 @@ function isStatic() {
   return this.scope === 'static' ? 'static ' : '';
 }
 
-/**
- *
- * @param {string} str
- * @return {*}
- */
 function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.substr(1);
 }

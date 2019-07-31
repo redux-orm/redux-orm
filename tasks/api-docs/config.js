@@ -1,5 +1,10 @@
-const docGenConfig = {
+module.exports = {
   src: 'src',
+  dest: 'standalone-docs/api',
+  partial: 'tasks/api-docs/partial/*.hbs',
+  helper: 'tasks/api-docs/helper/*.js',
+  rootTemplate: 'tasks/api-docs/partial/template.hbs',
+  configure: 'jsdoc.conf.json',
   include: [
     'Model',
     'ORM',
@@ -11,11 +16,6 @@ const docGenConfig = {
     'descriptors',
     'db/Table',
   ],
-  dest: 'standalone-docs/api',
-  partial: 'tasks/docgen/partial/*.hbs',
-  helper: 'tasks/docgen/helper/*.js',
-  rootTemplate: 'tasks/docgen/partial/template.hbs',
-  configure: 'jsdoc.conf.json',
   dmdOpts: {
     'no-cache': true,
     'name-format': true,
@@ -27,5 +27,3 @@ const docGenConfig = {
     'property-list-format': 'table', // list|table
   },
 }
-
-module.exports = docGenConfig
