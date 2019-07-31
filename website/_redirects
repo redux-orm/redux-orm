@@ -6,6 +6,9 @@
 /basics       /basics/basic-tutorial:splat
 /advanced     /advanced/advanced-tutorial:splat
 /api         /api/api-reference
+/api/api-reference/*        /api/api-reference:splat
+/api/*        /api/api-reference:splat
+/api/index.html        /api/api-reference
 /faq/performance'*         /faq/performance:splat
 /introduction/coreconcepts*         /introduction/core-concepts:splat
 /introduction/learningresources*         /introduction/learning-resources:splat
@@ -18,5 +21,3 @@
 /docs/FAQ.html*        /faq:splat
 /docs/recipes/WritingTests.html*        /recipes/writing-tests:splat
 /docs/Troubleshooting.html*        /troubleshooting:splat
-/api/api-reference/*        /api/api-reference:splat
-/api/index.html        /api/api-reference

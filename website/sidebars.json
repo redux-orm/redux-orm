@@ -27,23 +27,8 @@
       "api/Model",
       "api/QuerySet",
       "api/Session",
-      {
-        "type": "subcategory",
-        "label": "Descriptors",
-        "ids": [
-          "api/attr",
-          "api/oneToOne",
-          "api/fk",
-          "api/many"
-        ]
-      },{
-        "type": "subcategory",
-        "label": "Redux Integration",
-        "ids": [
-          "api/createReducer",
-          "api/createSelector"
-        ]
-      }
+      "api/module_fields",
+      "api/module_redux"
     ]
   }
 }

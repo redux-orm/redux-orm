@@ -25,15 +25,15 @@ const siteConfig = {
     fonts: {
         logoFont: ['https://fonts.googleapis.com/css?family=Lato:900&display=swap', 'sans-serif', '/css/custom.css'],
     },
-
+    usePrism: ['jsx','javascript', 'tsx', 'typescript'],
     headerIcon: 'img/redux-orm-white.svg',
     footerIcon: 'img/redux-orm-white.svg',
     favicon: 'img/favicon/favicon.ico',
-
+    customDocsPath: 'standalone-docs',
     colors: {
         primaryColor: '#bc001c',
         secondaryColor: '#56000c',
-        accentColor1: '#717171',
+        accentColor1: '#ffabb0',
         accentColor2: '#F3EAFF',
         accentColor3: '#ffabb0',
     },
@@ -41,7 +41,7 @@ const siteConfig = {
     copyright: 'Copyright (c) 2019-present Redux-ORM documentation authors.',
 
     highlight: {
-        theme: 'monokai',
+        theme: 'darcula',
     },
 
     scripts: [
@@ -49,14 +49,13 @@ const siteConfig = {
         '/scripts/codeblock.js',
         'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js',
         'https://buttons.github.io/buttons.js',
+        '/scripts/code-block-buttons.js',
     ],
-
+    stylesheets: ['/css/code-block-buttons.css'],
     enableUpdateTime: true,
-
     onPageNav: 'separate',
     cleanUrl: true,
     docsSideNavCollapsible: true,
-
     repoUrl: 'https://github.com/redux-orm/redux-orm',
 
     //todo add tracking id

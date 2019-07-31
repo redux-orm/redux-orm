@@ -15,7 +15,7 @@
     "transpile:es": "cross-env BABEL_ENV=es babel src --out-dir es --ignore */test",
     "build:umd": "webpack --config webpack.dev.js",
     "build:umd:min": "webpack --config webpack.prod.js",
-    "build:docs": "jsdoc src -d docs-current -c ./jsdoc.conf.json --verbose",
+    "build:docs": "jsdoc src -d docs -c ./jsdoc.conf.json --verbose",
     "build": "npm run clean && npm run transpile:cjs && npm run transpile:es && npm run build:umd && npm run build:umd:min && npm run build:docs",
     "pub": "npm run ensure-clean-tree && npm run ensure-version-not-published && npm run lint && npm run test && npm run build && npm run test:es5 && npm publish && git push origin && gulp deploy && npm run clean",
     "pub:next": "npm run ensure-clean-tree && npm run ensure-version-not-published && npm run lint && npm run test && npm run build && npm run test:es5 && npm publish --tag next && git push origin && gulp deploy && npm run clean",
@@ -23,7 +23,7 @@
     "ensure-clean-tree": "[ -z \"$(git status -s)\" ] || (echo \"Error: There are uncommitted changes in the git repostory.\" && false)",
     "lint": "eslint src",
     "deploydocs": "npm run build && gulp deploy",
-    "clean": "rimraf lib es dist docs coverage"
+    "clean": "rimraf lib es dist docs standalone-docs coverage"
   },
   "keywords": [
     "redux",
@@ -53,6 +53,7 @@
     "@babel/plugin-transform-runtime": "^7.4.4",
     "@babel/preset-env": "^7.4.5",
     "@babel/register": "^7.4.4",
+    "@types/jsdoc-to-markdown": "^4.0.0",
     "babel-core": "^7.0.0-bridge.0",
     "babel-eslint": "^10.0.1",
     "babel-jest": "^24.8.0",

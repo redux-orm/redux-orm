@@ -9,33 +9,24 @@
         "title": "Advanced Tutorial: Intro",
         "sidebar_label": "Advanced Tutorial: Intro"
       },
-      "api/attr": {
-        "title": "attr",
-        "sidebar_label": "attr"
+      "api/db/Database": {
+        "title": "api/db/Database"
       },
-      "api/createReducer": {
-        "title": "createReducer",
-        "sidebar_label": "createReducer"
+      "api/db/Table": {
+        "title": "Table",
+        "sidebar_label": "Table"
       },
-      "api/createSelector": {
-        "title": "createSelector",
-        "sidebar_label": "createSelector"
+      "api/module_descriptors": {
+        "title": "Descriptors",
+        "sidebar_label": "Descriptors"
       },
-      "api/fk": {
-        "title": "fk",
-        "sidebar_label": "fk"
-      },
-      "api/many": {
-        "title": "many",
-        "sidebar_label": "many"
+      "api/module_fields": {
+        "title": "Fields",
+        "sidebar_label": "Fields"
       },
       "api/Model": {
         "title": "Model",
         "sidebar_label": "Model"
-      },
-      "api/oneToOne": {
-        "title": "oneToOne",
-        "sidebar_label": "oneToOne"
       },
       "api/ORM": {
         "title": "ORM",
@@ -49,9 +40,17 @@
         "title": "API Reference",
         "sidebar_label": "API Reference"
       },
+      "api/module_redux": {
+        "title": "Redux",
+        "sidebar_label": "Redux"
+      },
       "api/Session": {
         "title": "Session",
         "sidebar_label": "Session"
+      },
+      "api/module_utils": {
+        "title": "Utils",
+        "sidebar_label": "Utils"
       },
       "basics/basic-tutorial": {
         "title": "Basic Tutorial: Intro",
