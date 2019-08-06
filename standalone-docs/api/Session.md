@@ -1,5 +1,4 @@
 ---
----
 id: Session
 title: Session
 sidebar_label: Session
@@ -22,15 +21,15 @@ hide_title: true
 
 ## `new  Session(db, state, [withMutations], [batchToken])`
 
-Creates a new Session.
+<p>Creates a new Session.</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| db | Database | a [Database](Database) instance |
-| state | Object | the database state |
-| [withMutations] | Boolean | whether the session should mutate data |
-| [batchToken] | Object | used by the backend to identify objects that can be                                 mutated. |
+| db | Database | <p>a [Database](Database) instance</p> |
+| state | Object | <p>the database state</p> |
+| [withMutations] | Boolean | <p>whether the session should mutate data</p> |
+| [batchToken] | Object | <p>used by the backend to identify objects that can be<br> mutated.</p> |
 
 
 <a name="session+getNextState"></a>

@@ -9,7 +9,7 @@ hide_title: true
 
 #  Table
 
-Handles the underlying data structure for a [Model](Model) class.
+<p>Handles the underlying data structure for a [Model](Model) class.</p>
 
 **Kind**: global class  
 
@@ -26,101 +26,106 @@ Handles the underlying data structure for a [Model](Model) class.
 
 ## `new  Table(userOpts)`
 
-Creates a new [Table](#Table) instance.
+<p>Creates a new [Table](#Table) instance.</p>
 
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
-| userOpts | Object |  | options to use. |
-| [userOpts.idAttribute] | string | `"id"` | the id attribute of the entity. |
-| [userOpts.arrName] | string | `"items"` | the state attribute where an array of                                             entity id's are stored |
-| [userOpts.mapName] | string | `"itemsById"` | the state attribute where the entity objects                                                 are stored in a id to entity object                                                 map. |
-| [userOpts.fields] | string | `"{}"` | mapping of field key to [Field](Field) object |
+| userOpts | Object |  | <p>options to use.</p> |
+| [userOpts.idAttribute] | string | `"id"` | <p>the id attribute of the entity.</p> |
+| [userOpts.arrName] | string | `"items"` | <p>the state attribute where an array of<br> entity id's are stored</p> |
+| [userOpts.mapName] | string | `"itemsById"` | <p>the state attribute where the entity objects<br> are stored in a id to entity object<br> map.</p> |
+| [userOpts.fields] | string | `"{}"` | <p>mapping of field key to [Field](Field) object</p> |
 
 
 <a name="table+accessId"></a>
 
 ## ` accessId(branch, id)`⇒ Object,undefined 
 
-Returns a reference to the object at index `id`in state `branch`.
+<p>Returns a reference to the object at index <code>id</code><br>
+in state <code>branch</code>.</p>
 
 **Kind**: instance method of [Table](#.Table)  
-**Returns**: Object ⎮ undefined - A reference to the raw object in the state or                           `undefined` if not found.  
+**Returns**: Object ⎮ undefined - <p>A reference to the raw object in the state or<br>
+<code>undefined</code> if not found.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| branch | Object | the state |
-| id | Number | the id of the object to get |
+| branch | Object | <p>the state</p> |
+| id | Number | <p>the id of the object to get</p> |
 
 
 <a name="table+getEmptyState"></a>
 
 ## ` getEmptyState()`⇒ Object 
 
-Returns the default state for the data structure.
+<p>Returns the default state for the data structure.</p>
 
 **Kind**: instance method of [Table](#.Table)  
-**Returns**: Object - The default state for this [ORM](ORM) instance's data structure  
+**Returns**: Object - <p>The default state for this [ORM](ORM) instance's data structure</p>  
 
 <a name="table+insert"></a>
 
 ## ` insert(tx, branch, entry)`⇒ Object 
 
-Returns the data structure including a new object `entry`
+<p>Returns the data structure including a new object <code>entry</code></p>
 
 **Kind**: instance method of [Table](#.Table)  
-**Returns**: Object - an object with two keys: `state` and `created`.                 `state` is the new table state and `created` is the                 row that was created.  
+**Returns**: Object - <p>an object with two keys: <code>state</code> and <code>created</code>.<br>
+<code>state</code> is the new table state and <code>created</code> is the<br>
+row that was created.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| tx | Object | transaction info |
-| branch | Object | the data structure state |
-| entry | Object | the object to insert |
+| tx | Object | <p>transaction info</p> |
+| branch | Object | <p>the data structure state</p> |
+| entry | Object | <p>the object to insert</p> |
 
 
 <a name="table+update"></a>
 
 ## ` update(tx, branch, rows, mergeObj)`⇒ Object 
 
-Returns the data structure with objects where `rows`are merged with `mergeObj`.
+<p>Returns the data structure with objects where <code>rows</code><br>
+are merged with <code>mergeObj</code>.</p>
 
 **Kind**: instance method of [Table](#.Table)  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| tx | Object | transaction info |
-| branch | Object | the data structure state |
-| rows | Array.<Object> | rows to update |
-| mergeObj | Object | The object to merge with each row. |
+| tx | Object | <p>transaction info</p> |
+| branch | Object | <p>the data structure state</p> |
+| rows | Array.<Object> | <p>rows to update</p> |
+| mergeObj | Object | <p>The object to merge with each row.</p> |
 
 
 <a name="table+delete"></a>
 
 ## ` delete(tx, branch, rows)`⇒ Object 
 
-Returns the data structure without rows `rows`.
+<p>Returns the data structure without rows <code>rows</code>.</p>
 
 **Kind**: instance method of [Table](#.Table)  
-**Returns**: Object - the data structure without ids in `idsToDelete`.  
+**Returns**: Object - <p>the data structure without ids in <code>idsToDelete</code>.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| tx | Object | transaction info |
-| branch | Object | the data structure state |
-| rows | Array.<Object> | rows to update |
+| tx | Object | <p>transaction info</p> |
+| branch | Object | <p>the data structure state</p> |
+| rows | Array.<Object> | <p>rows to update</p> |
 
 
 <a name="normalizeOrders"></a>
 
 # ` normalizeOrders(orders?)`⇒ Array.&lt;(&#x27;asc&#x27;|&#x27;desc&#x27;)&gt;,undefined 
 
-Adapt order directions array to @{lodash.orderBy} API.
+<p>Adapt order directions array to @{lodash.orderBy} API.</p>
 
 **Kind**: global function  
-**Returns**: Array.<('asc'|'desc')> ⎮ undefined - A normalized ordering array or null if non was provided.  
+**Returns**: Array.<('asc'|'desc')> ⎮ undefined - <p>A normalized ordering array or null if non was provided.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| orders? | Array.<(Boolean|'asc'|'desc')> | an array of optional order query directions as provided to {@Link {QuerySet.orderBy}} |
+| orders? | Array.<(Boolean|'asc'|'desc')> | <p>an array of optional order query directions as provided to {@Link {QuerySet.orderBy}}</p> |
 
 

@@ -9,7 +9,20 @@ hide_title: true
 
 #  QuerySet
 
-This class is used to build and make queries to the databaseand operating the resulting set (such as updating attributesor deleting the records).The queries are built lazily. For example:```javascriptconst qs = Book.all()    .filter(book => book.releaseYear > 1999)    .orderBy('name');```Doesn't execute a query. The query is executed only whenyou need information from the query result, such as [count](#QuerySet+count),[toRefArray](#QuerySet+toRefArray). After the query is executed, the resultingset is cached in the QuerySet instance.QuerySet instances also return copies, so chaining filters doesn'tmutate the previous instances.
+<p>This class is used to build and make queries to the database<br>
+and operating the resulting set (such as updating attributes<br>
+or deleting the records).</p>
+<p>The queries are built lazily. For example:</p>
+<pre class="prettyprint source lang-javascript"><code>const qs = Book.all()
+    .filter(book => book.releaseYear > 1999)
+    .orderBy('name');
+</code></pre>
+<p>Doesn't execute a query. The query is executed only when<br>
+you need information from the query result, such as [count](#QuerySet+count),<br>
+[toRefArray](#QuerySet+toRefArray). After the query is executed, the resulting<br>
+set is cached in the QuerySet instance.</p>
+<p>QuerySet instances also return copies, so chaining filters doesn't<br>
+mutate the previous instances.</p>
 
 **Kind**: global class  
 
@@ -38,14 +51,15 @@ This class is used to build and make queries to the databaseand operating the r
 
 ## `new  QuerySet(modelClass, clauses, [opts])`
 
-Creates a QuerySet. The constructor is mainly for internal use;You should access QuerySet instances from [Model](Model).
+<p>Creates a QuerySet. The constructor is mainly for internal use;<br>
+You should access QuerySet instances from [Model](Model).</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| modelClass | Model | the model class of objects in this QuerySet. |
-| clauses | Array.<any> | query clauses needed to evaluate the set. |
-| [opts] | Object | additional options |
+| modelClass | [Model](#.Model) | <p>the model class of objects in this QuerySet.</p> |
+| clauses | Array.<any> | <p>query clauses needed to evaluate the set.</p> |
+| [opts] | Object | <p>additional options</p> |
 
 
 <a name="queryset+withModels"></a>
@@ -68,57 +82,64 @@ Creates a QuerySet. The constructor is mainly for internal use;You should acces
 
 ## ` toRefArray()`⇒ Array.&lt;Object&gt; 
 
-Returns an array of the plain objects represented by the QuerySet.The plain objects are direct references to the store.
+<p>Returns an array of the plain objects represented by the QuerySet.<br>
+The plain objects are direct references to the store.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
-**Returns**: Array.<Object> - references to the plain JS objects represented by                   the QuerySet  
+**Returns**: Array.<Object> - <p>references to the plain JS objects represented by<br>
+the QuerySet</p>  
 
 <a name="queryset+toModelArray"></a>
 
 ## ` toModelArray()`⇒ Array.&lt;Model&gt; 
 
-Returns an array of [Model](Model) instances represented by the QuerySet.
+<p>Returns an array of [Model](Model) instances represented by the QuerySet.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
-**Returns**: Array.<Model> - model instances represented by the QuerySet  
+**Returns**: Array.<Model> - <p>model instances represented by the QuerySet</p>  
 
 <a name="queryset+count"></a>
 
 ## ` count()`⇒ number 
 
-Returns the number of [Model](Model) instances represented by the QuerySet.
+<p>Returns the number of [Model](Model) instances represented by the QuerySet.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
-**Returns**: number - length of the QuerySet  
+**Returns**: number - <p>length of the QuerySet</p>  
 
 <a name="queryset+exists"></a>
 
 ## ` exists()`⇒ Boolean 
 
-Checks if the [QuerySet](#QuerySet) instance has any records matching the queryin the database.
+<p>Checks if the [QuerySet](#QuerySet) instance has any records matching the query<br>
+in the database.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
-**Returns**: Boolean - `true` if the [QuerySet](#QuerySet) instance contains entities, else `false`.  
+**Returns**: Boolean - <p><code>true</code> if the [QuerySet](#QuerySet) instance contains entities, else <code>false</code>.</p>  
 
 <a name="queryset+at"></a>
 
 ## ` at(index)`⇒ Model,undefined 
 
-Returns the [Model](Model) instance at index `index` in the [QuerySet](#QuerySet) instance if`withRefs` flag is set to `false`, or a reference to the plain JavaScriptobject in the model state if `true`.
+<p>Returns the [Model](Model) instance at index <code>index</code> in the [QuerySet](#QuerySet) instance if<br>
+<code>withRefs</code> flag is set to <code>false</code>, or a reference to the plain JavaScript<br>
+object in the model state if <code>true</code>.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
-**Returns**: Model ⎮ undefined - a [Model](Model) instance at index                          `index` in the [QuerySet](#QuerySet) instance,                          or undefined if the index is out of bounds.  
+**Returns**: [Model](#.Model) ⎮ undefined - <p>a [Model](Model) instance at index<br>
+<code>index</code> in the [QuerySet](#QuerySet) instance,<br>
+or undefined if the index is out of bounds.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| index | number | index of the model instance to get |
+| index | number | <p>index of the model instance to get</p> |
 
 
 <a name="queryset+first"></a>
 
 ## ` first()`⇒ Model 
 
-Returns the [Model](Model) instance at index 0 in the [QuerySet](#QuerySet) instance.
+<p>Returns the [Model](Model) instance at index 0 in the [QuerySet](#QuerySet) instance.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
 
@@ -126,7 +147,7 @@ Returns the [Model](Model) instance at index 0 in the [QuerySet](#QuerySet) inst
 
 ## ` last()`⇒ Model 
 
-Returns the [Model](Model) instance at index `QuerySet.count() - 1`
+<p>Returns the [Model](Model) instance at index <code>QuerySet.count() - 1</code></p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
 
@@ -134,72 +155,75 @@ Returns the [Model](Model) instance at index `QuerySet.count() - 1`
 
 ## ` all()`⇒ QuerySet 
 
-Returns a new [QuerySet](#QuerySet) instance with the same entities.
+<p>Returns a new [QuerySet](#QuerySet) instance with the same entities.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
-**Returns**: [QuerySet](#.QuerySet) - a new QuerySet with the same entities.  
+**Returns**: [QuerySet](#.QuerySet) - <p>a new QuerySet with the same entities.</p>  
 
 <a name="queryset+filter"></a>
 
 ## ` filter(lookupObj)`⇒ QuerySet 
 
-Returns a new [QuerySet](#QuerySet) instance with entities that match properties in `lookupObj`.
+<p>Returns a new [QuerySet](#QuerySet) instance with entities that match properties in <code>lookupObj</code>.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
-**Returns**: [QuerySet](#.QuerySet) - a new [QuerySet](#QuerySet) instance with objects that passed the filter.  
+**Returns**: [QuerySet](#.QuerySet) - <p>a new [QuerySet](#QuerySet) instance with objects that passed the filter.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| lookupObj | Object | the properties to match objects with. Can also be a function. |
+| lookupObj | Object | <p>the properties to match objects with. Can also be a function.</p> |
 
 
 <a name="queryset+exclude"></a>
 
 ## ` exclude(lookupObj)`⇒ QuerySet 
 
-Returns a new [QuerySet](#QuerySet) instance with entities that do not matchproperties in `lookupObj`.
+<p>Returns a new [QuerySet](#QuerySet) instance with entities that do not match<br>
+properties in <code>lookupObj</code>.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
-**Returns**: [QuerySet](#.QuerySet) - a new [QuerySet](#QuerySet) instance with objects that did not pass the filter.  
+**Returns**: [QuerySet](#.QuerySet) - <p>a new [QuerySet](#QuerySet) instance with objects that did not pass the filter.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| lookupObj | Object | the properties to unmatch objects with. Can also be a function. |
+| lookupObj | Object | <p>the properties to unmatch objects with. Can also be a function.</p> |
 
 
 <a name="queryset+orderBy"></a>
 
 ## ` orderBy(iteratees, [orders])`⇒ QuerySet 
 
-Returns a new [QuerySet](#QuerySet) instance with entities ordered by `iteratees` in ascendingorder, unless otherwise specified. Delegates to `lodash.orderBy`.
+<p>Returns a new [QuerySet](#QuerySet) instance with entities ordered by <code>iteratees</code> in ascending<br>
+order, unless otherwise specified. Delegates to <code>lodash.orderBy</code>.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
-**Returns**: [QuerySet](#.QuerySet) - a new [QuerySet](#QuerySet) with objects ordered by `iteratees`.  
+**Returns**: [QuerySet](#.QuerySet) - <p>a new [QuerySet](#QuerySet) with objects ordered by <code>iteratees</code>.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| iteratees | Array.<string> ⎮ Array.<function()> | an array where each item can be a string or a                                           function. If a string is supplied, it should                                           correspond to property on the entity that will                                           determine the order. If a function is supplied,                                           it should return the value to order by. |
-| [orders] | Array.<Boolean> | the sort orders of `iteratees`. If unspecified, all iteratees                               will be sorted in ascending order. `true` and `'asc'`                               correspond to ascending order, and `false` and `'desc`                               to descending order. |
+| iteratees | Array.<string> ⎮ Array.<function()> | <p>an array where each item can be a string or a<br> function. If a string is supplied, it should<br> correspond to property on the entity that will<br> determine the order. If a function is supplied,<br> it should return the value to order by.</p> |
+| [orders] | Array.<Boolean> | <p>the sort orders of <code>iteratees</code>. If unspecified, all iteratees<br> will be sorted in ascending order. <code>true</code> and <code>'asc'</code><br> correspond to ascending order, and <code>false</code> and <code>'desc</code><br> to descending order.</p> |
 
 
 <a name="queryset+update"></a>
 
 ## ` update(mergeObj)`⇒ undefined 
 
-Records an update specified with `mergeObj` to all the objectsin the [QuerySet](#QuerySet) instance.
+<p>Records an update specified with <code>mergeObj</code> to all the objects<br>
+in the [QuerySet](#QuerySet) instance.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| mergeObj | Object | an object to merge with all the objects in this                             queryset. |
+| mergeObj | Object | <p>an object to merge with all the objects in this<br> queryset.</p> |
 
 
 <a name="queryset+delete"></a>
 
 ## ` delete()`⇒ undefined 
 
-Records a deletion of all the objects in this [QuerySet](#QuerySet) instance.
+<p>Records a deletion of all the objects in this [QuerySet](#QuerySet) instance.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
 

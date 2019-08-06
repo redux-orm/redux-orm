@@ -20,51 +20,49 @@ hide_title: true
 
 ## ` m2mName(declarationModelName, fieldName)`⇒ string 
 
-Returns the branch name for a many-to-many relation.
-The name is the combination of the model name and the field name the relation
-was declared. The field name's first letter is capitalized.
-
-Example: model `Author` has a many-to-many relation to the model `Book`, defined
-in the `Author` field `books`. The many-to-many branch name will be `AuthorBooks`.
+<p>Returns the branch name for a many-to-many relation.<br>
+The name is the combination of the model name and the field name the relation<br>
+was declared. The field name's first letter is capitalized.</p>
+<p>Example: model <code>Author</code> has a many-to-many relation to the model <code>Book</code>, defined<br>
+in the <code>Author</code> field <code>books</code>. The many-to-many branch name will be <code>AuthorBooks</code>.</p>
 
 **Kind**: inner method of [utils](#.utils)  
-**Returns**: string - The branch name for the many-to-many relation.  
+**Returns**: string - <p>The branch name for the many-to-many relation.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| declarationModelName | string | the name of the model the many-to-many relation was declared on |
-| fieldName | string | the field name where the many-to-many relation was declared on |
+| declarationModelName | string | <p>the name of the model the many-to-many relation was declared on</p> |
+| fieldName | string | <p>the field name where the many-to-many relation was declared on</p> |
 
 
 <a name="module:utils~m2mToFieldName"></a>
 
 ## ` m2mToFieldName(otherModelName)`⇒ string 
 
-Returns the fieldname that saves a foreign key in a many-to-many through model to the
-model where the many-to-many relation was declared.
-
-Example: `Book` => `toBookId`
+<p>Returns the fieldname that saves a foreign key in a many-to-many through model to the<br>
+model where the many-to-many relation was declared.</p>
+<p>Example: <code>Book</code> =&gt; <code>toBookId</code></p>
 
 **Kind**: inner method of [utils](#.utils)  
-**Returns**: string - the field name in the through model for `otherModelName`'s foreign key..  
+**Returns**: string - <p>the field name in the through model for <code>otherModelName</code>'s foreign key..</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| otherModelName | string | the name of the model that was the target of the many-to-many                                   declaration. |
+| otherModelName | string | <p>the name of the model that was the target of the many-to-many<br> declaration.</p> |
 
 
 <a name="module:utils~normalizeEntity"></a>
 
 ## ` normalizeEntity(entity)`⇒ * 
 
-Normalizes `entity` to an id, where `entity` can be an id
-or a Model instance.
+<p>Normalizes <code>entity</code> to an id, where <code>entity</code> can be an id<br>
+or a Model instance.</p>
 
 **Kind**: inner method of [utils](#.utils)  
-**Returns**: * - the id value of `entity`  
+**Returns**: * - <p>the id value of <code>entity</code></p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| entity | * | either a Model instance or an id value |
+| entity | * | <p>either a Model instance or an id value</p> |
 
 

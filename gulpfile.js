@@ -1,10 +1,15 @@
-const gulp = require('gulp')
-const apiDocs = require('./tasks/api-docs')
-const deploy = require('./tasks/deploy')
+const { task, series, watch } = require('gulp');
+const apiDocs = require('./tasks/api-docs');
+const deploy = require('./tasks/deploy');
 
-gulp.task('deploy', deploy)
+task('deploy', deploy);
 
-gulp.task('api-docs:clean', apiDocs.clean)
-gulp.task('api-docs:build', apiDocs.build)
-exports['api-docs'] = gulp.series('api-docs:clean', 'api-docs:build')
+task('api-docs:clean', apiDocs.clean);
+task('api-docs:build', apiDocs.build);
+const apiDocsAll = series('api-docs:clean', 'api-docs:build');
+function apiDocsWatch() {
+    watch(['src/**/*.js', 'tasks/api-docs/**/*'], apiDocsAll);
+}
 
+exports['api-docs'] = apiDocsAll;
+exports['api-docs:watch'] = apiDocsWatch;

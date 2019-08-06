@@ -9,7 +9,16 @@ hide_title: true
 
 #  ORM
 
-ORM - the Object Relational Mapper.Use instances of this class to:- Register your [Model](Model) classes using [register](#ORM+register)- Get the empty state for the underlying database with [getEmptyState](#ORM+getEmptyState)- Start an immutable database session with [session](#ORM+session)- Start a mutating database session with [mutableSession](#ORM+mutableSession)Internally, this class handles generating a schema specification from modelsto the database.
+<p>ORM - the Object Relational Mapper.</p>
+<p>Use instances of this class to:</p>
+<ul>
+<li>Register your [Model](Model) classes using [register](#ORM+register)</li>
+<li>Get the empty state for the underlying database with [getEmptyState](#ORM+getEmptyState)</li>
+<li>Start an immutable database session with [session](#ORM+session)</li>
+<li>Start a mutating database session with [mutableSession](#ORM+mutableSession)</li>
+</ul>
+<p>Internally, this class handles generating a schema specification from models<br>
+to the database.</p>
 
 **Kind**: global class  
 
@@ -30,75 +39,78 @@ ORM - the Object Relational Mapper.Use instances of this class to:- Register
 
 ## `new  ORM()`
 
-Creates a new ORM instance.
+<p>Creates a new ORM instance.</p>
 
 
 <a name="orm+register"></a>
 
 ## ` register(...models)`⇒ undefined 
 
-Registers a [Model](Model) class to the ORM.If the model has declared any ManyToMany fields, theirthrough models will be generated and registered withthis call, unless a custom through model has been specified.
+<p>Registers a [Model](Model) class to the ORM.</p>
+<p>If the model has declared any ManyToMany fields, their<br>
+through models will be generated and registered with<br>
+this call, unless a custom through model has been specified.</p>
 
 **Kind**: instance method of [ORM](#.ORM)  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| ...models | Model | a [Model](Model) class to register |
+| ...models | [Model](#.Model) | <p>a [Model](Model) class to register</p> |
 
 
 <a name="orm+get"></a>
 
 ## ` get(modelName)`⇒ Model 
 
-Gets a [Model](Model) class by its name from the registry.
+<p>Gets a [Model](Model) class by its name from the registry.</p>
 
 **Kind**: instance method of [ORM](#.ORM)  
-**Returns**: Model - the [Model](Model) class, if found  
+**Returns**: [Model](#.Model) - <p>the [Model](Model) class, if found</p>  
 **Throws**:
 
-- If [Model](Model) class is not found.
+- <p>If [Model](Model) class is not found.</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| modelName | string | the name of the [Model](Model) class to get |
+| modelName | string | <p>the name of the [Model](Model) class to get</p> |
 
 
 <a name="orm+getEmptyState"></a>
 
 ## ` getEmptyState()`⇒ Object 
 
-Returns the empty database state.
+<p>Returns the empty database state.</p>
 
 **Kind**: instance method of [ORM](#.ORM)  
-**Returns**: Object - the empty state  
+**Returns**: Object - <p>the empty state</p>  
 
 <a name="orm+session"></a>
 
 ## ` session(state)`⇒ Session 
 
-Begins an immutable database session.
+<p>Begins an immutable database session.</p>
 
 **Kind**: instance method of [ORM](#.ORM)  
-**Returns**: [Session](#.Session) - a new [Session](Session) instance  
+**Returns**: [Session](#.Session) - <p>a new [Session](Session) instance</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| state | Object | the state the database manages |
+| state | Object | <p>the state the database manages</p> |
 
 
 <a name="orm+mutableSession"></a>
 
 ## ` mutableSession(state)`⇒ Session 
 
-Begins a mutable database session.
+<p>Begins a mutable database session.</p>
 
 **Kind**: instance method of [ORM](#.ORM)  
-**Returns**: [Session](#.Session) - a new [Session](Session) instance  
+**Returns**: [Session](#.Session) - <p>a new [Session](Session) instance</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| state | Object | the state the database manages |
+| state | Object | <p>the state the database manages</p> |
 
 
 <a name="orm+withMutations"></a>

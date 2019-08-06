@@ -9,22 +9,18 @@ hide_title: true
 
 #  Model
 
-The heart of an ORM, the data model.
-
-The fields you specify to the Model will be used to generate
-a schema to the database, related property accessors, and
-possibly through models.
-
-In each [Session](Session) you instantiate from an [ORM](ORM) instance,
-you will receive a session-specific subclass of this Model. The methods
-you define here will be available to you in sessions.
-
-An instance of [Model](#Model) represents a record in the database, though
-it is possible to generate multiple instances from the same record in the database.
-
-To create data models in your schema, subclass [Model](#Model). To define
-information about the data model, override static class methods. Define instance
-logic by defining prototype methods (without `static` keyword).
+<p>The heart of an ORM, the data model.</p>
+<p>The fields you specify to the Model will be used to generate<br>
+a schema to the database, related property accessors, and<br>
+possibly through models.</p>
+<p>In each [Session](Session) you instantiate from an [ORM](ORM) instance,<br>
+you will receive a session-specific subclass of this Model. The methods<br>
+you define here will be available to you in sessions.</p>
+<p>An instance of [Model](#Model) represents a record in the database, though<br>
+it is possible to generate multiple instances from the same record in the database.</p>
+<p>To create data models in your schema, subclass [Model](#Model). To define<br>
+information about the data model, override static class methods. Define instance<br>
+logic by defining prototype methods (without <code>static</code> keyword).</p>
 
 **Kind**: global class  
 
@@ -63,108 +59,107 @@ logic by defining prototype methods (without `static` keyword).
 
 ## `new  Model(props)`
 
-Creates a Model instance from it's properties.
-Don't use this to create a new record; Use the static method [Model#create](Model#create).
+<p>Creates a Model instance from it's properties.<br>
+Don't use this to create a new record; Use the static method [Model#create](Model#create).</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| props | Object | the properties to instantiate with |
+| props | Object | <p>the properties to instantiate with</p> |
 
 
 <a name="model+ref"></a>
 
 ## ` ref`⇒ Object 
 
-Returns a reference to the plain JS object in the store.
-Make sure to not mutate this.
+<p>Returns a reference to the plain JS object in the store.<br>
+Make sure to not mutate this.</p>
 
 **Kind**: instance property of [Model](#.Model)  
-**Returns**: Object - a reference to the plain JS object in the store  
+**Returns**: Object - <p>a reference to the plain JS object in the store</p>  
 
 <a name="model+getClass"></a>
 
 ## ` getClass()`⇒ Model 
 
-Gets the [Model](#Model) class or subclass constructor (the class that
-instantiated this instance).
+<p>Gets the [Model](#Model) class or subclass constructor (the class that<br>
+instantiated this instance).</p>
 
 **Kind**: instance method of [Model](#.Model)  
-**Returns**: [Model](#.Model) - The [Model](#Model) class or subclass constructor used to instantiate
-                this instance.  
+**Returns**: [Model](#.Model) - <p>The [Model](#Model) class or subclass constructor used to instantiate<br>
+this instance.</p>  
 
 <a name="model+getId"></a>
 
 ## ` getId()`⇒ * 
 
-Gets the id value of the current instance by looking up the id attribute.
+<p>Gets the id value of the current instance by looking up the id attribute.</p>
 
 **Kind**: instance method of [Model](#.Model)  
-**Returns**: * - The id value of the current instance.  
+**Returns**: * - <p>The id value of the current instance.</p>  
 
 <a name="model+toString"></a>
 
 ## ` toString()`⇒ string 
 
-Returns a string representation of the [Model](#Model) instance.
+<p>Returns a string representation of the [Model](#Model) instance.</p>
 
 **Kind**: instance method of [Model](#.Model)  
-**Returns**: string - A string representation of this [Model](#Model) instance.  
+**Returns**: string - <p>A string representation of this [Model](#Model) instance.</p>  
 
 <a name="model+equals"></a>
 
 ## ` equals(otherModel)`⇒ Boolean 
 
-Returns a boolean indicating if `otherModel` equals this [Model](#Model) instance.
-Equality is determined by shallow comparing their attributes.
-
-This equality is used when you call [update](#Model+update).
-You can prevent model updates by returning `true` here.
-However, a model will always be updated if its relationships are changed.
+<p>Returns a boolean indicating if <code>otherModel</code> equals this [Model](#Model) instance.<br>
+Equality is determined by shallow comparing their attributes.</p>
+<p>This equality is used when you call [update](#Model+update).<br>
+You can prevent model updates by returning <code>true</code> here.<br>
+However, a model will always be updated if its relationships are changed.</p>
 
 **Kind**: instance method of [Model](#.Model)  
-**Returns**: Boolean - a boolean indicating if the [Model](#Model) instance's are equal.  
+**Returns**: Boolean - <p>a boolean indicating if the [Model](#Model) instance's are equal.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| otherModel | [Model](#.Model) | a [Model](#Model) instance to compare |
+| otherModel | [Model](#.Model) | <p>a [Model](#Model) instance to compare</p> |
 
 
 <a name="model+set"></a>
 
 ## ` set(propertyName, value)`⇒ undefined 
 
-Updates a property name to given value for this [Model](#Model) instance.
-The values are immediately committed to the database.
+<p>Updates a property name to given value for this [Model](#Model) instance.<br>
+The values are immediately committed to the database.</p>
 
 **Kind**: instance method of [Model](#.Model)  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| propertyName | string | name of the property to set |
-| value | * | value assigned to the property |
+| propertyName | string | <p>name of the property to set</p> |
+| value | * | <p>value assigned to the property</p> |
 
 
 <a name="model+update"></a>
 
 ## ` update(userMergeObj)`⇒ undefined 
 
-Assigns multiple fields and corresponding values to this [Model](#Model) instance.
-The updates are immediately committed to the database.
+<p>Assigns multiple fields and corresponding values to this [Model](#Model) instance.<br>
+The updates are immediately committed to the database.</p>
 
 **Kind**: instance method of [Model](#.Model)  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| userMergeObj | Object | an object that will be merged with this instance. |
+| userMergeObj | Object | <p>an object that will be merged with this instance.</p> |
 
 
 <a name="model+refreshFromState"></a>
 
 ## ` refreshFromState()`⇒ undefined 
 
-Updates [Model](#Model) instance attributes to reflect the
-database state in the current session.
+<p>Updates [Model](#Model) instance attributes to reflect the<br>
+database state in the current session.</p>
 
 **Kind**: instance method of [Model](#.Model)  
 
@@ -172,8 +167,8 @@ database state in the current session.
 
 ## ` delete()`⇒ undefined 
 
-Deletes the record for this [Model](#Model) instance.
-You'll still be able to access fields and values on the instance.
+<p>Deletes the record for this [Model](#Model) instance.<br>
+You'll still be able to access fields and values on the instance.</p>
 
 **Kind**: instance method of [Model](#.Model)  
 
@@ -186,17 +181,17 @@ You'll still be able to access fields and values on the instance.
 **Kind**: instance method of [Model](#.Model)  
 **Throws**:
 
-- Error Due to deprecation.
+- Error <p>Due to deprecation.</p>
 
 
 <a name="Model.idAttribute"></a>
 
 ## `static  idAttribute`⇒ string 
 
-Returns the id attribute of this [Model](#Model).
+<p>Returns the id attribute of this [Model](#Model).</p>
 
 **Kind**: static property of [Model](#.Model)  
-**Returns**: string - The id attribute of this [Model](#Model).  
+**Returns**: string - <p>The id attribute of this [Model](#Model).</p>  
 
 <a name="Model.query"></a>
 
@@ -209,38 +204,37 @@ Returns the id attribute of this [Model](#Model).
 
 ## `static  options()`⇒ Object 
 
-Returns the options object passed to the database for the table that represents
-this Model class.
-
-Returns an empty object by default, which means the database
-will use default options. You can either override this function to return the options
-you want to use, or assign the options object as a static property of the same name to the
-Model class.
+<p>Returns the options object passed to the database for the table that represents<br>
+this Model class.</p>
+<p>Returns an empty object by default, which means the database<br>
+will use default options. You can either override this function to return the options<br>
+you want to use, or assign the options object as a static property of the same name to the<br>
+Model class.</p>
 
 **Kind**: static method of [Model](#.Model)  
-**Returns**: Object - the options object passed to the database for the table
-                 representing this Model class.  
+**Returns**: Object - <p>the options object passed to the database for the table<br>
+representing this Model class.</p>  
 
 <a name="Model.markAccessed"></a>
 
 ## `static  markAccessed(ids)`⇒ undefined 
 
-Manually mark individual instances as accessed.
-This allows invalidating selector memoization within mutable sessions.
+<p>Manually mark individual instances as accessed.<br>
+This allows invalidating selector memoization within mutable sessions.</p>
 
 **Kind**: static method of [Model](#.Model)  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| ids | Array.<*> | Array of primary key values |
+| ids | Array.<*> | <p>Array of primary key values</p> |
 
 
 <a name="Model.markFullTableScanned"></a>
 
 ## `static  markFullTableScanned()`⇒ undefined 
 
-Manually mark this model's table as scanned.
-This allows invalidating selector memoization within mutable sessions.
+<p>Manually mark this model's table as scanned.<br>
+This allows invalidating selector memoization within mutable sessions.</p>
 
 **Kind**: static method of [Model](#.Model)  
 
@@ -248,25 +242,25 @@ This allows invalidating selector memoization within mutable sessions.
 
 ## `static  markAccessedIndexes(indexes)`⇒ undefined 
 
-Manually mark indexes as accessed.
-This allows invalidating selector memoization within mutable sessions.
+<p>Manually mark indexes as accessed.<br>
+This allows invalidating selector memoization within mutable sessions.</p>
 
 **Kind**: static method of [Model](#.Model)  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| indexes | Array.<Array.<*, *>> | Array of column-value pairs |
+| indexes | Array.<Array.<*, *>> | <p>Array of column-value pairs</p> |
 
 
 <a name="Model.getQuerySet"></a>
 
 ## `static  getQuerySet()`⇒ Object 
 
-Returns an instance of the model's `querySetClass` field.
-By default, this will be an empty [QuerySet](QuerySet).
+<p>Returns an instance of the model's <code>querySetClass</code> field.<br>
+By default, this will be an empty [QuerySet](QuerySet).</p>
 
 **Kind**: static method of [Model](#.Model)  
-**Returns**: Object - An instance of the model's `querySetClass`.  
+**Returns**: Object - <p>An instance of the model's <code>querySetClass</code>.</p>  
 
 <a name="Model.invalidateClassCache"></a>
 
@@ -278,106 +272,103 @@ By default, this will be an empty [QuerySet](QuerySet).
 
 ## `static  create(userProps)`⇒ Model 
 
-Creates a new record in the database, instantiates a [Model](#Model) and returns it.
-
-If you pass values for many-to-many fields, instances are created on the through
-model as well.
+<p>Creates a new record in the database, instantiates a [Model](#Model) and returns it.</p>
+<p>If you pass values for many-to-many fields, instances are created on the through<br>
+model as well.</p>
 
 **Kind**: static method of [Model](#.Model)  
-**Returns**: [Model](#.Model) - a new [Model](#Model) instance.  
+**Returns**: [Model](#.Model) - <p>a new [Model](#Model) instance.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| userProps | props | the new [Model](#Model)'s properties. |
+| userProps | props | <p>the new [Model](#Model)'s properties.</p> |
 
 
 <a name="Model.upsert"></a>
 
 ## `static  upsert(userProps)`⇒ Model 
 
-Creates a new or update existing record in the database, instantiates a [Model](#Model) and returns it.
-
-If you pass values for many-to-many fields, instances are created on the through
-model as well.
+<p>Creates a new or update existing record in the database, instantiates a [Model](#Model) and returns it.</p>
+<p>If you pass values for many-to-many fields, instances are created on the through<br>
+model as well.</p>
 
 **Kind**: static method of [Model](#.Model)  
-**Returns**: [Model](#.Model) - a [Model](#Model) instance.  
+**Returns**: [Model](#.Model) - <p>a [Model](#Model) instance.</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| userProps | props | the required [Model](#Model)'s properties. |
+| userProps | props | <p>the required [Model](#Model)'s properties.</p> |
 
 
 <a name="Model.withId"></a>
 
 ## `static  withId(id)`⇒ Model,null 
 
-Returns a [Model](#Model) instance for the object with id `id`.
-Returns `null` if the model has no instance with id `id`.
-
-You can use [Model#idExists](Model#idExists) to check for existence instead.
+<p>Returns a [Model](#Model) instance for the object with id <code>id</code>.<br>
+Returns <code>null</code> if the model has no instance with id <code>id</code>.</p>
+<p>You can use [Model#idExists](Model#idExists) to check for existence instead.</p>
 
 **Kind**: static method of [Model](#.Model)  
-**Returns**: [Model](#.Model) ⎮ null - [Model](#Model) instance with id `id`  
+**Returns**: [Model](#.Model) ⎮ null - <p>[Model](#Model) instance with id <code>id</code></p>  
 **Throws**:
 
-- If object with id `id` doesn't exist
+- <p>If object with id <code>id</code> doesn't exist</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| id | * | the `id` of the object to get |
+| id | * | <p>the <code>id</code> of the object to get</p> |
 
 
 <a name="Model.idExists"></a>
 
 ## `static  idExists(id)`⇒ Boolean 
 
-Returns a boolean indicating if an entity
-with the id `id` exists in the state.
+<p>Returns a boolean indicating if an entity<br>
+with the id <code>id</code> exists in the state.</p>
 
 **Kind**: static method of [Model](#.Model)  
-**Returns**: Boolean - a boolean indicating if entity with `id` exists in the state  
+**Returns**: Boolean - <p>a boolean indicating if entity with <code>id</code> exists in the state</p>  
 **Since**: 0.11.0  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| id | * | a value corresponding to the id attribute of the [Model](#Model) class. |
+| id | * | <p>a value corresponding to the id attribute of the [Model](#Model) class.</p> |
 
 
 <a name="Model.exists"></a>
 
 ## `static  exists(props)`⇒ Boolean 
 
-Returns a boolean indicating if an entity
-with the given props exists in the state.
+<p>Returns a boolean indicating if an entity<br>
+with the given props exists in the state.</p>
 
 **Kind**: static method of [Model](#.Model)  
-**Returns**: Boolean - a boolean indicating if entity with `props` exists in the state  
+**Returns**: Boolean - <p>a boolean indicating if entity with <code>props</code> exists in the state</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| props | * | a key-value that [Model](#Model) instances should have to be considered as existing. |
+| props | * | <p>a key-value that [Model](#Model) instances should have to be considered as existing.</p> |
 
 
 <a name="Model.get"></a>
 
 ## `static  get(lookupObj)`⇒ Model 
 
-Gets the [Model](#Model) instance that matches properties in `lookupObj`.
-Throws an error if [Model](#Model) if multiple records match
-the properties.
+<p>Gets the [Model](#Model) instance that matches properties in <code>lookupObj</code>.<br>
+Throws an error if [Model](#Model) if multiple records match<br>
+the properties.</p>
 
 **Kind**: static method of [Model](#.Model)  
-**Returns**: [Model](#.Model) - a [Model](#Model) instance that matches the properties in `lookupObj`.  
+**Returns**: [Model](#.Model) - <p>a [Model](#Model) instance that matches the properties in <code>lookupObj</code>.</p>  
 **Throws**:
 
-- Error If more than one entity matches the properties in `lookupObj`.
+- Error <p>If more than one entity matches the properties in <code>lookupObj</code>.</p>
 
 
 | Param | Type | Description |
 | --- | --- | --- |
-| lookupObj | Object | the properties used to match a single entity. |
+| lookupObj | Object | <p>the properties used to match a single entity.</p> |
 
 
 <a name="Model.hasId"></a>
@@ -386,14 +377,14 @@ the properties.
 
 ***Deprecated***
 
-Returns a boolean indicating if an entity
-with the id `id` exists in the state.
+<p>Returns a boolean indicating if an entity<br>
+with the id <code>id</code> exists in the state.</p>
 
 **Kind**: static method of [Model](#.Model)  
-**Returns**: Boolean - a boolean indicating if entity with `id` exists in the state  
+**Returns**: Boolean - <p>a boolean indicating if entity with <code>id</code> exists in the state</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
-| id | * | a value corresponding to the id attribute of the [Model](#Model) class. |
+| id | * | <p>a value corresponding to the id attribute of the [Model](#Model) class.</p> |
 
 

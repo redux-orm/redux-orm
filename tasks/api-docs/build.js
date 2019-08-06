@@ -9,14 +9,15 @@ const writeFile = util.promisify(fs.writeFile)
 module.exports = buildApiDocs
 
 async function buildApiDocs () {
-  const { dmdOpts, src, dest, partial, helper, include, rootTemplate } = config
+  const { dmdOpts, src, dest, partial, helper, include, rootTemplate, configure } = config
 
   const template = (await readFile(path.resolve(rootTemplate)))
 
   async function toMarkdown (file) {
-    const data = await jsdoc2md.getTemplateData({ files: file })
+    const data = await jsdoc2md.getTemplateData({ configure, files: file })
     const markdown = await jsdoc2md.render({
       data,
+      configure,
       template: template.toString(),
       partial,
       helper,
