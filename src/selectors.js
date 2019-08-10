@@ -154,7 +154,7 @@ export class FieldSelectorSpec extends ModelBasedSelectorSpec {
             value = parentInstance ? parentInstance[this._accessorName] : null;
         }
         if (value instanceof Model) {
-            return value ? value.ref : null;
+            return value.ref;
         }
         if (value instanceof QuerySet) {
             return value.toRefArray();
