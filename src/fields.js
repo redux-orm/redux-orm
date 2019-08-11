@@ -621,12 +621,10 @@ export function many(...args) {
  * @param {string} [options.as] - Name for the new accessor defined for this field. If you don't
  *                                supply this, the key that this field is defined under will be
  *                                overridden.
- * @param {string} [options.relatedName] - The property name that will be used to access
- *                                         an instance of the model that this field is defined on.
- * @param {string} [relatedName] - If you didn't pass an object as the first argument,
- *                                 this is the property name that will be used to
- *                                 access a QuerySet the foreign key is defined from,
- *                                 from the target model.
+ * @param {string} [options.relatedName] - The property name that will be used to access the source
+ *                                         model instance referencing the target model instance.
+ * @param {string} [relatedName] - The property name that will be used to access the source
+ *                                 model instance referencing the target model instance
  * @return {OneToOne}
  */
 export function oneToOne(...args) {
