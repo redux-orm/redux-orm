@@ -49,9 +49,13 @@
         "title": "Utils",
         "sidebar_label": "Utils"
       },
-      "basics/basic-tutorial": {
-        "title": "Basic Tutorial: Intro",
-        "sidebar_label": "Basic Tutorial: Intro"
+      "basics/fields": {
+        "title": "Fields",
+        "sidebar_label": "Fields"
+      },
+      "basics/quick-start": {
+        "title": "Quick Start",
+        "sidebar_label": "Quick Start"
       },
       "faq": {
         "title": "Index",
@@ -73,12 +77,12 @@
         "title": "Installation",
         "sidebar_label": "Installation"
       },
-      "introduction/learning-resources": {
-        "title": "Learning Resources",
-        "sidebar_label": "Learning Resources"
-      },
       "introduction/README": {
         "title": "introduction/README"
+      },
+      "learning-resources": {
+        "title": "Learning Resources",
+        "sidebar_label": "Learning Resources"
       },
       "README": {
         "title": "README"

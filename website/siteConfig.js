@@ -16,7 +16,7 @@ const siteConfig = {
 
     headerLinks: [
         { doc: 'introduction/getting-started', label: 'Getting Started' },
-        { doc: 'basics/basic-tutorial', label: 'Docs' },
+        { doc: 'basics/quick-start', label: 'Docs' },
         { doc: 'api/api-reference', label: 'API' },
         { doc: 'faq', label: 'FAQ' },
         { href: 'https://github.com/redux-orm/redux-orm', label: 'Github' },

@@ -3,11 +3,11 @@
     "Introduction": [
       "introduction/getting-started",
       "introduction/installation",
-      "introduction/core-concepts",
-      "introduction/learning-resources"
+      "introduction/core-concepts"
     ],
     "Basics": [
-      "basics/basic-tutorial"
+      "basics/quick-start",
+      "basics/fields"
     ],
     "Advanced Tutorial": [
       "advanced/advanced-tutorial"
@@ -19,7 +19,8 @@
       "faq/performance"
     ],
     "Other": [
-      "troubleshooting"
+      "troubleshooting",
+      "learning-resources"
     ],
     "API Reference": [
       "api/api-reference",

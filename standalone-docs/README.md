@@ -3,8 +3,7 @@
 
 - [Read Me](../README.md)
 - [Introduction](introduction/README.md)
-  - [Core Concepts](introduction/CoreConcepts.md)
-  - [Learning Resources](introduction/LearningResources.md)
+  - [Related Projects](introduction/CoreConcepts.md)
   - [Related Projects](introduction/RelatedProjects.md)
 - [Basics](basics/README.md)
 - [Advanced](advanced/README.md)
@@ -13,6 +12,7 @@
 - [FAQ](FAQ.md)
   - [Performance](faq/Performance.md)
 - [Troubleshooting](Troubleshooting.md)
+- [Learning Resources](LearningResources.md)
 - [API Reference](api/README.md)
   - [ORM](api/ORM.md)
   - [Model](api/Model.md)
