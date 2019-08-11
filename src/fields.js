@@ -451,7 +451,7 @@ export class OneToOne extends RelationalField {
  * @global
  *
  * @param  {Object} [opts]
- * @param {Function} [opts.getDefault] - if you give a function here, it's return
+ * @param {Function} [opts.getDefault] - If you give a function here, its return
  *                                       value from calling with zero arguments will
  *                                       be used as the value when creating a new Model
  *                                       instance with {@link Model#create} if the field
@@ -496,14 +496,20 @@ export function attr(opts) {
  *
  * @global
  *
- * @param  {string|Object} toModelNameOrObj - the `modelName` property of
- *                                            the Model that is the target of the
- *                                            foreign key, or an object with properties
- *                                            `to` and optionally `relatedName`.
- * @param {string} [relatedName] - if you didn't pass an object as the first argument,
+ * @param {string|Class<Model>|Object} options - The target Model class, its `modelName`
+ *                                               attribute or an options object that
+ *                                               contains either as the `to` key.
+ * @param {string|Class<Model>} options.to - The target Model class or its `modelName` attribute.
+ * @param {string} [options.as] - Name for the new accessor defined for this field. If you don't
+ *                                supply this, the key that this field is defined under will be
+ *                                overridden.
+ * @param {string} [options.relatedName] - The property name that will be used to access
+ *                                         a QuerySet for all source models that reference
+ *                                         the respective target Model's instance.
+ * @param {string} [relatedName] - If you didn't pass an object as the first argument,
  *                                 this is the property name that will be used to
- *                                 access a QuerySet the foreign key is defined from,
- *                                 from the target model.
+ *                                 access a QuerySet for all source models that reference
+ *                                 the respective target Model's instance.
  * @return {ForeignKey}
  */
 export function fk(...args) {
@@ -521,13 +527,15 @@ export function fk(...args) {
  * to the relationship. A custom through model must have at least two foreign keys,
  * one pointing to the source Model, and one pointing to the target Model.
  *
+ * Like `fk`, this function accepts one or two string arguments specifying the other
+ * Model and the related name, or a single object argument that allows you to pass
+ * a custom through model.
+ *
  * If you have more than one foreign key pointing to a source or target Model in the
  * through Model, you must pass the option `throughFields`, which is an array of two
  * strings, where the strings are the field names that identify the foreign keys to
  * be used for the many-to-many relationship. Redux-ORM will figure out which field name
- * points to which model by checking the through Model definition.
- *
- * Unlike `fk`, this function accepts only an object argument.
+ * points to which model by checking the "through model" definition.
  *
  * ```javascript
  * class Authorship extends Model {}
@@ -545,9 +553,9 @@ export function fk(...args) {
  *     relatedName: 'authors',
  *     through: 'Authorship',
  *
- *     // this is optional, since Redux-ORM can figure
- *     // out the through fields itself as there aren't
- *     // multiple foreign keys pointing to the same models.
+ *     // here this is optional: Redux-ORM can figure
+ *     // out the through fields itself since the two
+ *     // foreign key fields point to different Models
  *     throughFields: ['author', 'book'],
  *   })
  * };
@@ -562,24 +570,34 @@ export function fk(...args) {
  *
  * @global
  *
- * @param  {Object} options - options
- * @param  {string} options.to - the `modelName` attribute of the target Model.
- * @param  {string} [options.through] - the `modelName` attribute of the through Model which
- *                                    must declare at least one foreign key to both source and
- *                                    target Models. If not supplied, Redux-Orm will autogenerate
- *                                    one.
- * @param  {string[]} [options.throughFields] - this must be supplied only when a custom through
- *                                            Model has more than one foreign key pointing to
- *                                            either the source or target mode. In this case
- *                                            Redux-ORM can't figure out the correct fields for
- *                                            you, you must provide them. The supplied array should
- *                                            have two elements that are the field names for the
- *                                            through fields you want to declare the many-to-many
- *                                            relationship with. The order doesn't matter;
- *                                            Redux-ORM will figure out which field points to
- *                                            the source Model and which to the target Model.
- * @param  {string} [options.relatedName] - the attribute used to access a QuerySet
- *                                          of source Models from target Model.
+ * @param {string|Class<Model>|Object} options - The target Model class, its `modelName`
+ *                                               attribute or an options object that
+ *                                               contains either as the `to` key.
+ * @param {string|Class<Model>} options.to - The target Model class or its `modelName` attribute.
+ * @param {string} [options.as] - Name for the new accessor defined for this field. If you don't
+ *                                supply this, the key that this field is defined under will be
+ *                                overridden. **Note that specifying this may currently cause bugs. See [#232](https://github.com/redux-orm/redux-orm/issues/232).**
+ * @param {string|Class<Model>} [options.through] - The through Model class or its `modelName`
+ *                                                  attribute. It must declare at least one
+ *                                                  foreign key to both source and target models.
+ *                                                  If not supplied, Redux-ORM will generate one.
+ * @param {string[]} [options.throughFields] - Must be supplied only when a custom through
+ *                                             Model has more than one foreign key pointing to
+ *                                             either the source or target mode. In this case
+ *                                             Redux-ORM can't figure out the correct fields for
+ *                                             you, you must provide them. The supplied array should
+ *                                             have two elements that are the field names for the
+ *                                             through fields you want to declare the many-to-many
+ *                                             relationship with. The order doesn't matter;
+ *                                             Redux-ORM will figure out which field points to
+ *                                             the source Model and which to the target Model.
+ * @param {string} [options.relatedName] - The attribute used to access a QuerySet for all
+ *                                         source models that reference the respective target
+ *                                         Model's instance.
+ * @param {string} [relatedName] - If you didn't pass an object as the first argument,
+ *                                 this is the property name that will be used to
+ *                                 access a QuerySet for all source models that reference
+ *                                 the respective target Model's instance.
  * @return {ManyToMany}
  */
 export function many(...args) {
@@ -596,14 +614,19 @@ export function many(...args) {
  *
  * @global
  *
- * @param  {string|Object} toModelNameOrObj - the `modelName` property of
- *                                            the Model that is the target of the
- *                                            foreign key, or an object with properties
- *                                            `to` and optionally `relatedName`.
- * @param {string} [relatedName] - if you didn't pass an object as the first argument,
+ * @param {string|Class<Model>|Object} options - The target Model class, its `modelName`
+ *                                               attribute or an options object that
+ *                                               contains either as the `to` key.
+ * @param {string|Class<Model>} options.to - The target Model class or its `modelName` attribute.
+ * @param {string} [options.as] - Name for the new accessor defined for this field. If you don't
+ *                                supply this, the key that this field is defined under will be
+ *                                overridden.
+ * @param {string} [options.relatedName] - The property name that will be used to access
+ *                                         an instance of the model that this field is defined on.
+ * @param {string} [relatedName] - If you didn't pass an object as the first argument,
  *                                 this is the property name that will be used to
- *                                 access a Model the foreign key is defined from,
- *                                 from the target Model.
+ *                                 access a QuerySet the foreign key is defined from,
+ *                                 from the target model.
  * @return {OneToOne}
  */
 export function oneToOne(...args) {
