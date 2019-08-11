@@ -3,7 +3,7 @@
 
 - [Read Me](../README.md)
 - [Introduction](introduction/README.md)
-  - [Related Projects](introduction/CoreConcepts.md)
+  - [Core Concepts](introduction/CoreConcepts.md)
   - [Related Projects](introduction/RelatedProjects.md)
 - [Basics](basics/README.md)
 - [Advanced](advanced/README.md)
