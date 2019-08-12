@@ -1,0 +1,92 @@
+hide circle
+hide empty members
+
+!$headingFontSize = 18
+!$fontSize = 16
+!$accent = 'fff'
+!$accentDark = 'fff'
+!$primary = 'bc001c'
+!$secondary = 'fff'
+!$arrowColor = 'fff'
+!$arrowFontColor = 'fff'
+!$borderColor = 'bc001c'
+!$boxBg = 'fefefe'
+
+!function $font_style()
+  fontColor $primary
+  fontName $fontName
+  fontSize $fontSize
+  stereotypeFontColor $secondary
+  stereotypeFontSize $fontSize
+!endfunction
+
+!function $basic_style()
+  backgroundColor $boxBg
+  borderColor $borderColor
+!endfunction
+
+!function $accent_style()
+  backgroundColor $accent
+  borderColor $accentDark
+!endfunction
+
+!function $arrow_style()
+  arrowColor $arrowColor
+  arrowFontName $fontName
+  arrowBorderThickness 33
+  arrowFontColor $arrowFontColor
+  arrowFontSize $fontSize
+!endfunction
+
+skinparam class {
+  backgroundColor red
+  $basic_style()
+  $font_style()
+  $arrow_style()
+  attributeFontColor $primary
+  attributeFontSize $fontSize
+  attributeIconSize 14
+  attributeIconColor red
+  borderThickness 3
+}
+
+skinparam entity {
+  backgroundColor red
+  $basic_style()
+  $font_style()
+  $arrow_style()
+  attributeFontColor $primary
+  attributeFontSize $fontSize
+  attributeIconSize 22
+  attributeIconColor red
+  borderThickness 3
+}
+
+skinparam interface {
+  $accent_style()
+  $font_style()
+}
+
+skinparam component {
+  $basic_style()
+  $font_style()
+}
+
+skinparam node {
+  $basic_style()
+  $font_style()
+}
+
+skinparam database {
+  $basic_style()
+  $font_style()
+}
+skinparam note {
+  $accent_style()
+  $font_style()
+}
+
+skinparam rectangle {
+  $basic_style()
+  $font_style()
+}
