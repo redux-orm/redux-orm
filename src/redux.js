@@ -48,7 +48,8 @@ function createSelectorFromSpec(spec) {
     return createCachedSelector(
         spec.dependencies,
         spec.resultFunc
-    )(spec.keySelector, {
+    )({
+        keySelector: spec.keySelector,
         cacheObject: new FlatMapCache(),
         selectorCreator: createSelector, // eslint-disable-line no-use-before-define
     });
