@@ -600,15 +600,22 @@ describe('Many to many relationships', () => {
     });
 
     describe('many-many with accessor', () => {
-        it('registers relationship with an accessor', () => {
-            const User = class extends Model {};
+        let User;
+        let Project;
+
+        beforeEach(() => {
+            User = class extends Model {};
             User.modelName = 'User';
             User.fields = {
                 id: attr(),
-                projects_id: many({ to: 'Project', relatedName: 'users', as: 'projects' }),
+                project_ids: many({
+                    to: 'Project',
+                    as: 'projects',
+                    relatedName: 'users',
+                }),
             };
 
-            const Project = class extends Model {};
+            Project = class extends Model {};
             Project.modelName = 'Project';
             Project.fields = {
                 id: attr(),
@@ -617,22 +624,48 @@ describe('Many to many relationships', () => {
             orm = new ORM();
             orm.register(User, Project);
             session = orm.session();
+        });
 
+        it('registers relationship with a custom accessor', () => {
             session.Project.create({ id: 'p0' });
             session.Project.create({ id: 'p1' });
-            session.User.create({ id: 'u0', projects_id: ['p0', 'p1'] });
+            session.User.create({
+                id: 'u0',
+                project_ids: ['p0', 'p1'],
+            });
 
             const u0 = session.User.withId('u0');
-            expect(u0.projects_id).toEqual(['p0', 'p1']);
-            expect(u0.projects.toRefArray()).toEqual([{ id: 'p0' }, { id: 'p1' }]);
+            expect(u0.project_ids).toEqual(['p0', 'p1']);
+            expect(u0.projects.toRefArray()).toEqual([
+                { id: 'p0' },
+                { id: 'p1' },
+            ]);
 
             // Ensure that the backward relation works as expected
             const p0 = session.Project.withId('p0');
             expect(p0.users.toRefArray()).toEqual([
                 {
                     id: 'u0',
-                    projects_id: ['p0', 'p1']
+                    project_ids: ['p0', 'p1'],
                 }
+            ]);
+        });
+
+        it('updates relationship with a custom accessor', () => {
+            session.Project.create({ id: 'p0' });
+            session.Project.create({ id: 'p1' });
+            session.User.create({
+                id: 'u0',
+                project_ids: ['p0', 'p1'],
+            });
+
+            const u0 = session.User.withId('u0');
+            u0.update({
+                project_ids: ['p1'],
+            });
+            expect(u0.project_ids).toEqual(['p1']);
+            expect(u0.projects.toRefArray()).toEqual([
+                { id: 'p1' },
             ]);
         });
     });
