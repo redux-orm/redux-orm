@@ -289,10 +289,19 @@ const Model = class Model {
                     props[key] = field.getDefault();
                 }
             } else if (valuePassed) {
-                // If a value is supplied for a ManyToMany field,
-                // discard them from props and save for later processing.
+                // Save for later processing
                 m2mRelations[key] = userProps[key];
-                delete props[key];
+
+                if (!field.as) {
+                    /**
+                     * The relationship does not have an accessor
+                     * Discard the value from props as the field will be populated later with instances
+                     * from the target models when refreshing the M2M relations.
+                     * If the relationship does have an accessor (`as`) field then we do want to keep this
+                     * original value in the props to expose the raw list of IDs from the instance.
+                     */
+                    delete props[key];
+                }
             }
         });
 
@@ -574,7 +583,17 @@ const Model = class Model {
                 } else if (field instanceof ManyToMany) {
                     // field is forward relation
                     m2mRelations[mergeKey] = mergeObj[mergeKey];
-                    delete mergeObj[mergeKey];
+
+                    if (!field.as) {
+                        /**
+                         * The relationship does not have an accessor
+                         * Discard the value from props as the field will be populated later with instances
+                         * from the target models when refreshing the M2M relations.
+                         * If the relationship does have an accessor (`as`) field then we do want to keep this
+                         * original value in the props to expose the raw list of IDs from the instance.
+                         */
+                        delete mergeObj[mergeKey];
+                    }
                 }
             } else if (virtualFields.hasOwnProperty(mergeKey)) {
                 const field = virtualFields[mergeKey];
@@ -686,10 +705,11 @@ const Model = class Model {
                     add: idsToAdd,
                 } = diffActions;
                 if (idsToDelete.length > 0) {
-                    this[name].remove(...idsToDelete);
+                    this[field.as || name].remove(...idsToDelete);
                 }
+
                 if (idsToAdd.length > 0) {
-                    this[name].add(...idsToAdd);
+                    this[field.as || name].add(...idsToAdd);
                 }
             }
         });

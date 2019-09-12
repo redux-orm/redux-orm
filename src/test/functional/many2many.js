@@ -598,4 +598,33 @@ describe('Many to many relationships', () => {
             validateRelationState();
         });
     });
+
+    describe('many-many with accessor', () => {
+        it('registers relationship with an accessor', () => {
+            const User = class extends Model {};
+            User.modelName = 'User';
+            User.fields = {
+                id: attr(),
+                projects_id: many({ to: 'Project', relatedName: 'users', as: 'projects' }),
+            };
+
+            const Project = class extends Model {};
+            Project.modelName = 'Project';
+            Project.fields = {
+                id: attr(),
+            };
+
+            orm = new ORM();
+            orm.register(User, Project);
+            session = orm.session();
+
+            session.Project.create({ id: 'p0' });
+            session.Project.create({ id: 'p1' });
+            session.User.create({ id: 'u0', projects_id: ['p0', 'p1'] });
+
+            const u0 = session.User.withId('u0');
+            expect(u0.projects_id).toEqual(['p0', 'p1']);
+            expect(u0.projects.toRefArray()).toEqual([{ id: 'p0' }, { id: 'p1' }]);
+        });
+    });
 });
