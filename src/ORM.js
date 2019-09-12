@@ -25,7 +25,7 @@ const RESERVED_TABLE_OPTIONS = [
     'indexes',
     'meta',
 ];
-const isReservedTableOption = word => RESERVED_TABLE_OPTIONS.includes(word);
+const isReservedTableOption = (word) => RESERVED_TABLE_OPTIONS.includes(word);
 
 /**
  * ORM - the Object Relational Mapper.
@@ -45,7 +45,7 @@ export class ORM {
      * Creates a new ORM instance.
      */
     constructor(opts) {
-        const { createDatabase } = Object.assign({}, ORM_DEFAULTS, (opts || {}));
+        const { createDatabase } = { ...ORM_DEFAULTS, ...(opts || {}) };
         this.createDatabase = createDatabase;
         this.registry = [];
         this.implicitThroughModels = [];
@@ -157,7 +157,7 @@ export class ORM {
     get(modelName) {
         const allModels = this.registry.concat(this.implicitThroughModels);
         const found = Object.values(allModels).find(
-            model => model.modelName === modelName
+            (model) => model.modelName === modelName
         );
 
         if (typeof found === 'undefined') {
@@ -228,7 +228,7 @@ export class ORM {
      * @private
      */
     _setupModelPrototypes(models) {
-        models.filter(model => !model.isSetUp).forEach((model) => {
+        models.filter((model) => !model.isSetUp).forEach((model) => {
             const { fields, modelName, querySetClass } = model;
             Object.entries(fields).forEach(([fieldName, field]) => {
                 if (!this._isFieldInstalled(modelName, fieldName)) {

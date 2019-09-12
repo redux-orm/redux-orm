@@ -152,9 +152,9 @@ function objectShallowEquals(a, b) {
 }
 
 function arrayDiffActions(sourceArr, targetArr) {
-    const itemsInBoth = sourceArr.filter(item => targetArr.includes(item));
-    const deleteItems = sourceArr.filter(item => !itemsInBoth.includes(item));
-    const addItems = targetArr.filter(item => !itemsInBoth.includes(item));
+    const itemsInBoth = sourceArr.filter((item) => targetArr.includes(item));
+    const deleteItems = sourceArr.filter((item) => !itemsInBoth.includes(item));
+    const addItems = targetArr.filter((item) => !itemsInBoth.includes(item));
 
     if (deleteItems.length || addItems.length) {
         return {

@@ -153,7 +153,7 @@ const Session = class Session {
 
         const { idAttribute } = this[table];
         const accessedIds = new Set(rows.map(
-            row => row[idAttribute]
+            (row) => row[idAttribute]
         ));
 
         const anyClauseFilteredByPk = clauses.some((clause) => {

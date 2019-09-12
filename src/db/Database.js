@@ -98,7 +98,7 @@ export function createDatabase(schemaSpec) {
         query: query.bind(null, tables),
         update: update.bind(null, tables),
         // Used to inspect the schema.
-        describe: tableName => tables[tableName],
+        describe: (tableName) => tables[tableName],
     };
 }
 

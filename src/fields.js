@@ -399,8 +399,8 @@ export class ManyToMany extends RelationalField {
          * determine which field references which model
          * and infer the directions from that
          */
-        const throughModelFieldReferencing = otherModel => (
-            Object.keys(throughModel.fields).find(someFieldName => (
+        const throughModelFieldReferencing = (otherModel) => (
+            Object.keys(throughModel.fields).find((someFieldName) => (
                 throughModel.fields[someFieldName].references(otherModel)
             ))
         );

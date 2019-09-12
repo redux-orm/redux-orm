@@ -75,10 +75,10 @@ class ModelBasedSelectorSpec extends SelectorSpec {
             const { [this._model.modelName]: ModelClass } = session;
             if (typeof idArg === 'undefined') {
                 return ModelClass.all().toModelArray()
-                    .map(instance => this.valueForInstance(instance, session, ...other));
+                    .map((instance) => this.valueForInstance(instance, session, ...other));
             }
             if (Array.isArray(idArg)) {
-                return idArg.map(id => (
+                return idArg.map((id) => (
                     this.valueForInstance(ModelClass.withId(id), session, ...other)
                 ));
             }
@@ -102,7 +102,7 @@ export class MapSelectorSpec extends ModelBasedSelectorSpec {
     }
 
     get dependencies() {
-        return [this._orm, idArgSelector, state => state];
+        return [this._orm, idArgSelector, (state) => state];
     }
 
     valueForInstance(instance, session, state) {
@@ -117,7 +117,7 @@ export class MapSelectorSpec extends ModelBasedSelectorSpec {
             },
         } = session;
         return value.toRefArray()
-            .map(ref => this._selector(state, ref[mapIdAttribute]));
+            .map((ref) => this._selector(state, ref[mapIdAttribute]));
     }
 }
 

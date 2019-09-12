@@ -84,7 +84,7 @@ const Model = class Model {
             if (!(fieldName in this)) {
                 Object.defineProperty(this, fieldName, {
                     get: () => this._fields[fieldName],
-                    set: value => this.set(fieldName, value),
+                    set: (value) => this.set(fieldName, value),
                     configurable: true,
                     enumerable: true,
                 });
@@ -506,7 +506,7 @@ const Model = class Model {
             const field = ThisModel.fields[fieldName];
             if (field instanceof ManyToMany) {
                 const ids = this[fieldName].toModelArray().map(
-                    model => model.getId()
+                    (model) => model.getId()
                 );
                 return `${fieldName}: [${ids.join(', ')}]`;
             }
@@ -694,8 +694,8 @@ const Model = class Model {
                 ({ from: toField, to: fromField } = field.throughFields);
             }
 
-            const currentIds = ThroughModel.filter(through => through[fromField] === this[ThisModel.idAttribute]
-            ).toRefArray().map(ref => ref[toField]);
+            const currentIds = ThroughModel.filter((through) => through[fromField] === this[ThisModel.idAttribute]
+            ).toRefArray().map((ref) => ref[toField]);
 
             const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
 
