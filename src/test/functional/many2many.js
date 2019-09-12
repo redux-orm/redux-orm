@@ -625,6 +625,15 @@ describe('Many to many relationships', () => {
             const u0 = session.User.withId('u0');
             expect(u0.projects_id).toEqual(['p0', 'p1']);
             expect(u0.projects.toRefArray()).toEqual([{ id: 'p0' }, { id: 'p1' }]);
+
+            // Ensure that the backward relation works as expected
+            const p0 = session.Project.withId('p0');
+            expect(p0.users.toRefArray()).toEqual([
+                {
+                    id: 'u0',
+                    projects_id: ['p0', 'p1']
+                }
+            ]);
         });
     });
 });
