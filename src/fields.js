@@ -364,6 +364,7 @@ export class ManyToMany extends RelationalField {
             relatedName: fieldName,
             through: this.through,
             throughFields: this.getThroughFields(fieldName, model, toModel, throughModel),
+            as: this.as,
         });
     }
 
