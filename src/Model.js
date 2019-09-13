@@ -260,7 +260,7 @@ const Model = class Model {
      * If you pass values for many-to-many fields, instances are created on the through
      * model as well.
      *
-     * @param  {props} userProps - the new {@link Model}'s properties.
+     * @param  {Object} userProps - the new {@link Model}'s properties.
      * @return {Model} a new {@link Model} instance.
      */
     static create(userProps) {
@@ -336,7 +336,7 @@ const Model = class Model {
      * If you pass values for many-to-many fields, instances are created on the through
      * model as well.
      *
-     * @param  {props} userProps - the required {@link Model}'s properties.
+     * @param  {Object} userProps - the required {@link Model}'s properties.
      * @return {Model} a {@link Model} instance.
      */
     static upsert(userProps) {
@@ -457,7 +457,10 @@ const Model = class Model {
 
     /**
      * Returns a reference to the plain JS object in the store.
-     * Make sure to not mutate this.
+     * It contains all the properties that you pass when creating the model,
+     * except for primary keys of many-to-many relationships with a custom accessor.
+     *
+     * Make sure never to mutate this.
      *
      * @return {Object} a reference to the plain JS object in the store
      */
