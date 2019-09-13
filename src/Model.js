@@ -1,11 +1,11 @@
 import Session from './Session';
 import QuerySet from './QuerySet';
-import {
-    ManyToMany,
-    ForeignKey,
-    OneToOne,
-    attr,
-} from './fields';
+
+import { attr } from './fields';
+import ForeignKey from './fields/ForeignKey';
+import ManyToMany from './fields/ManyToMany';
+import OneToOne from './fields/OneToOne';
+
 import {
     CREATE, UPDATE, DELETE, FILTER,
 } from './constants';

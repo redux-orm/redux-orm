@@ -4,10 +4,8 @@ import createCachedSelector, { FlatMapCache } from 're-reselect';
 import { memoize } from './memoize';
 
 import { ORM } from './ORM';
-import {
-    SelectorSpec,
-    MapSelectorSpec,
-} from './selectors';
+import SelectorSpec from './selectors/SelectorSpec';
+import MapSelectorSpec from './selectors/MapSelectorSpec';
 
 /**
  * @module redux

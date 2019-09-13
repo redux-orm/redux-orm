@@ -199,6 +199,13 @@ function mapValues(object, func) {
         }, {});
 }
 
+function normalizeModelReference(modelNameOrClass) {
+    if (!modelNameOrClass || typeof modelNameOrClass === 'string') {
+        return modelNameOrClass;
+    }
+    return modelNameOrClass.modelName;
+}
+
 export {
     attachQuerySetMethods,
     m2mName,
@@ -215,4 +222,5 @@ export {
     clauseReducesResultSetSize,
     warnDeprecated,
     mapValues,
+    normalizeModelReference,
 };

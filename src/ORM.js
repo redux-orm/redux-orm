@@ -1,11 +1,10 @@
+/* eslint-disable max-classes-per-file */
 import Session from './Session';
 import Model from './Model';
 import { createDatabase as defaultCreateDatabase } from './db';
-import {
-    ForeignKey,
-    ManyToMany,
-    attr,
-} from './fields';
+import { attr } from './fields';
+import ForeignKey from './fields/ForeignKey';
+import ManyToMany from './fields/ManyToMany';
 
 import { createModelSelectorSpec } from './selectors';
 
@@ -124,7 +123,7 @@ export class ORM {
 
                 Through.modelName = m2mName(thisModelName, fieldName);
 
-                const PlainForeignKey = class ThroughForeignKeyField extends ForeignKey {
+                const PlainForeignKey = class PlainForeignKey extends ForeignKey {
                     get installsBackwardsVirtualField() {
                         return false;
                     }

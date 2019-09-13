@@ -10,3 +10,9 @@ export const SUCCESS = 'SUCCESS';
 export const FAILURE = 'FAILURE';
 
 export const STATE_FLAG = Symbol('REDUX_ORM_STATE_FLAG');
+
+export const ALL_INSTANCES = Symbol('REDUX_ORM_ALL_INSTANCES');
+
+export const ID_ARG_KEY_SELECTOR = (state, idArg) => (
+    (typeof idArg === 'undefined') ? ALL_INSTANCES : idArg
+);
