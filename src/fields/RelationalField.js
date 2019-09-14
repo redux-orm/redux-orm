@@ -7,7 +7,10 @@ import {
     normalizeModelReference,
 } from '../utils';
 
-export default class RelationalField extends Field {
+/**
+ * @private
+ */
+export class RelationalField extends Field {
     constructor(...args) {
         super();
         if (args.length === 1 && typeof args[0] === 'object') {
@@ -63,3 +66,5 @@ export default class RelationalField extends Field {
         };
     }
 }
+
+export default RelationalField;

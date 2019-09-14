@@ -14,14 +14,20 @@ const DEFAULT_TABLE_OPTIONS = {
     fields: {},
 };
 
-// Input is the current max id and the new id passed to the create action.
-// Both may be undefined. The current max id in the case that this is the first Model
-// being created, and the new id if the id was not explicitly passed to the
-// database.
-//
-// Return value is the new max id and the id to use to create the new row.
-// If the id's are strings, the id must be passed explicitly every time.
-// In this case, the current max id will remain `NaN` due to `Math.max`, but that's fine.
+/**
+ * @private
+ * @param {*} _currMax - the current max id
+ * @param {*} userPassedId - the new id passed to the create action
+ *
+ * Both may be undefined. The current max id in the case that this is the first Model
+ * being created, and the new id if the id was not explicitly passed to the
+ * database.
+ *
+ * @return {Array} the new max id and the id to use to create the new row
+ *
+ * If the id's are strings, the id must be passed explicitly every time.
+ * In this case, the current max id will remain `NaN` due to `Math.max`, but that's fine.
+ */
 function idSequencer(_currMax, userPassedId) {
     let currMax = _currMax;
     let newMax;
@@ -47,6 +53,9 @@ function idSequencer(_currMax, userPassedId) {
 
 /**
  * Adapt order directions array to @{lodash.orderBy} API.
+ *
+ * @private
+ *
  * @param {Array<Boolean|'asc'|'desc'>} orders? - an array of optional order query directions as provided to {@Link {QuerySet.orderBy}}
  * @return {Array<'asc'|'desc'>|undefined} A normalized ordering array or null if non was provided.
  */
@@ -60,8 +69,9 @@ function normalizeOrders(orders) {
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
+ * @private
  */
-const Table = class Table {
+export class Table {
     /**
      * Creates a new {@link Table} instance.
      * @param  {Object} userOpts - options to use.
@@ -561,6 +571,6 @@ const Table = class Table {
             ),
         }, branch);
     }
-};
+}
 
 export default Table;

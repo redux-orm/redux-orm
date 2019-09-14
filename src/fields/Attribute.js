@@ -4,7 +4,10 @@ import {
     attrDescriptor,
 } from '../descriptors';
 
-export default class Attribute extends Field {
+/**
+ * @private
+ */
+export class Attribute extends Field {
     constructor(opts) {
         super();
         this.opts = opts || {};
@@ -18,3 +21,5 @@ export default class Attribute extends Field {
         return attrDescriptor(fieldName);
     }
 }
+
+export default Attribute;

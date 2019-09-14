@@ -12,6 +12,7 @@ import OneToOne from './OneToOne';
  * {@link fk}, {@link many} and {@link oneToOne}.
  *
  * @module fields
+ * @private
  */
 
 /**
@@ -41,7 +42,7 @@ import OneToOne from './OneToOne';
  *                                       value is not passed.
  * @return {Attribute}
  */
-export function attr(opts) {
+function attr(opts) {
     return new Attribute(opts);
 }
 
@@ -95,7 +96,7 @@ export function attr(opts) {
  *                                 the respective target Model's instance.
  * @return {ForeignKey}
  */
-export function fk(...args) {
+function fk(...args) {
     return new ForeignKey(...args);
 }
 
@@ -159,7 +160,7 @@ export function fk(...args) {
  * @param {string|Class<Model>} options.to - The target Model class or its `modelName` attribute.
  * @param {string} [options.as] - Name for the new accessor defined for this field. If you don't
  *                                supply this, the key that this field is defined under will be
- *                                overridden. **Note that specifying this may currently cause bugs. See [#232](https://github.com/redux-orm/redux-orm/issues/232).**
+ *                                overridden.
  * @param {string|Class<Model>} [options.through] - The through Model class or its `modelName`
  *                                                  attribute. It must declare at least one
  *                                                  foreign key to both source and target models.
@@ -183,7 +184,7 @@ export function fk(...args) {
  *                                 the respective target Model's instance.
  * @return {ManyToMany}
  */
-export function many(...args) {
+function many(...args) {
     return new ManyToMany(...args);
 }
 
@@ -210,6 +211,13 @@ export function many(...args) {
  *                                 model instance referencing the target model instance
  * @return {OneToOne}
  */
-export function oneToOne(...args) {
+function oneToOne(...args) {
     return new OneToOne(...args);
 }
+
+export {
+    fk,
+    attr,
+    many,
+    oneToOne,
+};

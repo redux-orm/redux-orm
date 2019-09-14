@@ -5,7 +5,10 @@ import {
     backwardsOneToOneDescriptor,
 } from '../descriptors';
 
-export default class OneToOne extends RelationalField {
+/**
+ * @private
+ */
+export class OneToOne extends RelationalField {
     getBackwardsFieldName(model) {
         return (
             this.relatedName ||
@@ -21,3 +24,5 @@ export default class OneToOne extends RelationalField {
         return backwardsOneToOneDescriptor(fieldName, model.modelName);
     }
 }
+
+export default OneToOne;

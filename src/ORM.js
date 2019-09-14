@@ -42,6 +42,13 @@ const isReservedTableOption = (word) => RESERVED_TABLE_OPTIONS.includes(word);
 export class ORM {
     /**
      * Creates a new ORM instance.
+     *
+     * @param {Object} [opts]
+     * @param {Function} [opts.stateSelector] - function that given a Redux state tree
+     *                                          will return the ORM state's subtree,
+     *                                          e.g. `state => state.orm`
+     *                                          (necessary if you want to use selectors)
+     * @param {Function} [opts.createDatabase] - function that creates a database
      */
     constructor(opts) {
         const { createDatabase } = { ...ORM_DEFAULTS, ...(opts || {}) };

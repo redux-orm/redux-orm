@@ -15,7 +15,7 @@
     "transpile:es": "cross-env BABEL_ENV=es babel src --out-dir es --ignore */test",
     "build:umd": "webpack --config webpack.dev.js",
     "build:umd:min": "webpack --config webpack.prod.js",
-    "build:docs": "jsdoc src -d docs -c ./jsdoc.conf.json --verbose",
+    "build:docs": "jsdoc src src/db src/fields src/selectors -d docs -c ./jsdoc.conf.json --verbose",
     "build": "npm run clean && npm run transpile:cjs && npm run transpile:es && npm run build:umd && npm run build:umd:min && npm run build:docs",
     "pub": "npm run ensure-clean-tree && npm run ensure-version-not-published && npm run lint && npm run test && npm run build && npm run test:es5 && npm publish && git push origin && gulp deploy && npm run clean",
     "pub:next": "npm run ensure-clean-tree && npm run ensure-version-not-published && npm run lint && npm run test && npm run build && npm run test:es5 && npm publish --tag next && git push origin && gulp deploy && npm run clean",

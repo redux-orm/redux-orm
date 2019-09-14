@@ -3,7 +3,7 @@
  * Conforms to the template method behavioral design pattern.
  * @private
  */
-export default class FieldInstallerTemplate {
+export class FieldInstallerTemplate {
     constructor(opts) {
         this.field = opts.field;
         this.fieldName = opts.fieldName;
@@ -72,3 +72,5 @@ export default class FieldInstallerTemplate {
         }
     }
 }
+
+export default FieldInstallerTemplate;

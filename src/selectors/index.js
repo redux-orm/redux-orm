@@ -7,6 +7,7 @@ import ModelSelectorSpec from './ModelSelectorSpec';
 
 /**
  * @module selectors
+ * @private
  */
 
 export function createFieldSelectorSpec({

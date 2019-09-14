@@ -3,8 +3,10 @@ import { FILTER, EXCLUDE } from './constants';
 
 /**
  * @module utils
+ * @private
  */
 
+/** @private */
 function warnDeprecated(msg) {
     const logger = typeof console.warn === 'function'
         ? console.warn.bind(console)
@@ -12,6 +14,7 @@ function warnDeprecated(msg) {
     return logger(msg);
 }
 
+/** @private */
 function capitalize(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
@@ -38,7 +41,6 @@ function m2mName(declarationModelName, fieldName) {
  *
  * Example: `Author` => `fromAuthorId`
  *
- * @private
  * @param  {string} declarationModelName - the name of the model where the relation was declared
  * @return {string} the field name in the through model for `declarationModelName`'s foreign key.
  */
@@ -60,16 +62,19 @@ function m2mToFieldName(otherModelName) {
     return `to${otherModelName}Id`;
 }
 
+/** */
 function reverseFieldName(modelName) {
     return modelName.toLowerCase() + 'Set'; // eslint-disable-line prefer-template
 }
 
+/** @private */
 function querySetDelegatorFactory(methodName) {
     return function querySetDelegator(...args) {
         return this.getQuerySet()[methodName](...args);
     };
 }
 
+/** @private */
 function querySetGetterDelegatorFactory(getterName) {
     return function querySetGetterDelegator() {
         const qs = this.getQuerySet();
@@ -77,6 +82,7 @@ function querySetGetterDelegatorFactory(getterName) {
     };
 }
 
+/** @private */
 function forEachSuperClass(subClass, func) {
     let currClass = subClass;
     while (currClass !== Function.prototype) {
@@ -85,6 +91,7 @@ function forEachSuperClass(subClass, func) {
     }
 }
 
+/** */
 function attachQuerySetMethods(modelClass, querySetClass) {
     const leftToDefine = querySetClass.sharedMethods.slice();
 
@@ -129,6 +136,7 @@ function normalizeEntity(entity) {
     return entity;
 }
 
+/** */
 function reverseFieldErrorMessage(modelName, fieldName, toModelName, backwardsFieldName) {
     return [
         `Reverse field ${backwardsFieldName} already defined`,
@@ -137,6 +145,7 @@ function reverseFieldErrorMessage(modelName, fieldName, toModelName, backwardsFi
     ].join('');
 }
 
+/** */
 function objectShallowEquals(a, b) {
     let keysInA = 0;
 
@@ -151,6 +160,7 @@ function objectShallowEquals(a, b) {
     return keysInA === Object.keys(b).length;
 }
 
+/** */
 function arrayDiffActions(sourceArr, targetArr) {
     const itemsInBoth = sourceArr.filter((item) => targetArr.includes(item));
     const deleteItems = sourceArr.filter((item) => !itemsInBoth.includes(item));
@@ -167,6 +177,9 @@ function arrayDiffActions(sourceArr, targetArr) {
 
 const { getBatchToken } = ops;
 
+/**
+ * @return boolean
+ */
 function clauseFiltersByAttribute({ type, payload }, attribute) {
     if (type !== FILTER) return false;
 
@@ -187,10 +200,17 @@ function clauseFiltersByAttribute({ type, payload }, attribute) {
     return true;
 }
 
+/**
+ * @return boolean
+ */
 function clauseReducesResultSetSize({ type }) {
     return [FILTER, EXCLUDE].includes(type);
 }
 
+/**
+ * @param {Object} object
+ * @return Object
+ */
 function mapValues(object, func) {
     return Object.entries(object)
         .reduce((newObject, [key, value]) => {
@@ -199,6 +219,7 @@ function mapValues(object, func) {
         }, {});
 }
 
+/** */
 function normalizeModelReference(modelNameOrClass) {
     if (!modelNameOrClass || typeof modelNameOrClass === 'string') {
         return modelNameOrClass;

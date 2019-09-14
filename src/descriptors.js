@@ -10,6 +10,7 @@ import {
  * to add or remove relationships between models.
  *
  * @module descriptors
+ * @private
  */
 
 /**

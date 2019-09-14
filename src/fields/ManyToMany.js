@@ -10,7 +10,10 @@ import {
     m2mFromFieldName,
 } from '../utils';
 
-export default class ManyToMany extends RelationalField {
+/**
+ * @private
+ */
+export class ManyToMany extends RelationalField {
     getDefault() {
         return [];
     }
@@ -106,3 +109,5 @@ export default class ManyToMany extends RelationalField {
         };
     }
 }
+
+export default ManyToMany;

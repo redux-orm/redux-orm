@@ -13,6 +13,7 @@ Object.defineProperty(BASE_EMPTY_STATE, STATE_FLAG, {
     value: STATE_FLAG,
 });
 
+/** @private */
 function replaceTableState(tableName, newTableState, tx, state) {
     const { batchToken, withMutations } = tx;
 
@@ -24,6 +25,7 @@ function replaceTableState(tableName, newTableState, tx, state) {
     return ops.batch.set(batchToken, tableName, newTableState, state);
 }
 
+/** @private */
 function query(tables, querySpec, state) {
     const { table: tableName, clauses } = querySpec;
     const table = tables[tableName];
@@ -33,6 +35,7 @@ function query(tables, querySpec, state) {
     };
 }
 
+/** @private */
 function update(tables, updateSpec, tx, state) {
     const { action, payload } = updateSpec;
 
@@ -76,7 +79,11 @@ function update(tables, updateSpec, tx, state) {
     };
 }
 
-
+/**
+ * @memberof db
+ * @param {Object} schemaSpec
+ * @return Object database
+ */
 export function createDatabase(schemaSpec) {
     const { tables: tableSpecs } = schemaSpec;
     const tables = Object.entries(tableSpecs)

@@ -8,7 +8,7 @@ import {
  * Default implementation for the template method in FieldInstallerTemplate.
  * @private
  */
-export default class DefaultFieldInstaller extends FieldInstallerTemplate {
+export class DefaultFieldInstaller extends FieldInstallerTemplate {
     installForwardsDescriptor() {
         Object.defineProperty(
             this.model.prototype,
@@ -67,3 +67,5 @@ export default class DefaultFieldInstaller extends FieldInstallerTemplate {
         );
     }
 }
+
+export default DefaultFieldInstaller;

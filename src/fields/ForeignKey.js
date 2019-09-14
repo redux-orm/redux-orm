@@ -5,7 +5,10 @@ import {
     backwardsManyToOneDescriptor,
 } from '../descriptors';
 
-export default class ForeignKey extends RelationalField {
+/**
+ * @private
+ */
+export class ForeignKey extends RelationalField {
     constructor(...args) {
         super(...args);
         this.index = true;
@@ -19,3 +22,5 @@ export default class ForeignKey extends RelationalField {
         return backwardsManyToOneDescriptor(fieldName, model.modelName);
     }
 }
+
+export default ForeignKey;

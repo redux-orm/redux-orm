@@ -1,6 +1,9 @@
 import DefaultFieldInstaller from './DefaultFieldInstaller';
 
-export default class Field {
+/**
+ * @private
+ */
+export class Field {
     constructor() {
         this.index = false;
     }
@@ -37,3 +40,5 @@ export default class Field {
         return false;
     }
 }
+
+export default Field;
