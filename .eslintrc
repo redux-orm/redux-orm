@@ -17,7 +17,8 @@
     "prefer-rest-params": 0,
     "import/no-named-as-default": 0,
     "function-paren-newline": 0,
-    "operator-linebreak": 0
+    "operator-linebreak": 0,
+    "max-classes-per-file": ["warn", 1]
   },
   "parserOptions": {
     "ecmaFeatures": {

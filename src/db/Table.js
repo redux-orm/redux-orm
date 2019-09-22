@@ -14,14 +14,20 @@ const DEFAULT_TABLE_OPTIONS = {
     fields: {},
 };
 
-// Input is the current max id and the new id passed to the create action.
-// Both may be undefined. The current max id in the case that this is the first Model
-// being created, and the new id if the id was not explicitly passed to the
-// database.
-//
-// Return value is the new max id and the id to use to create the new row.
-// If the id's are strings, the id must be passed explicitly every time.
-// In this case, the current max id will remain `NaN` due to `Math.max`, but that's fine.
+/**
+ * @private
+ * @param {*} _currMax - the current max id
+ * @param {*} userPassedId - the new id passed to the create action
+ *
+ * Both may be undefined. The current max id in the case that this is the first Model
+ * being created, and the new id if the id was not explicitly passed to the
+ * database.
+ *
+ * @return {Array} the new max id and the id to use to create the new row
+ *
+ * If the id's are strings, the id must be passed explicitly every time.
+ * In this case, the current max id will remain `NaN` due to `Math.max`, but that's fine.
+ */
 function idSequencer(_currMax, userPassedId) {
     let currMax = _currMax;
     let newMax;
@@ -47,6 +53,9 @@ function idSequencer(_currMax, userPassedId) {
 
 /**
  * Adapt order directions array to @{lodash.orderBy} API.
+ *
+ * @private
+ *
  * @param {Array<Boolean|'asc'|'desc'>} orders? - an array of optional order query directions as provided to {@Link {QuerySet.orderBy}}
  * @return {Array<'asc'|'desc'>|undefined} A normalized ordering array or null if non was provided.
  */
@@ -54,14 +63,15 @@ function normalizeOrders(orders) {
     if (orders === undefined) {
         return undefined;
     }
-    const convert = order => (order === false ? 'desc' : 'asc');
+    const convert = (order) => (order === false ? 'desc' : 'asc');
     return Array.isArray(orders) ? orders.map(convert) : convert(orders);
 }
 
 /**
  * Handles the underlying data structure for a {@link Model} class.
+ * @private
  */
-const Table = class Table {
+export class Table {
     /**
      * Creates a new {@link Table} instance.
      * @param  {Object} userOpts - options to use.
@@ -92,7 +102,7 @@ const Table = class Table {
 
     accessIds(branch, ids) {
         const map = branch[this.mapName];
-        return ids.map(id => map[id]);
+        return ids.map((id) => map[id]);
     }
 
     idExists(branch, id) {
@@ -129,8 +139,8 @@ const Table = class Table {
             [this.mapName]: {},
         };
         const attrIndexes = Object.keys(this.fields)
-            .filter(attr => attr !== this.idAttribute)
-            .filter(attr => this.fields[attr].index)
+            .filter((attr) => attr !== this.idAttribute)
+            .filter((attr) => this.fields[attr].index)
             .reduce((indexes, attr) => ({
                 ...indexes,
                 [attr]: {},
@@ -311,11 +321,11 @@ const Table = class Table {
             : ops.batch.set(batchToken, this.idAttribute, id, entry);
 
         const indexesToAppendTo = Object.keys(workingState.indexes)
-            .filter(fkAttr => (
+            .filter((fkAttr) => (
                 entry.hasOwnProperty(fkAttr) &&
                 entry[fkAttr] !== null
             ))
-            .map(fkAttr => ([fkAttr, entry[fkAttr]]));
+            .map((fkAttr) => ([fkAttr, entry[fkAttr]]));
 
         if (withMutations) {
             ops.mutable.push(id, workingState[this.arrName]);
@@ -390,7 +400,7 @@ const Table = class Table {
         const set = withMutations ? ops.mutable.set : ops.batch.set(batchToken);
 
         const indexedAttrs = Object.keys(branch.indexes)
-            .filter(attr => mergeObj.hasOwnProperty(attr));
+            .filter((attr) => mergeObj.hasOwnProperty(attr));
         const indexIdsToAdd = [];
         const indexIdsToDelete = [];
 
@@ -467,7 +477,7 @@ const Table = class Table {
                             {
                                 [value]: ops.batch.filter(
                                     batchToken,
-                                    rowId => rowId !== id,
+                                    (rowId) => rowId !== id,
                                     indexMap[attr][value] || []
                                 ),
                             },
@@ -499,7 +509,7 @@ const Table = class Table {
         const { arrName, mapName } = this;
         const arr = branch[arrName];
 
-        const idsToDelete = rows.map(row => row[this.idAttribute]);
+        const idsToDelete = rows.map((row) => row[this.idAttribute]);
         if (withMutations) {
             idsToDelete.forEach((id) => {
                 const idx = arr.indexOf(id);
@@ -510,8 +520,8 @@ const Table = class Table {
                 ops.mutable.omit(id, branch[mapName]);
             });
             // delete ids from all indexes
-            Object.values(branch.indexes).forEach(attrIndex => (
-                Object.values(attrIndex).forEach(valueIndex => (
+            Object.values(branch.indexes).forEach((attrIndex) => (
+                Object.values(attrIndex).forEach((valueIndex) => (
                     idsToDelete.forEach((id) => {
                         const idx = valueIndex.indexOf(id);
                         if (idx !== -1) {
@@ -531,7 +541,7 @@ const Table = class Table {
                     Object.entries(attrIndex).reduce((attrIndexMap, [value, valueIndex]) => {
                         attrIndexMap[value] = ops.batch.filter(
                             batchToken,
-                            id => !idsToDelete.includes(id),
+                            (id) => !idsToDelete.includes(id),
                             valueIndex
                         );
                         return attrIndexMap;
@@ -546,7 +556,7 @@ const Table = class Table {
         return ops.batch.merge(batchToken, {
             [arrName]: ops.batch.filter(
                 batchToken,
-                id => !idsToDelete.includes(id),
+                (id) => !idsToDelete.includes(id),
                 branch[arrName],
             ),
             [mapName]: ops.batch.omit(
@@ -561,6 +571,6 @@ const Table = class Table {
             ),
         }, branch);
     }
-};
+}
 
 export default Table;

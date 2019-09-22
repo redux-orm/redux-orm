@@ -1,11 +1,11 @@
 import Session from './Session';
 import QuerySet from './QuerySet';
-import {
-    ManyToMany,
-    ForeignKey,
-    OneToOne,
-    attr,
-} from './fields';
+
+import { attr } from './fields';
+import ForeignKey from './fields/ForeignKey';
+import ManyToMany from './fields/ManyToMany';
+import OneToOne from './fields/OneToOne';
+
 import {
     CREATE, UPDATE, DELETE, FILTER,
 } from './constants';
@@ -84,7 +84,7 @@ const Model = class Model {
             if (!(fieldName in this)) {
                 Object.defineProperty(this, fieldName, {
                     get: () => this._fields[fieldName],
-                    set: value => this.set(fieldName, value),
+                    set: (value) => this.set(fieldName, value),
                     configurable: true,
                     enumerable: true,
                 });
@@ -260,7 +260,7 @@ const Model = class Model {
      * If you pass values for many-to-many fields, instances are created on the through
      * model as well.
      *
-     * @param  {props} userProps - the new {@link Model}'s properties.
+     * @param  {Object} userProps - the new {@link Model}'s properties.
      * @return {Model} a new {@link Model} instance.
      */
     static create(userProps) {
@@ -289,10 +289,19 @@ const Model = class Model {
                     props[key] = field.getDefault();
                 }
             } else if (valuePassed) {
-                // If a value is supplied for a ManyToMany field,
-                // discard them from props and save for later processing.
+                // Save for later processing
                 m2mRelations[key] = userProps[key];
-                delete props[key];
+
+                if (!field.as) {
+                    /**
+                     * The relationship does not have an accessor
+                     * Discard the value from props as the field will be populated later with instances
+                     * from the target models when refreshing the M2M relations.
+                     * If the relationship does have an accessor (`as`) field then we do want to keep this
+                     * original value in the props to expose the raw list of IDs from the instance.
+                     */
+                    delete props[key];
+                }
             }
         });
 
@@ -327,7 +336,7 @@ const Model = class Model {
      * If you pass values for many-to-many fields, instances are created on the through
      * model as well.
      *
-     * @param  {props} userProps - the required {@link Model}'s properties.
+     * @param  {Object} userProps - the required {@link Model}'s properties.
      * @return {Model} a {@link Model} instance.
      */
     static upsert(userProps) {
@@ -448,7 +457,10 @@ const Model = class Model {
 
     /**
      * Returns a reference to the plain JS object in the store.
-     * Make sure to not mutate this.
+     * It contains all the properties that you pass when creating the model,
+     * except for primary keys of many-to-many relationships with a custom accessor.
+     *
+     * Make sure never to mutate this.
      *
      * @return {Object} a reference to the plain JS object in the store
      */
@@ -497,7 +509,7 @@ const Model = class Model {
             const field = ThisModel.fields[fieldName];
             if (field instanceof ManyToMany) {
                 const ids = this[fieldName].toModelArray().map(
-                    model => model.getId()
+                    (model) => model.getId()
                 );
                 return `${fieldName}: [${ids.join(', ')}]`;
             }
@@ -574,7 +586,17 @@ const Model = class Model {
                 } else if (field instanceof ManyToMany) {
                     // field is forward relation
                     m2mRelations[mergeKey] = mergeObj[mergeKey];
-                    delete mergeObj[mergeKey];
+
+                    if (!field.as) {
+                        /**
+                         * The relationship does not have an accessor
+                         * Discard the value from props as the field will be populated later with instances
+                         * from the target models when refreshing the M2M relations.
+                         * If the relationship does have an accessor (`as`) field then we do want to keep this
+                         * original value in the props to expose the raw list of IDs from the instance.
+                         */
+                        delete mergeObj[mergeKey];
+                    }
                 }
             } else if (virtualFields.hasOwnProperty(mergeKey)) {
                 const field = virtualFields[mergeKey];
@@ -675,8 +697,8 @@ const Model = class Model {
                 ({ from: toField, to: fromField } = field.throughFields);
             }
 
-            const currentIds = ThroughModel.filter(through => through[fromField] === this[ThisModel.idAttribute]
-            ).toRefArray().map(ref => ref[toField]);
+            const currentIds = ThroughModel.filter((through) => through[fromField] === this[ThisModel.idAttribute]
+            ).toRefArray().map((ref) => ref[toField]);
 
             const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
 
@@ -686,10 +708,11 @@ const Model = class Model {
                     add: idsToAdd,
                 } = diffActions;
                 if (idsToDelete.length > 0) {
-                    this[name].remove(...idsToDelete);
+                    this[field.as || name].remove(...idsToDelete);
                 }
+
                 if (idsToAdd.length > 0) {
-                    this[name].add(...idsToAdd);
+                    this[field.as || name].add(...idsToAdd);
                 }
             }
         });

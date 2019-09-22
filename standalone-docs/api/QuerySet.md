@@ -57,7 +57,7 @@ You should access QuerySet instances from [Model](Model).</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| modelClass | [Model](#.Model) | <p>the model class of objects in this QuerySet.</p> |
+| modelClass | Model | <p>the model class of objects in this QuerySet.</p> |
 | clauses | Array.<any> | <p>query clauses needed to evaluate the set.</p> |
 | [opts] | Object | <p>additional options</p> |
 
@@ -126,7 +126,7 @@ in the database.</p>
 object in the model state if <code>true</code>.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
-**Returns**: [Model](#.Model) ⎮ undefined - <p>a [Model](Model) instance at index<br>
+**Returns**: Model ⎮ undefined - <p>a [Model](Model) instance at index<br>
 <code>index</code> in the [QuerySet](#QuerySet) instance,<br>
 or undefined if the index is out of bounds.</p>  
 

@@ -56,7 +56,7 @@ const QuerySet = class QuerySet {
     }
 
     _new(clauses, userOpts) {
-        const opts = Object.assign({}, this._opts, userOpts);
+        const opts = { ...this._opts, ...userOpts };
         return new this.constructor(this.modelClass, clauses, opts);
     }
 
@@ -85,7 +85,7 @@ const QuerySet = class QuerySet {
     toModelArray() {
         const { modelClass: ModelClass } = this;
         return this._evaluate().map(
-            props => new ModelClass(props)
+            (props) => new ModelClass(props)
         );
     }
 
@@ -307,7 +307,7 @@ const QuerySet = class QuerySet {
         } = this.modelClass;
 
         this.toModelArray().forEach(
-            model => model._onDelete() // eslint-disable-line no-underscore-dangle
+            (model) => model._onDelete() // eslint-disable-line no-underscore-dangle
         );
 
         session.applyUpdate({

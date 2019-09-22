@@ -10,6 +10,7 @@ import {
  * to add or remove relationships between models.
  *
  * @module descriptors
+ * @private
  */
 
 /**
@@ -178,14 +179,14 @@ function manyToManyDescriptor(
             const referencedOtherIds = new Set(
                 throughQs
                     .toRefArray()
-                    .map(obj => obj[otherReferencingField])
+                    .map((obj) => obj[otherReferencingField])
             );
 
             /**
              * selects all instances of other model that are referenced
              * by any instance of the current model
              */
-            const qs = OtherModel.filter(otherModelInstance => (
+            const qs = OtherModel.filter((otherModelInstance) => (
                 referencedOtherIds.has(
                     otherModelInstance[OtherModel.idAttribute]
                 )
@@ -204,14 +205,14 @@ function manyToManyDescriptor(
                     entities.map(normalizeEntity)
                 );
 
-                const existingQs = throughQs.filter(through => (
+                const existingQs = throughQs.filter((through) => (
                     idsToAdd.has(through[otherReferencingField])
                 ));
 
                 if (existingQs.exists()) {
                     const existingIds = existingQs
                         .toRefArray()
-                        .map(through => through[otherReferencingField]);
+                        .map((through) => through[otherReferencingField]);
 
                     throw new Error(`Tried to add already existing ${OtherModel.modelName} id(s) ${existingIds} to the ${ThisModel.modelName} instance with id ${thisId}`);
                 }
@@ -250,17 +251,17 @@ function manyToManyDescriptor(
                 );
 
                 const entitiesToDelete = throughQs.filter(
-                    through => idsToRemove.has(through[otherReferencingField])
+                    (through) => idsToRemove.has(through[otherReferencingField])
                 );
 
                 if (entitiesToDelete.count() !== idsToRemove.size) {
                     // Tried deleting non-existing entities.
                     const entitiesToDeleteIds = entitiesToDelete
                         .toRefArray()
-                        .map(through => through[otherReferencingField]);
+                        .map((through) => through[otherReferencingField]);
 
                     const unexistingIds = [...idsToRemove].filter(
-                        id => !entitiesToDeleteIds.includes(id)
+                        (id) => !entitiesToDeleteIds.includes(id)
                     );
 
                     throw new Error(`Tried to delete non-existing ${OtherModel.modelName} id(s) ${unexistingIds} from the ${ThisModel.modelName} instance with id ${thisId}`);

@@ -1,4 +1,4 @@
-import { ManyToMany } from '../../fields';
+import ManyToMany from '../../fields/ManyToMany';
 
 describe('Fields', () => {
     describe('ManyToMany', () => {

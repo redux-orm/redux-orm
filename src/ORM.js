@@ -1,11 +1,10 @@
+/* eslint-disable max-classes-per-file */
 import Session from './Session';
 import Model from './Model';
 import { createDatabase as defaultCreateDatabase } from './db';
-import {
-    ForeignKey,
-    ManyToMany,
-    attr,
-} from './fields';
+import { attr } from './fields';
+import ForeignKey from './fields/ForeignKey';
+import ManyToMany from './fields/ManyToMany';
 
 import { createModelSelectorSpec } from './selectors';
 
@@ -25,7 +24,7 @@ const RESERVED_TABLE_OPTIONS = [
     'indexes',
     'meta',
 ];
-const isReservedTableOption = word => RESERVED_TABLE_OPTIONS.includes(word);
+const isReservedTableOption = (word) => RESERVED_TABLE_OPTIONS.includes(word);
 
 /**
  * ORM - the Object Relational Mapper.
@@ -43,9 +42,16 @@ const isReservedTableOption = word => RESERVED_TABLE_OPTIONS.includes(word);
 class ORM {
     /**
      * Creates a new ORM instance.
+     *
+     * @param {Object} [opts]
+     * @param {Function} [opts.stateSelector] - function that given a Redux state tree
+     *                                          will return the ORM state's subtree,
+     *                                          e.g. `state => state.orm`
+     *                                          (necessary if you want to use selectors)
+     * @param {Function} [opts.createDatabase] - function that creates a database
      */
     constructor(opts) {
-        const { createDatabase } = Object.assign({}, ORM_DEFAULTS, (opts || {}));
+        const { createDatabase } = { ...ORM_DEFAULTS, ...(opts || {}) };
         this.createDatabase = createDatabase;
         this.registry = [];
         this.implicitThroughModels = [];
@@ -124,7 +130,7 @@ class ORM {
 
                 Through.modelName = m2mName(thisModelName, fieldName);
 
-                const PlainForeignKey = class ThroughForeignKeyField extends ForeignKey {
+                const PlainForeignKey = class PlainForeignKey extends ForeignKey {
                     get installsBackwardsVirtualField() {
                         return false;
                     }
@@ -157,7 +163,7 @@ class ORM {
     get(modelName) {
         const allModels = this.registry.concat(this.implicitThroughModels);
         const found = Object.values(allModels).find(
-            model => model.modelName === modelName
+            (model) => model.modelName === modelName
         );
 
         if (typeof found === 'undefined') {
@@ -228,7 +234,7 @@ class ORM {
      * @private
      */
     _setupModelPrototypes(models) {
-        models.filter(model => !model.isSetUp).forEach((model) => {
+        models.filter((model) => !model.isSetUp).forEach((model) => {
             const { fields, modelName, querySetClass } = model;
             Object.entries(fields).forEach(([fieldName, field]) => {
                 if (!this._isFieldInstalled(modelName, fieldName)) {

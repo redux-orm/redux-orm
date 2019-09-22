@@ -49,6 +49,10 @@ const Session = class Session {
         return this.modelData[modelName];
     }
 
+    getModelData() {
+        return this.modelData;
+    }
+
     markAccessed(modelName, modelIds) {
         const data = this.getDataForModel(modelName);
         if (!data.accessedInstances) {
@@ -60,13 +64,12 @@ const Session = class Session {
     }
 
     get accessedModelInstances() {
-        return this.sessionBoundModels
-            .filter(({ modelName }) => this.getDataForModel(modelName).accessedInstances)
-            .reduce(
-                (result, { modelName }) => ({
-                    ...result,
-                    [modelName]: this.getDataForModel(modelName).accessedInstances,
-                }), {});
+        return Object.entries(this.getModelData()).reduce((result, [key, value]) => {
+            if (value.accessedInstances) {
+                result[key] = value.accessedInstances;
+            }
+            return result;
+        }, {});
     }
 
     markFullTableScanned(modelName) {
@@ -75,9 +78,12 @@ const Session = class Session {
     }
 
     get fullTableScannedModels() {
-        return this.sessionBoundModels
-            .filter(({ modelName }) => this.getDataForModel(modelName).fullTableScanned)
-            .map(({ modelName }) => modelName);
+        return Object.entries(this.getModelData()).reduce((result, [key, value]) => {
+            if (value.fullTableScanned) {
+                result.push(key);
+            }
+            return result;
+        }, []);
     }
 
     markAccessedIndexes(indexes) {
@@ -94,12 +100,12 @@ const Session = class Session {
     }
 
     get accessedIndexes() {
-        return this.sessionBoundModels
-            .filter(({ modelName }) => this.getDataForModel(modelName).accessedIndexes)
-            .reduce((result, { modelName }) => ({
-                ...result,
-                [modelName]: this.getDataForModel(modelName).accessedIndexes,
-            }), {});
+        return Object.entries(this.getModelData()).reduce((result, [key, value]) => {
+            if (value.accessedIndexes) {
+                result[key] = value.accessedIndexes;
+            }
+            return result;
+        }, {});
     }
 
     /**
@@ -147,7 +153,7 @@ const Session = class Session {
 
         const { idAttribute } = this[table];
         const accessedIds = new Set(rows.map(
-            row => row[idAttribute]
+            (row) => row[idAttribute]
         ));
 
         const anyClauseFilteredByPk = clauses.some((clause) => {
