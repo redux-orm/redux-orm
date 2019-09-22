@@ -1,3 +1,10 @@
+const fs = require('fs')
+const plantumlPlugin = require('./plantuml-plugin')
+const umlMdPlugin = plantumlPlugin({
+    backendUrl: 'http://www.plantuml.com/plantuml/svg/',
+    theme: () => fs.readFileSync('../standalone-docs/assets/plantuml-theme.iuml'),
+})
+
 const siteConfig = {
     title: 'Redux-ORM',
     tagline: 'A small, simple and immutable ORM to manage relational data in your Redux store',
@@ -25,7 +32,7 @@ const siteConfig = {
     fonts: {
         logoFont: ['https://fonts.googleapis.com/css?family=Lato:900&display=swap', 'sans-serif', '/css/custom.css'],
     },
-    usePrism: ['jsx','javascript', 'tsx', 'typescript'],
+    usePrism: ['jsx', 'javascript', 'tsx', 'typescript'],
     headerIcon: 'img/redux-orm-white.svg',
     footerIcon: 'img/redux-orm-white.svg',
     favicon: 'img/favicon/favicon.ico',
@@ -47,9 +54,9 @@ const siteConfig = {
     scripts: [
         '/scripts/sidebarScroll.js',
         '/scripts/codeblock.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js',
-        'https://buttons.github.io/buttons.js',
         '/scripts/code-block-buttons.js',
+        'https://buttons.github.io/buttons.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js',
     ],
     stylesheets: ['/css/code-block-buttons.css'],
     enableUpdateTime: true,
@@ -57,9 +64,11 @@ const siteConfig = {
     cleanUrl: true,
     docsSideNavCollapsible: true,
     repoUrl: 'https://github.com/redux-orm/redux-orm',
-
+    markdownPlugins: [
+        umlMdPlugin,
+    ],
     //todo add tracking id
-    gaTrackingId: ''
-};
+    gaTrackingId: '',
+}
 
-module.exports = siteConfig;
+module.exports = siteConfig
