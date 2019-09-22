@@ -59,7 +59,7 @@
       },
       "introduction/getting-started": {
         "title": "Getting Started with Redux-ORM",
-        "sidebar_label": "Getting Started with Redux-ORM"
+        "sidebar_label": "Getting Started"
       },
       "introduction/installation": {
         "title": "Installation",
@@ -98,10 +98,6 @@
     "categories": {
       "Introduction": "Introduction",
       "Basics": "Basics",
-      "Advanced Tutorial": "Advanced Tutorial",
-      "Recipes": "Recipes",
-      "FAQ": "FAQ",
-      "Other": "Other",
       "API Reference": "API Reference"
     }
   },

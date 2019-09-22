@@ -139,7 +139,7 @@ header.postHeader:empty + article h1 {
   content : "";
   width : 32px;
   height : 32px;
-  background: url("/img/github-brands.svg");
+  background: url("/redux-orm/img/github-brands.svg");
 }
 
 .nav-footer .copyright,

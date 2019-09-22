@@ -10,3 +10,5 @@ dist/
 min
 coverage/
 .idea/
+docs/
+build/

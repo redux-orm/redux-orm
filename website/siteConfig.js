@@ -5,11 +5,12 @@ const umlMdPlugin = plantumlPlugin({
     theme: () => fs.readFileSync('../standalone-docs/assets/plantuml-theme.iuml'),
 })
 
+const baseUrl = '/redux-orm/';
 const siteConfig = {
     title: 'Redux-ORM',
     tagline: 'A small, simple and immutable ORM to manage relational data in your Redux store',
     url: 'https://github.com/redux-orm/redux-orm',
-    baseUrl: '/',
+    baseUrl,
     docsUrl: '',
     // todo: add search once finished
     // algolia: {
@@ -25,7 +26,7 @@ const siteConfig = {
         { doc: 'introduction/getting-started', label: 'Getting Started' },
         { doc: 'basics/quick-start', label: 'Docs' },
         { doc: 'api/api-reference', label: 'API' },
-        { doc: 'faq', label: 'FAQ' },
+//         { doc: 'faq', label: 'FAQ' },
         { href: 'https://github.com/redux-orm/redux-orm', label: 'GitHub' },
     ],
 
@@ -35,7 +36,7 @@ const siteConfig = {
     usePrism: ['jsx', 'javascript', 'tsx', 'typescript'],
     headerIcon: 'img/redux-orm-white.svg',
     footerIcon: 'img/redux-orm-white.svg',
-    favicon: 'img/favicon/favicon.ico',
+    favicon: '/redux-orm/img/favicon/favicon.ico',
     customDocsPath: 'standalone-docs',
     colors: {
         primaryColor: '#bc001c',
@@ -52,13 +53,15 @@ const siteConfig = {
     },
 
     scripts: [
-        '/scripts/sidebarScroll.js',
-        '/scripts/codeblock.js',
-        '/scripts/code-block-buttons.js',
+        `${baseUrl}scripts/sidebarScroll.js`,
+        `${baseUrl}scripts/codeblock.js`,
+        `${baseUrl}scripts/code-block-buttons.js`,
         'https://buttons.github.io/buttons.js',
         'https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js',
     ],
-    stylesheets: ['/css/code-block-buttons.css'],
+    stylesheets: [
+        `${baseUrl}code-block-buttons.css`,
+    ],
     enableUpdateTime: true,
     onPageNav: 'separate',
     cleanUrl: true,

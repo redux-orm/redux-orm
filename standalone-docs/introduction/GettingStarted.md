@@ -1,7 +1,7 @@
 ---
 id: getting-started
 title: Getting Started with Redux-ORM
-sidebar_label: Getting Started with Redux-ORM
+sidebar_label: Getting Started
 hide_title: true
 ---
 
@@ -25,4 +25,4 @@ So if you are dealing with a pre-ES6 environment, you should load a polyfill lik
 
 ### Details
 
-For more details, see the [Installation](Installation.md) page. Otherwise you can skip to the [Quick Start](basics/README.md).
+For more details, see the [Installation](Installation.md) page. Or [skip ahead to the Quick Start](basics/README.md).

@@ -31,7 +31,7 @@ hide_title: true
 
 | Param | Type | Description |
 | --- | --- | --- |
-| orm | ORM | <p>the ORM instance.</p> |
+| orm | [ORM](#.ORM) | <p>the ORM instance.</p> |
 | [updater] | function | <p>the function updating the ORM state based on the given action.</p> |
 
 

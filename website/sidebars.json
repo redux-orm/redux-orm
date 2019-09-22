@@ -2,25 +2,11 @@
   "docs": {
     "Introduction": [
       "introduction/getting-started",
-      "introduction/installation",
-      "introduction/core-concepts"
+      "introduction/installation"
     ],
     "Basics": [
       "basics/quick-start",
       "basics/fields"
-    ],
-    "Advanced Tutorial": [
-      "advanced/advanced-tutorial"
-    ],
-    "Recipes": [
-      "recipes/writing-tests"
-    ],
-    "FAQ": [
-      "faq/performance"
-    ],
-    "Other": [
-      "troubleshooting",
-      "learning-resources"
     ],
     "API Reference": [
       "api/api-reference",

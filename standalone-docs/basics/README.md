@@ -38,8 +38,8 @@ import { createStore, combineReducers } from "redux";
 import { createReducer } from "redux-orm";
 
 const rootReducer = combineReducers({
-    // … other reducers
     orm: createReducer(orm), // This will be the Redux-ORM state.
+    // … potentially other reducers
 });
 const store = createStore(rootReducer);
 ```

@@ -24,7 +24,7 @@
     "ensure-clean-tree": "[ -z \"$(git status -s)\" ] || (echo \"Error: There are uncommitted changes in the git repostory.\" && false)",
     "lint": "eslint src",
     "deploydocs": "npm run build && gulp deploy",
-    "clean": "rimraf lib es dist docs standalone-docs coverage"
+    "clean": "rimraf lib es dist docs coverage"
   },
   "keywords": [
     "redux",

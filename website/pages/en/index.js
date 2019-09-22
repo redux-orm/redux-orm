@@ -48,7 +48,7 @@ const SplashContainer = props => (
 const ProjectTitle = () => (
     <React.Fragment>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <img src={'img/redux-orm.svg'} alt="Redux-ORM logo" width={100} height={100} />
+            <img src={imgUrl('redux-orm.svg')} alt="Redux-ORM logo" width={100} height={100} />
             <h1 className="projectTitle">{siteConfig.title}</h1>
         </div>
 

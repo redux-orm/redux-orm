@@ -41,7 +41,7 @@ const Footer = props => (
             <div>
                 <h5>Community</h5>
                 <a
-                    href="http://stackoverflow.com/questions/tagged/redux-orm"
+                    href="https://stackoverflow.com/questions/tagged/redux-orm"
                     target="_blank"
                     rel="noreferrer noopener"
                 >
