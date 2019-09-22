@@ -16,14 +16,14 @@ This section documents the complete **Redux-ORM** API.
 - [QuerySet](QuerySet)
 - [Session](Session)
 
-### Descriptors    
+### Descriptors
 
 - [attr](module_fields#attr)
 - [oneToOne](module_fields#oneToOne)
 - [fk](module_fields#fk)
 - [many](module_fields#many)
 
-### Redux Integration    
+### Redux Integration
 
 - [createReducer](module_redux#createReducer)
 - [createSelector](module_redux#createSelector)

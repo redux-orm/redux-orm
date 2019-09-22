@@ -26,7 +26,7 @@ const siteConfig = {
         { doc: 'basics/basic-tutorial', label: 'Docs' },
         { doc: 'api/api-reference', label: 'API' },
         { doc: 'faq', label: 'FAQ' },
-        { href: 'https://github.com/redux-orm/redux-orm', label: 'Github' },
+        { href: 'https://github.com/redux-orm/redux-orm', label: 'GitHub' },
     ],
 
     fonts: {
@@ -45,7 +45,7 @@ const siteConfig = {
         accentColor3: '#ffabb0',
     },
 
-    copyright: 'Copyright (c) 2019-present Redux-ORM documentation authors.',
+    copyright: 'Copyright (c) 2019 Redux-ORM documentation authors.',
 
     highlight: {
         theme: 'darcula',

@@ -23,7 +23,7 @@ to the database.</p>
 **Kind**: global class  
 
 * [ORM](#.ORM)
-    * [`new ORM()`](#.ORM)
+    * [`new ORM([opts])`](#.ORM)
     * [`register(...models)`](#orm+register) ⇒ undefined
     * [`get(modelName)`](#orm+get) ⇒ Model
     * [`getEmptyState()`](#orm+getEmptyState) ⇒ Object
@@ -37,9 +37,16 @@ to the database.</p>
 
 <a name="ORM"></a>
 
-## `new  ORM()`
+## `new  ORM([opts])`
 
 <p>Creates a new ORM instance.</p>
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| [opts] | Object |  |
+| [opts.stateSelector] | function | <p>function that given a Redux state tree<br> will return the ORM state's subtree,<br> e.g. <code>state =&gt; state.orm</code><br> (necessary if you want to use selectors)</p> |
+| [opts.createDatabase] | function | <p>function that creates a database</p> |
 
 
 <a name="orm+register"></a>
@@ -92,7 +99,7 @@ this call, unless a custom through model has been specified.</p>
 <p>Begins an immutable database session.</p>
 
 **Kind**: instance method of [ORM](#.ORM)  
-**Returns**: [Session](#.Session) - <p>a new [Session](Session) instance</p>  
+**Returns**: Session - <p>a new [Session](Session) instance</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -106,7 +113,7 @@ this call, unless a custom through model has been specified.</p>
 <p>Begins a mutable database session.</p>
 
 **Kind**: instance method of [ORM](#.ORM)  
-**Returns**: [Session](#.Session) - <p>a new [Session](Session) instance</p>  
+**Returns**: Session - <p>a new [Session](Session) instance</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |

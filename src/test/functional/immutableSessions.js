@@ -660,7 +660,7 @@ describe('Immutable session', () => {
 
     it('applying no updates returns the same state reference', () => {
         const book = session.Book.first();
-        book.name = book.name;
+        book.name = book.name; // eslint-disable-line no-self-assign
 
         expect(session.state).toBe(state);
     });

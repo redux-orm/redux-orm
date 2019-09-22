@@ -9,10 +9,6 @@
         "title": "Advanced Tutorial: Intro",
         "sidebar_label": "Advanced Tutorial: Intro"
       },
-      "api/module_descriptors": {
-        "title": "Descriptors",
-        "sidebar_label": "Descriptors"
-      },
       "api/module_fields": {
         "title": "Fields",
         "sidebar_label": "Fields"
@@ -40,14 +36,6 @@
       "api/Session": {
         "title": "Session",
         "sidebar_label": "Session"
-      },
-      "api/Table": {
-        "title": "Table",
-        "sidebar_label": "Table"
-      },
-      "api/module_utils": {
-        "title": "Utils",
-        "sidebar_label": "Utils"
       },
       "basics/basic-tutorial": {
         "title": "Basic Tutorial: Intro",
@@ -101,7 +89,7 @@
       "Docs": "Docs",
       "API": "API",
       "FAQ": "FAQ",
-      "Github": "Github"
+      "GitHub": "GitHub"
     },
     "categories": {
       "Introduction": "Introduction",

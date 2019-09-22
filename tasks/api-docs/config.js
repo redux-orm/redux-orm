@@ -8,13 +8,10 @@ module.exports = {
   include: [
     'Model',
     'ORM',
-    'Session',
+    'fields/index',
     'QuerySet',
-    'fields',
+    'Session',
     'redux',
-    'utils',
-    'descriptors',
-    'db/Table',
   ],
   dmdOpts: {
     'no-cache': true,

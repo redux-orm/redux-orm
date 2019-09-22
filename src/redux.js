@@ -4,18 +4,19 @@ import createCachedSelector, { FlatMapCache } from 're-reselect';
 import { memoize } from './memoize';
 
 import { ORM } from './ORM';
-import {
-    SelectorSpec,
-    MapSelectorSpec,
-} from './selectors';
+import SelectorSpec from './selectors/SelectorSpec';
+import MapSelectorSpec from './selectors/MapSelectorSpec';
 
 /**
  * @module redux
+ * @desc Provides functions for integration with Redux.
  */
 
 /**
  * Calls all models' reducers if they exist.
+ *
  * @return {undefined}
+ * @global
  */
 export function defaultUpdater(session, action) {
     session.sessionBoundModels.forEach((modelClass) => {
@@ -25,7 +26,6 @@ export function defaultUpdater(session, action) {
         }
     });
 }
-
 
 /**
  * Call the returned function to pass actions to Redux-ORM.
@@ -44,16 +44,26 @@ export function createReducer(orm, updater = defaultUpdater) {
     };
 }
 
+/**
+ * @private
+ * @param {SelectorSpec} spec
+ */
 function createSelectorFromSpec(spec) {
     return createCachedSelector(
         spec.dependencies,
         spec.resultFunc
-    )(spec.keySelector, {
+    )({
+        keySelector: spec.keySelector,
         cacheObject: new FlatMapCache(),
         selectorCreator: createSelector, // eslint-disable-line no-use-before-define
     });
 }
 
+/**
+ * Tries to find ORM instance using the argument.
+ * @private
+ * @param {*} arg
+ */
 function toORM(arg) { /* eslint-disable no-underscore-dangle */
     if (arg instanceof ORM) {
         return arg;
@@ -67,6 +77,10 @@ function toORM(arg) { /* eslint-disable no-underscore-dangle */
 const selectorCache = new Map();
 const SELECTOR_KEY = Symbol('REDUX_ORM_SELECTOR');
 
+/**
+ * @private
+ * @param {function|ORM|SelectorSpec} arg
+ */
 function toSelector(arg) { /* eslint-disable no-underscore-dangle */
     if (typeof arg === 'function') {
         return arg;
@@ -93,6 +107,7 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
              *
              * The selector itself is stored under a special SELECTOR_KEY
              * so that we can store selectors below it as well.
+             * @private
              */
             level = ormSelectors;
             for (let i = 0; i < cachePath.length; ++i) {
@@ -130,22 +145,49 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
  *
  * When you use this method to create a selector, the returned selector
  * expects the whole `redux-orm` state branch as input. In the selector
- * function that you pass as the last argument, you will receive a
- * `session` argument (a `Session` instance) followed by any
- * input arguments, like in `reselect`.
+ * function that you pass as the last argument, any of the arguments
+ * you pass first will be considered selectors and mapped
+ * to their outputs, like in `reselect`.
  *
- * This is an example selector:
+ * Here are some example selectors:
  *
  * ```javascript
  * // orm is an instance of ORM
- * const bookSelector = createSelector(orm, session => {
- *     return session.Book.map(book => {
- *         return Object.assign({}, book.ref, {
- *             authors: book.authors.map(author => author.name),
- *             genres: book.genres.map(genre => genre.name),
- *         });
- *     });
- * });
+ * // reduxState is the state of a Redux store
+ * const books = createSelector(orm.Book);
+ * books(reduxState) // array of book refs
+ *
+ * const bookAuthors = createSelector(orm.Book.authors);
+ * bookAuthors(reduxState) // two-dimensional array of author refs for each book
+ * ```
+ * Selectors can easily be applied to related models:
+ * ```javascript
+ * const bookAuthorNames = createSelector(
+ *     orm.Book.authors.map(orm.Author.name),
+ * );
+ * bookAuthorNames(reduxState, 8) // names of all authors of book with ID 8
+ * bookAuthorNames(reduxState, [8, 9]) // 2D array of names of all authors of books with IDs 8 and 9
+ * ```
+ * Also note that `orm.Author.name` did not need to be wrapped in another `createSelector` call,
+ * although that would be possible.
+ *
+ * For more complex calculations you can access
+ * entire session objects by passing an ORM instance.
+ * ```javascript
+ * const freshBananasCost = createSelector(
+ *     orm,
+ *     session => {
+ *        const banana = session.Product.get({
+ *            name: "Banana",
+ *        });
+ *        // amount of fresh bananas in shopping cart
+ *        const amount = session.ShoppingCart.filter({
+ *            product_id: banana.id,
+ *            is_fresh: true,
+ *        }).count();
+ *        return `USD ${amount * banana.price}`;
+ *     }
+ * );
  * ```
  *
  * redux-orm uses a special memoization function to avoid recomputations.
@@ -160,7 +202,7 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
  *         (unless you call it for the first time).</li>
  * </ul>
  *
- * This way you can use the `PureRenderMixin` in your React components
+ * This way you can use pure rendering in your React components
  * for performance gains.
  *
  * @global

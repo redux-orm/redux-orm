@@ -73,7 +73,9 @@ Don't use this to create a new record; Use the static method [Model#create](Mode
 ## ` ref`⇒ Object 
 
 <p>Returns a reference to the plain JS object in the store.<br>
-Make sure to not mutate this.</p>
+It contains all the properties that you pass when creating the model,<br>
+except for primary keys of many-to-many relationships with a custom accessor.</p>
+<p>Make sure never to mutate this.</p>
 
 **Kind**: instance property of [Model](#.Model)  
 **Returns**: Object - <p>a reference to the plain JS object in the store</p>  
@@ -281,7 +283,7 @@ model as well.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| userProps | props | <p>the new [Model](#Model)'s properties.</p> |
+| userProps | Object | <p>the new [Model](#Model)'s properties.</p> |
 
 
 <a name="Model.upsert"></a>
@@ -297,7 +299,7 @@ model as well.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| userProps | props | <p>the required [Model](#Model)'s properties.</p> |
+| userProps | Object | <p>the required [Model](#Model)'s properties.</p> |
 
 
 <a name="Model.withId"></a>

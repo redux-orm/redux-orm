@@ -9,31 +9,16 @@ hide_title: true
 
 #  redux
 
-
-* [redux](#.redux)
-    * _static_
-        * [`defaultUpdater()`](#redux.defaultUpdater) ⇒ undefined
-    * _inner_
-        * [`level`](#redux.level)
+<p>Provides functions for integration with Redux.</p>
 
 
-<a name="module:redux.defaultUpdater"></a>
+<a name="defaultUpdater"></a>
 
-## `static  defaultUpdater()`⇒ undefined 
+# ` defaultUpdater()`⇒ undefined 
 
 <p>Calls all models' reducers if they exist.</p>
 
-**Kind**: static method of [redux](#.redux)  
-
-<a name="module:redux~level"></a>
-
-## ` level`
-
-<p>Drill down into selector map by cachePath.</p>
-<p>The selector itself is stored under a special SELECTOR_KEY<br>
-so that we can store selectors below it as well.</p>
-
-**Kind**: inner property of [redux](#.redux)  
+**Kind**: global function  
 
 <a name="createReducer"></a>
 
@@ -62,19 +47,43 @@ same as in <code>reselect</code>. The last argument is the selector<br>
 function and the previous are input selectors.</p>
 <p>When you use this method to create a selector, the returned selector<br>
 expects the whole <code>redux-orm</code> state branch as input. In the selector<br>
-function that you pass as the last argument, you will receive a<br>
-<code>session</code> argument (a <code>Session</code> instance) followed by any<br>
-input arguments, like in <code>reselect</code>.</p>
-<p>This is an example selector:</p>
+function that you pass as the last argument, any of the arguments<br>
+you pass first will be considered selectors and mapped<br>
+to their outputs, like in <code>reselect</code>.</p>
+<p>Here are some example selectors:</p>
 <pre class="prettyprint source lang-javascript"><code>// orm is an instance of ORM
-const bookSelector = createSelector(orm, session => {
-    return session.Book.map(book => {
-        return Object.assign({}, book.ref, {
-            authors: book.authors.map(author => author.name),
-            genres: book.genres.map(genre => genre.name),
-        });
-    });
-});
+// reduxState is the state of a Redux store
+const books = createSelector(orm.Book);
+books(reduxState) // array of book refs
+
+const bookAuthors = createSelector(orm.Book.authors);
+bookAuthors(reduxState) // two-dimensional array of author refs for each book
+</code></pre>
+<p>Selectors can easily be applied to related models:</p>
+<pre class="prettyprint source lang-javascript"><code>const bookAuthorNames = createSelector(
+    orm.Book.authors.map(orm.Author.name),
+);
+bookAuthorNames(reduxState, 8) // names of all authors of book with ID 8
+bookAuthorNames(reduxState, [8, 9]) // 2D array of names of all authors of books with IDs 8 and 9
+</code></pre>
+<p>Also note that <code>orm.Author.name</code> did not need to be wrapped in another <code>createSelector</code> call,<br>
+although that would be possible.</p>
+<p>For more complex calculations you can access<br>
+entire session objects by passing an ORM instance.</p>
+<pre class="prettyprint source lang-javascript"><code>const freshBananasCost = createSelector(
+    orm,
+    session => {
+       const banana = session.Product.get({
+           name: &quot;Banana&quot;,
+       });
+       // amount of fresh bananas in shopping cart
+       const amount = session.ShoppingCart.filter({
+           product_id: banana.id,
+           is_fresh: true,
+       }).count();
+       return `USD ${amount * banana.price}`;
+    }
+);
 </code></pre>
 <p>redux-orm uses a special memoization function to avoid recomputations.</p>
 <p>Everytime a selector runs, this function records which instances<br>
@@ -86,7 +95,7 @@ accessed instances or <code>args</code> have changed in any way:</p>
     <li>If not, it just returns the previous result
         (unless you call it for the first time).</li>
 </ul>
-<p>This way you can use the <code>PureRenderMixin</code> in your React components<br>
+<p>This way you can use pure rendering in your React components<br>
 for performance gains.</p>
 
 **Kind**: global function  

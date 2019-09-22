@@ -471,11 +471,28 @@ Book.fields = {
 }
 ```
 
-All the fields `fk`, `oneToOne` and `many` take a single argument, the related model name. The fields will be available as properties on each `Model` instance. You can set related fields with the id value of the related instance, or the related instance itself.
+All the fields `fk`, `oneToOne` and `many` accept a single argument, the related model name. The fields will be available as properties on each `Model` instance. You can set related fields with the id value of the related instance, or the related instance itself.
 
 For `fk`, you can access the reverse relation through `author.bookSet`, where the related name is `${modelName}Set`. Same goes for `many`. For `oneToOne`, the reverse relation can be accessed by just the model name the field was declared on: `author.book`.
 
 For `many` field declarations, accessing the field on a Model instance will return a `QuerySet` with two additional methods: `add` and `remove`. They take 1 or more arguments, where the arguments are either Model instances or their id's. Calling these methods records updates that will be reflected in the next state.
+
+Relations support more configuration options like accessors, related names, etc. by passing an object:
+
+```javascript
+class Book extends Model {
+    static get fields() {
+        return {
+            id: attr(),
+            name: attr(),
+            author_id: fk({ to: 'Author', as: 'author', relatedName: 'writtenBooks' }),
+            reviewers_id: many({ to: 'Author', as: 'reviewers', relatedName: 'reviewedBooks' })
+        };
+    }
+}
+```
+
+See [fk](https://redux-orm.github.io/redux-orm/global.html#fk), [oneToOne](https://redux-orm.github.io/redux-orm/global.html#oneToOne), and [many](https://redux-orm.github.io/redux-orm/global.html#many) in the documentation for more information.
 
 When declaring model classes, always remember to set the `modelName` property. It needs to be set explicitly, because running your code through a mangler would otherwise break functionality. The `modelName` will be used to resolve all related fields.
 

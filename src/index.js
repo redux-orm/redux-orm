@@ -6,15 +6,15 @@ import {
     createReducer,
     createSelector,
 } from './redux';
+import ForeignKey from './fields/ForeignKey';
+import ManyToMany from './fields/ManyToMany';
+import OneToOne from './fields/OneToOne';
+import Attribute from './fields/Attribute';
 import {
-    ForeignKey,
-    ManyToMany,
-    OneToOne,
     fk,
     many,
     oneToOne,
     attr,
-    Attribute,
 } from './fields';
 
 const Schema = DeprecatedSchema;
