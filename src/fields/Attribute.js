@@ -5,7 +5,7 @@ import {
 } from '../descriptors';
 
 /**
- * @private
+ * @memberof module:fields
  */
 export class Attribute extends Field {
     constructor(opts) {

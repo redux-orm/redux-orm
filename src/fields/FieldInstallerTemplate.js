@@ -2,6 +2,7 @@
  * Defines algorithm for installing a field onto a model and related models.
  * Conforms to the template method behavioral design pattern.
  * @private
+ * @memberof module:fields
  */
 export class FieldInstallerTemplate {
     constructor(opts) {

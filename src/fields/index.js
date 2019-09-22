@@ -12,7 +12,6 @@ import OneToOne from './OneToOne';
  * {@link fk}, {@link many} and {@link oneToOne}.
  *
  * @module fields
- * @private
  */
 
 /**
@@ -31,8 +30,6 @@ import OneToOne from './OneToOne';
  *   title: attr(),
  * }
  * ```
- *
- * @global
  *
  * @param  {Object} [opts]
  * @param {Function} [opts.getDefault] - If you give a function here, its return
@@ -77,8 +74,6 @@ function attr(opts) {
  *   author: fk('Author', 'books'),
  * }
  * ```
- *
- * @global
  *
  * @param {string|Class<Model>|Object} options - The target Model class, its `modelName`
  *                                               attribute or an options object that
@@ -196,7 +191,6 @@ function many(...args) {
  * the source model name in lowercase will be used. Note that with the one-to-one
  * relationship, the `relatedName` should be in singular, not plural.
  *
- * @global
  *
  * @param {string|Class<Model>|Object} options - The target Model class, its `modelName`
  *                                               attribute or an options object that

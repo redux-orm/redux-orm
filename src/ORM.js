@@ -39,7 +39,7 @@ const isReservedTableOption = (word) => RESERVED_TABLE_OPTIONS.includes(word);
  * Internally, this class handles generating a schema specification from models
  * to the database.
  */
-export class ORM {
+class ORM {
     /**
      * Creates a new ORM instance.
      *
@@ -66,7 +66,7 @@ export class ORM {
      * through models will be generated and registered with
      * this call, unless a custom through model has been specified.
      *
-     * @param  {...Model} model - a {@link Model} class to register
+     * @param  {...Model} models - a {@link Model} class to register
      * @return {undefined}
      */
     register(...models) {
@@ -331,5 +331,9 @@ export function DeprecatedSchema() {
         'from Redux-ORM.'
     );
 }
+
+export {
+    ORM,
+};
 
 export default ORM;

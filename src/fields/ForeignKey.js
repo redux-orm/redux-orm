@@ -6,7 +6,7 @@ import {
 } from '../descriptors';
 
 /**
- * @private
+ * @memberof module:fields
  */
 export class ForeignKey extends RelationalField {
     constructor(...args) {

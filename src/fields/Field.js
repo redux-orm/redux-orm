@@ -2,6 +2,7 @@ import DefaultFieldInstaller from './DefaultFieldInstaller';
 
 /**
  * @private
+ * @memberof module:fields
  */
 export class Field {
     constructor() {

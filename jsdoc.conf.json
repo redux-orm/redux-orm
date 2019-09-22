@@ -7,6 +7,9 @@
         "includePattern": ".+\\.js(doc)?$",
         "excludePattern": "test"
     },
+    "markdown": {
+        "hardwrap": true
+    },
     "plugins": [
         "plugins/markdown"
     ],

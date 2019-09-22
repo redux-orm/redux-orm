@@ -1,0 +1,21 @@
+{
+  "docs": {
+    "Introduction": [
+      "introduction/getting-started",
+      "introduction/installation"
+    ],
+    "Basics": [
+      "basics/quick-start",
+      "basics/fields"
+    ],
+    "API Reference": [
+      "api/api-reference",
+      "api/ORM",
+      "api/Model",
+      "api/QuerySet",
+      "api/Session",
+      "api/module_fields",
+      "api/module_redux"
+    ]
+  }
+}

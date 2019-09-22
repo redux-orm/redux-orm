@@ -1,0 +1,23 @@
+# Redirect all of our current Gitbook-generated URLs to the corresponding Docusaurus URLs
+# We will omit any URLs that directly match already, like /api/store
+
+# Note that more general URLs need to go later, so we'll put them at the end of each section
+
+/basics       /basics/basic-tutorial:splat
+/advanced     /advanced/advanced-tutorial:splat
+/api         /api/api-reference
+/api/api-reference/*        /api/api-reference:splat
+/api/*        /api/api-reference:splat
+/api/index.html        /api/api-reference
+/faq/performance'*         /faq/performance:splat
+/introduction/coreconcepts*         /introduction/core-concepts:splat
+/introduction/learningresources*         /introduction/learning-resources:splat
+/introduction         /introduction/getting-started
+/recipes/writingtests*         /recipes/writing-tests:splat
+/recipes         /recipes/recipe-index
+/docs/advanced/index.html        /advanced/advanced-tutorial
+/docs/advanced/        /advanced/advanced-tutorial
+/docs/faq/Performance.html*        /faq/performance:splat
+/docs/FAQ.html*        /faq:splat
+/docs/recipes/WritingTests.html*        /recipes/writing-tests:splat
+/docs/Troubleshooting.html*        /troubleshooting:splat

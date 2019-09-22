@@ -11,7 +11,7 @@ import {
 } from '../utils';
 
 /**
- * @private
+ * @memberof module:fields
  */
 export class ManyToMany extends RelationalField {
     getDefault() {

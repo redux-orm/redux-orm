@@ -1,5 +1,5 @@
 node_modules/
-docs/
+docs-current/
 *.sublime-project
 *.sublime-workspace
 .DS_Store
@@ -10,3 +10,5 @@ dist/
 min
 coverage/
 .idea/
+docs/
+build/

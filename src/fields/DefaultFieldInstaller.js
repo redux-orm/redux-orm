@@ -7,6 +7,7 @@ import {
 /**
  * Default implementation for the template method in FieldInstallerTemplate.
  * @private
+ * @memberof module:fields
  */
 export class DefaultFieldInstaller extends FieldInstallerTemplate {
     installForwardsDescriptor() {

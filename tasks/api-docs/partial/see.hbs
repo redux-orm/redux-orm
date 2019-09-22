@@ -1,0 +1,12 @@
+{{#if see~}}
+
+{{#if (equal see.length 1)~}}
+**See**: {{{docusaurusParseLink see.[0]}}}
+{{else~}}
+**See**
+
+{{#each see}}- {{{docusaurusParseLink this}}}
+{{/each}}
+
+{{/if~}}
+{{/if~}}

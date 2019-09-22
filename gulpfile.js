@@ -1,24 +1,15 @@
-const gulp = require('gulp');
-const ghPages = require('gulp-gh-pages');
-const rename = require('gulp-rename');
+const { task, series, watch } = require('gulp');
+const apiDocs = require('./tasks/api-docs');
+const deploy = require('./tasks/deploy');
 
-gulp.task('deploy', () =>
-    gulp.src([
-        './dist/**/*',
-        './docs/**/*',
-    ], { base: '.' })
-    .pipe(rename(filepath => {
-        if (filepath.dirname.startsWith('docs')) {
-            // Collapses `docs` parent directory
-            // so index.html ends up at the root.
-            // `dist` remains in the dist folder.
-            const withoutDocs = filepath.dirname.substring('docs'.length);
-            const withoutLeadingSlash = withoutDocs.startsWith('/')
-                ? withoutDocs.substring(1)
-                : withoutDocs;
+task('deploy', deploy);
 
-            filepath.dirname = withoutLeadingSlash;
-        }
-    }))
-    .pipe(ghPages())
-);
+task('api-docs:clean', apiDocs.clean);
+task('api-docs:build', apiDocs.build);
+const apiDocsAll = series('api-docs:clean', 'api-docs:build');
+function apiDocsWatch() {
+    watch(['src/**/*.js', 'tasks/api-docs/**/*'], apiDocsAll);
+}
+
+exports['api-docs'] = apiDocsAll;
+exports['api-docs:watch'] = apiDocsWatch;

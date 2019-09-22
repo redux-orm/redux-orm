@@ -10,7 +10,6 @@ import MapSelectorSpec from './selectors/MapSelectorSpec';
 /**
  * @module redux
  * @desc Provides functions for integration with Redux.
- * @private
  */
 
 /**

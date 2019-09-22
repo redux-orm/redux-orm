@@ -9,6 +9,7 @@ import {
 
 /**
  * @private
+ * @memberof module:fields
  */
 export class RelationalField extends Field {
     constructor(...args) {
