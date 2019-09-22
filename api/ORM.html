@@ -1,0 +1,178 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>ORM · Redux-ORM</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="&lt;a name=&quot;ORM&quot;&gt;&lt;/a&gt;"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="ORM · Redux-ORM"/><meta property="og:type" content="website"/><meta property="og:url" content="https://github.com/redux-orm/redux-orm/redux-orm/"/><meta property="og:description" content="&lt;a name=&quot;ORM&quot;&gt;&lt;/a&gt;"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/redux-orm//redux-orm/img/favicon/favicon.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/darcula.min.css"/><link rel="stylesheet" href="/redux-orm/code-block-buttons.css"/><script type="text/javascript" src="/redux-orm/scripts/sidebarScroll.js"></script><script type="text/javascript" src="/redux-orm/scripts/codeblock.js"></script><script type="text/javascript" src="/redux-orm/scripts/code-block-buttons.js"></script><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script src="/redux-orm/js/scrollSpy.js"></script><link rel="stylesheet" href="/redux-orm/css/prism.css"/><link rel="stylesheet" href="/redux-orm/css/main.css"/><script src="/redux-orm/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/redux-orm/"><img class="logo" src="/redux-orm/img/redux-orm-white.svg" alt="Redux-ORM"/><h2 class="headerTitleWithLogo">Redux-ORM</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/redux-orm/introduction/getting-started" target="_self">Getting Started</a></li><li class="siteNavGroupActive"><a href="/redux-orm/basics/quick-start" target="_self">Docs</a></li><li class="siteNavGroupActive"><a href="/redux-orm/api/api-reference" target="_self">API</a></li><li class=""><a href="https://github.com/redux-orm/redux-orm" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>API Reference</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Introduction<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/introduction/getting-started">Getting Started</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/introduction/installation">Installation</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Basics<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/basics/quick-start">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/basics/fields">Fields</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">API Reference<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/api/api-reference">API Reference</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/redux-orm/api/ORM">ORM</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/Model">Model</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/QuerySet">QuerySet</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/Session">Session</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/module_fields">Fields</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/module_redux">Redux</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><p><a name="ORM"></a></p>
+<h1><a class="anchor" aria-hidden="true" id="orm"></a><a href="#orm" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ORM</h1>
+<p>ORM - the Object Relational Mapper.</p>
+<p>Use instances of this class to:</p>
+<ul>
+<li>Register your [Model](Model) classes using [register](#ORM+register)</li>
+<li>Get the empty state for the underlying database with [getEmptyState](#ORM+getEmptyState)</li>
+<li>Start an immutable database session with [session](#ORM+session)</li>
+<li>Start a mutating database session with [mutableSession](#ORM+mutableSession)</li>
+</ul>
+<p>Internally, this class handles generating a schema specification from models<br>
+to the database.</p>
+<p><strong>Kind</strong>: global class</p>
+<ul>
+<li><a href="#.ORM">ORM</a>
+<ul>
+<li><a href="#.ORM"><code>new ORM([opts])</code></a></li>
+<li><a href="#orm+register"><code>register(...models)</code></a> ⇒ undefined</li>
+<li><a href="#orm+get"><code>get(modelName)</code></a> ⇒ Model</li>
+<li><a href="#orm+getEmptyState"><code>getEmptyState()</code></a> ⇒ Object</li>
+<li><a href="#orm+session"><code>session(state)</code></a> ⇒ Session</li>
+<li><a href="#orm+mutableSession"><code>mutableSession(state)</code></a> ⇒ Session</li>
+<li><del><a href="#orm+withMutations"><code>withMutations()</code></a></del></li>
+<li><del><a href="#orm+from"><code>from()</code></a></del></li>
+<li><del><a href="#orm+getDefaultState"><code>getDefaultState()</code></a></del></li>
+<li><del><a href="#orm+define"><code>define()</code></a></del></li>
+</ul></li>
+</ul>
+<p><a name="ORM"></a></p>
+<h2><a class="anchor" aria-hidden="true" id="new-orm-opts"></a><a href="#new-orm-opts" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><code>new ORM([opts])</code></h2>
+<p>Creates a new ORM instance.</p>
+<table>
+<thead>
+<tr><th>Param</th><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>[opts]</td><td>Object</td><td></td></tr>
+<tr><td>[opts.stateSelector]</td><td>function</td><td><p>function that given a Redux state tree<br> will return the ORM state's subtree,<br> e.g. <code>state =&gt; state.orm</code><br> (necessary if you want to use selectors)</p></td></tr>
+<tr><td>[opts.createDatabase]</td><td>function</td><td><p>function that creates a database</p></td></tr>
+</tbody>
+</table>
+<p><a name="orm+register"></a></p>
+<h2><a class="anchor" aria-hidden="true" id="registermodels-undefined"></a><a href="#registermodels-undefined" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><code>register(...models)</code>⇒ undefined</h2>
+<p>Registers a [Model](Model) class to the ORM.</p>
+<p>If the model has declared any ManyToMany fields, their<br>
+through models will be generated and registered with<br>
+this call, unless a custom through model has been specified.</p>
+<p><strong>Kind</strong>: instance method of <a href="#.ORM">ORM</a></p>
+<table>
+<thead>
+<tr><th>Param</th><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>...models</td><td>Model</td><td><p>a <a href="Model">Model</a> class to register</p></td></tr>
+</tbody>
+</table>
+<p><a name="orm+get"></a></p>
+<h2><a class="anchor" aria-hidden="true" id="getmodelname-model"></a><a href="#getmodelname-model" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><code>get(modelName)</code>⇒ Model</h2>
+<p>Gets a [Model](Model) class by its name from the registry.</p>
+<p><strong>Kind</strong>: instance method of <a href="#.ORM">ORM</a>  <br>
+<strong>Returns</strong>: Model - <p>the <a href="Model">Model</a> class, if found</p>  <br>
+<strong>Throws</strong>:</p>
+<ul>
+<li>- <p>If [Model](Model) class is not found.</p>
+</li>
+</ul>
+<table>
+<thead>
+<tr><th>Param</th><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>modelName</td><td>string</td><td><p>the name of the <a href="Model">Model</a> class to get</p></td></tr>
+</tbody>
+</table>
+<p><a name="orm+getEmptyState"></a></p>
+<h2><a class="anchor" aria-hidden="true" id="getemptystate-object"></a><a href="#getemptystate-object" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><code>getEmptyState()</code>⇒ Object</h2>
+<p>Returns the empty database state.</p>
+<p><strong>Kind</strong>: instance method of <a href="#.ORM">ORM</a>  <br>
+<strong>Returns</strong>: Object - <p>the empty state</p></p>
+<p><a name="orm+session"></a></p>
+<h2><a class="anchor" aria-hidden="true" id="sessionstate-session"></a><a href="#sessionstate-session" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><code>session(state)</code>⇒ Session</h2>
+<p>Begins an immutable database session.</p>
+<p><strong>Kind</strong>: instance method of <a href="#.ORM">ORM</a>  <br>
+<strong>Returns</strong>: <a href="#.Session">Session</a> - <p>a new <a href="Session">Session</a> instance</p></p>
+<table>
+<thead>
+<tr><th>Param</th><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>state</td><td>Object</td><td><p>the state the database manages</p></td></tr>
+</tbody>
+</table>
+<p><a name="orm+mutableSession"></a></p>
+<h2><a class="anchor" aria-hidden="true" id="mutablesessionstate-session"></a><a href="#mutablesessionstate-session" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><code>mutableSession(state)</code>⇒ Session</h2>
+<p>Begins a mutable database session.</p>
+<p><strong>Kind</strong>: instance method of <a href="#.ORM">ORM</a>  <br>
+<strong>Returns</strong>: <a href="#.Session">Session</a> - <p>a new <a href="Session">Session</a> instance</p></p>
+<table>
+<thead>
+<tr><th>Param</th><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>state</td><td>Object</td><td><p>the state the database manages</p></td></tr>
+</tbody>
+</table>
+<p><a name="orm+withMutations"></a></p>
+<h2><a class="anchor" aria-hidden="true" id="withmutations"></a><a href="#withmutations" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><del><code>withMutations()</code></del></h2>
+<p><strong><em>Deprecated</em></strong></p>
+<p><strong>Kind</strong>: instance method of <a href="#.ORM">ORM</a></p>
+<p><a name="orm+from"></a></p>
+<h2><a class="anchor" aria-hidden="true" id="from"></a><a href="#from" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><del><code>from()</code></del></h2>
+<p><strong><em>Deprecated</em></strong></p>
+<p><strong>Kind</strong>: instance method of <a href="#.ORM">ORM</a></p>
+<p><a name="orm+getDefaultState"></a></p>
+<h2><a class="anchor" aria-hidden="true" id="getdefaultstate"></a><a href="#getdefaultstate" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><del><code>getDefaultState()</code></del></h2>
+<p><strong><em>Deprecated</em></strong></p>
+<p><strong>Kind</strong>: instance method of <a href="#.ORM">ORM</a></p>
+<p><a name="orm+define"></a></p>
+<h2><a class="anchor" aria-hidden="true" id="define"></a><a href="#define" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><del><code>define()</code></del></h2>
+<p><strong><em>Deprecated</em></strong></p>
+<p><strong>Kind</strong>: instance method of <a href="#.ORM">ORM</a></p>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 9/22/2019</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/redux-orm/api/api-reference"><span class="arrow-prev">← </span><span>API Reference</span></a><a class="docs-next button" href="/redux-orm/api/Model"><span>Model</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#new-orm-opts"><code>new ORM([opts])</code></a></li><li><a href="#registermodels-undefined"><code>register(...models)</code>⇒ undefined</a></li><li><a href="#getmodelname-model"><code>get(modelName)</code>⇒ Model</a></li><li><a href="#getemptystate-object"><code>getEmptyState()</code>⇒ Object</a></li><li><a href="#sessionstate-session"><code>session(state)</code>⇒ Session</a></li><li><a href="#mutablesessionstate-session"><code>mutableSession(state)</code>⇒ Session</a></li><li><a href="#withmutations"><del><code>withMutations()</code></del></a></li><li><a href="#from"><del><code>from()</code></del></a></li><li><a href="#getdefaultstate"><del><code>getDefaultState()</code></del></a></li><li><a href="#define"><del><code>define()</code></del></a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/redux-orm/" class="nav-home"><img src="/redux-orm/img/redux-orm-white.svg" alt="Redux-ORM" width="66" height="58"/></a><div><h5>Docs</h5><a href="/redux-orm/introduction/getting-started">Getting Started</a><a href="/redux-orm/introduction/core-concepts">Core Concepts</a><a href="/redux-orm/basics">Basic usage</a><a href="/redux-orm/advanced/advanced-tutorial">Advanced scenarios</a></div><div><h5>Community</h5><a href="https://stackoverflow.com/questions/tagged/redux-orm" target="_blank" rel="noreferrer noopener">Stack Overflow</a></div><div><h5>More</h5><a href="https://github.com/redux-orm/redux-orm/">GitHub</a><a class="github-button" href="https://github.com/redux-orm/redux-orm" data-icon="octicon-star" data-count-href="/redux-orm/redux-orm/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div></section><section class="copyright">Copyright (c) 2019 Redux-ORM documentation authors.<br/>Some icons copyright <a href="https://fontawesome.com/license/free" style="color:white">Font Awesome.</a></section></footer></div></body></html>

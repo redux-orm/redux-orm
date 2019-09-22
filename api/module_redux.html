@@ -1,0 +1,147 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Redux · Redux-ORM</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="&lt;a name=&quot;module:redux&quot;&gt;&lt;/a&gt;"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Redux · Redux-ORM"/><meta property="og:type" content="website"/><meta property="og:url" content="https://github.com/redux-orm/redux-orm/redux-orm/"/><meta property="og:description" content="&lt;a name=&quot;module:redux&quot;&gt;&lt;/a&gt;"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/redux-orm//redux-orm/img/favicon/favicon.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/darcula.min.css"/><link rel="stylesheet" href="/redux-orm/code-block-buttons.css"/><script type="text/javascript" src="/redux-orm/scripts/sidebarScroll.js"></script><script type="text/javascript" src="/redux-orm/scripts/codeblock.js"></script><script type="text/javascript" src="/redux-orm/scripts/code-block-buttons.js"></script><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script src="/redux-orm/js/scrollSpy.js"></script><link rel="stylesheet" href="/redux-orm/css/prism.css"/><link rel="stylesheet" href="/redux-orm/css/main.css"/><script src="/redux-orm/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/redux-orm/"><img class="logo" src="/redux-orm/img/redux-orm-white.svg" alt="Redux-ORM"/><h2 class="headerTitleWithLogo">Redux-ORM</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/redux-orm/introduction/getting-started" target="_self">Getting Started</a></li><li class="siteNavGroupActive"><a href="/redux-orm/basics/quick-start" target="_self">Docs</a></li><li class="siteNavGroupActive"><a href="/redux-orm/api/api-reference" target="_self">API</a></li><li class=""><a href="https://github.com/redux-orm/redux-orm" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>API Reference</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Introduction<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/introduction/getting-started">Getting Started</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/introduction/installation">Installation</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Basics<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/basics/quick-start">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/basics/fields">Fields</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">API Reference<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/api/api-reference">API Reference</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/ORM">ORM</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/Model">Model</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/QuerySet">QuerySet</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/Session">Session</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/module_fields">Fields</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/redux-orm/api/module_redux">Redux</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><p><a name="module:redux"></a></p>
+<h1><a class="anchor" aria-hidden="true" id="redux"></a><a href="#redux" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>redux</h1>
+<p>Provides functions for integration with Redux.</p>
+<p><a name="defaultUpdater"></a></p>
+<h1><a class="anchor" aria-hidden="true" id="defaultupdater-undefined"></a><a href="#defaultupdater-undefined" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><code>defaultUpdater()</code>⇒ undefined</h1>
+<p>Calls all models' reducers if they exist.</p>
+<p><strong>Kind</strong>: global function</p>
+<p><a name="createReducer"></a></p>
+<h1><a class="anchor" aria-hidden="true" id="createreducerorm-updater-function"></a><a href="#createreducerorm-updater-function" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><code>createReducer(orm, [updater])</code>⇒ function</h1>
+<p>Call the returned function to pass actions to Redux-ORM.</p>
+<p><strong>Kind</strong>: global function<br>
+<strong>Returns</strong>: function - <p>reducer that will update the ORM state.</p></p>
+<table>
+<thead>
+<tr><th>Param</th><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>orm</td><td><a href="#.ORM">ORM</a></td><td><p>the ORM instance.</p></td></tr>
+<tr><td>[updater]</td><td>function</td><td><p>the function updating the ORM state based on the given action.</p></td></tr>
+</tbody>
+</table>
+<p><a name="createSelector"></a></p>
+<h1><a class="anchor" aria-hidden="true" id="createselectorargs-function"></a><a href="#createselectorargs-function" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><code>createSelector(...args)</code>⇒ function</h1>
+<p>Returns a memoized selector based on passed arguments.<br>
+This is similar to <code>reselect</code>'s <code>createSelector</code>,<br>
+except you can also pass a single function to be memoized.</p>
+<p>If you pass multiple functions, the format will be the<br>
+same as in <code>reselect</code>. The last argument is the selector<br>
+function and the previous are input selectors.</p>
+<p>When you use this method to create a selector, the returned selector<br>
+expects the whole <code>redux-orm</code> state branch as input. In the selector<br>
+function that you pass as the last argument, any of the arguments<br>
+you pass first will be considered selectors and mapped<br>
+to their outputs, like in <code>reselect</code>.</p>
+<p>Here are some example selectors:</p>
+<pre class="prettyprint source lang-javascript"><code>// orm is an instance of ORM
+// reduxState is the state of a Redux store
+const books = createSelector(orm.Book);
+books(reduxState) // array of book refs
+<p>const bookAuthors = createSelector(orm.Book.authors);
+bookAuthors(reduxState) // two-dimensional array of author refs for each book
+</code></pre></p>
+<p>Selectors can easily be applied to related models:</p>
+<pre class="prettyprint source lang-javascript"><code>const bookAuthorNames = createSelector(
+    orm.Book.authors.map(orm.Author.name),
+);
+bookAuthorNames(reduxState, 8) // names of all authors of book with ID 8
+bookAuthorNames(reduxState, [8, 9]) // 2D array of names of all authors of books with IDs 8 and 9
+</code></pre>
+<p>Also note that <code>orm.Author.name</code> did not need to be wrapped in another <code>createSelector</code> call,<br>
+although that would be possible.</p>
+<p>For more complex calculations you can access<br>
+entire session objects by passing an ORM instance.</p>
+<pre class="prettyprint source lang-javascript"><code>const freshBananasCost = createSelector(
+    orm,
+    session => {
+       const banana = session.Product.get({
+           name: &quot;Banana&quot;,
+       });
+       // amount of fresh bananas in shopping cart
+       const amount = session.ShoppingCart.filter({
+           product_id: banana.id,
+           is_fresh: true,
+       }).count();
+       return `USD ${amount * banana.price}`;
+    }
+);
+</code></pre>
+<p>redux-orm uses a special memoization function to avoid recomputations.</p>
+<p>Everytime a selector runs, this function records which instances<br>
+of your <code>Model</code>s were accessed.<br><br>
+On subsequent runs, the selector first checks if the previously<br>
+accessed instances or <code>args</code> have changed in any way:</p>
+<ul>
+    <li>If yes, the selector calls the function you passed to it.</li>
+    <li>If not, it just returns the previous result
+        (unless you call it for the first time).</li>
+</ul>
+<p>This way you can use pure rendering in your React components<br>
+for performance gains.</p>
+<p><strong>Kind</strong>: global function<br>
+<strong>Returns</strong>: function - <p>memoized selector</p></p>
+<table>
+<thead>
+<tr><th>Param</th><th>Type</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>...args</td><td>function</td><td><p>zero or more input selectors<br> and the selector function.</p></td></tr>
+</tbody>
+</table>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 9/22/2019</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/redux-orm/api/module_fields"><span class="arrow-prev">← </span><span>Fields</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/redux-orm/" class="nav-home"><img src="/redux-orm/img/redux-orm-white.svg" alt="Redux-ORM" width="66" height="58"/></a><div><h5>Docs</h5><a href="/redux-orm/introduction/getting-started">Getting Started</a><a href="/redux-orm/introduction/core-concepts">Core Concepts</a><a href="/redux-orm/basics">Basic usage</a><a href="/redux-orm/advanced/advanced-tutorial">Advanced scenarios</a></div><div><h5>Community</h5><a href="https://stackoverflow.com/questions/tagged/redux-orm" target="_blank" rel="noreferrer noopener">Stack Overflow</a></div><div><h5>More</h5><a href="https://github.com/redux-orm/redux-orm/">GitHub</a><a class="github-button" href="https://github.com/redux-orm/redux-orm" data-icon="octicon-star" data-count-href="/redux-orm/redux-orm/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div></section><section class="copyright">Copyright (c) 2019 Redux-ORM documentation authors.<br/>Some icons copyright <a href="https://fontawesome.com/license/free" style="color:white">Font Awesome.</a></section></footer></div></body></html>
