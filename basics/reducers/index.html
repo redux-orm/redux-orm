@@ -1,0 +1,107 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Reducers · Redux-ORM</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# Reducers"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Reducers · Redux-ORM"/><meta property="og:type" content="website"/><meta property="og:url" content="https://github.com/redux-orm/redux-orm/redux-orm/"/><meta property="og:description" content="# Reducers"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/redux-orm//redux-orm/img/favicon/favicon.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/darcula.min.css"/><link rel="stylesheet" href="/redux-orm/code-block-buttons.css"/><script type="text/javascript" src="/redux-orm/scripts/sidebarScroll.js"></script><script type="text/javascript" src="/redux-orm/scripts/codeblock.js"></script><script type="text/javascript" src="/redux-orm/scripts/code-block-buttons.js"></script><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script src="/redux-orm/js/scrollSpy.js"></script><link rel="stylesheet" href="/redux-orm/css/prism.css"/><link rel="stylesheet" href="/redux-orm/css/main.css"/><script src="/redux-orm/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/redux-orm/"><img class="logo" src="/redux-orm/img/redux-orm-white.svg" alt="Redux-ORM"/><h2 class="headerTitleWithLogo">Redux-ORM</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/redux-orm/introduction/getting-started" target="_self">Getting Started</a></li><li class="siteNavGroupActive"><a href="/redux-orm/basics/quick-start" target="_self">Docs</a></li><li class="siteNavGroupActive"><a href="/redux-orm/api/api-reference" target="_self">API</a></li><li class=""><a href="https://github.com/redux-orm/redux-orm" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Basics</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Introduction<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/introduction/getting-started">Getting Started</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/introduction/installation">Installation</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Basics<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/basics/quick-start">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/basics/fields">Fields</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/redux-orm/basics/reducers">Reducers</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/basics/selectors">Selectors</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Advanced<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/advanced/complex-selectors">Complex Selectors</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/advanced/custom-reducer">Custom Reducer</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">API Reference<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/api/api-reference">API Reference</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/ORM">ORM</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/Model">Model</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/QuerySet">QuerySet</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/Session">Session</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/module_fields">Fields</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/module_redux">Redux</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="reducers"></a><a href="#reducers" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Reducers</h1>
+<p>The default reducer that you passed to the Redux store allows you to update your models based on Redux actions.</p>
+<h2><a class="anchor" aria-hidden="true" id="modelreducer"></a><a href="#modelreducer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a><code>Model.reducer</code></h2>
+<p>Your model classes' static <code>reducer</code> function will automatically be called when a Redux action is dispatched. Override them to add your own behavior.</p>
+<pre><code class="hljs css language-js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Book</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">Model</span> </span>{
+    <span class="hljs-keyword">static</span> reducer(action, Book, session) {
+        <span class="hljs-keyword">let</span> book;
+        <span class="hljs-keyword">switch</span> (action.type) {
+        <span class="hljs-keyword">case</span> <span class="hljs-string">'CREATE_BOOK'</span>:
+            Book.create(action.payload);
+            <span class="hljs-keyword">break</span>;
+        <span class="hljs-keyword">case</span> <span class="hljs-string">'UPDATE_BOOK'</span>:
+            book = Book.withId(action.payload.id);
+            book.update(action.payload);
+            <span class="hljs-keyword">break</span>;
+        <span class="hljs-keyword">case</span> <span class="hljs-string">'REMOVE_BOOK'</span>:
+            book = Book.withId(action.payload);
+            book.delete();
+            <span class="hljs-keyword">break</span>;
+        <span class="hljs-keyword">case</span> <span class="hljs-string">'ADD_AUTHOR_TO_BOOK'</span>:
+            book = Book.withId(action.payload.bookId);
+            book.authors.add(action.payload.author);
+            <span class="hljs-keyword">break</span>;
+        <span class="hljs-keyword">case</span> <span class="hljs-string">'REMOVE_AUTHOR_FROM_BOOK'</span>:
+            book = Book.withId(action.payload.bookId);
+            book.authors.remove(action.payload.authorId);
+            <span class="hljs-keyword">break</span>;
+        <span class="hljs-keyword">case</span> <span class="hljs-string">'ASSIGN_PUBLISHER'</span>:
+            book = Book.withId(action.payload.bookId);
+            book.publisherId = action.payload.publisherId;
+            <span class="hljs-keyword">break</span>;
+        }
+        <span class="hljs-comment">// Return value is ignored.</span>
+    }
+}
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="static-methods"></a><a href="#static-methods" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Static methods</h2>
+<p>To find out which methods you can call on your model class <a href="../api/Model">take a look at the API reference</a>. The most useful ones are as follows:</p>
+<ul>
+<li><code>create(props)</code>: creates a new Model instance with <code>props</code>. If you don't supply an id, the new <code>id</code> will be <code>Math.max(...allOtherIds) + 1</code>.</li>
+<li><code>upsert(props)</code>: either creates a new Model instance with <code>props</code> or, in case an instance with the same id already exists, updates that one - in other words it's <strong>create or update</strong> behaviour.</li>
+<li><code>withId(id)</code>: gets the Model instance with id <code>id</code>.</li>
+<li><code>get(matchObj)</code>: gets a Model instance based on matching properties in <code>matchObj</code> (if you are sure there is only one matching instance).</li>
+</ul>
+<h2><a class="anchor" aria-hidden="true" id="instance-methods"></a><a href="#instance-methods" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Instance methods</h2>
+<p>Once you have a model instance, you may want to call one of the following methods:</p>
+<ul>
+<li><code>update(mergeObj)</code>: merges <code>mergeObj</code> with the Model instance properties. Returns <code>undefined</code>.</li>
+<li><code>delete()</code>: deletes the record for this Model instance in the database. Returns <code>undefined</code>.</li>
+</ul>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 9/23/2019</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/redux-orm/basics/fields"><span class="arrow-prev">← </span><span>Fields</span></a><a class="docs-next button" href="/redux-orm/basics/selectors"><span>Selectors</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#modelreducer"><code>Model.reducer</code></a></li><li><a href="#static-methods">Static methods</a></li><li><a href="#instance-methods">Instance methods</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/redux-orm/" class="nav-home"><img src="/redux-orm/img/redux-orm-white.svg" alt="Redux-ORM" width="66" height="58"/></a><div><h5>Docs</h5><a href="/redux-orm/introduction/getting-started">Getting Started</a><a href="/redux-orm/introduction/core-concepts">Core Concepts</a><a href="/redux-orm/basics">Basic usage</a><a href="/redux-orm/advanced/advanced-tutorial">Advanced scenarios</a></div><div><h5>Community</h5><a href="https://stackoverflow.com/questions/tagged/redux-orm" target="_blank" rel="noreferrer noopener">Stack Overflow</a></div><div><h5>More</h5><a href="https://github.com/redux-orm/redux-orm/">GitHub</a><a class="github-button" href="https://github.com/redux-orm/redux-orm" data-icon="octicon-star" data-count-href="/redux-orm/redux-orm/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div></section><section class="copyright">Copyright (c) 2019 Redux-ORM documentation authors.<br/>Some icons copyright <a href="https://fontawesome.com/license/free" style="color:white">Font Awesome.</a></section></footer></div></body></html>
