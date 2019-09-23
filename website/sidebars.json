@@ -6,7 +6,11 @@
     ],
     "Basics": [
       "basics/quick-start",
-      "basics/fields"
+      "basics/fields",
+      "basics/selectors"
+    ],
+    "Advanced": [
+      "advanced/complex-selectors"
     ],
     "API Reference": [
       "api/api-reference",
