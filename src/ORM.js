@@ -241,9 +241,9 @@ class ORM {
                 if (!(field instanceof Field)) {
                     throw new Error(
                         `${modelName}.${fieldName} is of type "${typeof field}" ` +
-                        `but must be an instance of Field. Please use the ` +
+                        'but must be an instance of Field. Please use the ' +
                         '`attr`, `fk`, `oneToOne` and `many` ' +
-                        `functions to define fields.`
+                        'functions to define fields.'
                     );
                 }
                 if (!this._isFieldInstalled(modelName, fieldName)) {

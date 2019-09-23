@@ -6,7 +6,7 @@ import ThroughModel from '../ThroughModel';
 
 describe('Field declarations', () => {
     describe('Common mistakes', () => {
-        it ('fields need to be instances of the Field class', () => {
+        it('fields need to be instances of the Field class', () => {
             class MyModel extends Model {}
             MyModel.modelName = 'MyModel';
             MyModel.fields = {
