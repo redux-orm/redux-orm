@@ -8,7 +8,7 @@
   "sideEffects": false,
   "scripts": {
     "test": "jest",
-    "test:watch": "npm test -- --watch",
+    "test:watch": "jest --watch",
     "test:es5": "jest --config=jest.es5.config.js",
     "test:perf": "jest --config=jest.perf.config.js",
     "transpile:cjs": "cross-env BABEL_ENV=cjs babel src --out-dir lib --ignore */test",
@@ -23,7 +23,6 @@
     "ensure-version-not-published": "[ -z \"$(npm info $(npm list | head -n 1 | cut -d ' ' -f1) 2> /dev/null)\" ] || (echo \"Error: $(npm list | head -n 1 | cut -d ' ' -f1) has already been published.\" && false)",
     "ensure-clean-tree": "[ -z \"$(git status -s)\" ] || (echo \"Error: There are uncommitted changes in the git repostory.\" && false)",
     "lint": "eslint src",
-    "deploydocs": "npm run build && gulp deploy",
     "clean": "rimraf lib es dist docs coverage"
   },
   "keywords": [
