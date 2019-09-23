@@ -1,8 +1,5 @@
 const { task, series, watch } = require('gulp');
 const apiDocs = require('./tasks/api-docs');
-const deploy = require('./tasks/deploy');
-
-task('deploy', deploy);
 
 task('api-docs:clean', apiDocs.clean);
 task('api-docs:build', apiDocs.build);
