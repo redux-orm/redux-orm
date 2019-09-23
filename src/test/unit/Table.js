@@ -1,6 +1,6 @@
 import deepFreeze from 'deep-freeze';
 import { EXCLUDE, FILTER, ORDER_BY } from '../../constants';
-import Table from '../../db/Table';
+import { Table } from '../../db';
 import { getBatchToken } from '../../utils';
 
 describe('Table', () => {

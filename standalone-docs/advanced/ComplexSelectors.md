@@ -19,6 +19,16 @@ const someSelector = createSelector(
 );
 ```
 
+This is important because if you want to access Model classes within the result function, you need to do get them using a session (like `session.User` above).
+
+## The `QuerySet` class
+
+Where does the `User.count()` call above come from, you're asking?
+
+There are many functions like `count()` defined on the [`QuerySet`](../api/QuerySet) class. Most of them are copied over to Model classes when a session is created.
+
+Instances of `QuerySet` are automatically created when you access a relationship that potentially returns multiple model instances, like `book.authors`. To get the corresponding database objects, you would write `book.authors.toRefArray()`. In some cases you need to wrap them in Model instances, e.g. in order to access other related models. To do that, use `book.authors.toModelArray()` instead.
+
 ## Complex selector example
 
 The last argument to `createSelector` can be a custom result function:
@@ -31,7 +41,7 @@ const publisherAverageRating = createSelector(
 ```
 
 ## Caveats
-You need to pass at least one selector beginning with `orm` to `createSelector()`.
+You always need to pass at least one selector beginning with `orm` to `createSelector()`.
 
 Different values of the primary key argument need to be handled if you want to support them ([#282](https://github.com/redux-orm/redux-orm/issues/282)):
 ```js

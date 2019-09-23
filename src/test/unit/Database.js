@@ -1,6 +1,5 @@
 import deepFreeze from 'deep-freeze';
-import createDatabase from '../../db';
-import Table from '../../db/Table';
+import { createDatabase, Table } from '../../db';
 import { getBatchToken } from '../../utils';
 import {
     FILTER, CREATE, UPDATE, DELETE, SUCCESS,

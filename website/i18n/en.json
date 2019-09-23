@@ -9,9 +9,9 @@
         "title": "Complex Selectors",
         "sidebar_label": "Complex Selectors"
       },
-      "advanced/advanced-tutorial": {
-        "title": "Advanced Tutorial: Intro",
-        "sidebar_label": "Advanced Tutorial: Intro"
+      "advanced/custom-reducer": {
+        "title": "Custom Reducer",
+        "sidebar_label": "Custom Reducer"
       },
       "api/module_fields": {
         "title": "Fields",
@@ -48,6 +48,10 @@
       "basics/quick-start": {
         "title": "Quick Start",
         "sidebar_label": "Quick Start"
+      },
+      "basics/reducers": {
+        "title": "Reducers",
+        "sidebar_label": "Reducers"
       },
       "basics/selectors": {
         "title": "Selectors",

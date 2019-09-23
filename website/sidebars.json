@@ -7,10 +7,12 @@
     "Basics": [
       "basics/quick-start",
       "basics/fields",
+      "basics/reducers",
       "basics/selectors"
     ],
     "Advanced": [
-      "advanced/complex-selectors"
+      "advanced/complex-selectors",
+      "advanced/custom-reducer"
     ],
     "API Reference": [
       "api/api-reference",
