@@ -3,6 +3,7 @@ import Session from './Session';
 import Model from './Model';
 import { createDatabase as defaultCreateDatabase } from './db';
 import { attr } from './fields';
+import Field from './fields/Field';
 import ForeignKey from './fields/ForeignKey';
 import ManyToMany from './fields/ManyToMany';
 
@@ -237,6 +238,14 @@ class ORM {
         models.filter((model) => !model.isSetUp).forEach((model) => {
             const { fields, modelName, querySetClass } = model;
             Object.entries(fields).forEach(([fieldName, field]) => {
+                if (!(field instanceof Field)) {
+                    throw new Error(
+                        `${modelName}.${fieldName} is of type "${typeof field}" ` +
+                        `but must be an instance of Field. Please use the ` +
+                        '`attr`, `fk`, `oneToOne` and `many` ' +
+                        `functions to define fields.`
+                    );
+                }
                 if (!this._isFieldInstalled(modelName, fieldName)) {
                     this._installField(field, fieldName, model);
                     this._setFieldInstalled(modelName, fieldName);
