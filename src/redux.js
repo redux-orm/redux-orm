@@ -75,7 +75,7 @@ function toORM(arg) { /* eslint-disable no-underscore-dangle */
 }
 
 const selectorCache = new Map();
-const SELECTOR_KEY = Symbol('REDUX_ORM_SELECTOR');
+const SELECTOR_KEY = Symbol.for('REDUX_ORM_SELECTOR');
 
 /**
  * @private
