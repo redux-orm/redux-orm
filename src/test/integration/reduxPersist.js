@@ -1,11 +1,11 @@
-import {
-    ORM, Session, Model as OrmModel, createReducer, createSelector
-} from '../..';
-
 import { createStore } from 'redux';
 
 import { persistCombineReducers, persistStore } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
+
+import {
+    ORM, Session, Model as OrmModel, createReducer, createSelector
+} from '../..';
 
 import { createTestModels } from '../helpers';
 import { STATE_FLAG } from '../../constants';
@@ -77,9 +77,9 @@ describe('Redux Persist integration', () => {
         ormState = emptyState;
         reducer = createReducer(orm);
         const persistConfig = {
-            key: "root",
+            key: 'root',
             storage,
-            whitelist: ["orm"],
+            whitelist: ['orm'],
         };
         rootReducer = persistCombineReducers(persistConfig, {
             orm: reducer,
@@ -99,7 +99,7 @@ describe('Redux Persist integration', () => {
                 type: CREATE_MOVIE,
                 payload: { id: 123 },
             });
-            persistor
+            return persistor
                 .flush()
                 .then(() => {
                     const session = orm.session(store.getState().orm);
