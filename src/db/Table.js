@@ -63,7 +63,7 @@ function normalizeOrders(orders) {
     if (orders === undefined) {
         return undefined;
     }
-    const convert = (order) => (order === false ? 'desc' : 'asc');
+    const convert = (order) => { if (['desc', false].includes(order)) { return 'desc'; } return 'asc'; };
     return Array.isArray(orders) ? orders.map(convert) : convert(orders);
 }
 
