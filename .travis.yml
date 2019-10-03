@@ -11,6 +11,7 @@ script:
   - "npm run test:es5"
   - npm run test
   - "npm run test:perf"
+  - cd website && npm install && npm run build
 
 after_success:
   - codecov
