@@ -249,9 +249,9 @@ const QuerySet = class QuerySet {
      *                                           correspond to property on the entity that will
      *                                           determine the order. If a function is supplied,
      *                                           it should return the value to order by.
-     * @param {Boolean[]} [orders] - the sort orders of `iteratees`. If unspecified, all iteratees
+     * @param {Array<Boolean|'asc'|'desc'>} [orders] - the sort orders of `iteratees`. If unspecified, all iteratees
      *                               will be sorted in ascending order. `true` and `'asc'`
-     *                               correspond to ascending order, and `false` and `'desc`
+     *                               correspond to ascending order, and `false` and `'desc'`
      *                               to descending order.
      * @return {QuerySet} a new {@link QuerySet} with objects ordered by `iteratees`.
      */

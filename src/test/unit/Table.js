@@ -170,7 +170,7 @@ describe('Table', () => {
             expect(result.map(row => row.data)).toEqual(['awesomedata', 'cooldata', 'verycooldata!']);
         });
 
-        it('orderBy works correctly with true orders', () => {
+        it('orderBy works correctly with true order', () => {
             const clauses = [{
                 type: ORDER_BY,
                 payload: [['data'], [true]],
@@ -180,10 +180,30 @@ describe('Table', () => {
                 .toEqual(['awesomedata', 'cooldata', 'verycooldata!']);
         });
 
-        it('orderBy works correctly with false orders', () => {
+        it('orderBy works correctly with false order', () => {
             const clauses = [{
                 type: ORDER_BY,
                 payload: [['data'], [false]],
+            }];
+            const result = table.query(state, clauses);
+            expect(result.map(row => row.data))
+                .toEqual(['verycooldata!', 'cooldata', 'awesomedata']);
+        });
+
+        it('orderBy works correctly with "asc" order', () => {
+            const clauses = [{
+                type: ORDER_BY,
+                payload: [['data'], ['asc']],
+            }];
+            const result = table.query(state, clauses);
+            expect(result.map(row => row.data))
+                .toEqual(['awesomedata', 'cooldata', 'verycooldata!']);
+        });
+
+        it('orderBy works correctly with "desc" order', () => {
+            const clauses = [{
+                type: ORDER_BY,
+                payload: [['data'], ['desc']],
             }];
             const result = table.query(state, clauses);
             expect(result.map(row => row.data))
