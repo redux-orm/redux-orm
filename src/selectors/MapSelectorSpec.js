@@ -19,13 +19,13 @@ export default class MapSelectorSpec extends ModelBasedSelectorSpec {
 
     valueForInstance(instance, session, state) {
         if (!instance) return null;
-        const { [this._accessorName]: value } = instance;
-        if (!value) return null;
+
         const {
-            [this._field.toModelName]: { idAttribute: mapIdAttribute },
+            [this._field.toModelName]: { idAttribute },
         } = session;
-        return value
+
+        return instance[this._accessorName]
             .toRefArray()
-            .map(ref => this._selector(state, ref[mapIdAttribute]));
+            .map(ref => this._selector(state, ref[idAttribute]));
     }
 }
