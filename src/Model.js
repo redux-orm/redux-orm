@@ -1,22 +1,19 @@
-import Session from './Session';
-import QuerySet from './QuerySet';
+import Session from "./Session";
+import QuerySet from "./QuerySet";
 
-import { attr } from './fields';
-import ForeignKey from './fields/ForeignKey';
-import ManyToMany from './fields/ManyToMany';
-import OneToOne from './fields/OneToOne';
+import { attr } from "./fields";
+import ForeignKey from "./fields/ForeignKey";
+import ManyToMany from "./fields/ManyToMany";
+import OneToOne from "./fields/OneToOne";
 
-import {
-    CREATE, UPDATE, DELETE, FILTER,
-} from './constants';
+import { CREATE, UPDATE, DELETE, FILTER } from "./constants";
 import {
     normalizeEntity,
     arrayDiffActions,
     objectShallowEquals,
     warnDeprecated,
     m2mName,
-} from './utils';
-
+} from "./utils";
 
 /**
  * Generates a query specification to get the instance's
@@ -41,7 +38,6 @@ function getByIdQuery(modelInstance) {
         ],
     };
 }
-
 
 /**
  * The heart of an ORM, the data model.
@@ -75,7 +71,7 @@ const Model = class Model {
         const propsObj = Object(props);
         this._fields = { ...propsObj };
 
-        Object.keys(propsObj).forEach((fieldName) => {
+        Object.keys(propsObj).forEach(fieldName => {
             // In this case, we got a prop that wasn't defined as a field.
             // Assuming it's an arbitrary data field, making an instance-specific
             // descriptor for it.
@@ -84,7 +80,7 @@ const Model = class Model {
             if (!(fieldName in this)) {
                 Object.defineProperty(this, fieldName, {
                     get: () => this._fields[fieldName],
-                    set: (value) => this.set(fieldName, value),
+                    set: value => this.set(fieldName, value),
                     configurable: true,
                     enumerable: true,
                 });
@@ -120,12 +116,14 @@ const Model = class Model {
      * @return {undefined}
      */
     static markAccessed(ids) {
-        if (typeof this._session === 'undefined') {
-            throw new Error([
-                `Tried to mark rows of the ${this.modelName} model as accessed without a session. `,
-                'Create a session using `session = orm.session()` and call ',
-                `\`session["${this.modelName}"].markAccessed\` instead.`,
-            ].join(''));
+        if (typeof this._session === "undefined") {
+            throw new Error(
+                [
+                    `Tried to mark rows of the ${this.modelName} model as accessed without a session. `,
+                    "Create a session using `session = orm.session()` and call ",
+                    `\`session["${this.modelName}"].markAccessed\` instead.`,
+                ].join("")
+            );
         }
         this.session.markAccessed(this.modelName, ids);
     }
@@ -137,12 +135,14 @@ const Model = class Model {
      * @return {undefined}
      */
     static markFullTableScanned() {
-        if (typeof this._session === 'undefined') {
-            throw new Error([
-                `Tried to mark the ${this.modelName} model as full table scanned without a session. `,
-                'Create a session using `session = orm.session()` and call ',
-                `\`session["${this.modelName}"].markFullTableScanned\` instead.`,
-            ].join(''));
+        if (typeof this._session === "undefined") {
+            throw new Error(
+                [
+                    `Tried to mark the ${this.modelName} model as full table scanned without a session. `,
+                    "Create a session using `session = orm.session()` and call ",
+                    `\`session["${this.modelName}"].markFullTableScanned\` instead.`,
+                ].join("")
+            );
         }
         this.session.markFullTableScanned(this.modelName);
     }
@@ -155,17 +155,21 @@ const Model = class Model {
      * @return {undefined}
      */
     static markAccessedIndexes(indexes) {
-        if (typeof this._session === 'undefined') {
-            throw new Error([
-                `Tried to mark indexes for the ${this.modelName} model as accessed without a session. `,
-                'Create a session using `session = orm.session()` and call ',
-                `\`session["${this.modelName}"].markAccessedIndexes\` instead.`,
-            ].join(''));
+        if (typeof this._session === "undefined") {
+            throw new Error(
+                [
+                    `Tried to mark indexes for the ${this.modelName} model as accessed without a session. `,
+                    "Create a session using `session = orm.session()` and call ",
+                    `\`session["${this.modelName}"].markAccessedIndexes\` instead.`,
+                ].join("")
+            );
         }
         this.session.markAccessedIndexes(
-            indexes.map(
-                ([attribute, value]) => [this.modelName, attribute, value]
-            )
+            indexes.map(([attribute, value]) => [
+                this.modelName,
+                attribute,
+                value,
+            ])
         );
     }
 
@@ -175,12 +179,14 @@ const Model = class Model {
      * @return {string} The id attribute of this {@link Model}.
      */
     static get idAttribute() {
-        if (typeof this._session === 'undefined') {
-            throw new Error([
-                `Tried to get the ${this.modelName} model's id attribute without a session. `,
-                'Create a session using `session = orm.session()` and access ',
-                `\`session["${this.modelName}"].idAttribute\` instead.`,
-            ].join(''));
+        if (typeof this._session === "undefined") {
+            throw new Error(
+                [
+                    `Tried to get the ${this.modelName} model's id attribute without a session. `,
+                    "Create a session using `session = orm.session()` and access ",
+                    `\`session["${this.modelName}"].idAttribute\` instead.`,
+                ].join("")
+            );
         }
         return this.session.db.describe(this.modelName).idAttribute;
     }
@@ -193,7 +199,9 @@ const Model = class Model {
      */
     static connect(session) {
         if (!(session instanceof Session)) {
-            throw new Error('A model can only be connected to instances of Session.');
+            throw new Error(
+                "A model can only be connected to instances of Session."
+            );
         }
         this._session = session;
     }
@@ -240,15 +248,19 @@ const Model = class Model {
      * @private
      */
     static tableOptions() {
-        if (typeof this.backend === 'function') {
-            warnDeprecated('`Model.backend` has been deprecated. Please rename to `.options`.');
+        if (typeof this.backend === "function") {
+            warnDeprecated(
+                "`Model.backend` has been deprecated. Please rename to `.options`."
+            );
             return this.backend();
         }
         if (this.backend) {
-            warnDeprecated('`Model.backend` has been deprecated. Please rename to `.options`.');
+            warnDeprecated(
+                "`Model.backend` has been deprecated. Please rename to `.options`."
+            );
             return this.backend;
         }
-        if (typeof this.options === 'function') {
+        if (typeof this.options === "function") {
             return this.options();
         }
         return this.options;
@@ -264,12 +276,14 @@ const Model = class Model {
      * @return {Model} a new {@link Model} instance.
      */
     static create(userProps) {
-        if (typeof this._session === 'undefined') {
-            throw new Error([
-                `Tried to create a ${this.modelName} model instance without a session. `,
-                'Create a session using `session = orm.session()` and call ',
-                `\`session["${this.modelName}"].create\` instead.`,
-            ].join(''));
+        if (typeof this._session === "undefined") {
+            throw new Error(
+                [
+                    `Tried to create a ${this.modelName} model instance without a session. `,
+                    "Create a session using `session = orm.session()` and call ",
+                    `\`session["${this.modelName}"].create\` instead.`,
+                ].join("")
+            );
         }
         const props = { ...userProps };
 
@@ -278,7 +292,7 @@ const Model = class Model {
         const declaredFieldNames = Object.keys(this.fields);
         const declaredVirtualFieldNames = Object.keys(this.virtualFields);
 
-        declaredFieldNames.forEach((key) => {
+        declaredFieldNames.forEach(key => {
             const field = this.fields[key];
             const valuePassed = userProps.hasOwnProperty(key);
             if (!(field instanceof ManyToMany)) {
@@ -306,10 +320,13 @@ const Model = class Model {
         });
 
         // add backward many-many if required
-        declaredVirtualFieldNames.forEach((key) => {
+        declaredVirtualFieldNames.forEach(key => {
             if (!m2mRelations.hasOwnProperty(key)) {
                 const field = this.virtualFields[key];
-                if (userProps.hasOwnProperty(key) && field instanceof ManyToMany) {
+                if (
+                    userProps.hasOwnProperty(key) &&
+                    field instanceof ManyToMany
+                ) {
                     // If a value is supplied for a ManyToMany field,
                     // discard them from props and save for later processing.
                     m2mRelations[key] = userProps[key];
@@ -340,12 +357,14 @@ const Model = class Model {
      * @return {Model} a {@link Model} instance.
      */
     static upsert(userProps) {
-        if (typeof this.session === 'undefined') {
-            throw new Error([
-                `Tried to upsert a ${this.modelName} model instance without a session. `,
-                'Create a session using `session = orm.session()` and call ',
-                `\`session["${this.modelName}"].upsert\` instead.`,
-            ].join(''));
+        if (typeof this.session === "undefined") {
+            throw new Error(
+                [
+                    `Tried to upsert a ${this.modelName} model instance without a session. `,
+                    "Create a session using `session = orm.session()` and call ",
+                    `\`session["${this.modelName}"].upsert\` instead.`,
+                ].join("")
+            );
         }
 
         const { idAttribute } = this;
@@ -400,17 +419,17 @@ const Model = class Model {
      * @return {Boolean} a boolean indicating if entity with `props` exists in the state
      */
     static exists(lookupObj) {
-        if (typeof this.session === 'undefined') {
-            throw new Error([
-                `Tried to check if a ${this.modelName} model instance exists without a session. `,
-                'Create a session using `session = orm.session()` and call ',
-                `\`session["${this.modelName}"].exists\` instead.`,
-            ].join(''));
+        if (typeof this.session === "undefined") {
+            throw new Error(
+                [
+                    `Tried to check if a ${this.modelName} model instance exists without a session. `,
+                    "Create a session using `session = orm.session()` and call ",
+                    `\`session["${this.modelName}"].exists\` instead.`,
+                ].join("")
+            );
         }
 
-        return Boolean(
-            this._findDatabaseRows(lookupObj).length
-        );
+        return Boolean(this._findDatabaseRows(lookupObj).length);
     }
 
     /**
@@ -430,7 +449,9 @@ const Model = class Model {
             return null;
         }
         if (rows.length > 1) {
-            throw new Error(`Expected to find a single row in \`${this.modelName}.get\`. Found ${rows.length}.`);
+            throw new Error(
+                `Expected to find a single row in \`${this.modelName}.get\`. Found ${rows.length}.`
+            );
         }
 
         return new ThisModel(rows[0]);
@@ -505,17 +526,19 @@ const Model = class Model {
         const ThisModel = this.getClass();
         const className = ThisModel.modelName;
         const fieldNames = Object.keys(ThisModel.fields);
-        const fields = fieldNames.map((fieldName) => {
-            const field = ThisModel.fields[fieldName];
-            if (field instanceof ManyToMany) {
-                const ids = this[fieldName].toModelArray().map(
-                    (model) => model.getId()
-                );
-                return `${fieldName}: [${ids.join(', ')}]`;
-            }
-            const val = this._fields[fieldName];
-            return `${fieldName}: ${val}`;
-        }).join(', ');
+        const fields = fieldNames
+            .map(fieldName => {
+                const field = ThisModel.fields[fieldName];
+                if (field instanceof ManyToMany) {
+                    const ids = this[fieldName]
+                        .toModelArray()
+                        .map(model => model.getId());
+                    return `${fieldName}: [${ids.join(", ")}]`;
+                }
+                const val = this._fields[fieldName];
+                return `${fieldName}: ${val}`;
+            })
+            .join(", ");
         return `${className}: {${fields}}`;
     }
 
@@ -558,11 +581,13 @@ const Model = class Model {
      */
     update(userMergeObj) {
         const ThisModel = this.getClass();
-        if (typeof ThisModel.session === 'undefined') {
-            throw new Error([
-                `Tried to update a ${ThisModel.modelName} model instance without a session. `,
-                'You cannot call `.update` on an instance that you did not receive from the database.',
-            ].join(''));
+        if (typeof ThisModel.session === "undefined") {
+            throw new Error(
+                [
+                    `Tried to update a ${ThisModel.modelName} model instance without a session. `,
+                    "You cannot call `.update` on an instance that you did not receive from the database.",
+                ].join("")
+            );
         }
 
         const mergeObj = { ...userMergeObj };
@@ -574,7 +599,8 @@ const Model = class Model {
         // If an array of entities or id's is supplied for a
         // many-to-many related field, clear the old relations
         // and add the new ones.
-        for (const mergeKey in mergeObj) { // eslint-disable-line no-restricted-syntax, guard-for-in
+        // eslint-disable-next-line guard-for-in, no-restricted-syntax
+        for (const mergeKey in mergeObj) {
             const isRealField = fields.hasOwnProperty(mergeKey);
 
             if (isRealField) {
@@ -645,11 +671,13 @@ const Model = class Model {
      */
     delete() {
         const ThisModel = this.getClass();
-        if (typeof ThisModel.session === 'undefined') {
-            throw new Error([
-                `Tried to delete a ${ThisModel.modelName} model instance without a session. `,
-                'You cannot call `.delete` on an instance that you did not receive from the database.',
-            ].join(''));
+        if (typeof ThisModel.session === "undefined") {
+            throw new Error(
+                [
+                    `Tried to delete a ${ThisModel.modelName} model instance without a session. `,
+                    "You cannot call `.delete` on an instance that you did not receive from the database.",
+                ].join("")
+            );
         }
 
         this._onDelete();
@@ -669,23 +697,28 @@ const Model = class Model {
         const ThisModel = this.getClass();
         const { fields, virtualFields, modelName } = ThisModel;
 
-        Object.keys(relations).forEach((name) => {
+        Object.keys(relations).forEach(name => {
             const reverse = !fields.hasOwnProperty(name);
             const field = virtualFields[name];
             const values = relations[name];
 
             if (!Array.isArray(values)) {
-                throw new TypeError(`Failed to resolve many-to-many relationship: ${modelName}[${name}] must be an array (passed: ${values})`);
+                throw new TypeError(
+                    `Failed to resolve many-to-many relationship: ${modelName}[${name}] must be an array (passed: ${values})`
+                );
             }
 
             const normalizedNewIds = values.map(normalizeEntity);
             const uniqueIds = [...new Set(normalizedNewIds)];
 
             if (normalizedNewIds.length !== uniqueIds.length) {
-                throw new Error(`Found duplicate id(s) when passing "${normalizedNewIds}" to ${ThisModel.modelName}.${name} value`);
+                throw new Error(
+                    `Found duplicate id(s) when passing "${normalizedNewIds}" to ${ThisModel.modelName}.${name} value`
+                );
             }
 
-            const throughModelName = field.through || m2mName(ThisModel.modelName, name);
+            const throughModelName =
+                field.through || m2mName(ThisModel.modelName, name);
             const ThroughModel = ThisModel.session[throughModelName];
 
             let fromField;
@@ -697,16 +730,16 @@ const Model = class Model {
                 ({ from: toField, to: fromField } = field.throughFields);
             }
 
-            const currentIds = ThroughModel.filter((through) => through[fromField] === this[ThisModel.idAttribute]
-            ).toRefArray().map((ref) => ref[toField]);
+            const currentIds = ThroughModel.filter(
+                through => through[fromField] === this[ThisModel.idAttribute]
+            )
+                .toRefArray()
+                .map(ref => ref[toField]);
 
             const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
 
             if (diffActions) {
-                const {
-                    delete: idsToDelete,
-                    add: idsToAdd,
-                } = diffActions;
+                const { delete: idsToDelete, add: idsToAdd } = diffActions;
                 if (idsToDelete.length > 0) {
                     this[field.as || name].remove(...idsToDelete);
                 }
@@ -724,7 +757,8 @@ const Model = class Model {
      */
     _onDelete() {
         const { virtualFields } = this.getClass();
-        for (const key in virtualFields) { // eslint-disable-line
+        // eslint-disable-next-line guard-for-in, no-restricted-syntax
+        for (const key in virtualFields) {
             const field = virtualFields[key];
             if (field instanceof ManyToMany) {
                 // Delete any many-to-many rows the entity is included in.
@@ -755,7 +789,9 @@ const Model = class Model {
      * @deprecated Please use {@link Model.idExists} instead.
      */
     static hasId(id) {
-        console.warn('`Model.hasId` has been deprecated. Please use `Model.idExists` instead.');
+        console.warn(
+            "`Model.hasId` has been deprecated. Please use `Model.idExists` instead."
+        );
         return this.idExists(id);
     }
 
@@ -765,8 +801,8 @@ const Model = class Model {
      */
     getNextState() {
         throw new Error(
-            '`Model.prototype.getNextState` has been removed. See the 0.9 ' +
-            'migration guide on the GitHub repo.'
+            "`Model.prototype.getNextState` has been removed. See the 0.9 " +
+                "migration guide on the GitHub repo."
         );
     }
 };

@@ -1,4 +1,4 @@
-import DefaultFieldInstaller from './DefaultFieldInstaller';
+import DefaultFieldInstaller from "./DefaultFieldInstaller";
 
 /**
  * @private

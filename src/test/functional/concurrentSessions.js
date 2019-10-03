@@ -1,19 +1,15 @@
-import { createTestSessionWithData } from '../helpers';
+import { createTestSessionWithData } from "../helpers";
 
-describe('Multiple concurrent sessions', () => {
+describe("Multiple concurrent sessions", () => {
     let session;
     let orm;
     let state;
 
     beforeEach(() => {
-        ({
-            session,
-            orm,
-            state,
-        } = createTestSessionWithData());
+        ({ session, orm, state } = createTestSessionWithData());
     });
 
-    it('separate sessions can manage separate data stores', () => {
+    it("separate sessions can manage separate data stores", () => {
         const firstSession = session;
         const secondSession = orm.session(state);
 
@@ -21,7 +17,7 @@ describe('Multiple concurrent sessions', () => {
         expect(secondSession.Book.count()).toBe(3);
 
         const newBookProps = {
-            name: 'New Book',
+            name: "New Book",
             author: 0,
             releaseYear: 2015,
             genres: [0, 1],
@@ -33,7 +29,7 @@ describe('Multiple concurrent sessions', () => {
         expect(secondSession.Book.count()).toBe(3);
     });
 
-    it('separate sessions have different session bound models', () => {
+    it("separate sessions have different session bound models", () => {
         const firstSession = orm.session();
         const secondSession = orm.session();
 

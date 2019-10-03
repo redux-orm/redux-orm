@@ -1,7 +1,7 @@
-import Attribute from './Attribute';
-import ForeignKey from './ForeignKey';
-import ManyToMany from './ManyToMany';
-import OneToOne from './OneToOne';
+import Attribute from "./Attribute";
+import ForeignKey from "./ForeignKey";
+import ManyToMany from "./ManyToMany";
+import OneToOne from "./OneToOne";
 
 /**
  * Contains the logic for how fields on {@link Model}s work
@@ -209,9 +209,4 @@ function oneToOne(...args) {
     return new OneToOne(...args);
 }
 
-export {
-    fk,
-    attr,
-    many,
-    oneToOne,
-};
+export { fk, attr, many, oneToOne };

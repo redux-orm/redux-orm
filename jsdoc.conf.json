@@ -1,20 +1,18 @@
 {
-    "tags": {
-        "allowUnknownTags": true,
-        "dictionaries": ["jsdoc","closure"]
-    },
-    "source": {
-        "includePattern": ".+\\.js(doc)?$",
-        "excludePattern": "test"
-    },
-    "markdown": {
-        "hardwrap": true
-    },
-    "plugins": [
-        "plugins/markdown"
-    ],
-    "templates": {
-        "cleverLinks": true,
-        "monospaceLinks": false
-    }
+  "tags": {
+    "allowUnknownTags": true,
+    "dictionaries": ["jsdoc", "closure"]
+  },
+  "source": {
+    "includePattern": ".+\\.js(doc)?$",
+    "excludePattern": "test"
+  },
+  "markdown": {
+    "hardwrap": true
+  },
+  "plugins": ["plugins/markdown"],
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": false
+  }
 }

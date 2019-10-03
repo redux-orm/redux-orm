@@ -1,6 +1,4 @@
-import {
-    normalizeEntity,
-} from './utils';
+import { normalizeEntity } from "./utils";
 
 /**
  * The functions in this file return custom JS property descriptors
@@ -45,13 +43,9 @@ function forwardsManyToOneDescriptor(fieldName, declaredToModelName) {
     return {
         get() {
             const {
-                session: {
-                    [declaredToModelName]: DeclaredToModel,
-                },
+                session: { [declaredToModelName]: DeclaredToModel },
             } = this.getClass();
-            const {
-                [fieldName]: toId,
-            } = this._fields;
+            const { [fieldName]: toId } = this._fields;
 
             return DeclaredToModel.withId(toId);
         },
@@ -90,9 +84,7 @@ function backwardsOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
     return {
         get() {
             const {
-                session: {
-                    [declaredFromModelName]: DeclaredFromModel,
-                },
+                session: { [declaredFromModelName]: DeclaredFromModel },
             } = this.getClass();
 
             return DeclaredFromModel.get({
@@ -100,7 +92,7 @@ function backwardsOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
             });
         },
         set() {
-            throw new Error('Can\'t mutate a reverse one-to-one relation.');
+            throw new Error("Can't mutate a reverse one-to-one relation.");
         },
     };
 }
@@ -112,13 +104,14 @@ function backwardsOneToOneDescriptor(declaredFieldName, declaredFromModelName) {
  * An example would be `author.books` referencing all instances of
  * the `Book` model that reference the author using `fk()`.
  */
-function backwardsManyToOneDescriptor(declaredFieldName, declaredFromModelName) {
+function backwardsManyToOneDescriptor(
+    declaredFieldName,
+    declaredFromModelName
+) {
     return {
         get() {
             const {
-                session: {
-                    [declaredFromModelName]: DeclaredFromModel,
-                },
+                session: { [declaredFromModelName]: DeclaredFromModel },
             } = this.getClass();
 
             return DeclaredFromModel.filter({
@@ -126,7 +119,7 @@ function backwardsManyToOneDescriptor(declaredFieldName, declaredFromModelName) 
             });
         },
         set() {
-            throw new Error('Can\'t mutate a reverse many-to-one relation.');
+            throw new Error("Can't mutate a reverse many-to-one relation.");
         },
     };
 }
@@ -152,12 +145,8 @@ function manyToManyDescriptor(
                 },
             } = this.getClass();
 
-            const ThisModel = reverse
-                ? DeclaredToModel
-                : DeclaredFromModel;
-            const OtherModel = reverse
-                ? DeclaredFromModel
-                : DeclaredToModel;
+            const ThisModel = reverse ? DeclaredToModel : DeclaredFromModel;
+            const OtherModel = reverse ? DeclaredFromModel : DeclaredToModel;
 
             const thisReferencingField = reverse
                 ? throughFields.to
@@ -177,20 +166,18 @@ function manyToManyDescriptor(
              * referenced by any instance of the current model
              */
             const referencedOtherIds = new Set(
-                throughQs
-                    .toRefArray()
-                    .map((obj) => obj[otherReferencingField])
+                throughQs.toRefArray().map(obj => obj[otherReferencingField])
             );
 
             /**
              * selects all instances of other model that are referenced
              * by any instance of the current model
              */
-            const qs = OtherModel.filter((otherModelInstance) => (
+            const qs = OtherModel.filter(otherModelInstance =>
                 referencedOtherIds.has(
                     otherModelInstance[OtherModel.idAttribute]
                 )
-            ));
+            );
 
             /**
              * Allows adding OtherModel instances to be referenced by the current instance.
@@ -201,23 +188,23 @@ function manyToManyDescriptor(
              * @return undefined
              */
             qs.add = function add(...entities) {
-                const idsToAdd = new Set(
-                    entities.map(normalizeEntity)
-                );
+                const idsToAdd = new Set(entities.map(normalizeEntity));
 
-                const existingQs = throughQs.filter((through) => (
+                const existingQs = throughQs.filter(through =>
                     idsToAdd.has(through[otherReferencingField])
-                ));
+                );
 
                 if (existingQs.exists()) {
                     const existingIds = existingQs
                         .toRefArray()
-                        .map((through) => through[otherReferencingField]);
+                        .map(through => through[otherReferencingField]);
 
-                    throw new Error(`Tried to add already existing ${OtherModel.modelName} id(s) ${existingIds} to the ${ThisModel.modelName} instance with id ${thisId}`);
+                    throw new Error(
+                        `Tried to add already existing ${OtherModel.modelName} id(s) ${existingIds} to the ${ThisModel.modelName} instance with id ${thisId}`
+                    );
                 }
 
-                idsToAdd.forEach((id) => {
+                idsToAdd.forEach(id => {
                     ThroughModel.create({
                         [otherReferencingField]: id,
                         [thisReferencingField]: thisId,
@@ -246,25 +233,25 @@ function manyToManyDescriptor(
              * @return undefined
              */
             qs.remove = function remove(...entities) {
-                const idsToRemove = new Set(
-                    entities.map(normalizeEntity)
-                );
+                const idsToRemove = new Set(entities.map(normalizeEntity));
 
-                const entitiesToDelete = throughQs.filter(
-                    (through) => idsToRemove.has(through[otherReferencingField])
+                const entitiesToDelete = throughQs.filter(through =>
+                    idsToRemove.has(through[otherReferencingField])
                 );
 
                 if (entitiesToDelete.count() !== idsToRemove.size) {
                     // Tried deleting non-existing entities.
                     const entitiesToDeleteIds = entitiesToDelete
                         .toRefArray()
-                        .map((through) => through[otherReferencingField]);
+                        .map(through => through[otherReferencingField]);
 
                     const unexistingIds = [...idsToRemove].filter(
-                        (id) => !entitiesToDeleteIds.includes(id)
+                        id => !entitiesToDeleteIds.includes(id)
                     );
 
-                    throw new Error(`Tried to delete non-existing ${OtherModel.modelName} id(s) ${unexistingIds} from the ${ThisModel.modelName} instance with id ${thisId}`);
+                    throw new Error(
+                        `Tried to delete non-existing ${OtherModel.modelName} id(s) ${unexistingIds} from the ${ThisModel.modelName} instance with id ${thisId}`
+                    );
                 }
 
                 entitiesToDelete.delete();
@@ -274,7 +261,9 @@ function manyToManyDescriptor(
         },
 
         set() {
-            throw new Error('Tried setting a M2M field. Please use the related QuerySet methods add, remove and clear.');
+            throw new Error(
+                "Tried setting a M2M field. Please use the related QuerySet methods add, remove and clear."
+            );
         },
     };
 }

@@ -1,15 +1,17 @@
-const merge = require('webpack-merge');
-const common = require('./webpack.common.js');
-const path = require('path');
+/* eslint-disable import/no-extraneous-dependencies */
+const path = require("path");
+
+const merge = require("webpack-merge");
+const common = require("./webpack.common.js");
 
 module.exports = merge(common, {
-    mode: 'development',
+    mode: "development",
     output: {
-        path: path.resolve('./dist'),
-        filename: 'redux-orm.js',
-        library: 'ReduxOrm',
-        libraryTarget: 'umd',
+        path: path.resolve("./dist"),
+        filename: "redux-orm.js",
+        library: "ReduxOrm",
+        libraryTarget: "umd",
         umdNamedDefine: true,
     },
-    devtool: 'eval-source-map',
+    devtool: "eval-source-map",
 });

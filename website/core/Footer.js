@@ -27,7 +27,7 @@ const Footer = props => (
                 <a
                     href={docUrl(
                         'introduction/getting-started',
-                        props.config.baseUrl,
+                        props.config.baseUrl
                     )}
                 >
                     Getting Started
@@ -41,7 +41,7 @@ const Footer = props => (
                 <a
                     href={docUrl(
                         'advanced/complex-selectors',
-                        props.config.baseUrl,
+                        props.config.baseUrl
                     )}
                 >
                     Advanced scenarios

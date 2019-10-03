@@ -1,19 +1,23 @@
-import deepFreeze from 'deep-freeze';
-import { createDatabase, Table } from '../../db';
-import { getBatchToken } from '../../utils';
+import deepFreeze from "deep-freeze";
+import { createDatabase, Table } from "../../db";
+import { getBatchToken } from "../../utils";
 import {
-    FILTER, CREATE, UPDATE, DELETE, SUCCESS,
+    FILTER,
+    CREATE,
+    UPDATE,
+    DELETE,
+    SUCCESS,
     STATE_FLAG,
-} from '../../constants';
+} from "../../constants";
 
-describe('createDatabase', () => {
+describe("createDatabase", () => {
     const schema = {
         tables: {
             Book: {
-                idAttribute: 'id',
+                idAttribute: "id",
             },
             Author: {
-                idAttribute: 'id',
+                idAttribute: "id",
             },
         },
     };
@@ -21,7 +25,7 @@ describe('createDatabase', () => {
     const db = createDatabase(schema);
     const emptyState = deepFreeze(db.getEmptyState());
 
-    it('getEmptyState', () => {
+    it("getEmptyState", () => {
         expect(emptyState).toEqual({
             [STATE_FLAG]: STATE_FLAG,
             Book: {
@@ -39,29 +43,33 @@ describe('createDatabase', () => {
         });
     });
 
-    it('describe', () => {
-        const table = db.describe('Book');
+    it("describe", () => {
+        const table = db.describe("Book");
         expect(table).toBeInstanceOf(Table);
     });
 
-    it('query on empty database', () => {
+    it("query on empty database", () => {
         const querySpec = {
-            table: 'Book',
+            table: "Book",
             clauses: [],
         };
         const result = db.query(querySpec, emptyState);
         expect(result.rows).toEqual([]);
     });
 
-    it('insert row with id specified', () => {
-        const props = { id: 0, name: 'Example Book' };
+    it("insert row with id specified", () => {
+        const props = { id: 0, name: "Example Book" };
         const updateSpec = {
             action: CREATE,
             payload: props,
-            table: 'Book',
+            table: "Book",
         };
         const tx = { batchToken: getBatchToken(), withMutations: false };
-        const { status, state, payload } = db.update(updateSpec, tx, emptyState);
+        const { status, state, payload } = db.update(
+            updateSpec,
+            tx,
+            emptyState
+        );
         expect(status).toBe(SUCCESS);
         expect(payload).toBe(props);
         expect(state).not.toBe(emptyState);
@@ -86,17 +94,21 @@ describe('createDatabase', () => {
         });
     });
 
-    it('insert row to empty database without id (autosequence)', () => {
-        const props = { name: 'Example Book' };
+    it("insert row to empty database without id (autosequence)", () => {
+        const props = { name: "Example Book" };
         const updateSpec = {
             action: CREATE,
             payload: props,
-            table: 'Book',
+            table: "Book",
         };
         const tx = { batchToken: getBatchToken(), withMutations: false };
-        const { status, state, payload } = db.update(updateSpec, tx, emptyState);
+        const { status, state, payload } = db.update(
+            updateSpec,
+            tx,
+            emptyState
+        );
         expect(status).toBe(SUCCESS);
-        expect(payload).toEqual({ id: 0, name: 'Example Book' });
+        expect(payload).toEqual({ id: 0, name: "Example Book" });
         expect(state).not.toBe(emptyState);
         expect(state).toEqual({
             [STATE_FLAG]: STATE_FLAG,
@@ -105,7 +117,7 @@ describe('createDatabase', () => {
                 itemsById: {
                     0: {
                         id: 0,
-                        name: 'Example Book',
+                        name: "Example Book",
                     },
                 },
                 meta: {
@@ -123,20 +135,20 @@ describe('createDatabase', () => {
 
         // Second insert.
 
-        const props2 = { name: 'Example Book Two' };
+        const props2 = { name: "Example Book Two" };
         const updateSpec2 = {
             action: CREATE,
             payload: props2,
-            table: 'Book',
+            table: "Book",
         };
-        const {
-            status: status2,
-            state: state2,
-            payload: payload2,
-        } = db.update(updateSpec2, tx, state);
+        const { status: status2, state: state2, payload: payload2 } = db.update(
+            updateSpec2,
+            tx,
+            state
+        );
 
         expect(status2).toBe(SUCCESS);
-        expect(payload2).toEqual({ id: 1, name: 'Example Book Two' });
+        expect(payload2).toEqual({ id: 1, name: "Example Book Two" });
         expect(state2).toBe(state);
         expect(state2).toEqual({
             [STATE_FLAG]: STATE_FLAG,
@@ -145,11 +157,11 @@ describe('createDatabase', () => {
                 itemsById: {
                     0: {
                         id: 0,
-                        name: 'Example Book',
+                        name: "Example Book",
                     },
                     1: {
                         id: 1,
-                        name: 'Example Book Two',
+                        name: "Example Book Two",
                     },
                 },
                 meta: {
@@ -166,14 +178,14 @@ describe('createDatabase', () => {
         });
     });
 
-    it('update row', () => {
+    it("update row", () => {
         const startState = {
             Book: {
                 items: [0],
                 itemsById: {
                     0: {
                         id: 0,
-                        name: 'Example Book',
+                        name: "Example Book",
                     },
                 },
                 meta: {
@@ -192,14 +204,12 @@ describe('createDatabase', () => {
         const updateSpec = {
             action: UPDATE,
             payload: {
-                name: 'Modified Example Book',
+                name: "Modified Example Book",
             },
-            table: 'Book',
+            table: "Book",
             query: {
-                table: 'Book',
-                clauses: [
-                    { type: FILTER, payload: { id: 0 } },
-                ],
+                table: "Book",
+                clauses: [{ type: FILTER, payload: { id: 0 } }],
             },
         };
         const tx = { batchToken: getBatchToken(), withMutations: false };
@@ -207,17 +217,17 @@ describe('createDatabase', () => {
 
         expect(status).toBe(SUCCESS);
         expect(state).not.toBe(startState);
-        expect(state.Book.itemsById[0].name).toBe('Modified Example Book');
+        expect(state.Book.itemsById[0].name).toBe("Modified Example Book");
     });
 
-    it('delete row', () => {
+    it("delete row", () => {
         const startState = {
             Book: {
                 items: [0],
                 itemsById: {
                     0: {
                         id: 0,
-                        name: 'Example Book',
+                        name: "Example Book",
                     },
                 },
                 meta: {
@@ -235,12 +245,10 @@ describe('createDatabase', () => {
 
         const updateSpec = {
             action: DELETE,
-            table: 'Book',
+            table: "Book",
             query: {
-                table: 'Book',
-                clauses: [
-                    { type: FILTER, payload: { id: 0 } },
-                ],
+                table: "Book",
+                clauses: [{ type: FILTER, payload: { id: 0 } }],
             },
         };
         const tx = { batchToken: getBatchToken(), withMutations: false };
@@ -252,7 +260,7 @@ describe('createDatabase', () => {
         expect(state.Book.itemsById).toEqual({});
     });
 
-    it('throws upon unknown update type', () => {
+    it("throws upon unknown update type", () => {
         const state = {
             Book: {
                 items: [],
@@ -262,15 +270,15 @@ describe('createDatabase', () => {
             },
         };
         const updateSpec = {
-            action: 'Wash the dishes',
+            action: "Wash the dishes",
             query: {
-                table: 'Book',
+                table: "Book",
                 clauses: [],
             },
         };
         const tx = { batchToken: getBatchToken(), withMutations: false };
         expect(() => {
             db.update(updateSpec, tx, state);
-        }).toThrow('Database received unknown update type: Wash the dishes');
+        }).toThrow("Database received unknown update type: Wash the dishes");
     });
 });

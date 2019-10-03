@@ -26,7 +26,7 @@ Author.modelName = 'Author';
 ```
 … which we then combine into a schema that we call **`ORM`**:
 ```js
-const orm = new ORM; 
+const orm = new ORM;
 orm.register(Book, Author);
 ```
 

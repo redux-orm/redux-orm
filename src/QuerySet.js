@@ -1,16 +1,6 @@
-import {
-    normalizeEntity,
-    warnDeprecated,
-    mapValues,
-} from './utils';
+import { normalizeEntity, warnDeprecated, mapValues } from "./utils";
 
-import {
-    UPDATE,
-    DELETE,
-    FILTER,
-    EXCLUDE,
-    ORDER_BY,
-} from './constants';
+import { UPDATE, DELETE, FILTER, EXCLUDE, ORDER_BY } from "./constants";
 
 /**
  * This class is used to build and make queries to the database
@@ -62,8 +52,9 @@ const QuerySet = class QuerySet {
 
     toString() {
         this._evaluate();
-        const contents = this.rows.map(({ id }) => this.modelClass.withId(id).toString()
-        ).join('\n    - ');
+        const contents = this.rows
+            .map(({ id }) => this.modelClass.withId(id).toString())
+            .join("\n    - ");
         return `QuerySet contents:\n    - ${contents}`;
     }
 
@@ -84,9 +75,7 @@ const QuerySet = class QuerySet {
      */
     toModelArray() {
         const { modelClass: ModelClass } = this;
-        return this._evaluate().map(
-            (props) => new ModelClass(props)
-        );
+        return this._evaluate().map(props => new ModelClass(props));
     }
 
     /**
@@ -166,9 +155,10 @@ const QuerySet = class QuerySet {
          * allow foreign keys to be specified as model instances,
          * transform model instances to their primary keys
          */
-        const normalizedLookupObj = typeof lookupObj === 'object'
-            ? mapValues(lookupObj, normalizeEntity)
-            : lookupObj;
+        const normalizedLookupObj =
+            typeof lookupObj === "object"
+                ? mapValues(lookupObj, normalizeEntity)
+                : lookupObj;
 
         const filterDescriptor = {
             type: FILTER,
@@ -178,9 +168,7 @@ const QuerySet = class QuerySet {
          * create a new QuerySet
          * including only rows matching the lookupObj
          */
-        return this._new(
-            this.clauses.concat(filterDescriptor)
-        );
+        return this._new(this.clauses.concat(filterDescriptor));
     }
 
     /**
@@ -195,9 +183,10 @@ const QuerySet = class QuerySet {
          * allow foreign keys to be specified as model instances,
          * transform model instances to their primary keys
          */
-        const normalizedLookupObj = typeof lookupObj === 'object'
-            ? mapValues(lookupObj, normalizeEntity)
-            : lookupObj;
+        const normalizedLookupObj =
+            typeof lookupObj === "object"
+                ? mapValues(lookupObj, normalizeEntity)
+                : lookupObj;
         const excludeDescriptor = {
             type: EXCLUDE,
             payload: normalizedLookupObj,
@@ -207,9 +196,7 @@ const QuerySet = class QuerySet {
          * create a new QuerySet
          * excluding all rows matching the lookupObj
          */
-        return this._new(
-            this.clauses.concat(excludeDescriptor)
-        );
+        return this._new(this.clauses.concat(excludeDescriptor));
     }
 
     /**
@@ -218,18 +205,17 @@ const QuerySet = class QuerySet {
      * @return {Array} rows corresponding to the QuerySet's clauses
      */
     _evaluate() {
-        if (typeof this.modelClass.session === 'undefined') {
-            throw new Error([
-                `Tried to query the ${this.modelClass.modelName} model's table without a session. `,
-                'Create a session using `session = orm.session()` and use ',
-                `\`session["${this.modelClass.modelName}"]\` for querying instead.`,
-            ].join(''));
+        if (typeof this.modelClass.session === "undefined") {
+            throw new Error(
+                [
+                    `Tried to query the ${this.modelClass.modelName} model's table without a session. `,
+                    "Create a session using `session = orm.session()` and use ",
+                    `\`session["${this.modelClass.modelName}"]\` for querying instead.`,
+                ].join("")
+            );
         }
         if (!this._evaluated) {
-            const {
-                session,
-                modelName: table,
-            } = this.modelClass;
+            const { session, modelName: table } = this.modelClass;
             const querySpec = {
                 table,
                 clauses: this.clauses,
@@ -265,9 +251,7 @@ const QuerySet = class QuerySet {
          * create a new QuerySet
          * sorting all rows according to the passed arguments
          */
-        return this._new(
-            this.clauses.concat(orderByDescriptor)
-        );
+        return this._new(this.clauses.concat(orderByDescriptor));
     }
 
     /**
@@ -279,10 +263,7 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     update(mergeObj) {
-        const {
-            session,
-            modelName: table,
-        } = this.modelClass;
+        const { session, modelName: table } = this.modelClass;
 
         session.applyUpdate({
             action: UPDATE,
@@ -301,13 +282,10 @@ const QuerySet = class QuerySet {
      * @return {undefined}
      */
     delete() {
-        const {
-            session,
-            modelName: table,
-        } = this.modelClass;
+        const { session, modelName: table } = this.modelClass;
 
         this.toModelArray().forEach(
-            (model) => model._onDelete() // eslint-disable-line no-underscore-dangle
+            model => model._onDelete() // eslint-disable-line no-underscore-dangle
         );
 
         session.applyUpdate({
@@ -330,9 +308,9 @@ const QuerySet = class QuerySet {
      */
     get withModels() {
         throw new Error(
-            '`QuerySet.prototype.withModels` has been removed. ' +
-            'Use `.toModelArray()` or predicate functions that ' +
-            'instantiate Models from refs, e.g. `new Model(ref)`.'
+            "`QuerySet.prototype.withModels` has been removed. " +
+                "Use `.toModelArray()` or predicate functions that " +
+                "instantiate Models from refs, e.g. `new Model(ref)`."
         );
     }
 
@@ -341,8 +319,8 @@ const QuerySet = class QuerySet {
      */
     get withRefs() {
         warnDeprecated(
-            '`QuerySet.prototype.withRefs` has been deprecated. ' +
-            'Query building operates on refs only now.'
+            "`QuerySet.prototype.withRefs` has been deprecated. " +
+                "Query building operates on refs only now."
         );
         return undefined;
     }
@@ -353,8 +331,8 @@ const QuerySet = class QuerySet {
      */
     map() {
         throw new Error(
-            '`QuerySet.prototype.map` has been removed. ' +
-            'Call `.toModelArray()` or `.toRefArray()` first to map.'
+            "`QuerySet.prototype.map` has been removed. " +
+                "Call `.toModelArray()` or `.toRefArray()` first to map."
         );
     }
 
@@ -364,23 +342,23 @@ const QuerySet = class QuerySet {
      */
     forEach() {
         throw new Error(
-            '`QuerySet.prototype.forEach` has been removed. ' +
-            'Call `.toModelArray()` or `.toRefArray()` first to iterate.'
+            "`QuerySet.prototype.forEach` has been removed. " +
+                "Call `.toModelArray()` or `.toRefArray()` first to iterate."
         );
     }
 };
 
 QuerySet.sharedMethods = [
-    'count',
-    'at',
-    'all',
-    'last',
-    'first',
-    'filter',
-    'exclude',
-    'orderBy',
-    'update',
-    'delete',
+    "count",
+    "at",
+    "all",
+    "last",
+    "first",
+    "filter",
+    "exclude",
+    "orderBy",
+    "update",
+    "delete",
 ];
 
 export default QuerySet;

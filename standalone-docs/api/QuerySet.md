@@ -57,7 +57,7 @@ You should access QuerySet instances from [Model](Model).</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| modelClass | Model | <p>the model class of objects in this QuerySet.</p> |
+| modelClass | [Model](#.Model) | <p>the model class of objects in this QuerySet.</p> |
 | clauses | Array.<any> | <p>query clauses needed to evaluate the set.</p> |
 | [opts] | Object | <p>additional options</p> |
 
@@ -126,7 +126,7 @@ in the database.</p>
 object in the model state if <code>true</code>.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
-**Returns**: Model ⎮ undefined - <p>a [Model](Model) instance at index<br>
+**Returns**: [Model](#.Model) ⎮ undefined - <p>a [Model](Model) instance at index<br>
 <code>index</code> in the [QuerySet](#QuerySet) instance,<br>
 or undefined if the index is out of bounds.</p>  
 
@@ -202,7 +202,7 @@ order, unless otherwise specified. Delegates to <code>lodash.orderBy</code>.</p>
 | Param | Type | Description |
 | --- | --- | --- |
 | iteratees | Array.<string> ⎮ Array.<function()> | <p>an array where each item can be a string or a<br> function. If a string is supplied, it should<br> correspond to property on the entity that will<br> determine the order. If a function is supplied,<br> it should return the value to order by.</p> |
-| [orders] | Array.<Boolean> | <p>the sort orders of <code>iteratees</code>. If unspecified, all iteratees<br> will be sorted in ascending order. <code>true</code> and <code>'asc'</code><br> correspond to ascending order, and <code>false</code> and <code>'desc</code><br> to descending order.</p> |
+| [orders] | Array.<(Boolean|'asc'|'desc')> | <p>the sort orders of <code>iteratees</code>. If unspecified, all iteratees<br> will be sorted in ascending order. <code>true</code> and <code>'asc'</code><br> correspond to ascending order, and <code>false</code> and <code>'desc'</code><br> to descending order.</p> |
 
 
 <a name="queryset+update"></a>

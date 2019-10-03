@@ -35,14 +35,10 @@
             ]
         },
         "cjs": {
-            "presets": [
-                "@babel/preset-env"
-            ]
+            "presets": ["@babel/preset-env"]
         },
         "test": {
-            "plugins": [
-                "@babel/plugin-transform-modules-commonjs"
-            ]
+            "plugins": ["@babel/plugin-transform-modules-commonjs"]
         }
     }
 }

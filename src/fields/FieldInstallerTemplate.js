@@ -17,16 +17,16 @@ export class FieldInstallerTemplate {
          * to be able to make better informed decisions
          */
         if (this.field.references(this.model)) {
-            this.field.toModelName = 'this';
+            this.field.toModelName = "this";
         }
     }
 
     get toModel() {
-        if (typeof this._toModel === 'undefined') {
+        if (typeof this._toModel === "undefined") {
             const { toModelName } = this.field;
             if (!toModelName) {
                 this._toModel = null;
-            } else if (toModelName === 'this') {
+            } else if (toModelName === "this") {
                 this._toModel = this.model;
             } else {
                 this._toModel = this.orm.get(toModelName);
@@ -36,7 +36,7 @@ export class FieldInstallerTemplate {
     }
 
     get throughModel() {
-        if (typeof this._throughModel === 'undefined') {
+        if (typeof this._throughModel === "undefined") {
             const throughModelName = this.field.getThroughModelName(
                 this.fieldName,
                 this.model

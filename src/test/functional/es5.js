@@ -1,9 +1,7 @@
-const {
-    Model, ORM, createSelector, fk,
-} = require('../../../lib'); // eslint-disable-line import/no-unresolved
+const { Model, ORM, createSelector, fk } = require("../../../lib"); // eslint-disable-line import/no-unresolved
 
-describe('ES5 library code', () => {
-    describe('With ES6 client code', () => {
+describe("ES5 library code", () => {
+    describe("With ES6 client code", () => {
         let orm;
         let session;
         const stateSelector = state => state;
@@ -13,28 +11,28 @@ describe('ES5 library code', () => {
                 static get fields() {
                     return {
                         authorId: fk({
-                            to: 'Author',
-                            as: 'author',
-                            relatedName: 'books',
+                            to: "Author",
+                            as: "author",
+                            relatedName: "books",
                         }),
                     };
                 }
             }
-            Book.modelName = 'Book';
+            Book.modelName = "Book";
             class Author extends Model {}
-            Author.modelName = 'Author';
+            Author.modelName = "Author";
             orm = new ORM({ stateSelector });
             orm.register(Book, Author);
             session = orm.session();
         });
 
-        it('Model CRUD works', () => {
+        it("Model CRUD works", () => {
             let book;
             expect(() => {
-                book = session.Book.create({ id: 1, title: 'title' });
+                book = session.Book.create({ id: 1, title: "title" });
             }).not.toThrow();
             expect(() => {
-                book.update({ id: 1, title: 'new title' });
+                book.update({ id: 1, title: "new title" });
             }).not.toThrow();
         });
 
