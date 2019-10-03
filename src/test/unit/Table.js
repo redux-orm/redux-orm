@@ -135,8 +135,8 @@ describe("Table", () => {
             expect(result[0]).toBe(state.itemsById[1]);
         });
 
-        it('filter works correctly with "idAttribute" is "name" and filter argument is a function', () => {
-            state = deepFreeze({
+        it('filter works correctly when id attribute is "name" and filter argument is a function', () => {
+            const myState = deepFreeze({
                 items: ["work", "personal", "urgent"],
                 itemsById: {
                     work: {
@@ -152,19 +152,93 @@ describe("Table", () => {
                 meta: {},
                 indexes: {},
             });
-            table = new Table({ idAttribute: "name" });
+            const idAttribute = "name";
+            table = new Table({ idAttribute });
             const clauses = [
                 {
                     type: FILTER,
-                    payload: attrs =>
-                        ["work", "urgent"].indexOf(attrs[table.idAttribute]) >
-                        -1,
+                    payload: obj =>
+                        ["work", "urgent"].includes(obj[idAttribute]),
                 },
             ];
-            const result = table.query(state, clauses);
+            const result = table.query(myState, clauses);
             expect(result).toHaveLength(2);
-            expect(result[0]).toBe(state.itemsById.work);
-            expect(result[1]).toBe(state.itemsById.urgent);
+            expect(result[0]).toBe(myState.itemsById.work);
+            expect(result[1]).toBe(myState.itemsById.urgent);
+        });
+
+        it("filter works when filtering by both an indexed and a non-indexed column", () => {
+            const myState = deepFreeze({
+                items: ["work", "personal", "urgent"],
+                itemsById: {
+                    1: {
+                        id: 1,
+                        name: "work",
+                        indexedColumn: 1,
+                    },
+                    2: {
+                        id: 2,
+                        name: "personal",
+                        indexedColumn: 2,
+                    },
+                    3: {
+                        id: 3,
+                        name: "urgent",
+                        indexedColumn: 2,
+                    },
+                },
+                meta: {},
+                indexes: {
+                    indexedColumn: {
+                        1: [1],
+                        2: [2, 3],
+                    },
+                },
+            });
+            table = new Table();
+            let result;
+            result = table.query(myState, [
+                {
+                    type: FILTER,
+                    payload: {
+                        indexedColumn: 1,
+                        name: "work",
+                    },
+                },
+            ]);
+            expect(result).toHaveLength(1);
+            expect(result[0]).toBe(myState.itemsById[1]);
+            result = table.query(myState, [
+                {
+                    type: FILTER,
+                    payload: {
+                        indexedColumn: 2,
+                        name: "urgent",
+                    },
+                },
+            ]);
+            expect(result).toHaveLength(1);
+            expect(result[0]).toBe(myState.itemsById[3]);
+            result = table.query(myState, [
+                {
+                    type: FILTER,
+                    payload: {
+                        indexedColumn: 2,
+                        name: "work",
+                    },
+                },
+            ]);
+            expect(result).toHaveLength(0);
+            result = table.query(myState, [
+                {
+                    type: FILTER,
+                    payload: {
+                        indexedColumn: 1,
+                        name: "urgent",
+                    },
+                },
+            ]);
+            expect(result).toHaveLength(0);
         });
 
         it("orderBy works correctly with prop argument", () => {
@@ -324,7 +398,7 @@ describe("Table", () => {
         });
 
         it("query works with clauses that are resolvable using multiple indexes", () => {
-            state = deepFreeze({
+            const stateWithIndexes = deepFreeze({
                 items: ["work", "personal", "urgent"],
                 itemsById: {
                     work: {
@@ -357,7 +431,7 @@ describe("Table", () => {
             const clauses = [
                 { type: FILTER, payload: { withIndex1: 1, withIndex2: 2 } },
             ];
-            const result = table.query(state, clauses);
+            const result = table.query(stateWithIndexes, clauses);
             expect(result.map(row => row.name)).toEqual(["work"]);
         });
 
