@@ -57,7 +57,7 @@ function idSequencer(_currMax, userPassedId) {
  * @private
  *
  * @param {Array<Boolean|'asc'|'desc'>} orders? - an array of optional order query directions as provided to {@Link {QuerySet.orderBy}}
- * @return {Array<'asc'|'desc'>|undefined} A normalized ordering array or undefined if non was provided.
+ * @return {Array<'asc'|'desc'>|undefined} A normalized ordering array or undefined if none was provided.
  */
 function normalizeOrders(orders) {
     if (orders === undefined) {
