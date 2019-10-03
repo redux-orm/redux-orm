@@ -1,5 +1,17 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.14.1
+
+* Use `Symbol.for` to create symbols in the global symbol registry. ([#290](https://github.com/redux-orm/redux-orm/pull/290))
+
+Allows you to use Redux-ORM across JavaScript contexts again. 
+
+### 0.14.0
+
+* Much easier selectors for common use-cases. ([#257](https://github.com/redux-orm/redux-orm/pull/257))
+* Specify related models using Model classes instead of strings. ([#266](https://github.com/redux-orm/redux-orm/pull/266))
+* Pass custom accessor names for many-to-many fields to be able to access initially passed data. ([#279](https://github.com/redux-orm/redux-orm/pull/279))
+
 ### 0.13.3
 
 * Prevent caching selectors if individual records accessed via index have changed. ([#255](https://github.com/redux-orm/redux-orm/issues/255), [02edce9](https://github.com/redux-orm/redux-orm/commit/02edce9fcad192613e799b68f2d2864564fc0313))
