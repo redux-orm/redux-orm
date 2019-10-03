@@ -26,6 +26,8 @@ movies(state, 1);          // movie with ID 1
 movies(state, [1, 2, 3]);  // array of movies with ID 1, 2 and 3
 ```
 
+> Arguments are compared shallowly so make sure not to create new references during each call.
+
 ## Mapping models to their fields
 
 A selector can directly retrieve related model references for you.
@@ -46,34 +48,28 @@ For relationships, this works in a chained way as well.
 const coverBookAuthors = createSelector(orm.Cover.book.authors);
 ```
 
-## The default is `null`
+### The default is `null`
 
 If the cover or its book don't exist, `null` is returned.
 
 ```js
-coverBookAuthors(state);            // []
-                                    // or [null, null, …] if there are covers
+coverBookAuthors(state);  // []
+                          // or [null, null, …] if there are covers but no authors
 coverBookAuthors(state, 1);         // null
 coverBookAuthors(state, [1, 2, 3]); // [null, null, null]
 ```
 
 ## Map over collections using `.map()`
 
-Map selectors to model collections:
+`map()` is a Redux-ORM method which returns a selector that will be called for all instances in a collection. For example, we might want a selector that returns all titles of books within a certain genre.
 
 ```js
-const bookAuthors = createSelector(orm.Book.authors);
-const genreAuthors = createSelector(
-    orm.Genre.books.map(bookAuthors)
+const genreTitles = createSelector(
+    orm.Genre.books.map(orm.Book.title)
 );
-```
 
-The following would work as well and is equivalent:
-
-```js
-const genreAuthors = createSelector(
-    orm.Genre.books.map(orm.Book.authors)
-);
+genreTitles(state, 'Realism');
+// ['The Adventures of Huckleberry Finn', 'The Portrait of a Lady']
 ```
 
 ## Prerequisites

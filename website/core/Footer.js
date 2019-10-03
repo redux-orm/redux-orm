@@ -10,7 +10,6 @@ const React = require('react');
 const docUrl = (doc, baseUrl) => `${baseUrl}${doc}`;
 
 const Footer = props => (
-
     <footer className="nav-footer" id="footer">
         <section className="sitemap">
             <a href={props.config.baseUrl} className="nav-home">
@@ -25,16 +24,26 @@ const Footer = props => (
             </a>
             <div>
                 <h5>Docs</h5>
-                <a href={docUrl('introduction/getting-started', props.config.baseUrl)}>
+                <a
+                    href={docUrl(
+                        'introduction/getting-started',
+                        props.config.baseUrl,
+                    )}
+                >
                     Getting Started
                 </a>
-                <a href={docUrl('introduction/core-concepts', props.config.baseUrl)}>
-                    Core Concepts
+                {/* <a href={docUrl("introduction/core-concepts", props.config.baseUrl)}>
+          Core Concepts
+        </a> */}
+                <a href={docUrl('basics/quick-start', props.config.baseUrl)}>
+                    Quick Start
                 </a>
-                <a href={docUrl('basics', props.config.baseUrl)}>
-                    Basic usage
-                </a>
-                <a href={docUrl('advanced/advanced-tutorial', props.config.baseUrl)}>
+                <a
+                    href={docUrl(
+                        'advanced/complex-selectors',
+                        props.config.baseUrl,
+                    )}
+                >
                     Advanced scenarios
                 </a>
             </div>
@@ -46,6 +55,13 @@ const Footer = props => (
                     rel="noreferrer noopener"
                 >
                     Stack Overflow
+                </a>
+                <a
+                    href="https://gitter.im/redux-orm/Lobby"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                >
+                    Gitter
                 </a>
             </div>
             <div>
@@ -65,13 +81,15 @@ const Footer = props => (
             </div>
         </section>
         <section className="copyright">
-            {props.config.copyright}<br/>
-            Some icons copyright <a
-            href="https://fontawesome.com/license/free"
-            style={{color : "white"}}
-        >
-            Font Awesome.
-        </a>
+            {props.config.copyright}
+            <br />
+            Some icons copyright{' '}
+            <a
+                href="https://fontawesome.com/license/free"
+                style={{ color: 'white' }}
+            >
+                Font Awesome.
+            </a>
         </section>
     </footer>
 );

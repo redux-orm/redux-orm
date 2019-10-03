@@ -47,7 +47,7 @@ We have now created a new branch within the Redux state tree at the key `orm`.
 
 ## Writing to the store
 
-To actually create some model instances, we need to start a **`Session`** and access the models below.
+To actually create some model instances, we need to start a **`Session`** and access the models below it.
 ```js
 const session = orm.session();
 
@@ -57,7 +57,7 @@ session.Book.create({
 });
 ```
 
-This is necessary because the model classes themselves are not connected to Redux by default.
+This is necessary so that you can re-use Model classes across different schemas.
 
 ## Reading from the store
 
