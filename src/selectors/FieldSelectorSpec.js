@@ -30,8 +30,10 @@ export default class FieldSelectorSpec extends ModelBasedSelectorSpec {
         if (!instance) return null;
         let value;
         if (this._parent instanceof ModelSelectorSpec) {
+            /* orm.Model.field */
             value = instance[this._accessorName];
-        } else if (this._parent instanceof FieldSelectorSpec) {
+        } else {
+            /* orm.Model.field1.field2..fieldN.field */
             const { [this._parent.toModelName]: ParentToModel } = session;
             const parentRef = this._parent.valueForInstance(instance, session);
             const parentInstance = parentRef
@@ -60,7 +62,10 @@ export default class FieldSelectorSpec extends ModelBasedSelectorSpec {
                     `Cannot select \`${selector._model.modelName}\` models in this \`map()\` call. Make sure you're passing a field selector of the form \`${this.toModelName}.<field>\` or a custom selector instead.`
                 );
             }
-        } else if (selector instanceof FieldSelectorSpec) {
+        } else if (
+            selector instanceof FieldSelectorSpec ||
+            selector instanceof MapSelectorSpec
+        ) {
             if (this.toModelName !== selector._model.modelName) {
                 throw new Error(
                     `Cannot select fields of the \`${selector._model.modelName}\` model in this \`map()\` call. Make sure you're passing a field selector of the form \`${this.toModelName}.<field>\` or a custom selector instead.`
