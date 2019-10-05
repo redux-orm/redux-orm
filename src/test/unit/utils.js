@@ -239,7 +239,7 @@ describe("Utils", () => {
                         secondAttribute: "secondValue",
                     },
                     {
-                        someAttribute: "otherValue",
+                        someAttribute: "someValue",
                     }
                 )
             ).toBe(false);

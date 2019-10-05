@@ -162,15 +162,14 @@ function reverseFieldErrorMessage(
 function objectShallowEquals(a, b) {
     let keysInA = 0;
 
-    // eslint-disable-next-line consistent-return
-    Object.entries(Object(a)).forEach(([key, value]) => {
+    const equalForKeysInA = Object.entries(Object(a)).every(([key, value]) => {
         if (!b.hasOwnProperty(key) || b[key] !== value) {
             return false;
         }
-        keysInA++;
+        ++keysInA;
+        return true;
     });
-
-    return keysInA === Object.keys(b).length;
+    return equalForKeysInA && keysInA === Object.keys(b).length;
 }
 
 /** */
