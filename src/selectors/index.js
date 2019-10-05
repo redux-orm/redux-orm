@@ -14,6 +14,7 @@ export function createFieldSelectorSpec({
     parent,
     model,
     field,
+    fieldModel,
     accessorName,
     orm,
     isVirtual,
@@ -21,9 +22,10 @@ export function createFieldSelectorSpec({
     const fieldSelectorSpec = new FieldSelectorSpec({
         parent,
         model,
-        orm,
         field,
+        fieldModel,
         accessorName,
+        orm,
         isVirtual,
     });
     /* Do not even try to create field selectors below attributes. */
@@ -46,7 +48,6 @@ export function createFieldSelectorSpec({
         }
     }
     const { toModelName } = field;
-    if (!toModelName) return fieldSelectorSpec;
     const toModel = orm.get(
         toModelName === "this" ? model.modelName : toModelName
     );
