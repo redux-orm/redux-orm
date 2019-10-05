@@ -5,10 +5,6 @@ import DefaultFieldInstaller from "./DefaultFieldInstaller";
  * @memberof module:fields
  */
 export class Field {
-    constructor() {
-        this.index = false;
-    }
-
     get installerClass() {
         return DefaultFieldInstaller;
     }
@@ -25,10 +21,6 @@ export class Field {
         return null;
     }
 
-    get installsForwardsDescriptor() {
-        return true;
-    }
-
     get installsForwardsVirtualField() {
         return false;
     }
@@ -38,6 +30,10 @@ export class Field {
     }
 
     get installsBackwardsVirtualField() {
+        return false;
+    }
+
+    get index() {
         return false;
     }
 }

@@ -176,13 +176,11 @@ const Session = class Session {
             if (!clauseFiltersByAttribute(clause, idAttribute)) {
                 return false;
             }
-            const id = clause.payload[idAttribute];
-            if (id === null) return false;
             /**
              * We previously knew which row we wanted to access,
              * so there was no need to scan the entire table.
              */
-            accessedIds.add(id);
+            accessedIds.add(clause.payload[idAttribute]);
             return true;
         });
 
@@ -190,7 +188,9 @@ const Session = class Session {
         const { indexes } = this.state[table];
         clauses.forEach(clause => {
             Object.keys(indexes).forEach(attr => {
-                if (!clauseFiltersByAttribute(clause, attr)) return;
+                if (!clauseFiltersByAttribute(clause, attr)) {
+                    return;
+                }
                 const value = clause.payload[attr];
                 accessedIndexes.push([table, attr, value]);
             });

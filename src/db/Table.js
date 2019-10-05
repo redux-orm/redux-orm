@@ -484,9 +484,7 @@ export class Table {
             indexIdsToDelete.forEach(([attr, value, id]) => {
                 const arr = nextIndexes[attr][value];
                 const idx = arr.indexOf(id);
-                if (idx !== -1) {
-                    ops.mutable.splice(idx, 1, [], arr);
-                }
+                ops.mutable.splice(idx, 1, [], arr);
             });
             indexIdsToAdd.forEach(([attr, value, id]) => {
                 ops.mutable.push(id, nextIndexes[attr][value]);
@@ -526,7 +524,7 @@ export class Table {
                                     [value]: ops.batch.filter(
                                         batchToken,
                                         rowId => rowId !== id,
-                                        indexMap[attr][value] || []
+                                        indexMap[attr][value]
                                     ),
                                 },
                                 indexMap[attr]
@@ -567,10 +565,7 @@ export class Table {
         if (withMutations) {
             idsToDelete.forEach(id => {
                 const idx = arr.indexOf(id);
-                if (idx !== -1) {
-                    ops.mutable.splice(idx, 1, [], arr);
-                }
-
+                ops.mutable.splice(idx, 1, [], arr);
                 ops.mutable.omit(id, branch[mapName]);
             });
             // delete ids from all indexes
