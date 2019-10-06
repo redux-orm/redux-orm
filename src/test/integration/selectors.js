@@ -1,4 +1,4 @@
-import { ORM, Session, Model, fk, createSelector } from "../..";
+import { ORM, Session, Model, fk, oneToOne, createSelector } from "../..";
 import { createTestModels, avg } from "../helpers";
 
 describe("Shorthand selector specifications", () => {
@@ -22,6 +22,7 @@ describe("Shorthand selector specifications", () => {
     const CREATE_BOOK = "CREATE_BOOK";
     const CREATE_COVER = "CREATE_COVER";
     const CREATE_AUTHOR = "CREATE_AUTHOR";
+    const CREATE_TAG = "CREATE_TAG";
 
     const consoleWarn = jest
         .spyOn(global.console, "warn")
@@ -59,6 +60,9 @@ describe("Shorthand selector specifications", () => {
                     break;
                 case CREATE_AUTHOR:
                     session.Author.create(action.payload);
+                    break;
+                case CREATE_TAG:
+                    session.Tag.create(action.payload);
                     break;
                 default:
                     break;
@@ -567,13 +571,33 @@ describe("Shorthand selector specifications", () => {
             );
         });
 
-        it("will exist for recursive fields", () => {
-            expect(orm.Book.cover.book.cover.book).not.toBeUndefined();
+        it("will exist for back-and-forth fields", () => {
+            const bookItself = createSelector(orm.Book.cover.book.cover.book);
+            expect(bookItself).not.toBeUndefined();
+            expect(bookItself(emptyState, 1)).toEqual(null);
+            ormState = reducer(emptyState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 1,
+                    cover: 123,
+                },
+            });
+            expect(bookItself(ormState, 1)).toEqual(null);
+            ormState = reducer(ormState, {
+                type: CREATE_COVER,
+                payload: {
+                    id: 123,
+                },
+            });
+            expect(bookItself(ormState, 1)).toEqual(ormState.Book.itemsById[1]);
+        });
+
+        it("will not exist for self-referencing collections", () => {
             const _orm = new ORM({ stateSelector });
             class TreeNode extends Model {}
             TreeNode.modelName = "TreeNode";
             TreeNode.fields = {
-                parent: fk("TreeNode", "subtrees"),
+                parent: fk("this", "subtrees"),
             };
             _orm.register(TreeNode);
             expect(() => _orm.TreeNode.subtrees.parent).toThrow(
@@ -624,6 +648,109 @@ describe("Shorthand selector specifications", () => {
             });
             expect(coverAuthors(ormState, 1)).toEqual([{ id: 3 }]);
             expect(coverAuthors(ormState, 1)).toEqual([{ id: 3 }]);
+        });
+
+        it("returns correct values for missing intermediate fields", () => {
+            const coverAuthors = createSelector(
+                orm.Cover.book.publisher.authors
+            );
+            expect(coverAuthors(emptyState, 1)).toEqual(null);
+            expect(coverAuthors(emptyState, 1)).toEqual(null);
+            ormState = reducer(emptyState, {
+                type: CREATE_COVER,
+                payload: {
+                    id: 1,
+                },
+            });
+            expect(coverAuthors(ormState, 1)).toEqual(null);
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 2,
+                    author: 3,
+                    cover: 1,
+                    publisher: 4,
+                },
+            });
+            expect(coverAuthors(ormState, 1)).toEqual(null);
+            ormState = reducer(ormState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 4,
+                },
+            });
+            expect(coverAuthors(ormState, 1)).toEqual([]);
+            ormState = reducer(ormState, {
+                type: CREATE_AUTHOR,
+                payload: {
+                    id: 3,
+                    publishers: [4],
+                },
+            });
+            expect(coverAuthors(ormState, 1)).toEqual([{ id: 3 }]);
+            expect(coverAuthors(ormState, 1)).toEqual([{ id: 3 }]);
+        });
+
+        it("can handle self-referencing many-to-many chains", () => {
+            const tagSubTags = createSelector(orm.Tag.subTags);
+            expect(tagSubTags(emptyState, "Technology")).toEqual(null);
+            expect(tagSubTags(emptyState, "Technology")).toEqual(null);
+            ormState = reducer(emptyState, {
+                type: CREATE_TAG,
+                payload: {
+                    name: "Technology",
+                    subTags: ["Redux"],
+                },
+            });
+            expect(tagSubTags(ormState, "Technology")).toEqual([]);
+            ormState = reducer(ormState, {
+                type: CREATE_TAG,
+                payload: {
+                    name: "Redux",
+                },
+            });
+            expect(tagSubTags(ormState, "Technology")).toEqual([
+                { name: "Redux" },
+            ]);
+        });
+
+        it("can handle self-referencing one-to-one chains", () => {
+            let _ormState;
+            const _stateSelector = () => _ormState;
+            const _orm = new ORM({ stateSelector: _stateSelector });
+            class Yin extends Model {}
+            Yin.modelName = "Yin";
+            Yin.fields = {
+                yang: oneToOne("this", "yin"),
+            };
+            _orm.register(Yin);
+            const _reducer = (state, payload) => {
+                const session = _orm.session(state || _orm.getEmptyState());
+                session.Yin.create(payload);
+                return session.state;
+            };
+            _ormState = _orm.getEmptyState();
+
+            const yinItself = createSelector(_orm.Yin.yang.yin.yang.yin);
+            expect(yinItself).not.toBeUndefined();
+            const yinYang = createSelector(_orm.Yin.yang.yin.yang);
+            expect(yinYang).not.toBeUndefined();
+            const yangYin = createSelector(_orm.Yin.yin.yang.yin);
+            expect(yangYin).not.toBeUndefined();
+
+            expect(yinItself(_ormState, 1)).toBe(null);
+            expect(yinYang(_ormState, 1)).toBe(null);
+            expect(yangYin(_ormState, 2)).toBe(null);
+
+            _ormState = _reducer(_ormState, { id: 1, yang: 2 });
+            expect(yinItself(_ormState, 1)).toBe(null);
+            expect(yinYang(_ormState, 1)).toBe(null);
+            expect(yangYin(_ormState, 2)).toBe(null);
+
+            _ormState = _reducer(_ormState, { id: 2 });
+            expect(yinItself(_ormState, 1)).toBe(_ormState.Yin.itemsById[1]);
+            expect(yinYang(_ormState, 1)).toBe(_ormState.Yin.itemsById[2]);
+            expect(yangYin(_ormState, 2)).toBe(_ormState.Yin.itemsById[1]);
         });
     });
 
