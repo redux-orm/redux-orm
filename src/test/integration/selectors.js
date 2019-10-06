@@ -744,8 +744,8 @@ describe("Shorthand selector specifications", () => {
             expect(yinYang(_ormState, 1)).toBe(null);
 
             _ormState = _reducer(_ormState, { id: 2 });
-            expect(yinItself(_ormState, 1)).toBe({ id: 1, yang: 2 });
-            expect(yinYang(_ormState, 1)).toBe({ id: 2 });
+            expect(yinItself(_ormState, 1)).toEqual({ id: 1, yang: 2 });
+            expect(yinYang(_ormState, 1)).toEqual({ id: 2 });
         });
     });
 
