@@ -30,8 +30,10 @@ export default class FieldSelectorSpec extends ModelBasedSelectorSpec {
         if (!instance) return null;
         let value;
         if (this._parent instanceof ModelSelectorSpec) {
+            /* orm.Model.field */
             value = instance[this._accessorName];
-        } else if (this._parent instanceof FieldSelectorSpec) {
+        } else {
+            /* orm.Model.field1.field2..fieldN.field */
             const { [this._parent.toModelName]: ParentToModel } = session;
             const parentRef = this._parent.valueForInstance(instance, session);
             const parentInstance = parentRef
