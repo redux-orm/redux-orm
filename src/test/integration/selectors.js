@@ -733,15 +733,19 @@ describe("Shorthand selector specifications", () => {
 
             const yinItself = createSelector(_orm.Yin.yang.yin.yang.yin);
             expect(yinItself).not.toBeUndefined();
-            const yinYang = createSelector(_orm.Yin.yang.yin.yang.yin);
+            const yinYang = createSelector(_orm.Yin.yang.yin.yang);
             expect(yinYang).not.toBeUndefined();
 
             expect(yinItself(_ormState, 1)).toBe(null);
             expect(yinYang(_ormState, 1)).toBe(null);
 
-            _ormState = _reducer(_ormState, { id: 1 });
+            _ormState = _reducer(_ormState, { id: 1, yang: 2 });
             expect(yinItself(_ormState, 1)).toBe(null);
             expect(yinYang(_ormState, 1)).toBe(null);
+
+            _ormState = _reducer(_ormState, { id: 2 });
+            expect(yinItself(_ormState, 1)).toBe({ id: 1, yang: 2 });
+            expect(yinYang(_ormState, 1)).toBe({ id: 2 });
         });
     });
 
