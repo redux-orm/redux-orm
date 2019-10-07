@@ -9,7 +9,7 @@ export const ORDER_BY = "REDUX_ORM_ORDER_BY";
 export const SUCCESS = "SUCCESS";
 export const FAILURE = "FAILURE";
 
-export const STATE_FLAG = Symbol.for("REDUX_ORM_STATE_FLAG");
+export const STATE_FLAG = "REDUX_ORM_STATE_FLAG";
 
 export const ALL_INSTANCES = Symbol.for("REDUX_ORM_ALL_INSTANCES");
 
