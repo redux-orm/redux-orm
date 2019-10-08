@@ -1,16 +1,21 @@
-import { createStore } from 'redux';
+import { createStore } from "redux";
 
-import { persistCombineReducers, persistStore } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
+import { persistCombineReducers, persistStore } from "redux-persist";
+import storage from "redux-persist/lib/storage";
+import hardSet from "redux-persist/lib/stateReconciler/hardSet";
 
 import {
-    ORM, Session, Model as OrmModel, createReducer, createSelector
-} from '../..';
+    ORM,
+    Session,
+    Model as OrmModel,
+    createReducer,
+    createSelector,
+} from "../..";
 
-import { createTestModels } from '../helpers';
-import { STATE_FLAG } from '../../constants';
+import { createTestModels } from "../helpers";
+import { STATE_FLAG } from "../../constants";
 
-describe('Redux Persist integration', () => {
+describe("Redux Persist integration", () => {
     let orm;
     let Book;
     let Cover;
@@ -28,10 +33,10 @@ describe('Redux Persist integration', () => {
 
     let store;
 
-    const CREATE_MOVIE = 'CREATE_MOVIE';
-    const UPSERT_MOVIE = 'UPSERT_MOVIE';
-    const CREATE_PUBLISHER = 'CREATE_PUBLISHER';
-    const CREATE_CUSTOM_MODEL = 'CREATE_CUSTOM_MODEL';
+    const CREATE_MOVIE = "CREATE_MOVIE";
+    const UPSERT_MOVIE = "UPSERT_MOVIE";
+    const CREATE_PUBLISHER = "CREATE_PUBLISHER";
+    const CREATE_CUSTOM_MODEL = "CREATE_CUSTOM_MODEL";
 
     const createModelReducers = () => {
         Author.reducer = jest.fn();
@@ -41,21 +46,23 @@ describe('Redux Persist integration', () => {
         Tag.reducer = jest.fn();
         Movie.reducer = jest.fn((action, Model, _session) => {
             switch (action.type) {
-            case CREATE_MOVIE:
-                Model.create(action.payload);
-                break;
-            case UPSERT_MOVIE:
-                Model.upsert(action.payload);
-                break;
-            default: break;
+                case CREATE_MOVIE:
+                    Model.create(action.payload);
+                    break;
+                case UPSERT_MOVIE:
+                    Model.upsert(action.payload);
+                    break;
+                default:
+                    break;
             }
         });
         Publisher.reducer = jest.fn((action, Model, _session) => {
             switch (action.type) {
-            case CREATE_PUBLISHER:
-                Model.create(action.payload);
-                break;
-            default: break;
+                case CREATE_PUBLISHER:
+                    Model.create(action.payload);
+                    break;
+                default:
+                    break;
             }
         });
     };
@@ -77,9 +84,10 @@ describe('Redux Persist integration', () => {
         ormState = emptyState;
         reducer = createReducer(orm);
         const persistConfig = {
-            key: 'root',
+            key: "root",
             storage,
-            whitelist: ['orm'],
+            whitelist: ["orm"],
+            stateReconciler: hardSet,
         };
         rootReducer = persistCombineReducers(persistConfig, {
             orm: reducer,
@@ -87,21 +95,20 @@ describe('Redux Persist integration', () => {
         store = createStore(rootReducer);
     });
 
-    it('creates empty state correctly', () => {
+    it("creates empty state correctly", () => {
         expect(store.getState().orm).not.toBe(null);
         expect(store.getState().orm[STATE_FLAG]).toBe(STATE_FLAG);
         expect(store.getState().orm).toEqual(emptyState);
     });
 
-    it('saves and restores state correctly', () => {
-        const persistor = persistStore(store, null, () => {
-            store.dispatch({
-                type: CREATE_MOVIE,
-                payload: { id: 123 },
-            });
-            return persistor
-                .flush()
-                .then(() => {
+    it("saves and restores state correctly", async () => {
+        await new Promise(resolve => {
+            const persistor = persistStore(store, null, () => {
+                store.dispatch({
+                    type: CREATE_MOVIE,
+                    payload: { id: 123 },
+                });
+                return persistor.flush().then(() => {
                     const session = orm.session(store.getState().orm);
                     expect(session.Movie.all().toRefArray()).toStrictEqual([
                         { id: 123 },
@@ -111,12 +118,16 @@ describe('Redux Persist integration', () => {
                     const persistor2 = persistStore(store2);
                     persistor2.subscribe(() => {
                         const session2 = orm.session(store2.getState().orm);
-                        expect(store2.getState().orm[STATE_FLAG]).toBe(STATE_FLAG);
-                        expect(session2.Movie.all().toRefArray()).toStrictEqual([
-                            { id: 123 },
-                        ]);
+                        expect(store2.getState().orm[STATE_FLAG]).toBe(
+                            STATE_FLAG
+                        );
+                        expect(session2.Movie.all().toRefArray()).toStrictEqual(
+                            [{ id: 123 }]
+                        );
+                        resolve();
                     });
                 });
+            });
         });
     });
 });
