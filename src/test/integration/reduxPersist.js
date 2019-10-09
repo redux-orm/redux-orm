@@ -94,15 +94,15 @@ describe("Redux Persist integration", () => {
     it("creates correct empty state by default", async () => {
         await new Promise(resolve => {
             const store = createStore(createPersistedReducer());
-            const persistor = persistStore(store, null, async () => {
+            persistStore(store, null, async () => {
                 expect(store.getState().orm).toStrictEqual(emptyState);
-            });
 
-            const store2 = createStore(createPersistedReducer());
-            const persistor2 = persistStore(store2);
-            persistor2.subscribe(() => {
-                expect(store2.getState().orm).toStrictEqual(emptyState);
-                resolve();
+                const store2 = createStore(createPersistedReducer());
+                const persistor2 = persistStore(store2);
+                persistor2.subscribe(() => {
+                    expect(store2.getState().orm).toStrictEqual(emptyState);
+                    resolve();
+                });
             });
         });
     });

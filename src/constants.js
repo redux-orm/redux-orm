@@ -9,9 +9,10 @@ export const ORDER_BY = "REDUX_ORM_ORDER_BY";
 export const SUCCESS = "SUCCESS";
 export const FAILURE = "FAILURE";
 
-export const STATE_FLAG = Symbol.for("REDUX_ORM_STATE_FLAG");
+// for detecting ORM state objects
+export const STATE_FLAG = "@@_______REDUX_ORM_STATE_FLAG";
 
-export const ALL_INSTANCES = Symbol.for("REDUX_ORM_ALL_INSTANCES");
-
-export const ID_ARG_KEY_SELECTOR = (state, idArg) =>
+// for caching selectors based on their ID argument
+export const ALL_INSTANCES = Symbol("REDUX_ORM_ALL_INSTANCES");
+export const ID_ARG_KEY_SELECTOR = (_state, idArg) =>
     typeof idArg === "undefined" ? ALL_INSTANCES : idArg;
