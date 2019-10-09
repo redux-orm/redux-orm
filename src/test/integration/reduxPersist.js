@@ -73,7 +73,9 @@ describe("Redux Persist integration", () => {
     };
 
     beforeEach(() => {
+        // eslint-disable-next-line no-undef
         localStorage.clear(); // prevents persistence between tests
+
         ({
             Book,
             Cover,
@@ -90,13 +92,12 @@ describe("Redux Persist integration", () => {
     });
 
     it("creates correct empty state by default", async () => {
-        await new Promise(async resolve => {
+        await new Promise(resolve => {
             const store = createStore(createPersistedReducer());
             const persistor = persistStore(store, null, async () => {
                 expect(store.getState().orm).toStrictEqual(emptyState);
             });
 
-            await persistor.flush();
             const store2 = createStore(createPersistedReducer());
             const persistor2 = persistStore(store2);
             persistor2.subscribe(() => {
