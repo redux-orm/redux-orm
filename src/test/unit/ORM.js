@@ -192,7 +192,7 @@ describe("ORM", () => {
             const defaultState = orm.getEmptyState();
 
             expect(defaultState).toEqual({
-                [STATE_FLAG]: STATE_FLAG,
+                [STATE_FLAG]: true,
                 Book: {
                     items: [],
                     itemsById: {},

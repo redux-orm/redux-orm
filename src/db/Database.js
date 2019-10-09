@@ -7,7 +7,7 @@ import Table from "./Table";
 const BASE_EMPTY_STATE = {};
 Object.defineProperty(BASE_EMPTY_STATE, STATE_FLAG, {
     enumerable: true,
-    value: STATE_FLAG,
+    value: true,
 });
 
 /** @private */
