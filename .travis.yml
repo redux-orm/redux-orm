@@ -1,6 +1,7 @@
 language: node_js
 
 node_js:
+  - "12"
   - "10"
   - "8"
 
@@ -10,6 +11,7 @@ script:
   - "npm run test:es5"
   - npm run test
   - "npm run test:perf"
+  - cd website && npm install && npm run build
 
 after_success:
   - codecov

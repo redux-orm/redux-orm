@@ -1,11 +1,11 @@
-import { createSelectorCreator } from 'reselect';
-import createCachedSelector, { FlatMapCache } from 're-reselect';
+import { createSelectorCreator } from "reselect";
+import createCachedSelector, { FlatMapCache } from "re-reselect";
 
-import { memoize } from './memoize';
+import { memoize } from "./memoize";
 
-import { ORM } from './ORM';
-import SelectorSpec from './selectors/SelectorSpec';
-import MapSelectorSpec from './selectors/MapSelectorSpec';
+import { ORM } from "./ORM";
+import SelectorSpec from "./selectors/SelectorSpec";
+import MapSelectorSpec from "./selectors/MapSelectorSpec";
 
 /**
  * @module redux
@@ -19,8 +19,8 @@ import MapSelectorSpec from './selectors/MapSelectorSpec';
  * @global
  */
 export function defaultUpdater(session, action) {
-    session.sessionBoundModels.forEach((modelClass) => {
-        if (typeof modelClass.reducer === 'function') {
+    session.sessionBoundModels.forEach(modelClass => {
+        if (typeof modelClass.reducer === "function") {
             // This calls this.applyUpdate to update this.state
             modelClass.reducer(action, modelClass, session);
         }
@@ -49,10 +49,7 @@ export function createReducer(orm, updater = defaultUpdater) {
  * @param {SelectorSpec} spec
  */
 function createSelectorFromSpec(spec) {
-    return createCachedSelector(
-        spec.dependencies,
-        spec.resultFunc
-    )({
+    return createCachedSelector(spec.dependencies, spec.resultFunc)({
         keySelector: spec.keySelector,
         cacheObject: new FlatMapCache(),
         selectorCreator: createSelector, // eslint-disable-line no-use-before-define
@@ -64,7 +61,8 @@ function createSelectorFromSpec(spec) {
  * @private
  * @param {*} arg
  */
-function toORM(arg) { /* eslint-disable no-underscore-dangle */
+function toORM(arg) {
+    /* eslint-disable no-underscore-dangle */
     if (arg instanceof ORM) {
         return arg;
     }
@@ -75,14 +73,15 @@ function toORM(arg) { /* eslint-disable no-underscore-dangle */
 }
 
 const selectorCache = new Map();
-const SELECTOR_KEY = Symbol.for('REDUX_ORM_SELECTOR');
+const SELECTOR_KEY = Symbol.for("REDUX_ORM_SELECTOR");
 
 /**
  * @private
  * @param {function|ORM|SelectorSpec} arg
  */
-function toSelector(arg) { /* eslint-disable no-underscore-dangle */
-    if (typeof arg === 'function') {
+function toSelector(arg) {
+    /* eslint-disable no-underscore-dangle */
+    if (typeof arg === "function") {
         return arg;
     }
     if (arg instanceof ORM) {
@@ -131,7 +130,11 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
 
         return selector;
     }
-    throw new Error(`Failed to interpret selector argument: ${JSON.stringify(arg)} of type ${typeof arg}`);
+    throw new Error(
+        `Failed to interpret selector argument: ${JSON.stringify(
+            arg
+        )} of type ${typeof arg}`
+    );
 }
 
 /**
@@ -213,7 +216,7 @@ function toSelector(arg) { /* eslint-disable no-underscore-dangle */
  */
 export function createSelector(...args) {
     if (!args.length) {
-        throw new Error('Cannot create a selector without arguments.');
+        throw new Error("Cannot create a selector without arguments.");
     }
 
     const resultArg = args.pop();
@@ -222,13 +225,21 @@ export function createSelector(...args) {
     const orm = dependencies.map(toORM).find(Boolean);
     const inputFuncs = dependencies.map(toSelector);
 
-    if (typeof resultArg === 'function') {
+    if (typeof resultArg === "function") {
         if (!orm) {
-            throw new Error('Failed to resolve the current ORM database state. Please pass an ORM instance or an ORM selector as an argument to `createSelector()`.');
+            throw new Error(
+                "Failed to resolve the current ORM database state. Please pass an ORM instance or an ORM selector as an argument to `createSelector()`."
+            );
         } else if (!orm.stateSelector) {
-            throw new Error('Failed to resolve the current ORM database state. Please pass an object to the ORM constructor that specifies a `stateSelector` function.');
-        } else if (typeof orm.stateSelector !== 'function') {
-            throw new Error(`Failed to resolve the current ORM database state. Please pass a function when specifying the ORM's \`stateSelector\`. Received: ${JSON.stringify(orm.stateSelector)} of type ${typeof orm.stateSelector}`);
+            throw new Error(
+                "Failed to resolve the current ORM database state. Please pass an object to the ORM constructor that specifies a `stateSelector` function."
+            );
+        } else if (typeof orm.stateSelector !== "function") {
+            throw new Error(
+                `Failed to resolve the current ORM database state. Please pass a function when specifying the ORM's \`stateSelector\`. Received: ${JSON.stringify(
+                    orm.stateSelector
+                )} of type ${typeof orm.stateSelector}`
+            );
         }
 
         return createSelectorCreator(memoize, undefined, orm)(
@@ -238,10 +249,14 @@ export function createSelector(...args) {
     }
 
     if (resultArg instanceof ORM) {
-        throw new Error('ORM instances cannot be the result function of selectors. You can access your models in the last function that you pass to `createSelector()`.');
+        throw new Error(
+            "ORM instances cannot be the result function of selectors. You can access your models in the last function that you pass to `createSelector()`."
+        );
     }
     if (inputFuncs.length) {
-        console.warn('Your input selectors will be ignored: the passed result function does not require any input.');
+        console.warn(
+            "Your input selectors will be ignored: the passed result function does not require any input."
+        );
     }
 
     return toSelector(resultArg);

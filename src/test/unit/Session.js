@@ -1,8 +1,8 @@
-import { ORM } from '../..';
-import { createTestModels, isSubclass } from '../helpers';
-import { CREATE } from '../../constants';
+import { ORM } from "../..";
+import { createTestModels, isSubclass } from "../helpers";
+import { CREATE } from "../../constants";
 
-describe('Session', () => {
+describe("Session", () => {
     let orm;
     let Book;
     let Cover;
@@ -12,20 +12,13 @@ describe('Session', () => {
     let Publisher;
     let emptyState;
     beforeEach(() => {
-        ({
-            Book,
-            Cover,
-            Genre,
-            Tag,
-            Author,
-            Publisher,
-        } = createTestModels());
+        ({ Book, Cover, Genre, Tag, Author, Publisher } = createTestModels());
         orm = new ORM();
         orm.register(Book, Cover, Genre, Tag, Author, Publisher);
         emptyState = orm.getEmptyState();
     });
 
-    it('connects models', () => {
+    it("connects models", () => {
         expect(Book.session).toBeUndefined();
         expect(Cover.session).toBeUndefined();
         expect(Genre.session).toBeUndefined();
@@ -43,7 +36,7 @@ describe('Session', () => {
         expect(session.Publisher.session).toBe(session);
     });
 
-    it('exposes models as getter properties', () => {
+    it("exposes models as getter properties", () => {
         const session = orm.session();
         expect(isSubclass(session.Book, Book)).toBe(true);
         expect(isSubclass(session.Author, Author)).toBe(true);
@@ -53,20 +46,20 @@ describe('Session', () => {
         expect(isSubclass(session.Publisher, Publisher)).toBe(true);
     });
 
-    it('marks models when full table scan has been performed', () => {
+    it("marks models when full table scan has been performed", () => {
         const session = orm.session();
         expect(session.fullTableScannedModels).toHaveLength(0);
 
         session.markFullTableScanned(Book.modelName);
         expect(session.fullTableScannedModels).toHaveLength(1);
-        expect(session.fullTableScannedModels[0]).toBe('Book');
+        expect(session.fullTableScannedModels[0]).toBe("Book");
 
         session.markFullTableScanned(Book.modelName);
 
-        expect(session.fullTableScannedModels[0]).toBe('Book');
+        expect(session.fullTableScannedModels[0]).toBe("Book");
     });
 
-    it('marks accessed model instances', () => {
+    it("marks accessed model instances", () => {
         const session = orm.session();
         expect(session.accessedModelInstances).toEqual({});
 
@@ -74,42 +67,42 @@ describe('Session', () => {
 
         expect(session.accessedModelInstances).toEqual({
             Book: {
-                0: true
-            }
+                0: true,
+            },
         });
 
         session.markAccessed(Book.modelName, [1]);
         expect(session.accessedModelInstances).toEqual({
             Book: {
                 0: true,
-                1: true
-            }
+                1: true,
+            },
         });
     });
 
-    it('throws when failing to apply updates', () => {
+    it("throws when failing to apply updates", () => {
         const session = orm.session();
         session.db = {
             update() {
                 return {
                     payload: 123,
-                    status: 'failed',
+                    status: "failed",
                     state: {},
                 };
-            }
+            },
         };
-        expect(
-            () => session.applyUpdate({})
-        ).toThrow('Applying update failed with status failed. Payload: 123');
+        expect(() => session.applyUpdate({})).toThrow(
+            "Applying update failed with status failed. Payload: 123"
+        );
     });
 
-    describe('gets the next state', () => {
-        it('without any updates, the same state is returned', () => {
+    describe("gets the next state", () => {
+        it("without any updates, the same state is returned", () => {
             const session = orm.session();
             expect(session.state).toEqual(emptyState);
         });
 
-        it('with updates, a new state is returned', () => {
+        it("with updates, a new state is returned", () => {
             const session = orm.session(emptyState);
 
             session.applyUpdate({
@@ -117,7 +110,7 @@ describe('Session', () => {
                 action: CREATE,
                 payload: {
                     id: 0,
-                    name: 'Caesar',
+                    name: "Caesar",
                 },
             });
 
@@ -125,14 +118,22 @@ describe('Session', () => {
 
             expect(nextState).not.toBe(emptyState);
 
-            expect(nextState[Author.modelName]).not.toBe(emptyState[Author.modelName]);
+            expect(nextState[Author.modelName]).not.toBe(
+                emptyState[Author.modelName]
+            );
 
             // All other model states should stay equal.
             expect(nextState[Book.modelName]).toBe(emptyState[Book.modelName]);
-            expect(nextState[Cover.modelName]).toBe(emptyState[Cover.modelName]);
-            expect(nextState[Genre.modelName]).toBe(emptyState[Genre.modelName]);
+            expect(nextState[Cover.modelName]).toBe(
+                emptyState[Cover.modelName]
+            );
+            expect(nextState[Genre.modelName]).toBe(
+                emptyState[Genre.modelName]
+            );
             expect(nextState[Tag.modelName]).toBe(emptyState[Tag.modelName]);
-            expect(nextState[Publisher.modelName]).toBe(emptyState[Publisher.modelName]);
+            expect(nextState[Publisher.modelName]).toBe(
+                emptyState[Publisher.modelName]
+            );
         });
     });
 });

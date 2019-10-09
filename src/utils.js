@@ -1,5 +1,5 @@
-import ops from 'immutable-ops';
-import { FILTER, EXCLUDE } from './constants';
+import ops from "immutable-ops";
+import { FILTER, EXCLUDE } from "./constants";
 
 /**
  * @module utils
@@ -8,9 +8,10 @@ import { FILTER, EXCLUDE } from './constants';
 
 /** @private */
 function warnDeprecated(msg) {
-    const logger = typeof console.warn === 'function'
-        ? console.warn.bind(console)
-        : console.log.bind(console);
+    const logger =
+        typeof console.warn === "function"
+            ? console.warn.bind(console)
+            : console.log.bind(console);
     return logger(msg);
 }
 
@@ -64,7 +65,7 @@ function m2mToFieldName(otherModelName) {
 
 /** */
 function reverseFieldName(modelName) {
-    return modelName.toLowerCase() + 'Set'; // eslint-disable-line prefer-template
+    return modelName.toLowerCase() + "Set"; // eslint-disable-line prefer-template
 }
 
 /** @private */
@@ -98,18 +99,23 @@ function attachQuerySetMethods(modelClass, querySetClass) {
     // There is no way to get a property descriptor for the whole prototype chain;
     // only from an objects own properties. Therefore we traverse the whole prototype
     // chain for querySet.
-    forEachSuperClass(querySetClass, (cls) => {
+    forEachSuperClass(querySetClass, cls => {
         for (let i = 0; i < leftToDefine.length; i++) {
             let defined = false;
             const methodName = leftToDefine[i];
-            const descriptor = Object.getOwnPropertyDescriptor(cls.prototype, methodName);
-            if (typeof descriptor !== 'undefined') {
-                if (typeof descriptor.get !== 'undefined') {
+            const descriptor = Object.getOwnPropertyDescriptor(
+                cls.prototype,
+                methodName
+            );
+            if (typeof descriptor !== "undefined") {
+                if (typeof descriptor.get !== "undefined") {
                     descriptor.get = querySetGetterDelegatorFactory(methodName);
                     Object.defineProperty(modelClass, methodName, descriptor);
                     defined = true;
-                } else if (typeof descriptor.value === 'function') {
-                    modelClass[methodName] = querySetDelegatorFactory(methodName);
+                } else if (typeof descriptor.value === "function") {
+                    modelClass[methodName] = querySetDelegatorFactory(
+                        methodName
+                    );
                     defined = true;
                 }
             }
@@ -128,21 +134,28 @@ function attachQuerySetMethods(modelClass, querySetClass) {
  * @return {*} the id value of `entity`
  */
 function normalizeEntity(entity) {
-    if (entity !== null &&
-            typeof entity !== 'undefined' &&
-            typeof entity.getId === 'function') {
+    if (
+        entity !== null &&
+        typeof entity !== "undefined" &&
+        typeof entity.getId === "function"
+    ) {
         return entity.getId();
     }
     return entity;
 }
 
 /** */
-function reverseFieldErrorMessage(modelName, fieldName, toModelName, backwardsFieldName) {
+function reverseFieldErrorMessage(
+    modelName,
+    fieldName,
+    toModelName,
+    backwardsFieldName
+) {
     return [
         `Reverse field ${backwardsFieldName} already defined`,
         ` on model ${toModelName}. To fix, set a custom related`,
         ` name on ${modelName}.${fieldName}.`,
-    ].join('');
+    ].join("");
 }
 
 /** */
@@ -162,9 +175,9 @@ function objectShallowEquals(a, b) {
 
 /** */
 function arrayDiffActions(sourceArr, targetArr) {
-    const itemsInBoth = sourceArr.filter((item) => targetArr.includes(item));
-    const deleteItems = sourceArr.filter((item) => !itemsInBoth.includes(item));
-    const addItems = targetArr.filter((item) => !itemsInBoth.includes(item));
+    const itemsInBoth = sourceArr.filter(item => targetArr.includes(item));
+    const deleteItems = sourceArr.filter(item => !itemsInBoth.includes(item));
+    const addItems = targetArr.filter(item => !itemsInBoth.includes(item));
 
     if (deleteItems.length || addItems.length) {
         return {
@@ -183,7 +196,7 @@ const { getBatchToken } = ops;
 function clauseFiltersByAttribute({ type, payload }, attribute) {
     if (type !== FILTER) return false;
 
-    if (typeof payload !== 'object') {
+    if (typeof payload !== "object") {
         /**
          * payload could also be a function in which case
          * we would have no way of knowing what it does,
@@ -212,16 +225,15 @@ function clauseReducesResultSetSize({ type }) {
  * @return Object
  */
 function mapValues(object, func) {
-    return Object.entries(object)
-        .reduce((newObject, [key, value]) => {
-            newObject[key] = func(value);
-            return newObject;
-        }, {});
+    return Object.entries(object).reduce((newObject, [key, value]) => {
+        newObject[key] = func(value);
+        return newObject;
+    }, {});
 }
 
 /** */
 function normalizeModelReference(modelNameOrClass) {
-    if (!modelNameOrClass || typeof modelNameOrClass === 'string') {
+    if (!modelNameOrClass || typeof modelNameOrClass === "string") {
         return modelNameOrClass;
     }
     return modelNameOrClass.modelName;

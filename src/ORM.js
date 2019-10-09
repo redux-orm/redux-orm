@@ -1,13 +1,13 @@
 /* eslint-disable max-classes-per-file */
-import Session from './Session';
-import Model from './Model';
-import { createDatabase as defaultCreateDatabase } from './db';
-import { attr } from './fields';
-import Field from './fields/Field';
-import ForeignKey from './fields/ForeignKey';
-import ManyToMany from './fields/ManyToMany';
+import Session from "./Session";
+import Model from "./Model";
+import { createDatabase as defaultCreateDatabase } from "./db";
+import { attr } from "./fields";
+import Field from "./fields/Field";
+import ForeignKey from "./fields/ForeignKey";
+import ManyToMany from "./fields/ManyToMany";
 
-import { createModelSelectorSpec } from './selectors';
+import { createModelSelectorSpec } from "./selectors";
 
 import {
     m2mName,
@@ -15,17 +15,14 @@ import {
     m2mToFieldName,
     m2mFromFieldName,
     warnDeprecated,
-} from './utils';
+} from "./utils";
 
 const ORM_DEFAULTS = {
     createDatabase: defaultCreateDatabase,
 };
 
-const RESERVED_TABLE_OPTIONS = [
-    'indexes',
-    'meta',
-];
-const isReservedTableOption = (word) => RESERVED_TABLE_OPTIONS.includes(word);
+const RESERVED_TABLE_OPTIONS = ["indexes", "meta"];
+const isReservedTableOption = word => RESERVED_TABLE_OPTIONS.includes(word);
 
 /**
  * ORM - the Object Relational Mapper.
@@ -71,9 +68,11 @@ class ORM {
      * @return {undefined}
      */
     register(...models) {
-        models.forEach((model) => {
+        models.forEach(model => {
             if (model.modelName === undefined) {
-                throw new Error('A model was passed that doesn\'t have a modelName set');
+                throw new Error(
+                    "A model was passed that doesn't have a modelName set"
+                );
             }
 
             model.invalidateClassCache();
@@ -105,7 +104,7 @@ class ORM {
             }
 
             let toModelName;
-            if (fieldInstance.toModelName === 'this') {
+            if (fieldInstance.toModelName === "this") {
                 toModelName = thisModelName;
             } else {
                 toModelName = fieldInstance.toModelName; // eslint-disable-line prefer-destructuring
@@ -118,12 +117,12 @@ class ORM {
             if (fieldInstance.through) {
                 if (selfReferencing && !fieldInstance.throughFields) {
                     throw new Error(
-                        'Self-referencing many-to-many relationship at ' +
-                        `"${thisModelName}.${fieldName}" using custom ` +
-                        `model "${fieldInstance.through}" has no ` +
-                        'throughFields key. Cannot determine which ' +
-                        'fields reference the instances partaking ' +
-                        'in the relationship.'
+                        "Self-referencing many-to-many relationship at " +
+                            `"${thisModelName}.${fieldName}" using custom ` +
+                            `model "${fieldInstance.through}" has no ` +
+                            "throughFields key. Cannot determine which " +
+                            "fields reference the instances partaking " +
+                            "in the relationship."
                     );
                 }
             } else {
@@ -164,10 +163,10 @@ class ORM {
     get(modelName) {
         const allModels = this.registry.concat(this.implicitThroughModels);
         const found = Object.values(allModels).find(
-            (model) => model.modelName === modelName
+            model => model.modelName === modelName
         );
 
-        if (typeof found === 'undefined') {
+        if (typeof found === "undefined") {
             throw new Error(`Did not find model ${modelName} from registry.`);
         }
         return found;
@@ -184,9 +183,13 @@ class ORM {
         const tables = models.reduce((spec, modelClass) => {
             const tableName = modelClass.modelName;
             const tableSpec = modelClass.tableOptions();
-            Object.keys(tableSpec).filter(isReservedTableOption).forEach((key) => {
-                throw new Error(`Reserved keyword \`${key}\` used in ${tableName}.options.`);
-            });
+            Object.keys(tableSpec)
+                .filter(isReservedTableOption)
+                .forEach(key => {
+                    throw new Error(
+                        `Reserved keyword \`${key}\` used in ${tableName}.options.`
+                    );
+                });
             spec[tableName] = {
                 fields: { ...modelClass.fields },
                 ...tableSpec,
@@ -235,25 +238,27 @@ class ORM {
      * @private
      */
     _setupModelPrototypes(models) {
-        models.filter((model) => !model.isSetUp).forEach((model) => {
-            const { fields, modelName, querySetClass } = model;
-            Object.entries(fields).forEach(([fieldName, field]) => {
-                if (!(field instanceof Field)) {
-                    throw new Error(
-                        `${modelName}.${fieldName} is of type "${typeof field}" ` +
-                        'but must be an instance of Field. Please use the ' +
-                        '`attr`, `fk`, `oneToOne` and `many` ' +
-                        'functions to define fields.'
-                    );
-                }
-                if (!this._isFieldInstalled(modelName, fieldName)) {
-                    this._installField(field, fieldName, model);
-                    this._setFieldInstalled(modelName, fieldName);
-                }
+        models
+            .filter(model => !model.isSetUp)
+            .forEach(model => {
+                const { fields, modelName, querySetClass } = model;
+                Object.entries(fields).forEach(([fieldName, field]) => {
+                    if (!(field instanceof Field)) {
+                        throw new Error(
+                            `${modelName}.${fieldName} is of type "${typeof field}" ` +
+                                "but must be an instance of Field. Please use the " +
+                                "`attr`, `fk`, `oneToOne` and `many` " +
+                                "functions to define fields."
+                        );
+                    }
+                    if (!this._isFieldInstalled(modelName, fieldName)) {
+                        this._installField(field, fieldName, model);
+                        this._setFieldInstalled(modelName, fieldName);
+                    }
+                });
+                attachQuerySetMethods(model, querySetClass);
+                model.isSetUp = true;
             });
-            attachQuerySetMethods(model, querySetClass);
-            model.isSetUp = true;
-        });
     }
 
     /**
@@ -281,12 +286,12 @@ class ORM {
      */
     _installField(field, fieldName, model) {
         const FieldInstaller = field.installerClass;
-        (new FieldInstaller({
+        new FieldInstaller({
             field,
             fieldName,
             model,
             orm: this,
-        })).run();
+        }).run();
     }
 
     // DEPRECATED AND REMOVED METHODS
@@ -296,8 +301,8 @@ class ORM {
      */
     withMutations(state) {
         warnDeprecated(
-            '`ORM.prototype.withMutations` has been deprecated. ' +
-            'Use `ORM.prototype.mutableSession` instead.'
+            "`ORM.prototype.withMutations` has been deprecated. " +
+                "Use `ORM.prototype.mutableSession` instead."
         );
         return this.mutableSession(state);
     }
@@ -307,8 +312,8 @@ class ORM {
      */
     from(state) {
         warnDeprecated(
-            '`ORM.prototype.from` has been deprecated. ' +
-            'Use `ORM.prototype.session` instead.'
+            "`ORM.prototype.from` has been deprecated. " +
+                "Use `ORM.prototype.session` instead."
         );
         return this.session(state);
     }
@@ -318,8 +323,8 @@ class ORM {
      */
     getDefaultState() {
         warnDeprecated(
-            '`ORM.prototype.getDefaultState` has been deprecated. Use ' +
-            '`ORM.prototype.getEmptyState` instead.'
+            "`ORM.prototype.getDefaultState` has been deprecated. Use " +
+                "`ORM.prototype.getEmptyState` instead."
         );
         return this.getEmptyState();
     }
@@ -329,20 +334,18 @@ class ORM {
      */
     define() {
         throw new Error(
-            '`ORM.prototype.define` has been removed. Please define a Model class.'
+            "`ORM.prototype.define` has been removed. Please define a Model class."
         );
     }
 }
 
 export function DeprecatedSchema() {
     throw new Error(
-        'Schema has been renamed to ORM. Please import ORM instead of Schema ' +
-        'from Redux-ORM.'
+        "Schema has been renamed to ORM. Please import ORM instead of Schema " +
+            "from Redux-ORM."
     );
 }
 
-export {
-    ORM,
-};
+export { ORM };
 
 export default ORM;

@@ -1,61 +1,59 @@
-import {
-    ORM, Session, Model, oneToOne, fk, many
-} from '../..';
-import { createTestModels } from '../helpers';
-import { STATE_FLAG } from '../../constants';
+import { ORM, Session, Model, oneToOne, fk, many } from "../..";
+import { createTestModels } from "../helpers";
+import { STATE_FLAG } from "../../constants";
 
-describe('ORM', () => {
-    it('constructor works', () => {
+describe("ORM", () => {
+    it("constructor works", () => {
         new ORM(); // eslint-disable-line no-new
     });
 
-    describe('throws on invalid model declarations', () => {
-        it('with multiple one-to-one fields to the same model without related name', () => {
+    describe("throws on invalid model declarations", () => {
+        it("with multiple one-to-one fields to the same model without related name", () => {
             class A extends Model {}
-            A.modelName = 'A';
+            A.modelName = "A";
 
             class B extends Model {}
-            B.modelName = 'B';
+            B.modelName = "B";
             B.fields = {
-                field1: oneToOne('A'),
-                field2: oneToOne('A'),
+                field1: oneToOne("A"),
+                field2: oneToOne("A"),
             };
             const orm = new ORM();
             orm.register(A, B);
             expect(() => orm.getModelClasses()).toThrow(/field/);
         });
 
-        it('with multiple foreign keys to the same model without related name', () => {
+        it("with multiple foreign keys to the same model without related name", () => {
             class A extends Model {}
-            A.modelName = 'A';
+            A.modelName = "A";
 
             class B extends Model {}
-            B.modelName = 'B';
+            B.modelName = "B";
             B.fields = {
-                field1: fk('A'),
-                field2: fk('A'),
+                field1: fk("A"),
+                field2: fk("A"),
             };
             const orm = new ORM();
             orm.register(A, B);
             expect(() => orm.getModelClasses()).toThrow(/field/);
         });
 
-        it('with multiple many-to-manys to the same model without related name', () => {
+        it("with multiple many-to-manys to the same model without related name", () => {
             class A extends Model {}
-            A.modelName = 'A';
+            A.modelName = "A";
 
             class B extends Model {}
-            B.modelName = 'B';
+            B.modelName = "B";
             B.fields = {
-                field1: many('A'),
-                field2: many('A'),
+                field1: many("A"),
+                field2: many("A"),
             };
             const orm = new ORM();
             orm.register(A, B);
             expect(() => orm.getModelClasses()).toThrow(/field/);
         });
 
-        it('correctly throws an error when a model does not have a modelName property', () => {
+        it("correctly throws an error when a model does not have a modelName property", () => {
             class A extends Model {}
             const orm = new ORM();
             expect(() => orm.register(A)).toThrow(
@@ -64,7 +62,7 @@ describe('ORM', () => {
         });
     });
 
-    describe('simple orm', () => {
+    describe("simple orm", () => {
         let orm;
         let Book;
         let Author;
@@ -85,7 +83,7 @@ describe('ORM', () => {
             orm = new ORM();
         });
 
-        it('correctly registers a single model at a time', () => {
+        it("correctly registers a single model at a time", () => {
             expect(orm.registry).toHaveLength(0);
             orm.register(Book);
             expect(orm.registry).toHaveLength(1);
@@ -93,59 +91,58 @@ describe('ORM', () => {
             expect(orm.registry).toHaveLength(2);
         });
 
-        it('correctly registers multiple models', () => {
+        it("correctly registers multiple models", () => {
             expect(orm.registry).toHaveLength(0);
             orm.register(Book, Author);
             expect(orm.registry).toHaveLength(2);
         });
 
-        it('correctly starts session', () => {
+        it("correctly starts session", () => {
             const initialState = {};
             const session = orm.session(initialState);
             expect(session).toBeInstanceOf(Session);
         });
 
-
-        it('correctly gets models from registry', () => {
+        it("correctly gets models from registry", () => {
             orm.register(Book);
-            expect(orm.get('Book')).toBe(Book);
+            expect(orm.get("Book")).toBe(Book);
         });
 
-        it('throws when trying to get inexistant model from registry', () => {
-            expect(() => orm.get('InexistantModel')).toThrow(
-                'Did not find model InexistantModel from registry.'
+        it("throws when trying to get inexistant model from registry", () => {
+            expect(() => orm.get("InexistantModel")).toThrow(
+                "Did not find model InexistantModel from registry."
             );
         });
 
-        it('correctly sets model prototypes', () => {
+        it("correctly sets model prototypes", () => {
             orm.register(Book, Author, Cover, Genre, Tag, Publisher);
             expect(Book.isSetUp).toBeFalsy();
 
             let coverDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
-                'cover'
+                "cover"
             );
             expect(coverDescriptor).toBeUndefined();
             let authorDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
-                'author'
+                "author"
             );
             expect(authorDescriptor).toBeUndefined();
             let genresDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
-                'genres'
+                "genres"
             );
             expect(genresDescriptor).toBeUndefined();
 
             let tagsDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
-                'tags'
+                "tags"
             );
             expect(tagsDescriptor).toBeUndefined();
 
             let publisherDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
-                'publisher'
+                "publisher"
             );
             expect(publisherDescriptor).toBeUndefined();
 
@@ -156,41 +153,41 @@ describe('ORM', () => {
 
             coverDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
-                'cover'
+                "cover"
             );
-            expect(typeof coverDescriptor.get).toBe('function');
-            expect(typeof coverDescriptor.set).toBe('function');
+            expect(typeof coverDescriptor.get).toBe("function");
+            expect(typeof coverDescriptor.set).toBe("function");
 
             authorDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
-                'author'
+                "author"
             );
-            expect(typeof authorDescriptor.get).toBe('function');
-            expect(typeof authorDescriptor.set).toBe('function');
+            expect(typeof authorDescriptor.get).toBe("function");
+            expect(typeof authorDescriptor.set).toBe("function");
 
             genresDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
-                'genres'
+                "genres"
             );
-            expect(typeof genresDescriptor.get).toBe('function');
-            expect(typeof genresDescriptor.set).toBe('function');
+            expect(typeof genresDescriptor.get).toBe("function");
+            expect(typeof genresDescriptor.set).toBe("function");
 
             tagsDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
-                'tags'
+                "tags"
             );
-            expect(typeof tagsDescriptor.get).toBe('function');
-            expect(typeof tagsDescriptor.set).toBe('function');
+            expect(typeof tagsDescriptor.get).toBe("function");
+            expect(typeof tagsDescriptor.set).toBe("function");
 
             publisherDescriptor = Object.getOwnPropertyDescriptor(
                 Book.prototype,
-                'publisher'
+                "publisher"
             );
-            expect(typeof publisherDescriptor.get).toBe('function');
-            expect(typeof publisherDescriptor.set).toBe('function');
+            expect(typeof publisherDescriptor.get).toBe("function");
+            expect(typeof publisherDescriptor.set).toBe("function");
         });
 
-        it('correctly gets the default state', () => {
+        it("correctly gets the default state", () => {
             orm.register(Book, Author, Cover, Genre, Tag, Publisher);
             const defaultState = orm.getEmptyState();
 
@@ -265,16 +262,16 @@ describe('ORM', () => {
             });
         });
 
-        it('immutably adapts schema spec to new model fields', () => {
+        it("immutably adapts schema spec to new model fields", () => {
             orm.register(Book, Author, Cover, Genre, Tag, Publisher);
             const coverFields = orm.generateSchemaSpec().tables.Cover.fields;
-            Cover.fields.tag = fk('Tag', 'covers');
-            expect(
-                orm.generateSchemaSpec().tables.Cover.fields
-            ).not.toEqual(coverFields);
+            Cover.fields.tag = fk("Tag", "covers");
+            expect(orm.generateSchemaSpec().tables.Cover.fields).not.toEqual(
+                coverFields
+            );
         });
 
-        it('correctly starts a mutating session', () => {
+        it("correctly starts a mutating session", () => {
             orm.register(Book, Author, Cover, Genre, Tag, Publisher);
             const initialState = orm.getEmptyState();
             const session = orm.mutableSession(initialState);
@@ -282,22 +279,26 @@ describe('ORM', () => {
             expect(session.withMutations).toBe(true);
         });
 
-        it('throws if reserved Table options are specified', () => {
+        it("throws if reserved Table options are specified", () => {
             class CustomizedModel extends Model {}
-            CustomizedModel.modelName = 'CustomizedModel';
+            CustomizedModel.modelName = "CustomizedModel";
             CustomizedModel.options = {
                 indexes: {},
             };
             orm.register(CustomizedModel);
             expect(() => {
                 orm.session();
-            }).toThrow('Reserved keyword `indexes` used in CustomizedModel.options.');
+            }).toThrow(
+                "Reserved keyword `indexes` used in CustomizedModel.options."
+            );
             CustomizedModel.options = {
                 meta: {},
             };
             expect(() => {
                 orm.session();
-            }).toThrow('Reserved keyword `meta` used in CustomizedModel.options.');
+            }).toThrow(
+                "Reserved keyword `meta` used in CustomizedModel.options."
+            );
         });
     });
 });

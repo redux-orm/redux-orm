@@ -46,7 +46,7 @@ Book.fields = {
 
 ## One-to-one
 
-Each `book` has **exactly one** cover. This can be expressed similarly to one-to-many relationships. 
+Each `book` has **exactly one** cover. This can be expressed similarly to one-to-many relationships.
 
 ```js
 import { oneToOne } from 'redux-orm';

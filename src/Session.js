@@ -1,7 +1,7 @@
-import { getBatchToken } from 'immutable-ops';
+import { getBatchToken } from "immutable-ops";
 
-import { SUCCESS, UPDATE, DELETE } from './constants';
-import { warnDeprecated, clauseFiltersByAttribute } from './utils';
+import { SUCCESS, UPDATE, DELETE } from "./constants";
+import { warnDeprecated, clauseFiltersByAttribute } from "./utils";
 
 const Session = class Session {
     /**
@@ -26,11 +26,18 @@ const Session = class Session {
 
         this.models = schema.getModelClasses();
 
-        this.sessionBoundModels = this.models.map((modelClass) => {
+        this.sessionBoundModels = this.models.map(modelClass => {
             function SessionBoundModel() {
-                return Reflect.construct(modelClass, arguments, SessionBoundModel); // eslint-disable-line prefer-rest-params
+                return Reflect.construct(
+                    modelClass,
+                    arguments,
+                    SessionBoundModel
+                ); // eslint-disable-line prefer-rest-params
             }
-            Reflect.setPrototypeOf(SessionBoundModel.prototype, modelClass.prototype);
+            Reflect.setPrototypeOf(
+                SessionBoundModel.prototype,
+                modelClass.prototype
+            );
             Reflect.setPrototypeOf(SessionBoundModel, modelClass);
 
             Object.defineProperty(this, modelClass.modelName, {
@@ -58,18 +65,21 @@ const Session = class Session {
         if (!data.accessedInstances) {
             data.accessedInstances = {};
         }
-        modelIds.forEach((id) => {
+        modelIds.forEach(id => {
             data.accessedInstances[id] = true;
         });
     }
 
     get accessedModelInstances() {
-        return Object.entries(this.getModelData()).reduce((result, [key, value]) => {
-            if (value.accessedInstances) {
-                result[key] = value.accessedInstances;
-            }
-            return result;
-        }, {});
+        return Object.entries(this.getModelData()).reduce(
+            (result, [key, value]) => {
+                if (value.accessedInstances) {
+                    result[key] = value.accessedInstances;
+                }
+                return result;
+            },
+            {}
+        );
     }
 
     markFullTableScanned(modelName) {
@@ -78,12 +88,15 @@ const Session = class Session {
     }
 
     get fullTableScannedModels() {
-        return Object.entries(this.getModelData()).reduce((result, [key, value]) => {
-            if (value.fullTableScanned) {
-                result.push(key);
-            }
-            return result;
-        }, []);
+        return Object.entries(this.getModelData()).reduce(
+            (result, [key, value]) => {
+                if (value.fullTableScanned) {
+                    result.push(key);
+                }
+                return result;
+            },
+            []
+        );
     }
 
     markAccessedIndexes(indexes) {
@@ -100,12 +113,15 @@ const Session = class Session {
     }
 
     get accessedIndexes() {
-        return Object.entries(this.getModelData()).reduce((result, [key, value]) => {
-            if (value.accessedIndexes) {
-                result[key] = value.accessedIndexes;
-            }
-            return result;
-        }, {});
+        return Object.entries(this.getModelData()).reduce(
+            (result, [key, value]) => {
+                if (value.accessedIndexes) {
+                    result[key] = value.accessedIndexes;
+                }
+                return result;
+            },
+            {}
+        );
     }
 
     /**
@@ -121,7 +137,9 @@ const Session = class Session {
         const { status, state, payload } = result;
 
         if (status !== SUCCESS) {
-            throw new Error(`Applying update failed with status ${status}. Payload: ${payload}`);
+            throw new Error(
+                `Applying update failed with status ${status}. Payload: ${payload}`
+            );
         }
 
         this.state = state;
@@ -152,11 +170,9 @@ const Session = class Session {
         const { rows } = result;
 
         const { idAttribute } = this[table];
-        const accessedIds = new Set(rows.map(
-            (row) => row[idAttribute]
-        ));
+        const accessedIds = new Set(rows.map(row => row[idAttribute]));
 
-        const anyClauseFilteredByPk = clauses.some((clause) => {
+        const anyClauseFilteredByPk = clauses.some(clause => {
             if (!clauseFiltersByAttribute(clause, idAttribute)) {
                 return false;
             }
@@ -172,8 +188,8 @@ const Session = class Session {
 
         const accessedIndexes = [];
         const { indexes } = this.state[table];
-        clauses.forEach((clause) => {
-            Object.keys(indexes).forEach((attr) => {
+        clauses.forEach(clause => {
+            Object.keys(indexes).forEach(attr => {
                 if (!clauseFiltersByAttribute(clause, attr)) return;
                 const value = clause.payload[attr];
                 accessedIndexes.push([table, attr, value]);
@@ -209,8 +225,8 @@ const Session = class Session {
      */
     getNextState() {
         warnDeprecated(
-            '`Session.prototype.getNextState` has been deprecated. Access ' +
-            'the `Session.prototype.state` property instead.'
+            "`Session.prototype.getNextState` has been deprecated. Access " +
+                "the `Session.prototype.state` property instead."
         );
         return this.state;
     }
@@ -222,9 +238,9 @@ const Session = class Session {
      */
     reduce() {
         throw new Error(
-            '`Session.prototype.reduce` has been removed. The Redux integration API ' +
-            'is now decoupled from ORM and Session - see the 0.9 migration guide ' +
-            'in the GitHub repo.'
+            "`Session.prototype.reduce` has been removed. The Redux integration API " +
+                "is now decoupled from ORM and Session - see the 0.9 migration guide " +
+                "in the GitHub repo."
         );
     }
 };

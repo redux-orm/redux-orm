@@ -1,8 +1,6 @@
-import Field from './Field';
+import Field from "./Field";
 
-import {
-    attrDescriptor,
-} from '../descriptors';
+import { attrDescriptor } from "../descriptors";
 
 /**
  * @memberof module:fields
@@ -12,7 +10,7 @@ export class Attribute extends Field {
         super();
         this.opts = opts || {};
 
-        if (this.opts.hasOwnProperty('getDefault')) {
+        if (this.opts.hasOwnProperty("getDefault")) {
             this.getDefault = this.opts.getDefault;
         }
     }

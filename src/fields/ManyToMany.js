@@ -1,14 +1,8 @@
-import RelationalField from './RelationalField';
+import RelationalField from "./RelationalField";
 
-import {
-    manyToManyDescriptor,
-} from '../descriptors';
+import { manyToManyDescriptor } from "../descriptors";
 
-import {
-    m2mName,
-    m2mToFieldName,
-    m2mFromFieldName,
-} from '../utils';
+import { m2mName, m2mToFieldName, m2mFromFieldName } from "../utils";
 
 /**
  * @memberof module:fields
@@ -19,10 +13,7 @@ export class ManyToMany extends RelationalField {
     }
 
     getThroughModelName(fieldName, model) {
-        return (
-            this.through ||
-            m2mName(model.modelName, fieldName)
-        );
+        return this.through || m2mName(model.modelName, fieldName);
     }
 
     createForwardsDescriptor(fieldName, model, toModel, throughModel) {
@@ -51,7 +42,12 @@ export class ManyToMany extends RelationalField {
             to: model.modelName,
             relatedName: fieldName,
             through: throughModel.modelName,
-            throughFields: this.getThroughFields(fieldName, model, toModel, throughModel),
+            throughFields: this.getThroughFields(
+                fieldName,
+                model,
+                toModel,
+                throughModel
+            ),
         });
     }
 
@@ -61,7 +57,12 @@ export class ManyToMany extends RelationalField {
             to: toModel.modelName,
             relatedName: fieldName,
             through: this.through,
-            throughFields: this.getThroughFields(fieldName, model, toModel, throughModel),
+            throughFields: this.getThroughFields(
+                fieldName,
+                model,
+                toModel,
+                throughModel
+            ),
             as: this.as,
         });
     }
@@ -97,11 +98,10 @@ export class ManyToMany extends RelationalField {
          * determine which field references which model
          * and infer the directions from that
          */
-        const throughModelFieldReferencing = (otherModel) => (
-            Object.keys(throughModel.fields).find((someFieldName) => (
+        const throughModelFieldReferencing = otherModel =>
+            Object.keys(throughModel.fields).find(someFieldName =>
                 throughModel.fields[someFieldName].references(otherModel)
-            ))
-        );
+            );
 
         return {
             to: throughModelFieldReferencing(toModel),

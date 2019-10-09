@@ -25,7 +25,11 @@ class Button extends React.Component {
     render() {
         return (
             <div className="pluginWrapper buttonWrapper">
-                <a className="button hero" href={this.props.href} target={this.props.target}>
+                <a
+                    className="button hero"
+                    href={this.props.href}
+                    target={this.props.target}
+                >
                     {this.props.children}
                 </a>
             </div>
@@ -47,8 +51,19 @@ const SplashContainer = props => (
 
 const ProjectTitle = () => (
     <React.Fragment>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <img src={imgUrl('redux-orm.svg')} alt="Redux-ORM logo" width={100} height={100} />
+        <div
+            style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+            }}
+        >
+            <img
+                src={imgUrl('redux-orm.svg')}
+                alt="Redux-ORM logo"
+                width={100}
+                height={100}
+            />
             <h1 className="projectTitle">{siteConfig.title}</h1>
         </div>
 
@@ -72,7 +87,14 @@ class HomeSplash extends React.Component {
                 <div className="inner">
                     <ProjectTitle />
                     <PromoSection>
-                        <Button href={docUrl('introduction/getting-started', language)}>Get Started</Button>
+                        <Button
+                            href={docUrl(
+                                'introduction/getting-started',
+                                language,
+                            )}
+                        >
+                            Get Started
+                        </Button>
                     </PromoSection>
                 </div>
             </SplashContainer>
@@ -88,8 +110,16 @@ const Installation = () => (
 );
 
 const Block = props => (
-    <Container id={props.id} background={props.background} className={props.className}>
-        <GridBlock align="center" contents={props.children} layout={props.layout} />
+    <Container
+        id={props.id}
+        background={props.background}
+        className={props.className}
+    >
+        <GridBlock
+            align="center"
+            contents={props.children}
+            layout={props.layout}
+        />
     </Container>
 );
 
@@ -98,27 +128,28 @@ const FeaturesTop = props => (
         {[
             {
                 content:
-                    'Redux-ORM is fast. **All queries are lazily-evaluated** and come with a built-in **support for memoization**.',
+                    'Redux-ORM is fast. **All queries are lazily evaluated** and come with a built-in **support for memoization**.',
                 image: imgUrl('lightweight.svg'),
                 imageAlign: 'top',
                 title: 'Lightweight',
             },
             {
                 content:
-                    'Redux-ORM provides a clean, domain-oriented abstraction over low-level state management, **protecting the state from accidental mutations.**',
+                    'It provides a clean abstraction over low-level updates, **protecting the state from accidental mutations.**',
                 image: imgUrl('safe.svg'),
                 imageAlign: 'top',
-                title: 'Safe',
+                title: 'Reliable',
             },
             {
-                content: 'With **100% code coverage**, Redux-ORM is thoroughly tested to ensure stability and **rock solid code quality**.',
+                content:
+                    'With nearly **100% branch coverage**, the library is thoroughly tested to ensure **rock solid code quality**.',
                 image: imgUrl('stable.svg'),
                 imageAlign: 'top',
                 title: 'Stable',
             },
             {
                 content:
-                    'Redux-ORM comes with a set of configuration and extension options, ranging from simple identifier tweaks to **custom database engines**.',
+                    'No matter where your data comes from, Redux-ORM will stay out of its way. Even a **custom database layer** is possible.',
                 image: imgUrl('flexible.svg'),
                 imageAlign: 'top',
                 title: 'Flexible',

@@ -1,8 +1,6 @@
-import FieldInstallerTemplate from './FieldInstallerTemplate';
+import FieldInstallerTemplate from "./FieldInstallerTemplate";
 
-import {
-    reverseFieldErrorMessage,
-} from '../utils';
+import { reverseFieldErrorMessage } from "../utils";
 
 /**
  * Default implementation for the template method in FieldInstallerTemplate.
@@ -24,7 +22,9 @@ export class DefaultFieldInstaller extends FieldInstallerTemplate {
     }
 
     installForwardsVirtualField() {
-        this.model.virtualFields[this.fieldName] = this.field.createForwardsVirtualField(
+        this.model.virtualFields[
+            this.fieldName
+        ] = this.field.createForwardsVirtualField(
             this.fieldName,
             this.model,
             this.toModel,
@@ -38,12 +38,14 @@ export class DefaultFieldInstaller extends FieldInstallerTemplate {
             this.backwardsFieldName
         );
         if (backwardsDescriptor) {
-            throw new Error(reverseFieldErrorMessage(
-                this.model.modelName,
-                this.fieldName,
-                this.toModel.modelName,
-                this.backwardsFieldName
-            ));
+            throw new Error(
+                reverseFieldErrorMessage(
+                    this.model.modelName,
+                    this.fieldName,
+                    this.toModel.modelName,
+                    this.backwardsFieldName
+                )
+            );
         }
 
         // install backwards descriptor
@@ -60,7 +62,9 @@ export class DefaultFieldInstaller extends FieldInstallerTemplate {
     }
 
     installBackwardsVirtualField() {
-        this.toModel.virtualFields[this.backwardsFieldName] = this.field.createBackwardsVirtualField(
+        this.toModel.virtualFields[
+            this.backwardsFieldName
+        ] = this.field.createBackwardsVirtualField(
             this.fieldName,
             this.model,
             this.toModel,

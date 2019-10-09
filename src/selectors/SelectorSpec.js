@@ -1,4 +1,4 @@
-import { ID_ARG_KEY_SELECTOR } from '../constants';
+import { ID_ARG_KEY_SELECTOR } from "../constants";
 
 export default class SelectorSpec {
     constructor({ parent, orm }) {

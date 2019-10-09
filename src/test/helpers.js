@@ -1,8 +1,6 @@
-import ORM from '../ORM';
-import Model from '../Model';
-import {
-    fk, many, oneToOne, attr
-} from '../fields';
+import ORM from "../ORM";
+import Model from "../Model";
+import { fk, many, oneToOne, attr } from "../fields";
 
 /**
  * These utils create a database schema for testing.
@@ -13,83 +11,83 @@ import {
 
 const AUTHORS_INITIAL = [
     {
-        name: 'Tommi Kaikkonen',
+        name: "Tommi Kaikkonen",
     },
     {
-        name: 'John Doe',
+        name: "John Doe",
     },
     {
-        name: 'Stephen King',
+        name: "Stephen King",
     },
 ];
 
 const COVERS_INITIAL = [
     {
-        src: 'cover.jpg',
+        src: "cover.jpg",
     },
     {
-        src: 'cover.jpg',
+        src: "cover.jpg",
     },
     {
-        src: 'cover.jpg',
+        src: "cover.jpg",
     },
 ];
 
 const GENRES_INITIAL = [
     {
-        name: 'Biography',
+        name: "Biography",
     },
     {
-        name: 'Autobiography',
+        name: "Autobiography",
     },
     {
-        name: 'Software Development',
+        name: "Software Development",
     },
     {
-        name: 'Redux',
+        name: "Redux",
     },
 ];
 
 const TAGS_INITIAL = [
     {
-        name: 'Technology',
+        name: "Technology",
     },
     {
-        name: 'Literary',
+        name: "Literary",
     },
     {
-        name: 'Natural',
+        name: "Natural",
     },
     {
-        name: 'Redux',
+        name: "Redux",
     },
 ];
 
 const BOOKS_INITIAL = [
     {
-        name: 'Tommi Kaikkonen - an Autobiography',
+        name: "Tommi Kaikkonen - an Autobiography",
         author: 0,
         cover: 0,
         genres: [0, 1],
-        tags: ['Technology', 'Literary'],
+        tags: ["Technology", "Literary"],
         releaseYear: 2050,
         publisher: 1,
     },
     {
-        name: 'Clean Code',
+        name: "Clean Code",
         author: 1,
         cover: 1,
         genres: [2],
-        tags: ['Technology'],
+        tags: ["Technology"],
         releaseYear: 2008,
         publisher: 0,
     },
     {
-        name: 'Getting Started with Redux',
+        name: "Getting Started with Redux",
         author: 2,
         cover: 2,
         genres: [2, 3],
-        tags: ['Technology', 'Redux'],
+        tags: ["Technology", "Redux"],
         releaseYear: 2015,
         publisher: 0,
     },
@@ -97,20 +95,20 @@ const BOOKS_INITIAL = [
 
 const PUBLISHERS_INITIAL = [
     {
-        name: 'Technical Publishing',
+        name: "Technical Publishing",
     },
     {
-        name: 'Autobiographies Inc',
+        name: "Autobiographies Inc",
     },
     {
-        name: 'Paramount Pictures',
+        name: "Paramount Pictures",
     },
 ];
 
 const MOVIES_INITIAL = [
     {
-        name: 'The Godfather',
-        characters: ['Vito Corleone', 'Tom Hagen', 'Bonasera'],
+        name: "The Godfather",
+        characters: ["Vito Corleone", "Tom Hagen", "Bonasera"],
         hasPremiered: true,
         rating: 9.2,
         meta: {},
@@ -125,15 +123,15 @@ export function createTestModels() {
                 id: attr(),
                 name: attr(),
                 releaseYear: attr(),
-                author: fk('Author', 'books'),
-                cover: oneToOne('Cover'),
-                genres: many('Genre', 'books'),
-                tags: many('Tag', 'books'),
-                publisher: fk('Publisher', 'books'),
+                author: fk("Author", "books"),
+                cover: oneToOne("Cover"),
+                genres: many("Genre", "books"),
+                tags: many("Tag", "books"),
+                publisher: fk("Publisher", "books"),
             };
         }
     };
-    Book.modelName = 'Book';
+    Book.modelName = "Book";
 
     const Author = class AuthorModel extends Model {
         static get fields() {
@@ -141,50 +139,50 @@ export function createTestModels() {
                 id: attr(),
                 name: attr(),
                 publishers: many({
-                    to: 'Publisher',
-                    through: 'Book',
-                    relatedName: 'authors',
+                    to: "Publisher",
+                    through: "Book",
+                    relatedName: "authors",
                 }),
             };
         }
     };
-    Author.modelName = 'Author';
+    Author.modelName = "Author";
 
     const Cover = class CoverModel extends Model {};
-    Cover.modelName = 'Cover';
+    Cover.modelName = "Cover";
     Cover.fields = {
         id: attr(),
         src: attr(),
     };
 
     const Genre = class GenreModel extends Model {};
-    Genre.modelName = 'Genre';
+    Genre.modelName = "Genre";
     Genre.fields = {
         id: attr(),
         name: attr(),
     };
 
     const Tag = class TagModel extends Model {};
-    Tag.modelName = 'Tag';
+    Tag.modelName = "Tag";
     Tag.options = {
-        idAttribute: 'name',
+        idAttribute: "name",
     };
     Tag.fields = {
         name: attr(),
-        subTags: many('this', 'parentTags'),
+        subTags: many("this", "parentTags"),
         // TODO: bidirectional many-to-many relations
         // synonymousTags: many('Tag', 'synonymousTags'),
     };
 
     const Publisher = class PublisherModel extends Model {};
-    Publisher.modelName = 'Publisher';
+    Publisher.modelName = "Publisher";
     Publisher.fields = {
         id: attr(),
         name: attr(),
     };
 
     const Movie = class MovieModel extends Model {};
-    Movie.modelName = 'Movie';
+    Movie.modelName = "Movie";
     Movie.fields = {
         id: attr(),
         name: attr(),
@@ -193,9 +191,9 @@ export function createTestModels() {
         characters: attr(),
         meta: attr(),
         publisherId: fk({
-            to: 'Publisher',
-            as: 'publisher',
-            relatedName: 'movies',
+            to: "Publisher",
+            as: "publisher",
+            relatedName: "movies",
         }),
     };
 
@@ -212,15 +210,7 @@ export function createTestModels() {
 
 export function createTestORM(customModels) {
     const models = customModels || createTestModels();
-    const {
-        Book,
-        Author,
-        Cover,
-        Genre,
-        Tag,
-        Publisher,
-        Movie,
-    } = models;
+    const { Book, Author, Cover, Genre, Tag, Publisher, Movie } = models;
 
     const orm = new ORM();
     orm.register(Book, Author, Cover, Genre, Tag, Publisher, Movie);
@@ -236,7 +226,13 @@ export function createTestSessionWithData(customORM) {
     const orm = customORM || createTestORM();
     const state = orm.getEmptyState();
     const {
-        Author, Cover, Genre, Tag, Book, Publisher, Movie
+        Author,
+        Cover,
+        Genre,
+        Tag,
+        Book,
+        Publisher,
+        Movie,
     } = orm.mutableSession(state);
 
     AUTHORS_INITIAL.forEach(props => Author.create(props));
@@ -253,17 +249,15 @@ export function createTestSessionWithData(customORM) {
 
 export const isSubclass = (a, b) => a.prototype instanceof b;
 
-export const measureMsSince = (startTime) => {
+export const measureMsSince = startTime => {
     if (!startTime) {
         return process.hrtime();
     }
     const endTime = process.hrtime(startTime);
-    return Math.round(
-        (endTime[0] * 1000) + (endTime[1] / 1000000)
-    );
+    return Math.round(endTime[0] * 1000 + endTime[1] / 1000000);
 };
 
-export const nTimes = (n) => Array.from({ length: n });
+export const nTimes = n => Array.from({ length: n });
 
 export function measureMs(fn) {
     const start = measureMsSince();
@@ -271,7 +265,7 @@ export function measureMs(fn) {
     return measureMsSince(start);
 }
 
-export const avg = (arr) => {
+export const avg = arr => {
     if (arr.length === 0) return null;
     const sum = arr.reduce((cur, summand) => cur + summand);
     return sum / arr.length;

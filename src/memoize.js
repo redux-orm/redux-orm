@@ -1,29 +1,23 @@
-import { STATE_FLAG } from './constants';
+import { STATE_FLAG } from "./constants";
 
 const defaultEqualityCheck = (a, b) => a === b;
 export const eqCheck = defaultEqualityCheck;
 
-const isOrmState = (arg) => (
-    arg &&
-    typeof arg === 'object' &&
-    arg.hasOwnProperty(STATE_FLAG)
-);
+const isOrmState = arg =>
+    arg && typeof arg === "object" && arg.hasOwnProperty(STATE_FLAG);
 
-const argsAreEqual = (lastArgs, nextArgs, equalityCheck) => (
-    nextArgs.every((arg, index) => (
-        (isOrmState(arg) && isOrmState(lastArgs[index])) ||
-        equalityCheck(arg, lastArgs[index])
-    ))
-);
+const argsAreEqual = (lastArgs, nextArgs, equalityCheck) =>
+    nextArgs.every(
+        (arg, index) =>
+            (isOrmState(arg) && isOrmState(lastArgs[index])) ||
+            equalityCheck(arg, lastArgs[index])
+    );
 
-const rowsAreEqual = (ids, rowsA, rowsB) => (
-    ids.every((id) => rowsA[id] === rowsB[id])
-);
+const rowsAreEqual = (ids, rowsA, rowsB) =>
+    ids.every(id => rowsA[id] === rowsB[id]);
 
 const accessedModelInstancesAreEqual = (previous, ormState, orm) => {
-    const {
-        accessedInstances,
-    } = previous;
+    const { accessedInstances } = previous;
 
     return Object.entries(accessedInstances).every(([modelName, instances]) => {
         // if the entire table has not been changed, we have nothing to do
@@ -42,26 +36,23 @@ const accessedModelInstancesAreEqual = (previous, ormState, orm) => {
 };
 
 const accessedIndexesAreEqual = (previous, ormState) => {
-    const {
-        accessedIndexes,
-    } = previous;
+    const { accessedIndexes } = previous;
 
-    return Object.entries(accessedIndexes).every(([modelName, indexes]) => (
-        Object.entries(indexes).every(([column, values]) => (
-            values.every((value) => (
-                previous.ormState[modelName].indexes[column][value]
-                    === ormState[modelName].indexes[column][value]
-            ))
-        ))
-    ));
+    return Object.entries(accessedIndexes).every(([modelName, indexes]) =>
+        Object.entries(indexes).every(([column, values]) =>
+            values.every(
+                value =>
+                    previous.ormState[modelName].indexes[column][value] ===
+                    ormState[modelName].indexes[column][value]
+            )
+        )
+    );
 };
 
-const fullTableScannedModelsAreEqual = (previous, ormState) => (
-    previous.fullTableScannedModels.every((modelName) => (
-        previous.ormState[modelName]
-            === ormState[modelName]
-    ))
-);
+const fullTableScannedModelsAreEqual = (previous, ormState) =>
+    previous.fullTableScannedModels.every(
+        modelName => previous.ormState[modelName] === ormState[modelName]
+    );
 
 /**
  * A memoizer to use with redux-orm
@@ -169,7 +160,9 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
          */
         const session = orm.session(ormState);
         /* Replace all ORM state arguments by the session above */
-        const argsWithSession = args.map((arg) => (isOrmState(arg) ? session : arg));
+        const argsWithSession = args.map(arg =>
+            isOrmState(arg) ? session : arg
+        );
 
         /* This is where we call the actual function */
         const result = func.apply(null, argsWithSession); // eslint-disable-line prefer-spread

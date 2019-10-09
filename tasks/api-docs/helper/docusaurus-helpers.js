@@ -1,10 +1,9 @@
 const links = {};
 
 function getLink(parent, name, link) {
-    if (parent === 'event') return name;
+    if (parent === "event") return name;
     let sig = `${parent}#${name}`;
     let out = links[sig];
-
 
     if (link) {
         links[sig] = link;
@@ -18,22 +17,30 @@ function getLink(parent, name, link) {
 }
 
 function docusaurusLink(
-    parent, prefix, accessSymbol, name, methodSign, returnTypes, scope) {
-    const parentAndSymbol = scope === 'instance' ?
-        [parent.toLowerCase(), '+'] :
-        [parent, '.'];
+    parent,
+    prefix,
+    accessSymbol,
+    name,
+    methodSign,
+    returnTypes,
+    scope
+) {
+    const parentAndSymbol =
+        scope === "instance" ? [parent.toLowerCase(), "+"] : [parent, "."];
 
-    const link = [
-        '#',
-        ...parentAndSymbol,
-        name,
-    ].join('');
+    const link = ["#", ...parentAndSymbol, name].join("");
 
     return getLink(parent, name, link);
 }
 
 function docusaurusGuessLink(
-    parent, prefix, accessSymbol, name, methodSign, returnTypes) {
+    parent,
+    prefix,
+    accessSymbol,
+    name,
+    methodSign,
+    returnTypes
+) {
     const link = getLink(parent, name);
     if (link) {
         return `[${name}](${link})`;
@@ -43,7 +50,7 @@ function docusaurusGuessLink(
 
 function docusaurusParseLink(roughName) {
     if (!roughName) return;
-    if (roughName.indexOf('http') >= 0) {
+    if (roughName.indexOf("http") >= 0) {
         return `[${roughName}](${roughName})`;
     }
     const parts = roughName.split(/[#\.:]/);
@@ -56,26 +63,26 @@ function docusaurusParseLink(roughName) {
 
 function sanitize(returnTypes) {
     if (Array.isArray(returnTypes)) {
-        return returnTypes.join('|');
+        return returnTypes.join("|");
     }
     return returnTypes;
 }
 
 function docusaurusAnchor(longname, scope) {
-    return scope === 'instance' ?
-        `${longname.substr(0, longname.indexOf('#')).toLowerCase()}+${
-            longname.substr(longname.indexOf('#') + 1)}` :
-        longname;
+    return scope === "instance"
+        ? `${longname
+              .substr(0, longname.indexOf("#"))
+              .toLowerCase()}+${longname.substr(longname.indexOf("#") + 1)}`
+        : longname;
 }
 
 function isStatic() {
-    return this.scope === 'static' ? 'static ' : '';
+    return this.scope === "static" ? "static " : "";
 }
 
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.substr(1);
 }
-
 
 exports.isStatic = isStatic;
 exports.sanitize = sanitize;

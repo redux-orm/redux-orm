@@ -1,4 +1,4 @@
 module.exports = {
-  clean: require('./clean'),
-  build: require('./build')
-}
+    clean: require("./clean"),
+    build: require("./build"),
+};

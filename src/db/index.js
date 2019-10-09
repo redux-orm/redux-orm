@@ -4,12 +4,9 @@
  * @private
  */
 
-import createDatabase from './Database';
-import Table from './Table';
+import createDatabase from "./Database";
+import Table from "./Table";
 
-export {
-    createDatabase,
-    Table,
-};
+export { createDatabase, Table };
 
 export default createDatabase;

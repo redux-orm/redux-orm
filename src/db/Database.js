@@ -1,11 +1,8 @@
-import ops from 'immutable-ops';
+import ops from "immutable-ops";
 
-import {
-    CREATE, UPDATE, DELETE, SUCCESS,
-    STATE_FLAG,
-} from '../constants';
+import { CREATE, UPDATE, DELETE, SUCCESS, STATE_FLAG } from "../constants";
 
-import Table from './Table';
+import Table from "./Table";
 
 const BASE_EMPTY_STATE = {};
 Object.defineProperty(BASE_EMPTY_STATE, STATE_FLAG, {
@@ -86,26 +83,29 @@ function update(tables, updateSpec, tx, state) {
  */
 export function createDatabase(schemaSpec) {
     const { tables: tableSpecs } = schemaSpec;
-    const tables = Object.entries(tableSpecs)
-        .reduce((map, [tableName, tableSpec]) => ({
+    const tables = Object.entries(tableSpecs).reduce(
+        (map, [tableName, tableSpec]) => ({
             ...map,
             [tableName]: new Table(tableSpec),
-        }), {});
+        }),
+        {}
+    );
 
-    const getEmptyState = () => (
-        Object.entries(tables)
-            .reduce((map, [tableName, table]) => ({
+    const getEmptyState = () =>
+        Object.entries(tables).reduce(
+            (map, [tableName, table]) => ({
                 ...map,
                 [tableName]: table.getEmptyState(),
-            }), BASE_EMPTY_STATE)
-    );
+            }),
+            BASE_EMPTY_STATE
+        );
 
     return {
         getEmptyState,
         query: query.bind(null, tables),
         update: update.bind(null, tables),
         // Used to inspect the schema.
-        describe: (tableName) => tables[tableName],
+        describe: tableName => tables[tableName],
     };
 }
 

@@ -7,7 +7,7 @@ hide_title: true
 
 # Custom Reducer
 
-## Own reducer function
+## Updating the store state
 
 If you wish to integrate Redux-ORM with Redux by yourself, you could define your own reducer that instantiates a session from the database state held in the Redux state slice.
 
@@ -49,4 +49,17 @@ function ormReducer(dbState, action) {
 }
 ```
 
+## `createStore`
+
 Of course then you need to pass this reducer to Redux' `createStore` function instead.
+
+```js
+import { createStore, combineReducers } from "redux";
+import { createReducer } from "redux-orm";
+
+const rootReducer = combineReducers({
+    orm: ormReducer,
+    // … potentially other reducers
+});
+const store = createStore(rootReducer);
+```

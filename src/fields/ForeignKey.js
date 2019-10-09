@@ -1,9 +1,9 @@
-import RelationalField from './RelationalField';
+import RelationalField from "./RelationalField";
 
 import {
     forwardsManyToOneDescriptor,
     backwardsManyToOneDescriptor,
-} from '../descriptors';
+} from "../descriptors";
 
 /**
  * @memberof module:fields

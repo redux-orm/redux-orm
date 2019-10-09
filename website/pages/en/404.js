@@ -28,7 +28,9 @@ const getTrackingScript = () => {
 
 const errorPage = () => (
     <div className="error-page">
-        {getTrackingScript() && <script dangerouslySetInnerHTML={getTrackingScript()}/>}
+        {getTrackingScript() && (
+            <script dangerouslySetInnerHTML={getTrackingScript()} />
+        )}
         <div className="error-message">
             <div className=" error-message-container container">
                 <span>404 </span>
@@ -40,6 +42,5 @@ const errorPage = () => (
 );
 
 errorPage.title = 'Page Not Found';
-
 
 module.exports = errorPage;

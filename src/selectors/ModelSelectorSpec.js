@@ -1,5 +1,5 @@
-import SelectorSpec from './SelectorSpec';
-import idArgSelector from './idArgSelector';
+import SelectorSpec from "./SelectorSpec";
+import idArgSelector from "./idArgSelector";
 
 export default class ModelSelectorSpec extends SelectorSpec {
     constructor({ model, ...other }) {
@@ -17,11 +17,11 @@ export default class ModelSelectorSpec extends SelectorSpec {
 
     get resultFunc() {
         return ({ [this._model.modelName]: ModelClass }, idArg) => {
-            if (typeof idArg === 'undefined') {
+            if (typeof idArg === "undefined") {
                 return ModelClass.all().toRefArray();
             }
             if (Array.isArray(idArg)) {
-                return idArg.map((id) => {
+                return idArg.map(id => {
                     const instance = ModelClass.withId(id);
                     return instance ? instance.ref : null;
                 });
