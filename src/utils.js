@@ -158,18 +158,20 @@ function reverseFieldErrorMessage(
     ].join("");
 }
 
-/** */
+/**
+ * Fastest way to check if two objects are equal.
+ * Object and array values have to be referentially equal.
+ */
 function objectShallowEquals(a, b) {
-    let keysInA = 0;
+    const entriesInA = Object.entries(Object(a));
 
-    const equalForKeysInA = Object.entries(Object(a)).every(([key, value]) => {
-        if (!b.hasOwnProperty(key) || b[key] !== value) {
-            return false;
-        }
-        ++keysInA;
-        return true;
-    });
-    return equalForKeysInA && keysInA === Object.keys(b).length;
+    if (entriesInA.length !== Object.keys(b).length) {
+        return false;
+    }
+
+    return entriesInA.every(
+        ([key, value]) => b.hasOwnProperty(key) && b[key] === value
+    );
 }
 
 /** */
