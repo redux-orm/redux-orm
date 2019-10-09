@@ -13,7 +13,6 @@ import {
 } from "../..";
 
 import { createTestModels } from "../helpers";
-import { STATE_FLAG } from "../../constants";
 
 describe("Redux Persist integration", () => {
     let orm;
@@ -24,19 +23,12 @@ describe("Redux Persist integration", () => {
     let Author;
     let Publisher;
     let Movie;
-    let emptyState;
-    let ormState;
-
-    let reducer;
-    let rootReducer;
     const stateSelector = state => state.orm;
-
-    let store;
+    let emptyState;
 
     const CREATE_MOVIE = "CREATE_MOVIE";
     const UPSERT_MOVIE = "UPSERT_MOVIE";
     const CREATE_PUBLISHER = "CREATE_PUBLISHER";
-    const CREATE_CUSTOM_MODEL = "CREATE_CUSTOM_MODEL";
 
     const createModelReducers = () => {
         Author.reducer = jest.fn();
@@ -67,7 +59,21 @@ describe("Redux Persist integration", () => {
         });
     };
 
+    const createPersistedReducer = () => {
+        const reducer = createReducer(orm);
+        const persistConfig = {
+            key: "root",
+            storage,
+            whitelist: ["orm"],
+            stateReconciler: hardSet,
+        };
+        return persistCombineReducers(persistConfig, {
+            orm: reducer,
+        });
+    };
+
     beforeEach(() => {
+        localStorage.clear(); // prevents persistence between tests
         ({
             Book,
             Cover,
@@ -79,31 +85,62 @@ describe("Redux Persist integration", () => {
         } = createTestModels());
         orm = new ORM({ stateSelector });
         orm.register(Book, Cover, Genre, Tag, Author, Movie, Publisher);
-        createModelReducers();
         emptyState = orm.getEmptyState();
-        ormState = emptyState;
-        reducer = createReducer(orm);
-        const persistConfig = {
-            key: "root",
-            storage,
-            whitelist: ["orm"],
-            stateReconciler: hardSet,
-        };
-        rootReducer = persistCombineReducers(persistConfig, {
-            orm: reducer,
+        createModelReducers();
+    });
+
+    it("creates correct empty state by default", async () => {
+        await new Promise(async resolve => {
+            const store = createStore(createPersistedReducer());
+            const persistor = persistStore(store, null, async () => {
+                expect(store.getState().orm).toStrictEqual(emptyState);
+            });
+
+            await persistor.flush();
+            const store2 = createStore(createPersistedReducer());
+            const persistor2 = persistStore(store2);
+            persistor2.subscribe(() => {
+                expect(store2.getState().orm).toStrictEqual(emptyState);
+                resolve();
+            });
         });
-        store = createStore(rootReducer);
     });
 
-    it("creates empty state correctly", () => {
-        expect(store.getState().orm).not.toBe(null);
-        expect(store.getState().orm[STATE_FLAG]).toBe(STATE_FLAG);
-        expect(store.getState().orm).toEqual(emptyState);
-    });
-
-    it("saves and restores state correctly", async () => {
+    it("keeps selector results consistent after persistence", async () => {
         await new Promise(resolve => {
-            const persistor = persistStore(store, null, () => {
+            const store = createStore(createPersistedReducer());
+            const persistor = persistStore(store, null, async () => {
+                store.dispatch({
+                    type: CREATE_MOVIE,
+                    payload: { id: 123 },
+                });
+
+                const movies = createSelector(orm.Movie);
+                expect(movies(store.getState())).toStrictEqual([{ id: 123 }]);
+
+                return persistor.flush().then(() => {
+                    expect(movies(store.getState())).toStrictEqual([
+                        { id: 123 },
+                    ]);
+
+                    const store2 = createStore(createPersistedReducer());
+                    const persistor2 = persistStore(store2);
+                    persistor2.subscribe(() => {
+                        expect(movies(store2.getState())).toStrictEqual([
+                            { id: 123 },
+                        ]);
+
+                        resolve();
+                    });
+                });
+            });
+        });
+    });
+
+    it("keeps state consistent after persistence", async () => {
+        await new Promise(resolve => {
+            const store = createStore(createPersistedReducer());
+            const persistor = persistStore(store, null, async () => {
                 store.dispatch({
                     type: CREATE_MOVIE,
                     payload: { id: 123 },
@@ -114,13 +151,14 @@ describe("Redux Persist integration", () => {
                         { id: 123 },
                     ]);
 
-                    const store2 = createStore(rootReducer);
+                    const store2 = createStore(createPersistedReducer());
                     const persistor2 = persistStore(store2);
                     persistor2.subscribe(() => {
-                        const session2 = orm.session(store2.getState().orm);
-                        expect(store2.getState().orm[STATE_FLAG]).toBe(
-                            STATE_FLAG
+                        expect(store2.getState()).toStrictEqual(
+                            store.getState()
                         );
+
+                        const session2 = orm.session(store2.getState().orm);
                         expect(session2.Movie.all().toRefArray()).toStrictEqual(
                             [{ id: 123 }]
                         );
