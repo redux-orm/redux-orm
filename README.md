@@ -84,7 +84,9 @@ An instance of the ORM class registers Models and handles generating a full sche
 import { ORM } from 'redux-orm';
 import { Book, Author, Publisher } from './models';
 
-const orm = new ORM();
+const orm = new ORM({
+  stateSelector: state => state.orm,
+});
 orm.register(Book, Author, Publisher);
 
 export default orm;
@@ -218,6 +220,8 @@ import orm from './orm';
 const reducer = createReducer(orm);
 ```
 
+This reducer needs to be hooked into your Redux store. Make sure that the key under which you store it is also the key that you use to retrieve the ORM's state in its `stateSelector`. Otherwise selectors won't work properly.
+
 `createReducer` is really simple, so we'll just paste the source here.
 
 ```javascript
@@ -249,15 +253,8 @@ Use memoized selectors to make queries into the state. Redux-ORM uses smart memo
 import { createSelector } from 'redux-orm';
 import orm from './orm';
 
-const dbStateSelector = state => state.db;
-
 const authorSelector = createSelector(
     orm,
-    // The first input selector should always select the db-state.
-    // Behind the scenes, `createSelector` begins a Redux-ORM session
-    // with the value returned by `dbStateSelector` and passes
-    // that Session instance as an argument instead.
-    dbStateSelector,
     session => {
         return session.Author.all().toModelArray().map(author => {
             /**
@@ -343,7 +340,7 @@ First, a new session:
 ```javascript
 import { orm } from './models';
 
-const dbState = store.getState().db; // getState() returns the Redux state
+const dbState = store.getState().orm; // getState() returns the Redux state
 const sess = orm.session(dbState);
 ```
 
@@ -406,7 +403,9 @@ See the full documentation for ORM [here](http://redux-orm.github.io/redux-orm/g
 #### Instantiation:
 
 ```javascript
-const orm = new ORM(); // no arguments needed.
+const orm = new ORM({
+  stateSelector: state => state.orm, // wherever the reducer is put during createStore
+});
 ```
 
 #### Instance methods:
