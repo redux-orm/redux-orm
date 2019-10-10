@@ -484,8 +484,8 @@ class Book extends Model {
         return {
             id: attr(),
             name: attr(),
-            author_id: fk({ to: 'Author', as: 'author', relatedName: 'writtenBooks' }),
-            reviewers_id: many({ to: 'Author', as: 'reviewers', relatedName: 'reviewedBooks' })
+            authorId: fk({ to: 'Author', as: 'author', relatedName: 'writtenBooks' }),
+            reviewerIds: many({ to: 'Author', as: 'reviewers', relatedName: 'reviewedBooks' })
         };
     }
 }
