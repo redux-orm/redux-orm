@@ -1,5 +1,11 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.15.0
+
+* Serializing the database using `JSON.stringify` is now officially supported and tested. This allows using redux-persist without any special configuration again. We no longer use a symbol to detect state objects, so you may need to add a migration to make this work with older persisted states. ([#321](https://github.com/redux-orm/redux-orm/pull/321))
+* Fixed `'desc'` values for ordering query sets. ([#311](https://github.com/redux-orm/redux-orm/pull/311))
+* Fixed a bug with field selectors for self-referencing fields not being able to infer the model that the fields point to. ([#315](https://github.com/redux-orm/redux-orm/pull/315))
+
 ### 0.14.1
 
 * Use `Symbol.for` to create symbols in the global symbol registry. ([#290](https://github.com/redux-orm/redux-orm/pull/290))
