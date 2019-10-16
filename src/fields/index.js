@@ -147,8 +147,6 @@ function fk(...args) {
  * above case of Authors to Books through Authorships, the relationship is
  * defined only on the Author model.
  *
- * @global
- *
  * @param {string|Class<Model>|Object} options - The target Model class, its `modelName`
  *                                               attribute or an options object that
  *                                               contains either as the `to` key.

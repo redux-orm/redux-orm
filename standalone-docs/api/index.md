@@ -13,12 +13,13 @@ hide_title: true
 and which descriptors must be installed.</p>
 <p>If your goal is to define fields on a Model class,<br>
 please use the more convenient methods [attr](attr),<br>
-[fk](fk), [many](#many) and [oneToOne](oneToOne).</p>
+[fk](fk), [many](many) and [oneToOne](oneToOne).</p>
 
 
 * [fields](#.fields)
     * [`attr([opts])`](#fields.attr) ⇒ Attribute
     * [`fk(options, [relatedName])`](#fields.fk) ⇒ ForeignKey
+    * [`many(options, [relatedName])`](#fields.many) ⇒ ManyToMany
     * [`oneToOne(options, [relatedName])`](#fields.oneToOne) ⇒ OneToOne
 
 
@@ -85,30 +86,9 @@ is being defined from, from the target Model.</p>
 | [relatedName] | string | <p>If you didn't pass an object as the first argument,<br> this is the property name that will be used to<br> access a QuerySet for all source models that reference<br> the respective target Model's instance.</p> |
 
 
-<a name="module:fields~oneToOne"></a>
+<a name="module:fields~many"></a>
 
-## ` oneToOne(options, [relatedName])`⇒ OneToOne 
-
-<p>Defines a one-to-one relationship. In database terms, this is a foreign key with the<br>
-added restriction that only one entity can point to single target entity.</p>
-<p>The arguments are the same as with <code>fk</code>. If <code>relatedName</code> is not supplied,<br>
-the source model name in lowercase will be used. Note that with the one-to-one<br>
-relationship, the <code>relatedName</code> should be in singular, not plural.</p>
-
-**Kind**: inner method of [fields](#.fields)  
-
-| Param | Type | Description |
-| --- | --- | --- |
-| options | string ⎮ Class.<Model> ⎮ Object | <p>The target Model class, its <code>modelName</code><br> attribute or an options object that<br> contains either as the <code>to</code> key.</p> |
-| options.to | string ⎮ Class.<Model> | <p>The target Model class or its <code>modelName</code> attribute.</p> |
-| [options.as] | string | <p>Name for the new accessor defined for this field. If you don't<br> supply this, the key that this field is defined under will be<br> overridden.</p> |
-| [options.relatedName] | string | <p>The property name that will be used to access the source<br> model instance referencing the target model instance.</p> |
-| [relatedName] | string | <p>The property name that will be used to access the source<br> model instance referencing the target model instance</p> |
-
-
-<a name="many"></a>
-
-# ` many(options, [relatedName])`⇒ ManyToMany 
+## ` many(options, [relatedName])`⇒ ManyToMany 
 
 <p>Defines a many-to-many relationship between<br>
 this (source) and another (target) model.</p>
@@ -154,7 +134,7 @@ Book.modelName = 'Book';
 above case of Authors to Books through Authorships, the relationship is<br>
 defined only on the Author model.</p>
 
-**Kind**: global function  
+**Kind**: inner method of [fields](#.fields)  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -165,5 +145,26 @@ defined only on the Author model.</p>
 | [options.throughFields] | Array.<string> | <p>Must be supplied only when a custom through<br> Model has more than one foreign key pointing to<br> either the source or target mode. In this case<br> Redux-ORM can't figure out the correct fields for<br> you, you must provide them. The supplied array should<br> have two elements that are the field names for the<br> through fields you want to declare the many-to-many<br> relationship with. The order doesn't matter;<br> Redux-ORM will figure out which field points to<br> the source Model and which to the target Model.</p> |
 | [options.relatedName] | string | <p>The attribute used to access a QuerySet for all<br> source models that reference the respective target<br> Model's instance.</p> |
 | [relatedName] | string | <p>If you didn't pass an object as the first argument,<br> this is the property name that will be used to<br> access a QuerySet for all source models that reference<br> the respective target Model's instance.</p> |
+
+
+<a name="module:fields~oneToOne"></a>
+
+## ` oneToOne(options, [relatedName])`⇒ OneToOne 
+
+<p>Defines a one-to-one relationship. In database terms, this is a foreign key with the<br>
+added restriction that only one entity can point to single target entity.</p>
+<p>The arguments are the same as with <code>fk</code>. If <code>relatedName</code> is not supplied,<br>
+the source model name in lowercase will be used. Note that with the one-to-one<br>
+relationship, the <code>relatedName</code> should be in singular, not plural.</p>
+
+**Kind**: inner method of [fields](#.fields)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| options | string ⎮ Class.<Model> ⎮ Object | <p>The target Model class, its <code>modelName</code><br> attribute or an options object that<br> contains either as the <code>to</code> key.</p> |
+| options.to | string ⎮ Class.<Model> | <p>The target Model class or its <code>modelName</code> attribute.</p> |
+| [options.as] | string | <p>Name for the new accessor defined for this field. If you don't<br> supply this, the key that this field is defined under will be<br> overridden.</p> |
+| [options.relatedName] | string | <p>The property name that will be used to access the source<br> model instance referencing the target model instance.</p> |
+| [relatedName] | string | <p>The property name that will be used to access the source<br> model instance referencing the target model instance</p> |
 
 
