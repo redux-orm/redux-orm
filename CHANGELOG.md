@@ -4,7 +4,7 @@
 
 Fix memoization for map selectors. ([#318](https://github.com/redux-orm/redux-orm/pull/318))
 
-Consider the selector createSelector(orm.Book.authors.map(orm.Author.name)). When the list of a book's authors didn't change but one of the authors' names changed, the selector would still return the old name.
+Consider the selector `createSelector(orm.Book.authors.map(orm.Author.name))`. When the list of a book's authors didn't change but one of the authors' names changed, the selector would still return the old name.
 
 ### 0.15.0
 
