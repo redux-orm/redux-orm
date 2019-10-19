@@ -49,6 +49,11 @@ export function createReducer(orm, updater = defaultUpdater) {
  * @param {SelectorSpec} spec
  */
 function createSelectorFromSpec(spec) {
+    if (spec instanceof MapSelectorSpec) {
+        // eslint-disable-next-line no-underscore-dangle
+        const parentSelector = createSelectorFromSpec(spec._parent);
+        return spec.createResultFunc(parentSelector);
+    }
     return createCachedSelector(spec.dependencies, spec.resultFunc)({
         keySelector: spec.keySelector,
         cacheObject: new FlatMapCache(),

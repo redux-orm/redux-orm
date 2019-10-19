@@ -935,5 +935,96 @@ describe("Shorthand selector specifications", () => {
             });
             expect(publisherAverageRating(ormState, 123)).toEqual(6.5);
         });
+
+        it("will return correct result of mapped selectors", () => {
+            const authorBookTags = createSelector(
+                orm.Author.books.map(orm.Book.tags)
+            );
+            ormState = reducer(emptyState, {
+                type: CREATE_AUTHOR,
+                payload: {
+                    id: 1,
+                },
+            });
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 123,
+                    author: 1,
+                    tags: ["Redux-ORM"],
+                },
+            });
+            ormState = reducer(ormState, {
+                type: CREATE_TAG,
+                payload: {
+                    name: "Redux-ORM",
+                },
+            });
+            expect(authorBookTags(ormState, 1)).toEqual([
+                [{ name: "Redux-ORM" }],
+            ]);
+        });
+
+        it("will refresh cache of mapped selectors", () => {
+            const authorBookTags = createSelector(
+                orm.Author.books.map(orm.Book.tags)
+            );
+            expect(authorBookTags(emptyState, 1)).toBe(null);
+            ormState = reducer(emptyState, {
+                type: CREATE_AUTHOR,
+                payload: {
+                    id: 1,
+                },
+            });
+            expect(authorBookTags(ormState, 1)).toEqual([]);
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 123,
+                    author: 1,
+                    tags: ["Redux-ORM"],
+                },
+            });
+            expect(authorBookTags(ormState, 1)).toEqual([[]]);
+            ormState = reducer(ormState, {
+                type: CREATE_TAG,
+                payload: {
+                    name: "Redux-ORM",
+                },
+            });
+            expect(authorBookTags(ormState, 1)).toEqual([
+                [{ name: "Redux-ORM" }],
+            ]);
+        });
+
+        it("will map using mapped selectors", () => {
+            const authorBookTagNames = createSelector(
+                orm.Author.books.map(orm.Book.tags.map(orm.Tag.name))
+            );
+            expect(authorBookTagNames(emptyState, 1)).toBe(null);
+            ormState = reducer(emptyState, {
+                type: CREATE_AUTHOR,
+                payload: {
+                    id: 1,
+                },
+            });
+            expect(authorBookTagNames(ormState, 1)).toEqual([]);
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 123,
+                    author: 1,
+                    tags: ["Redux-ORM"],
+                },
+            });
+            expect(authorBookTagNames(ormState, 1)).toEqual([[]]);
+            ormState = reducer(ormState, {
+                type: CREATE_TAG,
+                payload: {
+                    name: "Redux-ORM",
+                },
+            });
+            expect(authorBookTagNames(ormState, 1)).toEqual([["Redux-ORM"]]);
+        });
     });
 });

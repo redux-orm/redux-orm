@@ -2,30 +2,31 @@ import ModelBasedSelectorSpec from "./ModelBasedSelectorSpec";
 import idArgSelector from "./idArgSelector";
 
 export default class MapSelectorSpec extends ModelBasedSelectorSpec {
-    constructor({ field, accessorName, selector, ...other }) {
+    constructor({ field, selector, ...other }) {
         super(other);
         this._field = field;
-        this._accessorName = accessorName;
         this._selector = selector;
     }
 
-    get key() {
-        return this._selector;
-    }
+    createResultFunc(parentSelector) {
+        return (state, ...other) => {
+            const parentResult = parentSelector(state, ...other);
+            if (parentResult === null) return null;
 
-    get dependencies() {
-        return [this._orm, idArgSelector, state => state];
-    }
-
-    valueForInstance(instance, session, state) {
-        if (!instance) return null;
-
-        const {
-            [this._field.toModelName]: { idAttribute },
-        } = session;
-
-        return instance[this._accessorName]
-            .toRefArray()
-            .map(ref => this._selector(state, ref[idAttribute]));
+            const ormState = this._orm.stateSelector(state, ...other);
+            const session = this._orm.session(ormState);
+            const idArg = idArgSelector(state, ...other);
+            const {
+                [this._field.toModelName]: { idAttribute },
+            } = session;
+            if (typeof idArg === "undefined" || Array.isArray(idArg)) {
+                return parentResult.map(ref =>
+                    ref === null
+                        ? null
+                        : this._selector(state, ref[idAttribute])
+                );
+            }
+            return this._selector(state, parentResult[idAttribute]);
+        };
     }
 }
