@@ -93,7 +93,6 @@ export default class FieldSelectorSpec extends ModelBasedSelectorSpec {
             model: this._model,
             orm: this._orm,
             field: this._field,
-            accessorName: this._accessorName,
             selector,
         });
     }
