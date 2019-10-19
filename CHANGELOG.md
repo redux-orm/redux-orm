@@ -1,5 +1,11 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.15.1
+
+Fix memoization for map selectors. ([#318](https://github.com/redux-orm/redux-orm/pull/318))
+
+Consider the selector createSelector(orm.Book.authors.map(orm.Author.name)). When the list of a book's authors didn't change but one of the authors' names changed, the selector would still return the old name.
+
 ### 0.15.0
 
 * Serializing the database using `JSON.stringify` is now officially supported and tested. This allows using redux-persist without any special configuration again. We no longer use a symbol to detect state objects, so you may need to add a migration to make this work with older persisted states. ([#321](https://github.com/redux-orm/redux-orm/pull/321))
