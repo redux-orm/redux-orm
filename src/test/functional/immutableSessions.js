@@ -138,6 +138,11 @@ describe("Immutable session", () => {
         );
     });
 
+    it("withId(null) returns null", () => {
+        const { Book } = session;
+        expect(Book.withId(null)).toBe(null);
+    });
+
     it("withId returns null if model instance not found", () => {
         const { Book } = session;
         expect(Book.withId(9043290)).toBe(null);

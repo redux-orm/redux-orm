@@ -55,9 +55,7 @@ export class FieldInstallerTemplate {
     }
 
     run() {
-        if (this.field.installsForwardsDescriptor) {
-            this.installForwardsDescriptor();
-        }
+        this.installForwardsDescriptor();
         if (this.field.installsForwardsVirtualField) {
             this.installForwardsVirtualField();
         }

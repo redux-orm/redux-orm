@@ -97,41 +97,36 @@ function toSelector(arg) {
     }
     if (arg instanceof SelectorSpec) {
         const { _orm: orm, cachePath } = arg;
-        let ormSelectors;
         let level;
-        if (cachePath && cachePath.length) {
-            // the selector cache for the spec's ORM
-            if (!selectorCache.has(orm)) {
-                selectorCache.set(orm, new Map());
-            }
-            ormSelectors = selectorCache.get(orm);
 
-            /**
-             * Drill down into selector map by cachePath.
-             *
-             * The selector itself is stored under a special SELECTOR_KEY
-             * so that we can store selectors below it as well.
-             * @private
-             */
-            level = ormSelectors;
-            for (let i = 0; i < cachePath.length; ++i) {
-                if (!level.has(cachePath[i])) {
-                    level.set(cachePath[i], new Map());
-                }
-                level = level.get(cachePath[i]);
+        // the selector cache for the spec's ORM
+        if (!selectorCache.has(orm)) {
+            selectorCache.set(orm, new Map());
+        }
+        const ormSelectors = selectorCache.get(orm);
+
+        /**
+         * Drill down into selector map by cachePath.
+         *
+         * The selector itself is stored under a special SELECTOR_KEY
+         * so that we can store selectors below it as well.
+         */
+        level = ormSelectors;
+        for (let i = 0; i < cachePath.length; ++i) {
+            if (!level.has(cachePath[i])) {
+                level.set(cachePath[i], new Map());
             }
-            if (level && level.has(SELECTOR_KEY)) {
-                // Cache hit: the selector has been created before
-                return level.get(SELECTOR_KEY);
-            }
+            level = level.get(cachePath[i]);
+        }
+        if (level && level.has(SELECTOR_KEY)) {
+            // Cache hit: the selector has been created before
+            return level.get(SELECTOR_KEY);
         }
 
         const selector = createSelectorFromSpec(arg);
 
-        if (cachePath && cachePath.length) {
-            // Save the selector at the cachePath position
-            level.set(SELECTOR_KEY, selector);
-        }
+        // Save the selector at the cachePath position
+        level.set(SELECTOR_KEY, selector);
 
         return selector;
     }

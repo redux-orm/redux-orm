@@ -111,13 +111,12 @@ function attachQuerySetMethods(modelClass, querySetClass) {
                 if (typeof descriptor.get !== "undefined") {
                     descriptor.get = querySetGetterDelegatorFactory(methodName);
                     Object.defineProperty(modelClass, methodName, descriptor);
-                    defined = true;
-                } else if (typeof descriptor.value === "function") {
+                } else {
                     modelClass[methodName] = querySetDelegatorFactory(
                         methodName
                     );
-                    defined = true;
                 }
+                defined = true;
             }
             if (defined) {
                 leftToDefine.splice(i--, 1);
