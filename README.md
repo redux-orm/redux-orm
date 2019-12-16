@@ -398,7 +398,7 @@ The ORM abstraction will never be as performant compared to writing reducers by 
 
 ### ORM
 
-See the full documentation for ORM [here](http://redux-orm.github.io/redux-orm/global.html#ORM)
+See the full documentation for ORM [here](https://redux-orm.github.io/redux-orm/api/ORM)
 
 #### Instantiation:
 
@@ -420,7 +420,7 @@ const orm = new ORM({
 
 ### Model
 
-See the full documentation for `Model` [here](http://redux-orm.github.io/redux-orm/Model.html).
+See the full documentation for `Model` [here](https://redux-orm.github.io/redux-orm/api/Model).
 
 **Instantiation**: Don't instantiate directly; use the class methods `create` and `upsert` as documented below.
 
@@ -433,7 +433,7 @@ See the full documentation for `Model` [here](http://redux-orm.github.io/redux-o
 * `create(props)`: creates a new Model instance with `props`. If you don't supply an id, the new `id` will be `Math.max(...allOtherIds) + 1`.
 * `upsert(props)`: either creates a new Model instance with `props` or, in case an instance with the same id already exists, updates that one - in other words it's **create or update** behaviour.
 
-You will also have access to almost all [QuerySet instance methods](http://redux-orm.github.io/redux-orm/QuerySet.html) from the class object for convenience, including `where` and the like.
+You will also have access to almost all [QuerySet instance methods](https://redux-orm.github.io/redux-orm/api/QuerySet) from the class object for convenience, including `where` and the like.
 
 #### Instance Attributes:
 * `ref`: returns a direct reference to the plain JavaScript object representing the Model instance in the store.
@@ -491,7 +491,7 @@ class Book extends Model {
 }
 ```
 
-See [fk](https://redux-orm.github.io/redux-orm/global.html#fk), [oneToOne](https://redux-orm.github.io/redux-orm/global.html#oneToOne), and [many](https://redux-orm.github.io/redux-orm/global.html#many) in the documentation for more information.
+See [fk](https://redux-orm.github.io/redux-orm/api/module_fields#fk), [oneToOne](https://redux-orm.github.io/redux-orm/api/module_fields#fields.oneToOne), and [many](https://redux-orm.github.io/redux-orm/api/module_fields#fields.many) in the documentation for more information.
 
 When declaring model classes, always remember to set the `modelName` property. It needs to be set explicitly, because running your code through a mangler would otherwise break functionality. The `modelName` will be used to resolve all related fields.
 
@@ -521,7 +521,7 @@ Book.options = {
 
 ### QuerySet
 
-See the full documentation for `QuerySet` [here](http://redux-orm.github.io/redux-orm/QuerySet.html).
+See the full documentation for `QuerySet` [here](https://redux-orm.github.io/redux-orm/api/QuerySet).
 
 You can access all of these methods straight from a `Model` class, as if they were class methods on `Model`. In this case the functions will operate on a QuerySet that includes all the Model instances.
 
@@ -542,7 +542,7 @@ You can access all of these methods straight from a `Model` class, as if they we
 
 ### Session
 
-See the full documentation for Session [here](http://redux-orm.github.io/redux-orm/Session.html)
+See the full documentation for Session [here](https://redux-orm.github.io/redux-orm/api/Session)
 
 #### Instantiation:
 
