@@ -71,7 +71,7 @@
     "gulp": "^4.0.2",
     "gulp-clean": "^0.4.0",
     "gulp-gh-pages": "https://github.com/tekd/gulp-gh-pages/tarball/9ebafeb4011982c98038d8e90373fe7ed91e3f88",
-    "gulp-rename": "^1.4.0",
+    "gulp-rename": "^2.0.0",
     "jest": "^24.9.0",
     "jest-cli": "^24.9.0",
     "jsdoc": "^3.6.3",
