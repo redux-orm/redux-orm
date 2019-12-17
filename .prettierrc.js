@@ -6,14 +6,14 @@ module.exports = {
         {
             files: ["*.js", "*.mjs"],
             options: {
-                trailingComma: "es5"
-            }
+                trailingComma: "es5",
+            },
         },
         {
             files: "*.json",
             options: {
-                tabWidth: 2
-            }
-        }
-    ]
+                tabWidth: 2,
+            },
+        },
+    ],
 };

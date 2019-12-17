@@ -160,9 +160,9 @@ describe("Redux Persist integration", () => {
                         );
 
                         const session2 = orm.session(store2.getState().orm);
-                        expect(session2.Movie.all().toRefArray()).toStrictEqual(
-                            [{ id: 123 }]
-                        );
+                        expect(
+                            session2.Movie.all().toRefArray()
+                        ).toStrictEqual([{ id: 123 }]);
                         resolve();
                     });
                 });

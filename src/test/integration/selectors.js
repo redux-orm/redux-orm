@@ -108,10 +108,7 @@ describe("Shorthand selector specifications", () => {
             "ORM instances cannot be the result function of selectors. You can access your models in the last function that you pass to `createSelector()`."
         );
         expect(() => {
-            createSelector(
-                () => {},
-                orm
-            );
+            createSelector(() => {}, orm);
         }).toThrow(
             "ORM instances cannot be the result function of selectors. You can access your models in the last function that you pass to `createSelector()`."
         );
@@ -122,10 +119,7 @@ describe("Shorthand selector specifications", () => {
         );
         const ormWithoutStateSelector = new ORM();
         expect(() => {
-            createSelector(
-                ormWithoutStateSelector,
-                () => {}
-            );
+            createSelector(ormWithoutStateSelector, () => {});
         }).toThrow(
             "Failed to resolve the current ORM database state. Please pass an object to the ORM constructor that specifies a `stateSelector` function."
         );
@@ -133,10 +127,7 @@ describe("Shorthand selector specifications", () => {
             stateSelector: "I should be a function",
         });
         expect(() => {
-            createSelector(
-                ormWithInvalidStateSelector,
-                () => {}
-            );
+            createSelector(ormWithInvalidStateSelector, () => {});
         }).toThrow(
             'Failed to resolve the current ORM database state. Please pass a function when specifying the ORM\'s `stateSelector`. Received: "I should be a function" of type string'
         );
@@ -144,10 +135,7 @@ describe("Shorthand selector specifications", () => {
 
     it("warns when ignoring selectors", () => {
         expect(consoleWarn).toHaveBeenCalledTimes(0);
-        createSelector(
-            () => {},
-            orm.Publisher
-        );
+        createSelector(() => {}, orm.Publisher);
         expect(consoleWarn).toHaveBeenCalledTimes(1);
         expect(consoleWarn.mock.results[0].value).toEqual(
             "Your input selectors will be ignored: the passed result function does not require any input."
@@ -419,10 +407,16 @@ describe("Shorthand selector specifications", () => {
                 { id: 2, publisherId: 123 },
             ]);
             expect(publisherMovies(ormState, [123])).toEqual([
-                [{ id: 1, publisherId: 123 }, { id: 2, publisherId: 123 }],
+                [
+                    { id: 1, publisherId: 123 },
+                    { id: 2, publisherId: 123 },
+                ],
             ]);
             expect(publisherMovies(ormState)).toEqual([
-                [{ id: 1, publisherId: 123 }, { id: 2, publisherId: 123 }],
+                [
+                    { id: 1, publisherId: 123 },
+                    { id: 2, publisherId: 123 },
+                ],
             ]);
         });
     });
@@ -763,20 +757,10 @@ describe("Shorthand selector specifications", () => {
                 "`map()` requires a selector as an input. Received: undefined of type function"
             );
             expect(() =>
-                orm.Author.name.map(
-                    createSelector(
-                        orm,
-                        () => {}
-                    )
-                )
+                orm.Author.name.map(createSelector(orm, () => {}))
             ).toThrow("Cannot map selectors for non-collection fields");
             expect(() =>
-                orm.Book.cover.map(
-                    createSelector(
-                        orm,
-                        () => {}
-                    )
-                )
+                orm.Book.cover.map(createSelector(orm, () => {}))
             ).toThrow("Cannot map selectors for non-collection fields");
         });
 

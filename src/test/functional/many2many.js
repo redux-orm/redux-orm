@@ -12,7 +12,27 @@ describe("Many to many relationships", () => {
         let teamFirst;
         let userFirst;
         let userLast;
-        let validateRelationState;
+
+        const validateRelationState = () => {
+            const { TeamUsers } = session;
+
+            teamFirst = session.Team.first();
+            userFirst = session.User.first();
+            userLast = session.User.last();
+
+            expect(teamFirst.users.toRefArray().map(row => row.id)).toEqual([
+                userFirst.id,
+                userLast.id,
+            ]);
+            expect(userFirst.teams.toRefArray().map(row => row.id)).toEqual([
+                teamFirst.id,
+            ]);
+            expect(userLast.teams.toRefArray().map(row => row.id)).toEqual([
+                teamFirst.id,
+            ]);
+
+            expect(TeamUsers.count()).toBe(2);
+        };
 
         beforeEach(() => {
             User = class extends Model {};
@@ -45,44 +65,28 @@ describe("Many to many relationships", () => {
             teamFirst = session.Team.first();
             userFirst = session.User.first();
             userLast = session.User.last();
-
-            validateRelationState = () => {
-                const { TeamUsers } = session;
-
-                teamFirst = session.Team.first();
-                userFirst = session.User.first();
-                userLast = session.User.last();
-
-                expect(teamFirst.users.toRefArray().map(row => row.id)).toEqual(
-                    [userFirst.id, userLast.id]
-                );
-                expect(userFirst.teams.toRefArray().map(row => row.id)).toEqual(
-                    [teamFirst.id]
-                );
-                expect(userLast.teams.toRefArray().map(row => row.id)).toEqual([
-                    teamFirst.id,
-                ]);
-
-                expect(TeamUsers.count()).toBe(2);
-            };
         });
 
+        // eslint-disable-next-line jest/expect-expect
         it("add forward many-many field", () => {
             teamFirst.users.add(userFirst, userLast);
             validateRelationState();
         });
 
+        // eslint-disable-next-line jest/expect-expect
         it("update forward many-many field", () => {
             teamFirst.update({ users: [userFirst, userLast] });
             validateRelationState();
         });
 
+        // eslint-disable-next-line jest/expect-expect
         it("add backward many-many field", () => {
             userFirst.teams.add(teamFirst);
             userLast.teams.add(teamFirst);
             validateRelationState();
         });
 
+        // eslint-disable-next-line jest/expect-expect
         it("update backward many-many field", () => {
             userFirst.update({ teams: [teamFirst] });
             userLast.update({ teams: [teamFirst] });
@@ -202,48 +206,46 @@ describe("Many to many relationships", () => {
     });
 
     describe("many-many with a custom through model", () => {
-        let validateRelationState;
-        beforeEach(() => {
-            validateRelationState = () => {
-                const { User, Team, User2Team } = session;
+        const validateRelationState = () => {
+            const { User, Team, User2Team } = session;
 
-                // Forward (from many-to-many field declaration)
-                const user = User.get({ name: "user0" });
-                const { teams: relatedTeams } = user;
-                expect(relatedTeams).toBeInstanceOf(QuerySet);
-                expect(relatedTeams.modelClass).toBe(Team);
-                expect(relatedTeams.count()).toBe(1);
+            // Forward (from many-to-many field declaration)
+            const user = User.get({ name: "user0" });
+            const { teams: relatedTeams } = user;
+            expect(relatedTeams).toBeInstanceOf(QuerySet);
+            expect(relatedTeams.modelClass).toBe(Team);
+            expect(relatedTeams.count()).toBe(1);
 
-                // Backward
-                const team = Team.get({ name: "team0" });
-                const { users: relatedUsers } = team;
-                expect(relatedUsers).toBeInstanceOf(QuerySet);
-                expect(relatedUsers.modelClass).toBe(User);
-                expect(relatedUsers.count()).toBe(2);
+            // Backward
+            const team = Team.get({ name: "team0" });
+            const { users: relatedUsers } = team;
+            expect(relatedUsers).toBeInstanceOf(QuerySet);
+            expect(relatedUsers.modelClass).toBe(User);
+            expect(relatedUsers.count()).toBe(2);
 
-                expect(relatedUsers.toRefArray().map(row => row.id)).toEqual([
-                    "u0",
-                    "u1",
-                ]);
-                expect(
-                    Team.withId("t2")
-                        .users.toRefArray()
-                        .map(row => row.id)
-                ).toEqual(["u1"]);
+            expect(relatedUsers.toRefArray().map(row => row.id)).toEqual([
+                "u0",
+                "u1",
+            ]);
+            expect(
+                Team.withId("t2")
+                    .users.toRefArray()
+                    .map(row => row.id)
+            ).toEqual(["u1"]);
 
-                expect(relatedTeams.toRefArray().map(row => row.id)).toEqual([
-                    team.id,
-                ]);
-                expect(
-                    User.withId("u1")
-                        .teams.toRefArray()
-                        .map(row => row.id)
-                ).toEqual(["t0", "t2"]);
+            expect(relatedTeams.toRefArray().map(row => row.id)).toEqual([
+                team.id,
+            ]);
+            expect(
+                User.withId("u1")
+                    .teams.toRefArray()
+                    .map(row => row.id)
+            ).toEqual(["t0", "t2"]);
 
-                expect(User2Team.count()).toBe(3);
-            };
-        });
+            expect(User2Team.count()).toBe(3);
+        };
 
+        // eslint-disable-next-line jest/expect-expect
         it("without throughFields", () => {
             const UserModel = class extends Model {};
             UserModel.modelName = "User";
@@ -284,6 +286,7 @@ describe("Many to many relationships", () => {
             validateRelationState();
         });
 
+        // eslint-disable-next-line jest/expect-expect
         it("with throughFields", () => {
             const UserModel = class extends Model {};
             UserModel.modelName = "User";
@@ -512,7 +515,27 @@ describe("Many to many relationships", () => {
         let user0;
         let user1;
         let user2;
-        let validateRelationState;
+
+        const validateRelationState = () => {
+            const { UserSubscribed } = session;
+
+            user0 = session.User.withId("u0");
+            user1 = session.User.withId("u1");
+            user2 = session.User.withId("u2");
+
+            expect(user0.subscribed.toRefArray().map(row => row.id)).toEqual([
+                "u2",
+            ]);
+            expect(user1.subscribed.toRefArray().map(row => row.id)).toEqual([
+                "u0",
+                "u2",
+            ]);
+            expect(user2.subscribed.toRefArray().map(row => row.id)).toEqual([
+                "u1",
+            ]);
+
+            expect(UserSubscribed.count()).toBe(4);
+        };
 
         beforeEach(() => {
             User = class extends Model {};
@@ -532,28 +555,9 @@ describe("Many to many relationships", () => {
             user0 = session.User.withId("u0");
             user1 = session.User.withId("u1");
             user2 = session.User.withId("u2");
-
-            validateRelationState = () => {
-                const { UserSubscribed } = session;
-
-                user0 = session.User.withId("u0");
-                user1 = session.User.withId("u1");
-                user2 = session.User.withId("u2");
-
-                expect(
-                    user0.subscribed.toRefArray().map(row => row.id)
-                ).toEqual(["u2"]);
-                expect(
-                    user1.subscribed.toRefArray().map(row => row.id)
-                ).toEqual(["u0", "u2"]);
-                expect(
-                    user2.subscribed.toRefArray().map(row => row.id)
-                ).toEqual(["u1"]);
-
-                expect(UserSubscribed.count()).toBe(4);
-            };
         });
 
+        // eslint-disable-next-line jest/expect-expect
         it("add forward many-many field", () => {
             user0.subscribed.add(user2);
             user1.subscribed.add(user0, user2);
@@ -561,6 +565,7 @@ describe("Many to many relationships", () => {
             validateRelationState();
         });
 
+        // eslint-disable-next-line jest/expect-expect
         it("update forward many-many field", () => {
             user0.update({ subscribed: [user2] });
             user1.update({ subscribed: [user0, user2] });
@@ -568,6 +573,7 @@ describe("Many to many relationships", () => {
             validateRelationState();
         });
 
+        // eslint-disable-next-line jest/expect-expect
         it("add backward many-many field", () => {
             user0.subscribers.add(user1);
             user1.subscribers.add(user2);
@@ -575,6 +581,7 @@ describe("Many to many relationships", () => {
             validateRelationState();
         });
 
+        // eslint-disable-next-line jest/expect-expect
         it("update backward many-many field", () => {
             user0.update({ subscribers: [user1] });
             user1.update({ subscribers: [user2] });

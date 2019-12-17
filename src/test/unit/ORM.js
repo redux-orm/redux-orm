@@ -4,7 +4,9 @@ import { STATE_FLAG } from "../../constants";
 
 describe("ORM", () => {
     it("constructor works", () => {
-        new ORM(); // eslint-disable-line no-new
+        expect(() => {
+            new ORM(); // eslint-disable-line no-new
+        }).not.toThrow();
     });
 
     describe("throws on invalid model declarations", () => {

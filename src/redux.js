@@ -54,7 +54,10 @@ function createSelectorFromSpec(spec) {
         const parentSelector = createSelectorFromSpec(spec._parent);
         return spec.createResultFunc(parentSelector);
     }
-    return createCachedSelector(spec.dependencies, spec.resultFunc)({
+    return createCachedSelector(
+        spec.dependencies,
+        spec.resultFunc
+    )({
         keySelector: spec.keySelector,
         cacheObject: new FlatMapCache(),
         selectorCreator: createSelector, // eslint-disable-line no-use-before-define
@@ -242,10 +245,11 @@ export function createSelector(...args) {
             );
         }
 
-        return createSelectorCreator(memoize, undefined, orm)(
-            [orm.stateSelector, ...inputFuncs],
-            resultArg
-        );
+        return createSelectorCreator(
+            memoize,
+            undefined,
+            orm
+        )([orm.stateSelector, ...inputFuncs], resultArg);
     }
 
     if (resultArg instanceof ORM) {
