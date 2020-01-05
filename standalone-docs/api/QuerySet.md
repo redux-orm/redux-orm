@@ -171,7 +171,7 @@ or undefined if the index is out of bounds.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| lookupObj | Object | <p>the properties to match objects with. Can also be a function. It works the same than (Lodash filter](https://lodash.com/docs/#filter)</p> |
+| lookupObj | Object | <p>the properties to match objects with. Can also be a function.</p> |
 
 
 <a name="queryset+exclude"></a>
@@ -186,7 +186,7 @@ properties in <code>lookupObj</code>.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| lookupObj | Object | <p>the properties to unmatch objects with. Can also be a function. It works the same than (Lodash reject](https://lodash.com/docs/#reject)</p> |
+| lookupObj | Object | <p>the properties to unmatch objects with. Can also be a function.</p> |
 
 
 <a name="queryset+orderBy"></a>
