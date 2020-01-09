@@ -148,6 +148,7 @@ const QuerySet = class QuerySet {
      * Returns a new {@link QuerySet} instance with entities that match properties in `lookupObj`.
      *
      * @param  {Object} lookupObj - the properties to match objects with. Can also be a function.
+     *                              It works the same as (Lodash filter](https://lodash.com/docs/#filter).
      * @return {QuerySet} a new {@link QuerySet} instance with objects that passed the filter.
      */
     filter(lookupObj) {
@@ -176,6 +177,7 @@ const QuerySet = class QuerySet {
      * properties in `lookupObj`.
      *
      * @param  {Object} lookupObj - the properties to unmatch objects with. Can also be a function.
+     *                              It works the same as (Lodash reject](https://lodash.com/docs/#reject).
      * @return {QuerySet} a new {@link QuerySet} instance with objects that did not pass the filter.
      */
     exclude(lookupObj) {
