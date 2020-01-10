@@ -22,7 +22,7 @@ export const authors = createSelector(orm.Author);
 export const authorBooks = createSelector(orm.Author.books);
 ```
 
-Then, we proceed to implementing the author profile component.
+Then, we proceed to implement the author profile component.
 We make use of the `useSelector` hook that allows us to easily retrieve
 the stored author by their ID and the books they have written.
 
