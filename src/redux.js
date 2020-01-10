@@ -50,8 +50,7 @@ export function createReducer(orm, updater = defaultUpdater) {
  */
 function createSelectorFromSpec(spec) {
     if (spec instanceof MapSelectorSpec) {
-        // eslint-disable-next-line no-underscore-dangle
-        const parentSelector = createSelectorFromSpec(spec._parent);
+        const parentSelector = createSelectorFromSpec(spec.parent);
         return spec.createResultFunc(parentSelector);
     }
     return createCachedSelector(

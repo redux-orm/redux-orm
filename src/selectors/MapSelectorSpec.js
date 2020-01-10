@@ -8,6 +8,10 @@ export default class MapSelectorSpec extends ModelBasedSelectorSpec {
         this._selector = selector;
     }
 
+    get parent() {
+        return this._parent;
+    }
+
     createResultFunc(parentSelector) {
         return (state, ...other) => {
             const parentResult = parentSelector(state, ...other);
