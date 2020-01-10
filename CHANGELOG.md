@@ -1,5 +1,12 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.16.0
+
+* Removed unnecessary branches ([#316](https://github.com/redux-orm/redux-orm/pull/316))
+* Optimized `objectShallowEquals` using `every` instead of `forEach` ([#317](https://github.com/redux-orm/redux-orm/pull/317))
+
+This release should not be breaking. It is a new minor version only to safeguard from potential edge cases.
+
 ### 0.15.1
 
 Fix memoization for map selectors. ([#318](https://github.com/redux-orm/redux-orm/pull/318))
