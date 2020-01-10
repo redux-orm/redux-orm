@@ -42,8 +42,12 @@
         "sidebar_label": "Session"
       },
       "basics/fields": {
-        "title": "Fields",
-        "sidebar_label": "Fields"
+        "title": "Relational Fields",
+        "sidebar_label": "Relational Fields"
+      },
+      "basics/react": {
+        "title": "Usage with React",
+        "sidebar_label": "Usage with React"
       },
       "basics/quick-start": {
         "title": "Quick Start",

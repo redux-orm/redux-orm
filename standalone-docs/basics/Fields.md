@@ -1,11 +1,11 @@
 ---
 id: fields
-title: Fields
-sidebar_label: Fields
+title: Relational Fields
+sidebar_label: Relational Fields
 hide_title: true
 ---
 
-# Fields
+# Relational Fields
 
 Our goal is to have each model instance be stored exactly once, and we want to retrieve related model instances easily.
 

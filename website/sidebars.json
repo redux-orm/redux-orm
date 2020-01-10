@@ -8,7 +8,8 @@
             "basics/quick-start",
             "basics/fields",
             "basics/reducers",
-            "basics/selectors"
+            "basics/selectors",
+            "basics/react"
         ],
         "Advanced": ["advanced/complex-selectors", "advanced/custom-reducer"],
         "API Reference": [
