@@ -1,0 +1,87 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Usage with React · Redux-ORM</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# Usage with React"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Usage with React · Redux-ORM"/><meta property="og:type" content="website"/><meta property="og:url" content="https://github.com/redux-orm/redux-orm/redux-orm/"/><meta property="og:description" content="# Usage with React"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/redux-orm//redux-orm/img/favicon/favicon.ico"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/darcula.min.css"/><link rel="stylesheet" href="/redux-orm/code-block-buttons.css"/><script type="text/javascript" src="/redux-orm/scripts/sidebarScroll.js"></script><script type="text/javascript" src="/redux-orm/scripts/codeblock.js"></script><script type="text/javascript" src="/redux-orm/scripts/code-block-buttons.js"></script><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.0/clipboard.min.js"></script><script src="/redux-orm/js/scrollSpy.js"></script><link rel="stylesheet" href="/redux-orm/css/prism.css"/><link rel="stylesheet" href="/redux-orm/css/main.css"/><script src="/redux-orm/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/redux-orm/"><img class="logo" src="/redux-orm/img/redux-orm-white.svg" alt="Redux-ORM"/><h2 class="headerTitleWithLogo">Redux-ORM</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/redux-orm/introduction/getting-started" target="_self">Getting Started</a></li><li class="siteNavGroupActive"><a href="/redux-orm/basics/quick-start" target="_self">Docs</a></li><li class="siteNavGroupActive"><a href="/redux-orm/api/api-reference" target="_self">API</a></li><li class=""><a href="https://github.com/redux-orm/redux-orm" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Basics</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Introduction<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/introduction/getting-started">Getting Started</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/introduction/installation">Installation</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Basics<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/basics/quick-start">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/basics/fields">Relational Fields</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/basics/reducers">Reducers</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/basics/selectors">Selectors</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/redux-orm/basics/react">Usage with React</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">Advanced<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/advanced/complex-selectors">Complex Selectors</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/advanced/custom-reducer">Custom Reducer</a></li></ul></div><div class="navGroup"><h3 class="navGroupCategoryTitle collapsible">API Reference<span class="arrow"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="#565656" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"></path><path d="M0 0h24v24H0z" fill="none"></path></svg></span></h3><ul class="hide"><li class="navListItem"><a class="navItem" href="/redux-orm/api/api-reference">API Reference</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/ORM">ORM</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/Model">Model</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/QuerySet">QuerySet</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/Session">Session</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/module_fields">Fields</a></li><li class="navListItem"><a class="navItem" href="/redux-orm/api/module_redux">Redux</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="usage-with-react"></a><a href="#usage-with-react" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Usage with React</h1>
+<p>Here is an example of how Redux-ORM can help when using React.</p>
+<p>Let's imagine we have a file at <code>src/orm.js</code> where we have set up an <code>ORM</code> with a <code>Book</code> and an <code>Author</code> model. Each book is written by a single author, indicated by a foreign key. Our task is to implement a small author profile that shows an author's name and how many books they have written.</p>
+<p>We first define a selector to retrieve one or more authors and another to retrieve their books.</p>
+<p><strong><code>src/selectors.js</code></strong>:</p>
+<pre><code class="hljs css language-jsx"><span class="token keyword">import</span> <span class="token punctuation">{</span> createSelector <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"redux-orm"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> orm <span class="token keyword">from</span> <span class="token string">"./orm"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">const</span> authors <span class="token operator">=</span> <span class="token function">createSelector</span><span class="token punctuation">(</span>orm<span class="token punctuation">.</span>Author<span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token keyword">export</span> <span class="token keyword">const</span> authorBooks <span class="token operator">=</span> <span class="token function">createSelector</span><span class="token punctuation">(</span>orm<span class="token punctuation">.</span>Author<span class="token punctuation">.</span>books<span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p>Then, we proceed to implementing the author profile component.
+We make use of the <code>useSelector</code> hook that allows us to easily retrieve
+the stored author by their ID and the books they have written.</p>
+<p><strong><code>src/components/AuthorProfile.js</code></strong>:</p>
+<pre><code class="hljs css language-jsx"><span class="token keyword">import</span> React <span class="token keyword">from</span> <span class="token string">"react"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> useSelector <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"react-redux"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> authors<span class="token punctuation">,</span> authorBooks <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"../selectors"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">function</span> <span class="token function">AuthorProfile</span><span class="token punctuation">(</span><span class="token parameter">props</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> author <span class="token operator">=</span> <span class="token function">useSelector</span><span class="token punctuation">(</span><span class="token parameter">state</span> <span class="token operator">=></span> <span class="token function">authors</span><span class="token punctuation">(</span>state<span class="token punctuation">,</span> props<span class="token punctuation">.</span>authorId<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> books <span class="token operator">=</span> <span class="token function">useSelector</span><span class="token punctuation">(</span><span class="token parameter">state</span> <span class="token operator">=></span> <span class="token function">authorBooks</span><span class="token punctuation">(</span>state<span class="token punctuation">,</span> props<span class="token punctuation">.</span>authorId<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">return</span> <span class="token punctuation">(</span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>div</span><span class="token punctuation">></span></span><span class="token punctuation">{</span>author<span class="token punctuation">.</span>name<span class="token punctuation">}</span> has written <span class="token punctuation">{</span>books<span class="token punctuation">.</span>length<span class="token punctuation">}</span> books<span class="token operator">!</span><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>div</span><span class="token punctuation">></span></span>
+  <span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+</code></pre>
+<p>To use this component, we simply pass an author's primary key to it.</p>
+<pre><code class="hljs css language-jsx"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span><span class="token class-name">AuthorProfile</span></span> <span class="token attr-name">authorId</span><span class="token script language-javascript"><span class="token script-punctuation punctuation">=</span><span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">}</span></span> <span class="token punctuation">/></span></span>
+</code></pre>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 2020-1-10</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/redux-orm/basics/selectors"><span class="arrow-prev">← </span><span>Selectors</span></a><a class="docs-next button" href="/redux-orm/advanced/complex-selectors"><span>Complex Selectors</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/redux-orm/" class="nav-home"><img src="/redux-orm/img/redux-orm-white.svg" alt="Redux-ORM" width="66" height="58"/></a><div><h5>Docs</h5><a href="/redux-orm/introduction/getting-started">Getting Started</a><a href="/redux-orm/basics/quick-start">Quick Start</a><a href="/redux-orm/advanced/complex-selectors">Advanced scenarios</a></div><div><h5>Community</h5><a href="https://stackoverflow.com/questions/tagged/redux-orm" target="_blank" rel="noreferrer noopener">Stack Overflow</a><a href="https://gitter.im/redux-orm/Lobby" target="_blank" rel="noreferrer noopener">Gitter</a></div><div><h5>More</h5><a href="https://github.com/redux-orm/redux-orm/">GitHub</a><a class="github-button" href="https://github.com/redux-orm/redux-orm" data-icon="octicon-star" data-count-href="/redux-orm/redux-orm/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div></section><section class="copyright">Copyright © 2020 Redux-ORM documentation authors.<br/>Some icons copyright <a href="https://fontawesome.com/license/free" style="color:white">Font Awesome.</a></section></footer></div></body></html>
