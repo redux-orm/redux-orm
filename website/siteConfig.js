@@ -52,7 +52,7 @@ const siteConfig = {
         accentColor3: '#ffabb0',
     },
 
-    copyright: 'Copyright (c) 2019 Redux-ORM documentation authors.',
+    copyright: 'Copyright © 2020 Redux-ORM documentation authors.',
 
     highlight: {
         theme: 'darcula',
