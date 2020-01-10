@@ -99,7 +99,7 @@ this call, unless a custom through model has been specified.</p>
 <p>Begins an immutable database session.</p>
 
 **Kind**: instance method of [ORM](#.ORM)  
-**Returns**: [Session](#.Session) - <p>a new [Session](Session) instance</p>  
+**Returns**: Session - <p>a new [Session](Session) instance</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -113,7 +113,7 @@ this call, unless a custom through model has been specified.</p>
 <p>Begins a mutable database session.</p>
 
 **Kind**: instance method of [ORM](#.ORM)  
-**Returns**: [Session](#.Session) - <p>a new [Session](Session) instance</p>  
+**Returns**: Session - <p>a new [Session](Session) instance</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |

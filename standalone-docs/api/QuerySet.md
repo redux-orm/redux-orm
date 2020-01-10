@@ -171,7 +171,7 @@ or undefined if the index is out of bounds.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| lookupObj | Object | <p>the properties to match objects with. Can also be a function.</p> |
+| lookupObj | Object | <p>the properties to match objects with. Can also be a function.<br> It works the same as <a href="https://lodash.com/docs/#filter">Lodash filter</a>.</p> |
 
 
 <a name="queryset+exclude"></a>
@@ -186,7 +186,7 @@ properties in <code>lookupObj</code>.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| lookupObj | Object | <p>the properties to unmatch objects with. Can also be a function.</p> |
+| lookupObj | Object | <p>the properties to unmatch objects with. Can also be a function.<br> It works the same as <a href="https://lodash.com/docs/#reject">Lodash reject</a>.</p> |
 
 
 <a name="queryset+orderBy"></a>
@@ -194,7 +194,7 @@ properties in <code>lookupObj</code>.</p>
 ## ` orderBy(iteratees, [orders])`⇒ QuerySet 
 
 <p>Returns a new [QuerySet](#QuerySet) instance with entities ordered by <code>iteratees</code> in ascending<br>
-order, unless otherwise specified. Delegates to <code>lodash.orderBy</code>.</p>
+order, unless otherwise specified. Delegates to <a href="https://lodash.com/docs/#orderBy">Lodash orderBy</a>.</p>
 
 **Kind**: instance method of [QuerySet](#.QuerySet)  
 **Returns**: [QuerySet](#.QuerySet) - <p>a new [QuerySet](#QuerySet) with objects ordered by <code>iteratees</code>.</p>  

@@ -12,6 +12,16 @@ hide_title: true
 <p>Provides functions for integration with Redux.</p>
 
 
+<a name="module:redux~level"></a>
+
+## ` level`
+
+<p>Drill down into selector map by cachePath.</p>
+<p>The selector itself is stored under a special SELECTOR_KEY<br>
+so that we can store selectors below it as well.</p>
+
+**Kind**: inner property of redux  
+
 <a name="defaultUpdater"></a>
 
 # ` defaultUpdater()`⇒ undefined 
@@ -31,7 +41,7 @@ hide_title: true
 
 | Param | Type | Description |
 | --- | --- | --- |
-| orm | ORM | <p>the ORM instance.</p> |
+| orm | [ORM](#.ORM) | <p>the ORM instance.</p> |
 | [updater] | function | <p>the function updating the ORM state based on the given action.</p> |
 
 
