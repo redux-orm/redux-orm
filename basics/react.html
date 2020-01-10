@@ -65,7 +65,7 @@
 <span class="token keyword">export</span> <span class="token keyword">const</span> authors <span class="token operator">=</span> <span class="token function">createSelector</span><span class="token punctuation">(</span>orm<span class="token punctuation">.</span>Author<span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token keyword">export</span> <span class="token keyword">const</span> authorBooks <span class="token operator">=</span> <span class="token function">createSelector</span><span class="token punctuation">(</span>orm<span class="token punctuation">.</span>Author<span class="token punctuation">.</span>books<span class="token punctuation">)</span><span class="token punctuation">;</span>
 </code></pre>
-<p>Then, we proceed to implementing the author profile component.
+<p>Then, we proceed to implement the author profile component.
 We make use of the <code>useSelector</code> hook that allows us to easily retrieve
 the stored author by their ID and the books they have written.</p>
 <p><strong><code>src/components/AuthorProfile.js</code></strong>:</p>
