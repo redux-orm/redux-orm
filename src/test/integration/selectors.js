@@ -949,7 +949,7 @@ describe("Shorthand selector specifications", () => {
             ]);
         });
 
-        it("will refresh cache of mapped selectors", () => {
+        it("will refresh cached result of mapped selectors", () => {
             const authorBookTags = createSelector(
                 orm.Author.books.map(orm.Book.tags)
             );
@@ -1009,6 +1009,24 @@ describe("Shorthand selector specifications", () => {
                 },
             });
             expect(authorBookTagNames(ormState, 1)).toEqual([["Redux-ORM"]]);
+        });
+
+        it("caches different mapped selectors correctly", () => {
+            /**
+             * Here, `authorBookTags` and `authorBookAuthor`
+             * share the base cache path "orm.Author.books".
+             * They should be stored under different keys.
+             */
+            const authorBookTags = createSelector(
+                orm.Author.books.map(orm.Book.tags)
+            );
+            expect(createSelector(
+                orm.Author.books.map(orm.Book.tags)
+            )).toBe(authorBookTags);
+            const authorBookAuthor = createSelector(
+                orm.Author.books.map(orm.Book.author)
+            );
+            expect(authorBookTags).not.toBe(authorBookAuthor);
         });
     });
 });

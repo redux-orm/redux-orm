@@ -33,4 +33,8 @@ export default class MapSelectorSpec extends ModelBasedSelectorSpec {
             return this._selector(state, parentResult[idAttribute]);
         };
     }
+
+    get key() {
+        return this._selector;
+    }
 }
