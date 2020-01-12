@@ -27,7 +27,9 @@ export default class FieldSelectorSpec extends ModelBasedSelectorSpec {
     }
 
     valueForInstance(instance, session) {
-        if (!instance) return null;
+        if (!instance) {
+            return null;
+        }
         let value;
         if (this._parent instanceof ModelSelectorSpec) {
             /* orm.Model.field */
@@ -51,24 +53,23 @@ export default class FieldSelectorSpec extends ModelBasedSelectorSpec {
     }
 
     map(selector) {
-        /* eslint-disable no-underscore-dangle */
         if (selector instanceof ModelSelectorSpec) {
-            if (this.toModelName === selector._model.modelName) {
+            if (this.toModelName === selector.model.modelName) {
                 throw new Error(
                     `Cannot select models in a \`map()\` call. If you just want the \`${this._accessorName}\` as a ref array then you can simply drop the \`map()\`. Otherwise make sure you're passing a field selector of the form \`${this.toModelName}.<field>\` or a custom selector instead.`
                 );
             } else {
                 throw new Error(
-                    `Cannot select \`${selector._model.modelName}\` models in this \`map()\` call. Make sure you're passing a field selector of the form \`${this.toModelName}.<field>\` or a custom selector instead.`
+                    `Cannot select \`${selector.model.modelName}\` models in this \`map()\` call. Make sure you're passing a field selector of the form \`${this.toModelName}.<field>\` or a custom selector instead.`
                 );
             }
         } else if (
             selector instanceof FieldSelectorSpec ||
             selector instanceof MapSelectorSpec
         ) {
-            if (this.toModelName !== selector._model.modelName) {
+            if (this.toModelName !== selector.model.modelName) {
                 throw new Error(
-                    `Cannot select fields of the \`${selector._model.modelName}\` model in this \`map()\` call. Make sure you're passing a field selector of the form \`${this.toModelName}.<field>\` or a custom selector instead.`
+                    `Cannot select fields of the \`${selector.model.modelName}\` model in this \`map()\` call. Make sure you're passing a field selector of the form \`${this.toModelName}.<field>\` or a custom selector instead.`
                 );
             }
         } else if (
@@ -101,5 +102,10 @@ export default class FieldSelectorSpec extends ModelBasedSelectorSpec {
         return this._field.toModelName === "this"
             ? this._fieldModel.modelName
             : this._field.toModelName;
+    }
+
+    get toModel() {
+        const db = this._orm.getDatabase();
+        return db.describe(this.toModelName);
     }
 }

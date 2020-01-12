@@ -8,30 +8,38 @@ export default class MapSelectorSpec extends ModelBasedSelectorSpec {
         this._selector = selector;
     }
 
-    get parent() {
-        return this._parent;
+    createResultFunc(parentSelector) {
+        const { idAttribute } = this._parent.toModel;
+        return (state, ...other) => {
+            /**
+             * The parent selector should return a ref array
+             * in case of a single ID being passed.
+             * Otherwise it should return an array of ref arrays.
+             */
+            const parentResult = parentSelector(state, ...other);
+            const idArg = idArgSelector(state, ...other);
+            const single = refArray => {
+                if (refArray === null) {
+                    // an intermediate field could not be resolved
+                    return null;
+                }
+                return refArray.map(ref =>
+                    this._selector(state, ref[idAttribute])
+                );
+            };
+            if (typeof idArg === "undefined" || Array.isArray(idArg)) {
+                return parentResult.map(single);
+            }
+            return single(parentResult);
+        };
     }
 
-    createResultFunc(parentSelector) {
-        return (state, ...other) => {
-            const parentResult = parentSelector(state, ...other);
-            if (parentResult === null) return null;
+    get selector() {
+        return this._selector;
+    }
 
-            const ormState = this._orm.stateSelector(state, ...other);
-            const session = this._orm.session(ormState);
-            const idArg = idArgSelector(state, ...other);
-            const {
-                [this._field.toModelName]: { idAttribute },
-            } = session;
-            if (typeof idArg === "undefined" || Array.isArray(idArg)) {
-                return parentResult.map(ref =>
-                    ref === null
-                        ? null
-                        : this._selector(state, ref[idAttribute])
-                );
-            }
-            return this._selector(state, parentResult[idAttribute]);
-        };
+    set selector(selector) {
+        this._selector = selector;
     }
 
     get key() {

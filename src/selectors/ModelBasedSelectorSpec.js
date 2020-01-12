@@ -32,4 +32,8 @@ export default class ModelBasedSelectorSpec extends SelectorSpec {
             );
         };
     }
+
+    get model() {
+        return this._model;
+    }
 }

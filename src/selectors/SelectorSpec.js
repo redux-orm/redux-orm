@@ -11,4 +11,12 @@ export default class SelectorSpec {
         const basePath = this._parent ? this._parent.cachePath : [];
         return [...basePath, this.key];
     }
+
+    get orm() {
+        return this._orm;
+    }
+
+    get parent() {
+        return this._parent;
+    }
 }

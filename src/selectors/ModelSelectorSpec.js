@@ -30,4 +30,8 @@ export default class ModelSelectorSpec extends SelectorSpec {
             return instance ? instance.ref : null;
         };
     }
+
+    get model() {
+        return this._model;
+    }
 }

@@ -86,8 +86,7 @@ const SELECTOR_KEY = Symbol.for("REDUX_ORM_SELECTOR");
  * @private
  * @param {function|ORM|SelectorSpec} arg
  */
-function toSelector(arg) {
-    /* eslint-disable no-underscore-dangle */
+export function toSelector(arg) {
     if (typeof arg === "function") {
         return arg;
     }
@@ -95,10 +94,11 @@ function toSelector(arg) {
         return arg.stateSelector;
     }
     if (arg instanceof MapSelectorSpec) {
-        arg._selector = toSelector(arg._selector);
+        // the argument to map() needs to be callable
+        arg.selector = toSelector(arg.selector);
     }
     if (arg instanceof SelectorSpec) {
-        const { _orm: orm, cachePath } = arg;
+        const { orm, cachePath } = arg;
         let level;
 
         // the selector cache for the spec's ORM
@@ -115,18 +115,18 @@ function toSelector(arg) {
          */
         level = ormSelectors;
         for (let i = 0; i < cachePath.length; ++i) {
-            if (!level.has(cachePath[i])) {
-                level.set(cachePath[i], new Map());
+            const storageKey = cachePath[i];
+            if (!level.has(storageKey)) {
+                level.set(storageKey, new Map());
             }
-            level = level.get(cachePath[i]);
+            level = level.get(storageKey);
         }
         if (level && level.has(SELECTOR_KEY)) {
             // Cache hit: the selector has been created before
             return level.get(SELECTOR_KEY);
         }
-
+        // Cache miss: the selector needs to be created
         const selector = createSelectorFromSpec(arg);
-
         // Save the selector at the cachePath position
         level.set(SELECTOR_KEY, selector);
 

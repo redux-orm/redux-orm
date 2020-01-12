@@ -829,9 +829,8 @@ describe("Shorthand selector specifications", () => {
         });
 
         it("will map selector outputs for forward foreign key selectors and some instances", () => {
-            const movieRating = createSelector(orm.Movie.rating);
             const publisherMovieRatings = createSelector(
-                orm.Publisher.movies.map(movieRating)
+                orm.Publisher.movies.map(orm.Movie.rating)
             );
             expect(publisherMovieRatings(emptyState, [123])).toEqual([null]); // publisher doesn't exist yet
             ormState = reducer(ormState, {
@@ -859,9 +858,8 @@ describe("Shorthand selector specifications", () => {
         });
 
         it("will map selector outputs for forward foreign key selectors and all instances", () => {
-            const movieRating = createSelector(orm.Movie.rating);
             const publisherMovieRatings = createSelector(
-                orm.Publisher.movies.map(movieRating)
+                orm.Publisher.movies.map(orm.Movie.rating)
             );
             expect(publisherMovieRatings(emptyState)).toEqual([]); // publisher doesn't exist yet
             ormState = reducer(ormState, {
@@ -889,9 +887,8 @@ describe("Shorthand selector specifications", () => {
         });
 
         it("can be combined when used as input selectors ", () => {
-            const movieRating = createSelector(orm.Movie.rating);
             const publisherAverageRating = createSelector(
-                orm.Publisher.movies.map(movieRating),
+                orm.Publisher.movies.map(orm.Movie.rating),
                 ratings =>
                     ratings && (ratings.length ? avg(ratings) : "no movies")
             );
@@ -942,6 +939,36 @@ describe("Shorthand selector specifications", () => {
                 type: CREATE_TAG,
                 payload: {
                     name: "Redux-ORM",
+                },
+            });
+            // unrelated book
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 456,
+                    author: null,
+                    tags: ["Other tag"],
+                },
+            });
+            ormState = reducer(ormState, {
+                type: CREATE_TAG,
+                payload: {
+                    name: "Other tag",
+                },
+            });
+            // unrelated book and tag
+            ormState = reducer(ormState, {
+                type: CREATE_BOOK,
+                payload: {
+                    id: 456,
+                    author: null,
+                    tags: ["Other tag"],
+                },
+            });
+            ormState = reducer(ormState, {
+                type: CREATE_TAG,
+                payload: {
+                    name: "Other tag",
                 },
             });
             expect(authorBookTags(ormState, 1)).toEqual([
@@ -1020,9 +1047,11 @@ describe("Shorthand selector specifications", () => {
             const authorBookTags = createSelector(
                 orm.Author.books.map(orm.Book.tags)
             );
-            expect(createSelector(
-                orm.Author.books.map(orm.Book.tags)
-            )).toBe(authorBookTags);
+            // should be stored in cache
+            expect(authorBookTags).toBe(
+                createSelector(orm.Author.books.map(orm.Book.tags))
+            );
+            // should be a new value in cache
             const authorBookAuthor = createSelector(
                 orm.Author.books.map(orm.Book.author)
             );
