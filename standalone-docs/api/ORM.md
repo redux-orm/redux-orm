@@ -62,7 +62,7 @@ this call, unless a custom through model has been specified.</p>
 
 | Param | Type | Description |
 | --- | --- | --- |
-| ...models | [Model](#.Model) | <p>a [Model](Model) class to register</p> |
+| ...models | Model | <p>a [Model](Model) class to register</p> |
 
 
 <a name="orm+get"></a>
@@ -72,7 +72,7 @@ this call, unless a custom through model has been specified.</p>
 <p>Gets a [Model](Model) class by its name from the registry.</p>
 
 **Kind**: instance method of [ORM](#.ORM)  
-**Returns**: [Model](#.Model) - <p>the [Model](Model) class, if found</p>  
+**Returns**: Model - <p>the [Model](Model) class, if found</p>  
 **Throws**:
 
 - <p>If [Model](Model) class is not found.</p>
@@ -99,7 +99,7 @@ this call, unless a custom through model has been specified.</p>
 <p>Begins an immutable database session.</p>
 
 **Kind**: instance method of [ORM](#.ORM)  
-**Returns**: Session - <p>a new [Session](Session) instance</p>  
+**Returns**: [Session](#.Session) - <p>a new [Session](Session) instance</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -113,7 +113,7 @@ this call, unless a custom through model has been specified.</p>
 <p>Begins a mutable database session.</p>
 
 **Kind**: instance method of [ORM](#.ORM)  
-**Returns**: Session - <p>a new [Session](Session) instance</p>  
+**Returns**: [Session](#.Session) - <p>a new [Session](Session) instance</p>  
 
 | Param | Type | Description |
 | --- | --- | --- |
