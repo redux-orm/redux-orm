@@ -86,7 +86,7 @@ const SELECTOR_KEY = Symbol.for("REDUX_ORM_SELECTOR");
  * @private
  * @param {function|ORM|SelectorSpec} arg
  */
-export function toSelector(arg) {
+function toSelector(arg) {
     if (typeof arg === "function") {
         return arg;
     }
