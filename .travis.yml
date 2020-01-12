@@ -14,7 +14,7 @@ script:
   - cd website && npm install && npm run build
 
 after_success:
-  - codecov
+  - npx codecov
 
 cache:
   directories:
