@@ -1,5 +1,10 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.16.1
+
+* Fixed map selectors being stored under the same key. ([ad9d0c7](https://github.com/redux-orm/redux-orm/commit/ad9d0c797130a90c293c605514defb4dbb8adea7))
+* Prevent map selectors from returning unrelated refs. ([27bddb6](https://github.com/redux-orm/redux-orm/commit/27bddb6327896ac4161d7755b62dd69b230deba0))
+
 ### 0.16.0
 
 * Removed unnecessary branches ([#316](https://github.com/redux-orm/redux-orm/pull/316))
