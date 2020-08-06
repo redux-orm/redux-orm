@@ -8,11 +8,11 @@
         "rename-version": "docusaurus-rename-version"
     },
     "devDependencies": {
-        "@babel/plugin-proposal-class-properties": "^7.8.3",
-        "@babel/preset-react": "^7.8.3"
+        "@babel/plugin-proposal-class-properties": "^7.10.4",
+        "@babel/preset-react": "^7.10.4"
     },
     "dependencies": {
-        "docusaurus": "^1.14.4",
+        "docusaurus": "^1.14.6",
         "plantuml-encoder": "^1.4.0"
     }
 }
