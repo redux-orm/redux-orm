@@ -88,5 +88,7 @@ Book.fields = {
 ### idAttribute
 Sometimes backends store use natural keys as primary keys or call them differently. If that's the case we need to change the model's ID attribute.
 ```js
-Book.idAttribute = 'title'; // Default: 'id'
+Book.options = {
+  idAttribute: 'title'; // Default: 'id' 
+}
 ```
