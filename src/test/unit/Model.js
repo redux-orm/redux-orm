@@ -54,7 +54,7 @@ describe("Model", () => {
 
         it("connect throws if not passing a session", () => {
             expect(Model.session).toBeUndefined();
-            [1, "", [], {}].forEach(value =>
+            [1, "", [], {}].forEach((value) =>
                 expect(() => {
                     Model.connect(value);
                 }).toThrow(

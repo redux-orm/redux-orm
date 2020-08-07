@@ -78,13 +78,13 @@ describe("QuerySet tests", () => {
 
     it("orderBy works correctly with prop argument", () => {
         const ordered = bookQs.orderBy(["releaseYear"]);
-        const idArr = ordered.toRefArray().map(row => row.id);
+        const idArr = ordered.toRefArray().map((row) => row.id);
         expect(idArr).toEqual([1, 2, 0]);
     });
 
     it("orderBy works correctly with function argument", () => {
-        const ordered = bookQs.orderBy([book => book.releaseYear]);
-        const idArr = ordered.toRefArray().map(row => row.id);
+        const ordered = bookQs.orderBy([(book) => book.releaseYear]);
+        const idArr = ordered.toRefArray().map((row) => row.id);
         expect(idArr).toEqual([1, 2, 0]);
     });
 
@@ -92,7 +92,7 @@ describe("QuerySet tests", () => {
         const excluded = bookQs.exclude({ name: "Clean Code" });
         expect(excluded.count()).toBe(2);
 
-        const idArr = excluded.toRefArray().map(row => row.id);
+        const idArr = excluded.toRefArray().map((row) => row.id);
         expect(idArr).toEqual([0, 2]);
     });
 
@@ -102,7 +102,7 @@ describe("QuerySet tests", () => {
         });
         expect(excluded.count()).toBe(2);
 
-        const idArr = excluded.toRefArray().map(row => row.id);
+        const idArr = excluded.toRefArray().map((row) => row.id);
         expect(idArr).toEqual([0, 2]);
     });
 
@@ -110,7 +110,7 @@ describe("QuerySet tests", () => {
         const excluded = bookQs.exclude(({ author }) => author === 1);
         expect(excluded.count()).toBe(2);
 
-        const idArr = excluded.toRefArray().map(row => row.id);
+        const idArr = excluded.toRefArray().map((row) => row.id);
         expect(idArr).toEqual([0, 2]);
     });
 
@@ -120,7 +120,7 @@ describe("QuerySet tests", () => {
 
         bookQs
             .toRefArray()
-            .forEach(row => expect(row.name).toBe("Updated Book Name"));
+            .forEach((row) => expect(row.name).toBe("Updated Book Name"));
     });
 
     it("delete records a update", () => {
@@ -149,7 +149,7 @@ describe("QuerySet tests", () => {
         const currentYear = 2015;
         class CustomQuerySet extends QuerySet {
             unreleased() {
-                return this.filter(book => book.releaseYear > currentYear);
+                return this.filter((book) => book.releaseYear > currentYear);
             }
         }
         CustomQuerySet.addSharedMethod("unreleased");

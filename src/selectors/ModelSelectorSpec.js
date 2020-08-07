@@ -21,7 +21,7 @@ export default class ModelSelectorSpec extends SelectorSpec {
                 return ModelClass.all().toRefArray();
             }
             if (Array.isArray(idArg)) {
-                return idArg.map(id => {
+                return idArg.map((id) => {
                     const instance = ModelClass.withId(id);
                     return instance ? instance.ref : null;
                 });

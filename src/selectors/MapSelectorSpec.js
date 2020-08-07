@@ -18,12 +18,12 @@ export default class MapSelectorSpec extends ModelBasedSelectorSpec {
              */
             const parentResult = parentSelector(state, ...other);
             const idArg = idArgSelector(state, ...other);
-            const single = refArray => {
+            const single = (refArray) => {
                 if (refArray === null) {
                     // an intermediate field could not be resolved
                     return null;
                 }
-                return refArray.map(ref =>
+                return refArray.map((ref) =>
                     this._selector(state, ref[idAttribute])
                 );
             };

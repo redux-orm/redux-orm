@@ -18,7 +18,7 @@ describe("Redux integration", () => {
     let Movie;
     let emptyState;
     let ormState;
-    const stateSelector = state => state;
+    const stateSelector = (state) => state;
     let reducer;
 
     let session;
@@ -76,7 +76,7 @@ describe("Redux integration", () => {
         ormState = emptyState;
 
         sessionOrm = Object.create(orm);
-        sessionOrm.stateSelector = state => session.state;
+        sessionOrm.stateSelector = (state) => session.state;
         session = sessionOrm.session();
     });
 
@@ -134,9 +134,9 @@ describe("Redux integration", () => {
         });
 
         it("arbitrary filters", () => {
-            const selector = createSelector(orm, selectorSession =>
+            const selector = createSelector(orm, (selectorSession) =>
                 selectorSession.Movie.filter(
-                    movie => movie.name === "Getting started with filters"
+                    (movie) => movie.name === "Getting started with filters"
                 ).toRefArray()
             );
 
@@ -157,7 +157,7 @@ describe("Redux integration", () => {
         });
 
         it("id lookups", () => {
-            const selector = createSelector(orm, selectorSession =>
+            const selector = createSelector(orm, (selectorSession) =>
                 selectorSession.Movie.withId(0)
             );
             expect(typeof selector).toBe("function");
@@ -179,7 +179,7 @@ describe("Redux integration", () => {
         });
 
         it("id-based lookups with additional attributes", () => {
-            const selector = createSelector(orm, selectorSession => {
+            const selector = createSelector(orm, (selectorSession) => {
                 const movie = selectorSession.Movie.filter({
                     id: 123,
                     name: "Looking for this name",
@@ -241,7 +241,7 @@ describe("Redux integration", () => {
         });
 
         it("empty QuerySets", () => {
-            const selector = createSelector(orm, selectorSession =>
+            const selector = createSelector(orm, (selectorSession) =>
                 selectorSession.Movie.all().toModelArray()
             );
             expect(typeof selector).toBe("function");
@@ -263,7 +263,7 @@ describe("Redux integration", () => {
         });
 
         it("Model updates", () => {
-            const selector = createSelector(orm, selectorSession =>
+            const selector = createSelector(orm, (selectorSession) =>
                 selectorSession.Movie.withId(0)
             );
 
@@ -283,7 +283,7 @@ describe("Redux integration", () => {
         });
 
         it("Model deletions", () => {
-            const selector = createSelector(orm, selectorSession =>
+            const selector = createSelector(orm, (selectorSession) =>
                 selectorSession.Movie.withId(0)
             );
 
@@ -303,7 +303,7 @@ describe("Redux integration", () => {
         });
 
         it("foreign key forward descriptors", () => {
-            const selector = createSelector(orm, selectorSession =>
+            const selector = createSelector(orm, (selectorSession) =>
                 selectorSession.Movie.all()
                     .toModelArray()
                     .reduce(
@@ -367,10 +367,10 @@ describe("Redux integration", () => {
         });
 
         it("foreign key backward descriptors", () => {
-            const selector = createSelector(orm, selectorSession => {
+            const selector = createSelector(orm, (selectorSession) => {
                 const publisher = selectorSession.Publisher.withId(123);
                 if (!publisher) return [];
-                return publisher.movies.toRefArray().map(movie => movie.id);
+                return publisher.movies.toRefArray().map((movie) => movie.id);
             });
             expect(typeof selector).toBe("function");
 
@@ -427,13 +427,13 @@ describe("Redux integration", () => {
         });
 
         it("ordered foreign key backward descriptors", () => {
-            const selector = createSelector(orm, selectorSession => {
+            const selector = createSelector(orm, (selectorSession) => {
                 const publisher = selectorSession.Publisher.withId(123);
                 if (!publisher) return [];
                 return publisher.movies
                     .orderBy("name", "asc")
                     .toRefArray()
-                    .map(movie => movie.id);
+                    .map((movie) => movie.id);
             });
             expect(typeof selector).toBe("function");
 
@@ -505,14 +505,14 @@ describe("Redux integration", () => {
                 }
             });
             let _ormState;
-            const _stateSelector = state => _ormState;
+            const _stateSelector = (state) => _ormState;
             const _orm = new ORM({ stateSelector: _stateSelector });
             _orm.register(CustomModel);
 
             const _reducer = createReducer(_orm);
             _ormState = _orm.getEmptyState();
 
-            const selector = createSelector(_orm, selectorSession =>
+            const selector = createSelector(_orm, (selectorSession) =>
                 selectorSession.CustomModel.count()
             );
 
@@ -535,7 +535,7 @@ describe("Redux integration", () => {
 
             let appState;
             const ormWithAppState = Object.create(orm);
-            ormWithAppState.stateSelector = state => appState.orm;
+            ormWithAppState.stateSelector = (state) => appState.orm;
 
             const _reducer = createReducer(ormWithAppState);
             const _ormState = ormWithAppState.getEmptyState();
@@ -546,7 +546,7 @@ describe("Redux integration", () => {
 
             const selector = createSelector(
                 ormWithAppState,
-                state => state.selectedMovie,
+                (state) => state.selectedMovie,
                 memoized
             );
 

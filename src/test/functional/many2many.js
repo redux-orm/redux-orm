@@ -20,14 +20,14 @@ describe("Many to many relationships", () => {
             userFirst = session.User.first();
             userLast = session.User.last();
 
-            expect(teamFirst.users.toRefArray().map(row => row.id)).toEqual([
+            expect(teamFirst.users.toRefArray().map((row) => row.id)).toEqual([
                 userFirst.id,
                 userLast.id,
             ]);
-            expect(userFirst.teams.toRefArray().map(row => row.id)).toEqual([
+            expect(userFirst.teams.toRefArray().map((row) => row.id)).toEqual([
                 teamFirst.id,
             ]);
-            expect(userLast.teams.toRefArray().map(row => row.id)).toEqual([
+            expect(userLast.teams.toRefArray().map((row) => row.id)).toEqual([
                 teamFirst.id,
             ]);
 
@@ -270,23 +270,23 @@ describe("Many to many relationships", () => {
             expect(relatedUsers.modelClass).toBe(User);
             expect(relatedUsers.count()).toBe(2);
 
-            expect(relatedUsers.toRefArray().map(row => row.id)).toEqual([
+            expect(relatedUsers.toRefArray().map((row) => row.id)).toEqual([
                 "u0",
                 "u1",
             ]);
             expect(
                 Team.withId("t2")
                     .users.toRefArray()
-                    .map(row => row.id)
+                    .map((row) => row.id)
             ).toEqual(["u1"]);
 
-            expect(relatedTeams.toRefArray().map(row => row.id)).toEqual([
+            expect(relatedTeams.toRefArray().map((row) => row.id)).toEqual([
                 team.id,
             ]);
             expect(
                 User.withId("u1")
                     .teams.toRefArray()
-                    .map(row => row.id)
+                    .map((row) => row.id)
             ).toEqual(["t0", "t2"]);
 
             expect(User2Team.count()).toBe(3);
@@ -422,12 +422,12 @@ describe("Many to many relationships", () => {
             expect(
                 User.withId("u0")
                     .links.toRefArray()
-                    .map(row => row.name)
+                    .map((row) => row.name)
             ).toEqual(["link0"]);
             expect(
                 User.withId("u1")
                     .links.toRefArray()
-                    .map(row => row.name)
+                    .map((row) => row.name)
             ).toEqual(["link1", "link2"]);
         });
 
@@ -570,14 +570,14 @@ describe("Many to many relationships", () => {
             user1 = session.User.withId("u1");
             user2 = session.User.withId("u2");
 
-            expect(user0.subscribed.toRefArray().map(row => row.id)).toEqual([
+            expect(user0.subscribed.toRefArray().map((row) => row.id)).toEqual([
                 "u2",
             ]);
-            expect(user1.subscribed.toRefArray().map(row => row.id)).toEqual([
+            expect(user1.subscribed.toRefArray().map((row) => row.id)).toEqual([
                 "u0",
                 "u2",
             ]);
-            expect(user2.subscribed.toRefArray().map(row => row.id)).toEqual([
+            expect(user2.subscribed.toRefArray().map((row) => row.id)).toEqual([
                 "u1",
             ]);
 

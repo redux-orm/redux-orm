@@ -12,12 +12,12 @@ export default class ModelBasedSelectorSpec extends SelectorSpec {
             if (typeof idArg === "undefined") {
                 return ModelClass.all()
                     .toModelArray()
-                    .map(instance =>
+                    .map((instance) =>
                         this.valueForInstance(instance, session, ...other)
                     );
             }
             if (Array.isArray(idArg)) {
-                return idArg.map(id =>
+                return idArg.map((id) =>
                     this.valueForInstance(
                         ModelClass.withId(id),
                         session,

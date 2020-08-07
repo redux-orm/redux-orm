@@ -23,7 +23,7 @@ describe("Redux Persist integration", () => {
     let Author;
     let Publisher;
     let Movie;
-    const stateSelector = state => state.orm;
+    const stateSelector = (state) => state.orm;
     let emptyState;
 
     const CREATE_MOVIE = "CREATE_MOVIE";
@@ -92,7 +92,7 @@ describe("Redux Persist integration", () => {
     });
 
     it("creates correct empty state by default", async () => {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
             const store = createStore(createPersistedReducer());
             persistStore(store, null, async () => {
                 expect(store.getState().orm).toStrictEqual(emptyState);
@@ -108,7 +108,7 @@ describe("Redux Persist integration", () => {
     });
 
     it("keeps selector results consistent after persistence", async () => {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
             const store = createStore(createPersistedReducer());
             const persistor = persistStore(store, null, async () => {
                 store.dispatch({
@@ -139,7 +139,7 @@ describe("Redux Persist integration", () => {
     });
 
     it("keeps state consistent after persistence", async () => {
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
             const store = createStore(createPersistedReducer());
             const persistor = persistStore(store, null, async () => {
                 store.dispatch({
