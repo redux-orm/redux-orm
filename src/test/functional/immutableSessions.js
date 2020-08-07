@@ -622,6 +622,21 @@ describe("Immutable session", () => {
         expect(movie.publisher.ref).toBe(newPublisher.ref);
     });
 
+    it("upserting previously empty forwards foreign key (many-to-one) field works", () => {
+        const { Movie, Publisher } = session;
+
+        const publisher = Publisher.withId(0);
+
+        const initialMovie = Movie.create({});
+        const newMovie = Movie.upsert({
+            id: initialMovie.id,
+            publisherId: publisher.id,
+        });
+
+        expect(newMovie.publisherId).toEqual(0);
+        expect(newMovie.publisher.ref).toBe(publisher.ref);
+    });
+
     it("trying to set backwards foreign key (reverse many-to-one) field throws", () => {
         const { Book } = session;
 
