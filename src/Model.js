@@ -71,7 +71,7 @@ const Model = class Model {
         const propsObj = Object(props);
         this._fields = { ...propsObj };
 
-        Object.keys(propsObj).forEach(fieldName => {
+        Object.keys(propsObj).forEach((fieldName) => {
             // In this case, we got a prop that wasn't defined as a field.
             // Assuming it's an arbitrary data field, making an instance-specific
             // descriptor for it.
@@ -80,7 +80,7 @@ const Model = class Model {
             if (!(fieldName in this)) {
                 Object.defineProperty(this, fieldName, {
                     get: () => this._fields[fieldName],
-                    set: value => this.set(fieldName, value),
+                    set: (value) => this.set(fieldName, value),
                     configurable: true,
                     enumerable: true,
                 });
@@ -292,7 +292,7 @@ const Model = class Model {
         const declaredFieldNames = Object.keys(this.fields);
         const declaredVirtualFieldNames = Object.keys(this.virtualFields);
 
-        declaredFieldNames.forEach(key => {
+        declaredFieldNames.forEach((key) => {
             const field = this.fields[key];
             const valuePassed = userProps.hasOwnProperty(key);
             if (!(field instanceof ManyToMany)) {
@@ -320,7 +320,7 @@ const Model = class Model {
         });
 
         // add backward many-many if required
-        declaredVirtualFieldNames.forEach(key => {
+        declaredVirtualFieldNames.forEach((key) => {
             if (!m2mRelations.hasOwnProperty(key)) {
                 const field = this.virtualFields[key];
                 if (
@@ -527,12 +527,12 @@ const Model = class Model {
         const className = ThisModel.modelName;
         const fieldNames = Object.keys(ThisModel.fields);
         const fields = fieldNames
-            .map(fieldName => {
+            .map((fieldName) => {
                 const field = ThisModel.fields[fieldName];
                 if (field instanceof ManyToMany) {
                     const ids = this[fieldName]
                         .toModelArray()
-                        .map(model => model.getId());
+                        .map((model) => model.getId());
                     return `${fieldName}: [${ids.join(", ")}]`;
                 }
                 const val = this._fields[fieldName];
@@ -697,7 +697,7 @@ const Model = class Model {
         const ThisModel = this.getClass();
         const { fields, virtualFields, modelName } = ThisModel;
 
-        Object.keys(relations).forEach(name => {
+        Object.keys(relations).forEach((name) => {
             const reverse = !fields.hasOwnProperty(name);
             const field = virtualFields[name];
             const values = relations[name];
@@ -731,10 +731,10 @@ const Model = class Model {
             }
 
             const currentIds = ThroughModel.filter(
-                through => through[fromField] === this[ThisModel.idAttribute]
+                (through) => through[fromField] === this[ThisModel.idAttribute]
             )
                 .toRefArray()
-                .map(ref => ref[toField]);
+                .map((ref) => ref[toField]);
 
             const diffActions = arrayDiffActions(currentIds, normalizedNewIds);
 

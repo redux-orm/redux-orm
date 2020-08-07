@@ -68,7 +68,7 @@ describe("Utils", () => {
         });
 
         it("calls console.warn if possible", () => {
-            console.warn = msg => {
+            console.warn = (msg) => {
                 consoleWarn.timesRun++;
                 consoleWarn.lastMessage = msg;
             };
@@ -79,7 +79,7 @@ describe("Utils", () => {
         });
 
         it("calls console.log if console.warn is not callable", () => {
-            console.log = msg => {
+            console.log = (msg) => {
                 consoleLog.timesRun++;
                 consoleLog.lastMessage = msg;
             };
@@ -110,7 +110,7 @@ describe("Utils", () => {
 
         it("normal case", () => {
             attachQuerySetMethods(Book, Book.querySetClass);
-            defaultSharedMethods.forEach(methodName => {
+            defaultSharedMethods.forEach((methodName) => {
                 expect(typeof Book[methodName]).toBe("function");
             });
         });
@@ -122,7 +122,7 @@ describe("Utils", () => {
 
             attachQuerySetMethods(Book, Book.querySetClass);
 
-            defaultSharedMethods.forEach(methodName => {
+            defaultSharedMethods.forEach((methodName) => {
                 if (["all"].includes(methodName)) return;
                 expect(Book[methodName]).toBe(undefined);
             });

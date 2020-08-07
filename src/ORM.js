@@ -22,7 +22,7 @@ const ORM_DEFAULTS = {
 };
 
 const RESERVED_TABLE_OPTIONS = ["indexes", "meta"];
-const isReservedTableOption = word => RESERVED_TABLE_OPTIONS.includes(word);
+const isReservedTableOption = (word) => RESERVED_TABLE_OPTIONS.includes(word);
 
 /**
  * ORM - the Object Relational Mapper.
@@ -68,7 +68,7 @@ class ORM {
      * @return {undefined}
      */
     register(...models) {
-        models.forEach(model => {
+        models.forEach((model) => {
             if (model.modelName === undefined) {
                 throw new Error(
                     "A model was passed that doesn't have a modelName set"
@@ -163,7 +163,7 @@ class ORM {
     get(modelName) {
         const allModels = this.registry.concat(this.implicitThroughModels);
         const found = Object.values(allModels).find(
-            model => model.modelName === modelName
+            (model) => model.modelName === modelName
         );
 
         if (typeof found === "undefined") {
@@ -185,7 +185,7 @@ class ORM {
             const tableSpec = modelClass.tableOptions();
             Object.keys(tableSpec)
                 .filter(isReservedTableOption)
-                .forEach(key => {
+                .forEach((key) => {
                     throw new Error(
                         `Reserved keyword \`${key}\` used in ${tableName}.options.`
                     );
@@ -239,8 +239,8 @@ class ORM {
      */
     _setupModelPrototypes(models) {
         models
-            .filter(model => !model.isSetUp)
-            .forEach(model => {
+            .filter((model) => !model.isSetUp)
+            .forEach((model) => {
                 const { fields, modelName, querySetClass } = model;
                 Object.entries(fields).forEach(([fieldName, field]) => {
                     if (!(field instanceof Field)) {

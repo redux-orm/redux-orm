@@ -273,7 +273,7 @@ describe("Immutable session", () => {
         const movie = Movie.first();
         const oldRef = movie.ref;
 
-        movie.equals = otherModel => true;
+        movie.equals = (otherModel) => true;
         movie.update({
             name: "New name",
             rating: 10,
@@ -320,7 +320,7 @@ describe("Immutable session", () => {
             book.genres
                 .all()
                 .toRefArray()
-                .map(genre => genre.id)
+                .map((genre) => genre.id)
         ).toEqual([1, 2]);
         // update with same string, expect relations to be preserved
         book.update({ name: "Updated Book name" });
@@ -328,7 +328,7 @@ describe("Immutable session", () => {
             book.genres
                 .all()
                 .toRefArray()
-                .map(genre => genre.id)
+                .map((genre) => genre.id)
         ).toEqual([1, 2]);
     });
 
@@ -344,7 +344,7 @@ describe("Immutable session", () => {
             book.genres
                 .all()
                 .toRefArray()
-                .map(genre => genre.id)
+                .map((genre) => genre.id)
         ).toEqual([1, 2]);
 
         // mutate array by appending element without changing reference
@@ -359,14 +359,14 @@ describe("Immutable session", () => {
             book.genres
                 .all()
                 .toRefArray()
-                .map(genre => genre.id)
+                .map((genre) => genre.id)
         ).toEqual([1, 2, 3]);
         /* the backward relation must have been updated as well */
         expect(
             Genre.withId(3)
                 .books.all()
                 .toRefArray()
-                .map(_book => _book.id)
+                .map((_book) => _book.id)
                 .includes(book.id)
         ).toBeTruthy();
     });
@@ -451,12 +451,12 @@ describe("Immutable session", () => {
         const { Genre, Author } = session;
         const tommi = Author.get({ name: "Tommi Kaikkonen" });
         const book = tommi.books.first();
-        expect(book.genres.toRefArray().map(row => row.id)).toEqual([0, 1]);
+        expect(book.genres.toRefArray().map((row) => row.id)).toEqual([0, 1]);
 
         const deleteGenre = Genre.withId(0);
 
         book.update({ genres: [1, 2] });
-        expect(book.genres.toRefArray().map(row => row.id)).toEqual([1, 2]);
+        expect(book.genres.toRefArray().map((row) => row.id)).toEqual([1, 2]);
 
         expect(deleteGenre.books.filter({ id: book.id }).exists()).toBe(false);
     });
@@ -470,32 +470,32 @@ describe("Immutable session", () => {
         expect(
             session.BookGenres.filter({ fromBookId: book.id })
                 .toRefArray()
-                .map(row => row.toGenreId)
+                .map((row) => row.toGenreId)
         ).toEqual([0, 99]);
-        expect(book.genres.toRefArray().map(row => row.id)).toEqual([0]);
+        expect(book.genres.toRefArray().map((row) => row.id)).toEqual([0]);
 
         book.update({ genres: [1, 98] });
 
         expect(
             session.BookGenres.filter({ fromBookId: book.id })
                 .toRefArray()
-                .map(row => row.toGenreId)
+                .map((row) => row.toGenreId)
         ).toEqual([1, 98]);
-        expect(book.genres.toRefArray().map(row => row.id)).toEqual([1]);
+        expect(book.genres.toRefArray().map((row) => row.id)).toEqual([1]);
     });
 
     it("updating non-existing many-to-many entities works", () => {
         const { Genre, Author } = session;
         const tommi = Author.get({ name: "Tommi Kaikkonen" });
         const book = tommi.books.first();
-        expect(book.genres.toRefArray().map(row => row.id)).toEqual([0, 1]);
+        expect(book.genres.toRefArray().map((row) => row.id)).toEqual([0, 1]);
 
         const deleteGenre = Genre.withId(0);
         const keepGenre = Genre.withId(1);
         const addGenre = Genre.withId(2);
 
         book.update({ genres: [addGenre, keepGenre] });
-        expect(book.genres.toRefArray().map(row => row.id)).toEqual([1, 2]);
+        expect(book.genres.toRefArray().map((row) => row.id)).toEqual([1, 2]);
 
         expect(deleteGenre.books.filter({ id: book.id }).exists()).toBe(false);
     });
@@ -509,7 +509,7 @@ describe("Immutable session", () => {
 
     it("creating models throws when passing non-array many field", () => {
         const { Book } = session;
-        [null, undefined, 353, "a string"].forEach(value => {
+        [null, undefined, 353, "a string"].forEach((value) => {
             expect(() => {
                 Book.create({ id: 457656121, genres: value });
             }).toThrow(
@@ -529,7 +529,7 @@ describe("Immutable session", () => {
     it("update throws with non-array many field", () => {
         const { Book } = session;
         const book = Book.create({ id: 457656121 });
-        [null, undefined, 353, "a string"].forEach(value => {
+        [null, undefined, 353, "a string"].forEach((value) => {
             expect(() => {
                 book.update({ genres: value });
             }).toThrow(

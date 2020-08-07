@@ -26,7 +26,7 @@ const Session = class Session {
 
         this.models = schema.getModelClasses();
 
-        this.sessionBoundModels = this.models.map(modelClass => {
+        this.sessionBoundModels = this.models.map((modelClass) => {
             function SessionBoundModel() {
                 return Reflect.construct(
                     modelClass,
@@ -65,7 +65,7 @@ const Session = class Session {
         if (!data.accessedInstances) {
             data.accessedInstances = {};
         }
-        modelIds.forEach(id => {
+        modelIds.forEach((id) => {
             data.accessedInstances[id] = true;
         });
     }
@@ -170,9 +170,9 @@ const Session = class Session {
         const { rows } = result;
 
         const { idAttribute } = this[table];
-        const accessedIds = new Set(rows.map(row => row[idAttribute]));
+        const accessedIds = new Set(rows.map((row) => row[idAttribute]));
 
-        const anyClauseFilteredByPk = clauses.some(clause => {
+        const anyClauseFilteredByPk = clauses.some((clause) => {
             if (!clauseFiltersByAttribute(clause, idAttribute)) {
                 return false;
             }
@@ -186,8 +186,8 @@ const Session = class Session {
 
         const accessedIndexes = [];
         const { indexes } = this.state[table];
-        clauses.forEach(clause => {
-            Object.keys(indexes).forEach(attr => {
+        clauses.forEach((clause) => {
+            Object.keys(indexes).forEach((attr) => {
                 if (!clauseFiltersByAttribute(clause, attr)) {
                     return;
                 }

@@ -3,7 +3,7 @@ import { STATE_FLAG } from "./constants";
 const defaultEqualityCheck = (a, b) => a === b;
 export const eqCheck = defaultEqualityCheck;
 
-const isOrmState = arg =>
+const isOrmState = (arg) =>
     arg && typeof arg === "object" && arg.hasOwnProperty(STATE_FLAG);
 
 const argsAreEqual = (lastArgs, nextArgs, equalityCheck) =>
@@ -14,7 +14,7 @@ const argsAreEqual = (lastArgs, nextArgs, equalityCheck) =>
     );
 
 const rowsAreEqual = (ids, rowsA, rowsB) =>
-    ids.every(id => rowsA[id] === rowsB[id]);
+    ids.every((id) => rowsA[id] === rowsB[id]);
 
 const accessedModelInstancesAreEqual = (previous, ormState, orm) => {
     const { accessedInstances } = previous;
@@ -41,7 +41,7 @@ const accessedIndexesAreEqual = (previous, ormState) => {
     return Object.entries(accessedIndexes).every(([modelName, indexes]) =>
         Object.entries(indexes).every(([column, values]) =>
             values.every(
-                value =>
+                (value) =>
                     previous.ormState[modelName].indexes[column][value] ===
                     ormState[modelName].indexes[column][value]
             )
@@ -51,7 +51,7 @@ const accessedIndexesAreEqual = (previous, ormState) => {
 
 const fullTableScannedModelsAreEqual = (previous, ormState) =>
     previous.fullTableScannedModels.every(
-        modelName => previous.ormState[modelName] === ormState[modelName]
+        (modelName) => previous.ormState[modelName] === ormState[modelName]
     );
 
 /**
@@ -160,7 +160,7 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
          */
         const session = orm.session(ormState);
         /* Replace all ORM state arguments by the session above */
-        const argsWithSession = args.map(arg =>
+        const argsWithSession = args.map((arg) =>
             isOrmState(arg) ? session : arg
         );
 

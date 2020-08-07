@@ -75,7 +75,7 @@ const QuerySet = class QuerySet {
      */
     toModelArray() {
         const { modelClass: ModelClass } = this;
-        return this._evaluate().map(props => new ModelClass(props));
+        return this._evaluate().map((props) => new ModelClass(props));
     }
 
     /**
@@ -287,7 +287,7 @@ const QuerySet = class QuerySet {
         const { session, modelName: table } = this.modelClass;
 
         this.toModelArray().forEach(
-            model => model._onDelete() // eslint-disable-line no-underscore-dangle
+            (model) => model._onDelete() // eslint-disable-line no-underscore-dangle
         );
 
         session.applyUpdate({

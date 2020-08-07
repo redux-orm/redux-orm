@@ -166,14 +166,14 @@ function manyToManyDescriptor(
              * referenced by any instance of the current model
              */
             const referencedOtherIds = new Set(
-                throughQs.toRefArray().map(obj => obj[otherReferencingField])
+                throughQs.toRefArray().map((obj) => obj[otherReferencingField])
             );
 
             /**
              * selects all instances of other model that are referenced
              * by any instance of the current model
              */
-            const qs = OtherModel.filter(otherModelInstance =>
+            const qs = OtherModel.filter((otherModelInstance) =>
                 referencedOtherIds.has(
                     otherModelInstance[OtherModel.idAttribute]
                 )
@@ -190,21 +190,21 @@ function manyToManyDescriptor(
             qs.add = function add(...entities) {
                 const idsToAdd = new Set(entities.map(normalizeEntity));
 
-                const existingQs = throughQs.filter(through =>
+                const existingQs = throughQs.filter((through) =>
                     idsToAdd.has(through[otherReferencingField])
                 );
 
                 if (existingQs.exists()) {
                     const existingIds = existingQs
                         .toRefArray()
-                        .map(through => through[otherReferencingField]);
+                        .map((through) => through[otherReferencingField]);
 
                     throw new Error(
                         `Tried to add already existing ${OtherModel.modelName} id(s) ${existingIds} to the ${ThisModel.modelName} instance with id ${thisId}`
                     );
                 }
 
-                idsToAdd.forEach(id => {
+                idsToAdd.forEach((id) => {
                     ThroughModel.create({
                         [otherReferencingField]: id,
                         [thisReferencingField]: thisId,
@@ -235,7 +235,7 @@ function manyToManyDescriptor(
             qs.remove = function remove(...entities) {
                 const idsToRemove = new Set(entities.map(normalizeEntity));
 
-                const entitiesToDelete = throughQs.filter(through =>
+                const entitiesToDelete = throughQs.filter((through) =>
                     idsToRemove.has(through[otherReferencingField])
                 );
 
@@ -243,10 +243,10 @@ function manyToManyDescriptor(
                     // Tried deleting non-existing entities.
                     const entitiesToDeleteIds = entitiesToDelete
                         .toRefArray()
-                        .map(through => through[otherReferencingField]);
+                        .map((through) => through[otherReferencingField]);
 
                     const unexistingIds = [...idsToRemove].filter(
-                        id => !entitiesToDeleteIds.includes(id)
+                        (id) => !entitiesToDeleteIds.includes(id)
                     );
 
                     throw new Error(

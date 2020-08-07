@@ -15,7 +15,7 @@ describe("Deprecations", () => {
             ({ session, orm, state } = createTestSessionWithData());
             consoleWarn.timesRun = 0;
             consoleWarn.lastMessage = null;
-            console.warn = msg => {
+            console.warn = (msg) => {
                 consoleWarn.timesRun++;
                 consoleWarn.lastMessage = msg;
             };
@@ -121,7 +121,7 @@ describe("Deprecations", () => {
             orm = createTestORM();
             consoleWarn.timesRun = 0;
             consoleWarn.lastMessage = null;
-            console.warn = msg => {
+            console.warn = (msg) => {
                 consoleWarn.timesRun++;
                 consoleWarn.lastMessage = msg;
             };

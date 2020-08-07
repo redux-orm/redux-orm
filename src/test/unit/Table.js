@@ -157,7 +157,7 @@ describe("Table", () => {
             const clauses = [
                 {
                     type: FILTER,
-                    payload: obj =>
+                    payload: (obj) =>
                         ["work", "urgent"].includes(obj[idAttribute]),
                 },
             ];
@@ -249,7 +249,7 @@ describe("Table", () => {
                 },
             ];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).toEqual([
+            expect(result.map((row) => row.data)).toEqual([
                 "awesomedata",
                 "cooldata",
                 "verycooldata!",
@@ -258,10 +258,10 @@ describe("Table", () => {
 
         it("orderBy works correctly with function argument", () => {
             const clauses = [
-                { type: ORDER_BY, payload: [row => row.data, undefined] },
+                { type: ORDER_BY, payload: [(row) => row.data, undefined] },
             ];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).toEqual([
+            expect(result.map((row) => row.data)).toEqual([
                 "awesomedata",
                 "cooldata",
                 "verycooldata!",
@@ -276,7 +276,7 @@ describe("Table", () => {
                 },
             ];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).toEqual([
+            expect(result.map((row) => row.data)).toEqual([
                 "awesomedata",
                 "cooldata",
                 "verycooldata!",
@@ -291,7 +291,7 @@ describe("Table", () => {
                 },
             ];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).toEqual([
+            expect(result.map((row) => row.data)).toEqual([
                 "verycooldata!",
                 "cooldata",
                 "awesomedata",
@@ -306,7 +306,7 @@ describe("Table", () => {
                 },
             ];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).toEqual([
+            expect(result.map((row) => row.data)).toEqual([
                 "awesomedata",
                 "cooldata",
                 "verycooldata!",
@@ -321,7 +321,7 @@ describe("Table", () => {
                 },
             ];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).toEqual([
+            expect(result.map((row) => row.data)).toEqual([
                 "verycooldata!",
                 "cooldata",
                 "awesomedata",
@@ -336,7 +336,7 @@ describe("Table", () => {
                 },
             ];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).toEqual([
+            expect(result.map((row) => row.data)).toEqual([
                 "verycooldata!",
                 "cooldata",
                 "awesomedata",
@@ -348,13 +348,13 @@ describe("Table", () => {
                 {
                     type: ORDER_BY,
                     payload: [
-                        [row => (row.data.includes("cool") ? 1 : 0), "id"],
+                        [(row) => (row.data.includes("cool") ? 1 : 0), "id"],
                         [false, "asc"],
                     ],
                 },
             ];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).toEqual([
+            expect(result.map((row) => row.data)).toEqual([
                 "cooldata",
                 "verycooldata!",
                 "awesomedata",
@@ -369,7 +369,7 @@ describe("Table", () => {
                 },
             ];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).toEqual([
+            expect(result.map((row) => row.data)).toEqual([
                 "cooldata",
                 "verycooldata!",
                 "awesomedata",
@@ -382,16 +382,16 @@ describe("Table", () => {
             ];
             const result = table.query(state, clauses);
             expect(result).toHaveLength(2);
-            expect(result.map(row => row.id)).toEqual([0, 2]);
+            expect(result.map((row) => row.id)).toEqual([0, 2]);
         });
 
         it("query works with multiple clauses", () => {
             const clauses = [
-                { type: FILTER, payload: row => row.id > 0 },
+                { type: FILTER, payload: (row) => row.id > 0 },
                 { type: ORDER_BY, payload: [["data"], ["inc"]] },
             ];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).toEqual([
+            expect(result.map((row) => row.data)).toEqual([
                 "awesomedata",
                 "verycooldata!",
             ]);
@@ -432,12 +432,12 @@ describe("Table", () => {
                 { type: FILTER, payload: { withIndex1: 1, withIndex2: 2 } },
             ];
             const result = table.query(stateWithIndexes, clauses);
-            expect(result.map(row => row.name)).toEqual(["work"]);
+            expect(result.map((row) => row.name)).toEqual(["work"]);
         });
 
         it("query works with an id filter for a row which is not in the current result set", () => {
             const clauses = [
-                { type: FILTER, payload: row => row.id !== 1 },
+                { type: FILTER, payload: (row) => row.id !== 1 },
                 { type: FILTER, payload: { id: 1 } },
             ];
             const result = table.query(state, clauses);
@@ -447,7 +447,7 @@ describe("Table", () => {
         it("query works with clauses of unknown type", () => {
             const clauses = [{ type: "Some unkown type" }];
             const result = table.query(state, clauses);
-            expect(result.map(row => row.data)).toEqual([
+            expect(result.map((row) => row.data)).toEqual([
                 "cooldata",
                 "verycooldata!",
                 "awesomedata",

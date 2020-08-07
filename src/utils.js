@@ -99,7 +99,7 @@ function attachQuerySetMethods(modelClass, querySetClass) {
     // There is no way to get a property descriptor for the whole prototype chain;
     // only from an objects own properties. Therefore we traverse the whole prototype
     // chain for querySet.
-    forEachSuperClass(querySetClass, cls => {
+    forEachSuperClass(querySetClass, (cls) => {
         for (let i = 0; i < leftToDefine.length; i++) {
             let defined = false;
             const methodName = leftToDefine[i];
@@ -175,9 +175,9 @@ function objectShallowEquals(a, b) {
 
 /** */
 function arrayDiffActions(sourceArr, targetArr) {
-    const itemsInBoth = sourceArr.filter(item => targetArr.includes(item));
-    const deleteItems = sourceArr.filter(item => !itemsInBoth.includes(item));
-    const addItems = targetArr.filter(item => !itemsInBoth.includes(item));
+    const itemsInBoth = sourceArr.filter((item) => targetArr.includes(item));
+    const deleteItems = sourceArr.filter((item) => !itemsInBoth.includes(item));
+    const addItems = targetArr.filter((item) => !itemsInBoth.includes(item));
 
     if (deleteItems.length || addItems.length) {
         return {

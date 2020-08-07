@@ -26,7 +26,7 @@ describe("Shorthand selector specifications", () => {
 
     const consoleWarn = jest
         .spyOn(global.console, "warn")
-        .mockImplementation(msg => msg);
+        .mockImplementation((msg) => msg);
 
     beforeEach(() => {
         ({
@@ -889,7 +889,7 @@ describe("Shorthand selector specifications", () => {
         it("can be combined when used as input selectors ", () => {
             const publisherAverageRating = createSelector(
                 orm.Publisher.movies.map(orm.Movie.rating),
-                ratings =>
+                (ratings) =>
                     ratings && (ratings.length ? avg(ratings) : "no movies")
             );
             expect(publisherAverageRating(emptyState, 123)).toEqual(null); // publisher doesn't exist yet

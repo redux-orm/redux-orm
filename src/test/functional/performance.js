@@ -14,8 +14,8 @@ const logTime = (message, tookSeconds, maxSeconds, measurements) => {
     let out = `${message} took ${tookSeconds}s / ${maxSeconds}s`;
     if (measurements) {
         const measurementSeconds = measurements
-            .map(m => round(m, PRECISION))
-            .map(m => `${m}s`)
+            .map((m) => round(m, PRECISION))
+            .map((m) => `${m}s`)
             .join(", ");
         out += ` on average (${measurementSeconds} each)`;
     }
@@ -69,7 +69,7 @@ describe("Big Data Test", () => {
                     }
                 });
             })
-            .map(ms => ms / 1000);
+            .map((ms) => ms / 1000);
 
         const tookSeconds = round(avg(measurements), PRECISION);
         logTime(
@@ -106,7 +106,7 @@ describe("Big Data Test", () => {
                     }
                 });
             })
-            .map(ms => ms / 1000);
+            .map((ms) => ms / 1000);
 
         const tookSeconds = round(avg(measurements), PRECISION);
         logTime(
@@ -140,10 +140,12 @@ describe("Big Data Test", () => {
         const measurements = nTimes(n)
             .map((_value, index) =>
                 measureMs(() => {
-                    group.items.toModelArray().forEach(item => item.toString());
+                    group.items
+                        .toModelArray()
+                        .forEach((item) => item.toString());
                 })
             )
-            .map(ms => ms / 1000);
+            .map((ms) => ms / 1000);
 
         const tookSeconds = round(avg(measurements), PRECISION);
         logTime(
@@ -216,7 +218,7 @@ describe("Many-to-many relationship performance", () => {
                 unassignChildren(parent, 0, childAmount);
                 return ms;
             })
-            .map(ms => ms / 1000);
+            .map((ms) => ms / 1000);
 
         const tookSeconds = round(avg(measurements), PRECISION);
         logTime(
@@ -246,7 +248,7 @@ describe("Many-to-many relationship performance", () => {
                     }
                 })
             )
-            .map(ms => ms / 1000);
+            .map((ms) => ms / 1000);
 
         const tookSeconds = round(avg(measurements), PRECISION);
         logTime(
@@ -276,7 +278,7 @@ describe("Many-to-many relationship performance", () => {
                 });
                 return ms;
             })
-            .map(ms => ms / 1000);
+            .map((ms) => ms / 1000);
 
         const tookSeconds = round(avg(measurements), PRECISION);
         logTime(

@@ -235,13 +235,13 @@ export function createTestSessionWithData(customORM) {
         Movie,
     } = orm.mutableSession(state);
 
-    AUTHORS_INITIAL.forEach(props => Author.create(props));
-    COVERS_INITIAL.forEach(props => Cover.create(props));
-    GENRES_INITIAL.forEach(props => Genre.create(props));
-    TAGS_INITIAL.forEach(props => Tag.create(props));
-    BOOKS_INITIAL.forEach(props => Book.create(props));
-    PUBLISHERS_INITIAL.forEach(props => Publisher.create(props));
-    MOVIES_INITIAL.forEach(props => Movie.create(props));
+    AUTHORS_INITIAL.forEach((props) => Author.create(props));
+    COVERS_INITIAL.forEach((props) => Cover.create(props));
+    GENRES_INITIAL.forEach((props) => Genre.create(props));
+    TAGS_INITIAL.forEach((props) => Tag.create(props));
+    BOOKS_INITIAL.forEach((props) => Book.create(props));
+    PUBLISHERS_INITIAL.forEach((props) => Publisher.create(props));
+    MOVIES_INITIAL.forEach((props) => Movie.create(props));
 
     const normalSession = orm.session(state);
     return { session: normalSession, orm, state };
@@ -249,7 +249,7 @@ export function createTestSessionWithData(customORM) {
 
 export const isSubclass = (a, b) => a.prototype instanceof b;
 
-export const measureMsSince = startTime => {
+export const measureMsSince = (startTime) => {
     if (!startTime) {
         return process.hrtime();
     }
@@ -257,7 +257,7 @@ export const measureMsSince = startTime => {
     return Math.round(endTime[0] * 1000 + endTime[1] / 1000000);
 };
 
-export const nTimes = n => Array.from({ length: n });
+export const nTimes = (n) => Array.from({ length: n });
 
 export function measureMs(fn) {
     const start = measureMsSince();
@@ -265,7 +265,7 @@ export function measureMs(fn) {
     return measureMsSince(start);
 }
 
-export const avg = arr => {
+export const avg = (arr) => {
     if (arr.length === 0) return null;
     const sum = arr.reduce((cur, summand) => cur + summand);
     return sum / arr.length;
