@@ -203,6 +203,37 @@ describe("Many to many relationships", () => {
 
             validateRelationState();
         });
+
+        it("deletes with custom field name", () => {
+            const Apple = class extends Model {};
+            Apple.modelName = "Apple";
+            Apple.fields = {
+                id: attr(),
+                comparableIds: many({
+                    to: "Orange",
+                    as: "comparables",
+                    relatedName: "comparables",
+                }),
+            };
+
+            const Orange = class extends Model {};
+            Orange.modelName = "Orange";
+            Orange.fields = {
+                id: attr(),
+            };
+
+            orm = new ORM();
+            orm.register(Apple, Orange);
+            session = orm.session();
+            expect(session.Apple.count()).toBe(0);
+            expect(session.Orange.count()).toBe(0);
+
+            session.Apple.create({ id: "a0", comparableIds: [] });
+
+            expect(session.Apple.count()).toBe(1);
+            session.Apple.first().delete();
+            expect(session.Apple.count()).toBe(0);
+        });
     });
 
     describe("many-many with a custom through model", () => {
