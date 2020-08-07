@@ -762,7 +762,8 @@ const Model = class Model {
             const field = virtualFields[key];
             if (field instanceof ManyToMany) {
                 // Delete any many-to-many rows the entity is included in.
-                this[key].clear();
+                const descriptorKey = field.as || key;
+                this[descriptorKey].clear();
             } else if (field instanceof ForeignKey) {
                 const relatedQs = this[key];
                 if (relatedQs.exists()) {
