@@ -57,7 +57,7 @@
     "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.0",
     "@babel/register": "^7.10.5",
-    "@types/jsdoc-to-markdown": "^4.0.0",
+    "@types/jsdoc-to-markdown": "^6.0.0",
     "babel-core": "^7.0.0-bridge.0",
     "babel-eslint": "^10.1.0",
     "babel-jest": "^24.9.0",
