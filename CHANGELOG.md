@@ -1,5 +1,11 @@
 **Minor changes before v1.0.0 can include breaking changes.**
 
+### 0.16.2
+
+* Fix upsert when virtual fields have not been passed during creation: Don't attempt to delete from non-existing index. ([#543](https://github.com/redux-orm/redux-orm/pull/543))
+* Fix failing deletion of many-to-many fields with custom accessor names. ([#552](https://github.com/redux-orm/redux-orm/pull/552))
+* Update Babel-related dependencies. ([#544](https://github.com/redux-orm/redux-orm/pull/544))
+
 ### 0.16.1
 
 * Fixed map selectors being stored under the same key. ([ad9d0c7](https://github.com/redux-orm/redux-orm/commit/ad9d0c797130a90c293c605514defb4dbb8adea7))
