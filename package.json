@@ -74,7 +74,7 @@
     "eslint-plugin-prettier": "^3.1.2",
     "gulp": "^4.0.2",
     "gulp-clean": "^0.4.0",
-    "jest": "^24.9.0",
+    "jest": "^26.2.2",
     "jest-cli": "^24.9.0",
     "jsdoc": "^3.6.3",
     "jsdoc-to-markdown": "^5.0.3",
