@@ -467,7 +467,7 @@ export class Table {
                     // attribute has not changed, no need to update any index
                     return;
                 }
-                if (prevValue !== null) {
+                if (prevValue !== null && typeof prevValue !== "undefined") {
                     // remove id from attribute's index for its old value
                     indexIdsToDelete.push([attr, prevValue, id]);
                 }
