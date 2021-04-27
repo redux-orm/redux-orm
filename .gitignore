@@ -5,6 +5,8 @@ docs-current/
 .DS_Store
 lib/
 es/
+jsnext/
+types/
 .publish
 dist/
 min

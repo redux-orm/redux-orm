@@ -7,12 +7,12 @@ module.exports = {
     entry: "./src/index.js",
     resolve: {
         modules: [path.resolve("./src"), "node_modules"],
-        extensions: [".js"],
+        extensions: [".js", ".ts"],
     },
     module: {
         rules: [
             {
-                test: /\.js$/,
+                test: /\.(js|ts)$/,
                 loader: "babel-loader",
                 exclude: /node_modules/,
                 options: {
