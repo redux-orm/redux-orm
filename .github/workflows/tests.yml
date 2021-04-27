@@ -36,13 +36,13 @@ jobs:
               run: npm run lint
 
             - name: ES5 tests
-              run: npm test:es5
+              run: npm run test:es5
 
             - name: Normal tests
-              run: npm test
+              run: npm run test
 
             - name: Performance tests
-              run: npm test:perf
+              run: npm run test:perf
 
             - name: Collect coverage
               run: npx codecov
