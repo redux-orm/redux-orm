@@ -35,6 +35,9 @@ jobs:
             - name: Lint code
               run: npm run lint
 
+            - name: Transpile to ES5
+              run: npm run transpile:cjs
+
             - name: ES5 tests
               run: npm run test:es5
 
