@@ -1,16 +1,19 @@
 import { IndexedModelClasses, ORM, OrmState } from "./ORM";
 import { Database, QueryResult, QuerySpec, UpdateSpec } from "./db";
 import { Assign } from "./helpers";
+import { ModelType } from "./Model";
 
-export declare type BatchToken = any;
+export type BatchToken = any;
 
-export declare class Session<I extends IndexedModelClasses<any>> {
+export default class Session<I extends IndexedModelClasses<any>> {
     /**
      * list of bound {@link Model} classes bound to this session, bootstrapped during {@link @ORM.register}.
      *
-     * @see {@link Model}
+     * @see {@link ModelType}
      */
-    readonly sessionBoundModels: ReadonlyArray<I[keyof I]>;
+    readonly sessionBoundModels: ReadonlyArray<
+        ModelType<InstanceType<I[keyof I]>>
+    >;
 
     /**
      * Current {@link OrmState}, specific to registered schema
@@ -66,13 +69,12 @@ export declare class Session<I extends IndexedModelClasses<any>> {
 }
 
 /**
- * An {@link ORM}-bound {@link Session} instance, extended with a set of {@link Model.constructor} properties.
+ * An {@link ORM}-bound {@link Session} instance, extended with a set of {@link ModelType} properties.
  *
- * Extension is a map of {@link Model} class accessible under keys within a set of {@link Model#modelName} values
+ * Extension is a map of {@link ModelType} accessible under keys within a set of {@link Model#modelName} values
  * for registered {@link Model} classes.
  */
-export declare type OrmSession<I extends IndexedModelClasses<any>> = Assign<
+export type OrmSession<I extends IndexedModelClasses<any>> = Assign<
     Session<I>,
-    { [K in keyof I]: I[K] }
+    { [K in keyof I]: ModelType<InstanceType<I[K]>> }
 >;
-export default Session;

@@ -1,4 +1,4 @@
-export declare class Field {
+export class Field {
     readonly index: boolean;
 }
 
@@ -19,10 +19,7 @@ export interface RelationalFieldOpts {
     to: string;
     relatedName?: string;
     through?: string;
-    throughFields?: {
-        to: string;
-        from: string;
-    };
+    throughFields?: [string, string];
     as?: string;
 }
 
@@ -65,13 +62,13 @@ export interface OneToOneCreator {
     (opts: RelationalFieldOpts): OneToOne;
 }
 
-export declare const attr: AttrCreator;
+export const attr: AttrCreator;
 
-export declare const oneToOne: OneToOneCreator;
+export const oneToOne: OneToOneCreator;
 
-export declare const fk: FkCreator;
+export const fk: FkCreator;
 
-export declare const many: ManyCreator;
+export const many: ManyCreator;
 
 export interface FieldSpecMap {
     [K: string]: Attribute | ForeignKey | ManyToMany | OneToOne;

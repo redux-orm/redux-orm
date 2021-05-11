@@ -16,7 +16,7 @@ import { BatchToken } from "../Session";
 /**
  * A type of {@link QueryClause}.
  */
-type QueryType = typeof FILTER | typeof EXCLUDE | typeof ORDER_BY;
+export type QueryType = typeof FILTER | typeof EXCLUDE | typeof ORDER_BY;
 
 /**
  * A single `QueryClause`.
@@ -52,12 +52,12 @@ export interface QueryResult<Row extends Record<string, Serializable> = {}> {
 /**
  * A type of data update to perform.
  */
-type UpdateType = typeof CREATE | typeof UPDATE | typeof DELETE;
+export type UpdateType = typeof CREATE | typeof UPDATE | typeof DELETE;
 
 /**
  * A status of data update operation.
  */
-type UpdateStatus = typeof SUCCESS | typeof FAILURE;
+export type UpdateStatus = typeof SUCCESS | typeof FAILURE;
 
 /**
  * Data update definition
@@ -165,7 +165,7 @@ export interface Database<
 /**
  * Database creation function type.
  */
-type DatabaseCreator = typeof createDatabase;
+export type DatabaseCreator = typeof createDatabase;
 
 /**
  * Default database creation procedure handle.
@@ -177,3 +177,5 @@ type DatabaseCreator = typeof createDatabase;
 export function createDatabase<I extends IndexedModelClasses<any>>(
     schemaSpec: SchemaSpec<I>
 ): Database<I>;
+
+export default createDatabase;

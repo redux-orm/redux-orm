@@ -1,6 +1,11 @@
 module.exports = {
-    extends: ["airbnb-base", "plugin:prettier/recommended"],
-    parser: "babel-eslint",
+    extends: [
+        "airbnb-base",
+        "plugin:prettier/recommended",
+        // "plugin:@typescript-eslint/recommended", // enables TS linting
+    ],
+    parser: "@typescript-eslint/parser",
+    plugins: ["@typescript-eslint"],
     rules: {
         "max-len": 0,
         "id-length": 0,
