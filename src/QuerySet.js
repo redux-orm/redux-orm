@@ -1,6 +1,13 @@
 import { normalizeEntity, warnDeprecated, mapValues } from "./utils";
 
-import { UPDATE, DELETE, FILTER, EXCLUDE, ORDER_BY } from "./constants";
+import {
+    UPDATE,
+    DELETE,
+    FILTER,
+    EXCLUDE,
+    ORDER_BY,
+    EMPTY_ARRAY,
+} from "./constants";
 
 /**
  * This class is used to build and make queries to the database
@@ -66,7 +73,11 @@ const QuerySet = class QuerySet {
      *                    the QuerySet
      */
     toRefArray() {
-        return this._evaluate();
+        const arr = this._evaluate();
+        if (arr.length === 0) {
+            return EMPTY_ARRAY;
+        }
+        return arr;
     }
 
     /**
@@ -75,7 +86,11 @@ const QuerySet = class QuerySet {
      */
     toModelArray() {
         const { modelClass: ModelClass } = this;
-        return this._evaluate().map((props) => new ModelClass(props));
+        const arr = this._evaluate();
+        if (arr.length === 0) {
+            return EMPTY_ARRAY;
+        }
+        return arr.map((props) => new ModelClass(props));
     }
 
     /**
