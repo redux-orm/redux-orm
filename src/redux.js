@@ -192,12 +192,6 @@ function createSelectorFromSpecFor(modelOrModelBasedSpec) {
             [
                 orm.stateSelector,
                 idArgSelector,
-                // TODO: do the mapping by key in memoizeByKey
-                // get "base dependencies" that do not include idArgSelector
-                // get "base result func" that does not map by key
-                // check if args are equal in memoizeByKey again
-                // the only reason we need to do that is to keep backwards
-                // compatibility
                 (state) => state,
                 orm.stateSelector,
                 idArgSelector,
@@ -497,8 +491,6 @@ export function createSelectorFor(spec) {
                 );
             }
 
-            // TODO: Somehow detect selectors created by `createSelectorFor` and compare
-            //       the models here. We need to mark those selectors.
             const dependencyIsForModelRef = dependencies.map(
                 (dep) =>
                     (typeof dep === "function" &&
