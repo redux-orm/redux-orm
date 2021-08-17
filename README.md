@@ -3,9 +3,9 @@
 <div align="center">
 
 [![Build Status](https://img.shields.io/travis/redux-orm/redux-orm.svg?style=flat-square)](https://travis-ci.org/redux-orm/redux-orm)
-[![Codacy Grade](https://img.shields.io/codacy/grade/d3ad7e3bd8264012953df9d1967bedaa.svg?style=flat-square)](https://www.codacy.com/app/redux-orm/redux-orm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=redux-orm/redux-orm&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://img.shields.io/codecov/c/github/redux-orm/redux-orm/master.svg?style=flat-square)](https://codecov.io/gh/redux-orm/redux-orm/branch/master)
 [![NPM package](https://img.shields.io/npm/v/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
+![NPM package (next)](https://img.shields.io/npm/v/redux-orm/next?style=flat-square)
 ![GitHub Release Date](https://img.shields.io/github/release-date/redux-orm/redux-orm.svg?style=flat-square)
 [![NPM downloads](https://img.shields.io/npm/dm/redux-orm.svg?style=flat-square)](https://www.npmjs.com/package/redux-orm)
 [![Gitter](https://badges.gitter.im/redux-orm/Lobby.svg?style=flat-square)](https://gitter.im/redux-orm/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
