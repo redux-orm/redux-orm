@@ -54,6 +54,42 @@ const fullTableScannedModelsAreEqual = (previous, ormState) =>
         (modelName) => previous.ormState[modelName] === ormState[modelName]
     );
 
+const MEMOIZATION_STATE_KEY = "@@_______REDUX_ORM_MEMOIZATION_STATE";
+const MEMOIZATION_STATE = {
+    /* Result of the previous function call */
+    result: null,
+    /**
+     * Snapshot of the previous database.
+     *
+     * Lets us know how the tables looked like
+     * during the previous function call.
+     */
+    ormState: null,
+    /**
+     * Names of models whose tables have been scanned completely
+     * during previous function call (contains only model names)
+     * Format example: ['Book']
+     */
+    fullTableScannedModels: [],
+    /**
+     * Map of which model instances have been accessed
+     * during previous function call.
+     * Contains only PKs of accessed instances.
+     * Format example: { Book: { 1: true, 3: true } }
+     */
+    accessedInstances: {},
+    /**
+     * Map of which attribute indexes have been accessed
+     * during previous function call.
+     * Contains only attributes that were actually filtered on.
+     * Author.withId(3).books would add 3 to the authorId index below.
+     * Format example: { Book: { authorId: [1, 2], publisherId: [5] } }
+     */
+    accessedIndexes: {},
+    /* Whether the selector has been called */
+    calledBefore: false,
+};
+
 /**
  * A memoizer to use with redux-orm
  * selectors. When the memoized function is first run,
@@ -90,46 +126,11 @@ const fullTableScannedModelsAreEqual = (previous, ormState) =>
  *
  * @private
  * @param  {Function} func - function to memoize
- * @param  {Function} argEqualityCheck - equality check function to use with normal
- *                                       selector args
  * @param  {ORM} orm - a redux-orm ORM instance
  * @return {Function} `func` memoized.
  */
-export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
-    let previous = {
-        /* Result of the previous function call */
-        result: null,
-        /* Arguments to the previous function call (excluding ORM state) */
-        args: null,
-        /**
-         * Snapshot of the previous database.
-         *
-         * Lets us know how the tables looked like
-         * during the previous function call.
-         */
-        ormState: null,
-        /**
-         * Names of models whose tables have been scanned completely
-         * during previous function call (contains only model names)
-         * Format example: ['Book']
-         */
-        fullTableScannedModels: [],
-        /**
-         * Map of which model instances have been accessed
-         * during previous function call.
-         * Contains only PKs of accessed instances.
-         * Format example: { Book: { 1: true, 3: true } }
-         */
-        accessedInstances: {},
-        /**
-         * Map of which attribute indexes have been accessed
-         * during previous function call.
-         * Contains only attributes that were actually filtered on.
-         * Author.withId(3).books would add 3 to the authorId index below.
-         * Format example: { Book: { authorId: [1, 2], publisherId: [5] } }
-         */
-        accessedIndexes: {},
-    };
+export function memoize(func, orm) {
+    const previous = { ...MEMOIZATION_STATE, args: null };
 
     return (...stateAndArgs) => {
         /**
@@ -138,10 +139,9 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
          */
         const [ormState, ...args] = stateAndArgs;
 
-        const selectorWasCalledBefore = Boolean(previous.args);
         if (
-            selectorWasCalledBefore &&
-            argsAreEqual(previous.args, args, argEqualityCheck) &&
+            previous.calledBefore &&
+            argsAreEqual(previous.args, args, defaultEqualityCheck) &&
             fullTableScannedModelsAreEqual(previous, ormState) &&
             accessedIndexesAreEqual(previous, ormState) &&
             accessedModelInstancesAreEqual(previous, ormState, orm)
@@ -171,20 +171,110 @@ export function memoize(func, argEqualityCheck = defaultEqualityCheck, orm) {
          * The metadata for the previous call are no longer valid.
          * Update cached values.
          */
-        previous = {
-            /* Arguments that were passed to the selector */
-            args,
-            /* Selector result */
-            result,
-            /* Redux state slice for session.state */
-            ormState,
-            /* Rows retrieved by resolved primary key */
-            accessedInstances: session.accessedModelInstances,
-            /* Foreign key indexes that were used to speed up queries */
-            accessedIndexes: session.accessedIndexes,
-            /* Tables that had to be scanned completely */
-            fullTableScannedModels: session.fullTableScannedModels,
-        };
+        previous.result = result;
+        previous.args = args;
+        /* Redux state slice for session.state */
+        previous.ormState = ormState;
+        /* Rows retrieved by resolved primary key */
+        previous.accessedInstances = session.accessedModelInstances;
+        /* Foreign key indexes that were used to speed up queries */
+        previous.accessedIndexes = session.accessedIndexes;
+        /* Tables that had to be scanned completely */
+        previous.fullTableScannedModels = session.fullTableScannedModels;
+        /* Whether the selector has been called */
+        previous.calledBefore = true;
+
+        return result;
+    };
+}
+
+class PreviousCalls extends Map {
+    getFromCacheKeys(cacheKeys) {
+        let level = this;
+        for (const key of cacheKeys) {
+            if (level.has(key)) {
+                level = level.get(key);
+                continue;
+            }
+            const newLevel = new Map([
+                [MEMOIZATION_STATE_KEY, { ...MEMOIZATION_STATE }],
+            ]);
+            level.set(key, newLevel);
+            level = newLevel;
+        }
+        return level;
+    }
+
+    getState(cacheKeys) {
+        const call = this.getFromCacheKeys(cacheKeys);
+        return call ? call.get(MEMOIZATION_STATE_KEY) : null;
+    }
+}
+
+export function memoizeByKey(func, orm, ignoreDependenciesCount) {
+    const previousCalls = new PreviousCalls([
+        [MEMOIZATION_STATE_KEY, { ...MEMOIZATION_STATE }],
+    ]);
+
+    return (...stateAndKeysAndArgs) => {
+        /**
+         * The first argument to this function needs to be
+         * the ORM's reducer state in the user's Redux store.
+         */
+        const [ormState, cacheKeys, ...args] = stateAndKeysAndArgs;
+        /** Ignore the first `ignoreDependenciesCount` dependencies. */
+        const argsToCompare = args.slice(Math.max(0, ignoreDependenciesCount));
+
+        const previous = previousCalls.getState([cacheKeys]);
+
+        if (
+            previous.calledBefore &&
+            argsAreEqual(
+                previous.argsToCompare,
+                argsToCompare,
+                defaultEqualityCheck
+            ) &&
+            fullTableScannedModelsAreEqual(previous, ormState) &&
+            accessedIndexesAreEqual(previous, ormState) &&
+            accessedModelInstancesAreEqual(previous, ormState, orm)
+        ) {
+            /**
+             * None of this selector's dependencies have changed
+             * since the last time that we called it.
+             */
+            return previous.result;
+        }
+
+        /**
+         * Start a session so that the selector can access the database.
+         * Make this session immutable. This way we can find out if
+         * the operations that the selector performs are cacheable.
+         */
+        const session = orm.session(ormState);
+        /* Replace all ORM state arguments by the session above */
+        const argsWithSession = args.map((arg) =>
+            isOrmState(arg) ? session : arg
+        );
+
+        /* This is where we call the actual function */
+        const result = func.apply(null, argsWithSession); // eslint-disable-line prefer-spread
+
+        /**
+         * The metadata for the previous call are no longer valid.
+         * Update cached values.
+         */
+        previous.result = result;
+        /* Redux state slice for session.state */
+        previous.ormState = ormState;
+        /* Rows retrieved by resolved primary key */
+        previous.accessedInstances = session.accessedModelInstances;
+        /* Foreign key indexes that were used to speed up queries */
+        previous.accessedIndexes = session.accessedIndexes;
+        /* Tables that had to be scanned completely */
+        previous.fullTableScannedModels = session.fullTableScannedModels;
+        /* Whether the selector has been called */
+        previous.calledBefore = true;
+        previous.argsToCompare = argsToCompare;
 
         return result;
     };

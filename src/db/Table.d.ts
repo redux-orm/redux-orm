@@ -1,5 +1,6 @@
-import { AnyModel, FieldSpecKeys, IdType, Ref } from "../Model";
-import { Field, ForeignKey, OneToOne } from "../fields";
+import Model, { AnyModel, FieldSpecKeys, IdType, Ref } from "../Model";
+import { ForeignKey, OneToOne } from "../index";
+import { Field } from "../fields";
 
 /**
  * {@link TableOpts} used for {@link Table} customization.
@@ -30,7 +31,7 @@ export interface TableOpts {
 /**
  * @internal
  */
-type ExtractModelOption<
+export type ExtractModelOption<
     MClass extends typeof AnyModel,
     K extends keyof TableOpts,
     DefaultValue extends string
@@ -60,7 +61,7 @@ export type IdAttribute<MClass extends typeof AnyModel> = ExtractModelOption<
  *
  * Falls back to `'items'` if not specified explicitly via {@link Model.options}.
  */
-type ArrName<MClass extends typeof AnyModel> = ExtractModelOption<
+export type ArrName<MClass extends typeof AnyModel> = ExtractModelOption<
     MClass,
     "arrName",
     "items"
@@ -92,7 +93,7 @@ export interface ModelTableOpts<MClass extends typeof AnyModel> {
 /**
  * Handles the underlying data structure for a {@link Model} class.
  */
-export declare class Table<MClass extends typeof AnyModel> {
+export class Table<MClass extends typeof AnyModel> {
     /**
      * Creates a new {@link Table} instance.
      *
@@ -113,7 +114,7 @@ export declare class Table<MClass extends typeof AnyModel> {
 /**
  * Type of {@link Model} state's branch `meta` field.
  */
-interface DefaultMeta<MIdType> {
+export interface DefaultMeta<MIdType> {
     maxId: MIdType extends number ? number : null | number;
 }
 
@@ -126,7 +127,7 @@ export type TableIndexes<MClass extends typeof AnyModel> = {
  *
  * Infers actual state of the ORM branch based on the {@link Model} class provided.
  */
-export declare type TableState<MClass extends typeof AnyModel> = {
+export type TableState<MClass extends typeof AnyModel> = {
     readonly meta: DefaultMeta<IdType<InstanceType<MClass>>>;
     readonly indexes: TableIndexes<MClass>;
 } & {
@@ -139,5 +140,3 @@ export declare type TableState<MClass extends typeof AnyModel> = {
             readonly [K: string]: Ref<InstanceType<MClass>>;
         };
     };
-
-export default Table;

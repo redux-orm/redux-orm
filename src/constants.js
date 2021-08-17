@@ -11,8 +11,12 @@ export const FAILURE = "FAILURE";
 
 // for detecting ORM state objects
 export const STATE_FLAG = "@@_______REDUX_ORM_STATE_FLAG";
+// for detecting keyed selectors and storing the corresponding model
+export const KEYED_SELECTOR_MARKER = "@@_______REDUX_ORM_KEYED_SELECTOR";
 
 // for caching selectors based on their ID argument
 export const ALL_INSTANCES = Symbol("REDUX_ORM_ALL_INSTANCES");
 export const ID_ARG_KEY_SELECTOR = (_state, idArg) =>
     typeof idArg === "undefined" ? ALL_INSTANCES : idArg;
+
+export const EMPTY_ARRAY = Object.freeze([]);

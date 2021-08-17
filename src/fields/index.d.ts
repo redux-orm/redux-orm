@@ -1,8 +1,8 @@
-export declare class Field {
+export class Field {
     readonly index: boolean;
 }
 
-interface AttributeOpts {
+export interface AttributeOpts {
     getDefault?: () => any;
 }
 
@@ -11,18 +11,15 @@ export declare class Attribute extends Field {
     ["type"]: "attr";
 }
 
-interface AttributeWithDefault extends Attribute {
+export interface AttributeWithDefault extends Attribute {
     getDefault(): any;
 }
 
-interface RelationalFieldOpts {
+export interface RelationalFieldOpts {
     to: string;
     relatedName?: string;
     through?: string;
-    throughFields?: {
-        to: string;
-        from: string;
-    };
+    throughFields?: [string, string];
     as?: string;
 }
 
@@ -45,34 +42,34 @@ export declare class ManyToMany extends RelationalField {
     ["type"]: "many";
 }
 
-interface AttrCreator {
+export interface AttrCreator {
     (): Attribute;
     (opts: AttributeOpts): AttributeWithDefault;
 }
 
-interface FkCreator {
+export interface FkCreator {
     (toModelName: string, relatedName?: string): ForeignKey;
     (opts: RelationalFieldOpts): ForeignKey;
 }
 
-interface ManyCreator {
+export interface ManyCreator {
     (toModelName: string, relatedName?: string): ManyToMany;
     (opts: RelationalFieldOpts): ManyToMany;
 }
 
-interface OneToOneCreator {
+export interface OneToOneCreator {
     (toModelName: string, relatedName?: string): OneToOne;
     (opts: RelationalFieldOpts): OneToOne;
 }
 
-export declare const attr: AttrCreator;
+export const attr: AttrCreator;
 
-export declare const oneToOne: OneToOneCreator;
+export const oneToOne: OneToOneCreator;
 
-export declare const fk: FkCreator;
+export const fk: FkCreator;
 
-export declare const many: ManyCreator;
+export const many: ManyCreator;
 
-interface FieldSpecMap {
+export interface FieldSpecMap {
     [K: string]: Attribute | ForeignKey | ManyToMany | OneToOne;
 }

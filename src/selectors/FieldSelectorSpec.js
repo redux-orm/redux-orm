@@ -22,11 +22,7 @@ export default class FieldSelectorSpec extends ModelBasedSelectorSpec {
         return this._accessorName;
     }
 
-    get dependencies() {
-        return [this._orm, idArgSelector];
-    }
-
-    valueForInstance(instance, session) {
+    valueForInstance(instance, session, state) {
         if (!instance) {
             return null;
         }
@@ -37,7 +33,11 @@ export default class FieldSelectorSpec extends ModelBasedSelectorSpec {
         } else {
             /* orm.Model.field1.field2..fieldN.field */
             const { [this._parent.toModelName]: ParentToModel } = session;
-            const parentRef = this._parent.valueForInstance(instance, session);
+            const parentRef = this._parent.valueForInstance(
+                instance,
+                session,
+                state
+            );
             const parentInstance = parentRef
                 ? new ParentToModel(parentRef)
                 : null;

@@ -1,6 +1,6 @@
 {
   "name": "redux-orm",
-  "version": "0.16.2",
+  "version": "0.17.0-rc.0",
   "description": "Simple ORM to manage and query your state trees",
   "main": "lib/index.js",
   "module": "es/index.js",
@@ -28,6 +28,7 @@
     "ensure-clean-tree": "[ -z \"$(git status -s)\" ] || (echo \"Error: There are uncommitted changes in the git repostory.\" && false)",
     "lint": "run-p lint:*",
     "lint:es": "eslint src",
+    "lint:dts": "dtslint src --expectOnly",
     "clean": "rimraf lib es jsnext types dist docs coverage"
   },
   "keywords": [
@@ -65,7 +66,10 @@
     "@babel/preset-env": "^7.13.9",
     "@babel/preset-typescript": "^7.13.0",
     "@babel/register": "^7.13.8",
+    "@types/jest": "^26.0.23",
     "@types/jsdoc-to-markdown": "^6.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.22.1",
+    "@typescript-eslint/parser": "^4.22.1",
     "babel-core": "^7.0.0-bridge.0",
     "babel-eslint": "^10.1.0",
     "babel-jest": "^26.6.3",
@@ -74,7 +78,8 @@
     "codecov": "^3.8.1",
     "cross-env": "^7.0.3",
     "deep-freeze": "0.0.1",
-    "eslint": "^7.21.0",
+    "dtslint": "^4.0.9",
+    "eslint": "^7.25.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-config-prettier": "^6.15.0",
     "eslint-plugin-import": "^2.22.1",
@@ -92,7 +97,8 @@
     "redux": "^4.0.5",
     "redux-persist": "^6.0.0",
     "rimraf": "^3.0.2",
-    "typescript": "^4.2.2",
+    "ts-jest": "^26.5.5",
+    "typescript": "^4.2.4",
     "webpack": "^4.46.0",
     "webpack-cli": "^3.3.12",
     "webpack-merge": "^5.7.3"

@@ -3,6 +3,7 @@ import Model, {
     AnyModel,
     IdType,
     ModelClass,
+    Ref,
     Serializable,
     SessionBoundModel,
     UpdateProps,
@@ -36,7 +37,7 @@ import Model, {
  *
  * @see {@link QuerySet.QueryBuilder}
  */
-export declare class QuerySet<
+export class QuerySet<
     M extends AnyModel = any,
     InstanceProps extends object = {}
 > implements QuerySet.QueryBuilder<M, InstanceProps> {
@@ -68,7 +69,7 @@ export declare class QuerySet<
      *
      * @return references to the plain JS objects represented by the QuerySet
      */
-    toRefArray(): ReadonlyArray<M["ref"] & InstanceProps>;
+    toRefArray(): ReadonlyArray<Ref<M> & InstanceProps>;
 
     /**
      * Returns an array of {@link SessionBoundModel} instances represented by the QuerySet.
@@ -122,7 +123,7 @@ export interface MutableQuerySet<
     clear: () => void;
 }
 
-export declare namespace QuerySet {
+export namespace QuerySet {
     /**
      * Register custom method on a `QuerySet` class specification.
      * QuerySet class may be attached to a {@link Model} class via {@link Model#querySetClass}
@@ -267,16 +268,14 @@ export declare namespace QuerySet {
      *
      * {@see QuerySet.orderBy}
      */
-    type SortIteratee<M extends Model> =
-        | keyof M["ref"]
-        | { (row: M["ref"]): any };
+    type SortIteratee<M extends Model> = keyof Ref<M> | { (row: Ref<M>): any };
 
     /**
      * Lookup clause as an object specifying props to match with plain object Model representation stored in the database.
      * {@see QuerySet.exclude}
      * {@see QuerySet.filter}
      */
-    type LookupProps<M extends Model> = Partial<M["ref"]> &
+    type LookupProps<M extends Model> = Partial<Ref<M>> &
         Record<string, Serializable>;
 
     /**
@@ -284,7 +283,7 @@ export declare namespace QuerySet {
      * {@see QuerySet.exclude}
      * {@see QuerySet.filter}
      */
-    type LookupPredicate<M extends Model> = (row: M["ref"]) => boolean;
+    type LookupPredicate<M extends Model> = (row: Ref<M>) => boolean;
 
     /**
      * A union of lookup clauses.
@@ -301,4 +300,5 @@ export declare namespace QuerySet {
      * {@see QuerySet.filter}
      */
 }
+
 export default QuerySet;

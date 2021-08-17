@@ -1,9 +1,11 @@
+// Minimum TypeScript Version: 3.8
+
 import { ORM } from "./ORM";
 import Model from "./Model";
 import QuerySet from "./QuerySet";
 import { createDatabase } from "./db";
 import { attr, fk, many, oneToOne } from "./fields";
-import { createReducer, createSelector } from "./redux";
+import { createReducer, createSelector, createSelectorFor } from "./redux";
 
 import type {
     CreateProps,
@@ -65,6 +67,7 @@ export type {
 export {
     createDatabase,
     createSelector,
+    createSelectorFor,
     createReducer,
     ORM,
     Model,

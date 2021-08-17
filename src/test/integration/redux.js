@@ -118,7 +118,7 @@ describe("Redux integration", () => {
         }).not.toThrow();
     });
 
-    describe("selectors memoize results as intended", () => {
+    describe("createSelector memoizes results as intended", () => {
         it("basic selector", () => {
             const selector = createSelector(orm, () => {});
             expect(typeof selector).toBe("function");

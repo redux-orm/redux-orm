@@ -12,11 +12,12 @@ export default class ModelSelectorSpec extends SelectorSpec {
     }
 
     get dependencies() {
-        return [this._orm, idArgSelector];
+        return [(state) => state, this._orm, idArgSelector];
     }
 
     get resultFunc() {
-        return ({ [this._model.modelName]: ModelClass }, idArg) => {
+        return function modelSelectorResult(_state, session, idArg) {
+            const { [this._model.modelName]: ModelClass } = session;
             if (typeof idArg === "undefined") {
                 return ModelClass.all().toRefArray();
             }
@@ -31,7 +32,15 @@ export default class ModelSelectorSpec extends SelectorSpec {
         };
     }
 
+    valueForRef(ref, _session) {
+        return ref;
+    }
+
     get model() {
         return this._model;
+    }
+
+    modelIs(modelName) {
+        return modelName === this._model.modelName;
     }
 }

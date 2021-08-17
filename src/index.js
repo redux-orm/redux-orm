@@ -2,7 +2,7 @@ import QuerySet from "./QuerySet";
 import Model from "./Model";
 import { DeprecatedSchema, ORM } from "./ORM";
 import Session from "./Session";
-import { createReducer, createSelector } from "./redux";
+import { createReducer, createSelector, createSelectorFor } from "./redux";
 import ForeignKey from "./fields/ForeignKey";
 import ManyToMany from "./fields/ManyToMany";
 import OneToOne from "./fields/OneToOne";
@@ -36,6 +36,7 @@ export {
     oneToOne,
     createReducer,
     createSelector,
+    createSelectorFor,
 };
 
 export default Model;

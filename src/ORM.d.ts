@@ -1,7 +1,6 @@
-import { Database, DatabaseCreator } from "./db";
-import { TableState } from "./db/Table";
+import { Database, DatabaseCreator, TableState } from "./db";
 import { AnyModel } from "./Model";
-import Session, { OrmSession } from "./Session";
+import { OrmSession } from "./Session";
 
 /**
  * A `{typeof Model[modelName]: typeof Model}` map defining:
@@ -10,7 +9,7 @@ import Session, { OrmSession } from "./Session";
  * - {@link Session} bound Model classes
  * - ORM branch state type
  */
-type IndexedModelClasses<
+export type IndexedModelClasses<
     T extends { [k in keyof T]: typeof AnyModel } = {},
     K extends keyof T = Extract<keyof T, T[keyof T]["modelName"]>
 > = { [k in K]: T[K] };
@@ -18,7 +17,7 @@ type IndexedModelClasses<
 /**
  * A mapped type capable of inferring ORM branch state type based on schema {@link Model}s.
  */
-type OrmState<MClassMap extends IndexedModelClasses<any>> = {
+export type OrmState<MClassMap extends IndexedModelClasses<any>> = {
     [K in keyof MClassMap]: TableState<MClassMap[K]>;
 };
 
@@ -27,7 +26,7 @@ type OrmState<MClassMap extends IndexedModelClasses<any>> = {
  *
  * Enables customization of database creation.
  */
-interface ORMOpts<MClassMap> {
+export interface ORMOpts<MClassMap> {
     stateSelector?: (state: any) => OrmState<MClassMap>;
     createDatabase?: DatabaseCreator;
 }
@@ -45,7 +44,7 @@ interface ORMOpts<MClassMap> {
  * Internally, this class handles generating a schema specification from models
  * to the database.
  */
-declare class ORM<
+export class ORM<
     I extends IndexedModelClasses<any>,
     ModelNames extends keyof I = keyof I
 > {
@@ -118,3 +117,5 @@ declare class ORM<
      */
     getDatabase(): Database<I>;
 }
+
+export default ORM;

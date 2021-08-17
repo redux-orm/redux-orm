@@ -1,7 +1,7 @@
 import { ORM, Session, Model, fk, oneToOne, createSelector } from "../..";
 import { createTestModels, avg } from "../helpers";
 
-describe("Shorthand selector specifications", () => {
+describe("createSelector shorthand selector specifications", () => {
     let orm;
     let reducer;
     let emptyState;
@@ -166,25 +166,19 @@ describe("Shorthand selector specifications", () => {
 
     describe("model selector specs", () => {
         let publishers;
-
         beforeEach(() => {
             publishers = createSelector(orm.Publisher);
         });
-
         it("return correct values for empty state", () => {
             expect(publishers(emptyState, 1)).toEqual(null);
             expect(publishers(emptyState, 1)).toEqual(null);
-
             expect(publishers(emptyState, zeroAndTwo)).toEqual([null, null]);
             expect(publishers(emptyState, zeroAndTwo)).toEqual([null, null]);
-
             expect(publishers(emptyState, [])).toEqual([]);
             expect(publishers(emptyState, [])).toEqual([]);
-
             expect(publishers(emptyState)).toEqual([]);
             expect(publishers(emptyState)).toEqual([]);
         });
-
         it("will recompute single instances", () => {
             ormState = reducer(emptyState, {
                 type: CREATE_PUBLISHER,
@@ -228,7 +222,6 @@ describe("Shorthand selector specifications", () => {
                 name: "New name",
             });
         });
-
         it("will recompute some model instances by ID array", () => {
             ormState = reducer(emptyState, {
                 type: CREATE_PUBLISHER,
@@ -252,7 +245,6 @@ describe("Shorthand selector specifications", () => {
             expect(publishers(ormState, zeroAndTwo)).toEqual([null, { id: 2 }]);
             expect(publishers(ormState, zeroAndTwo)).toEqual([null, { id: 2 }]);
         });
-
         it("will recompute all model instances", () => {
             ormState = reducer(emptyState, {
                 type: CREATE_PUBLISHER,
@@ -294,11 +286,9 @@ describe("Shorthand selector specifications", () => {
 
     describe("attr field selector specs", () => {
         let publisherNames;
-
         beforeEach(() => {
             publisherNames = createSelector(orm.Publisher.name);
         });
-
         it("return correct values for empty state", () => {
             expect(publisherNames(emptyState, 1)).toEqual(null);
             expect(publisherNames(emptyState, 1)).toEqual(null);
@@ -315,7 +305,6 @@ describe("Shorthand selector specifications", () => {
             expect(publisherNames(emptyState, [])).toEqual([]);
             expect(publisherNames(emptyState, [])).toEqual([]);
         });
-
         it("will compute attr fields", () => {
             ormState = reducer(emptyState, {
                 type: CREATE_PUBLISHER,
@@ -333,22 +322,18 @@ describe("Shorthand selector specifications", () => {
     describe("foreign key field selector specs", () => {
         let moviePublisher;
         let publisherMovies;
-
         beforeEach(() => {
             moviePublisher = createSelector(orm.Movie.publisher);
             publisherMovies = createSelector(orm.Publisher.movies);
         });
-
         it("return correct values for empty state", () => {
             expect(moviePublisher(ormState, 1)).toEqual(null);
             expect(moviePublisher(ormState, [1])).toEqual([null]);
             expect(moviePublisher(ormState)).toEqual([]);
-
             expect(publisherMovies(ormState, 123)).toEqual(null);
             expect(publisherMovies(ormState, [123])).toEqual([null]);
             expect(publisherMovies(ormState)).toEqual([]);
         });
-
         it("will compute forward FK models", () => {
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
@@ -368,7 +353,6 @@ describe("Shorthand selector specifications", () => {
             expect(moviePublisher(ormState)).toEqual([{ id: 123 }]);
             expect(moviePublisher(ormState, 1)).toEqual({ id: 123 });
         });
-
         it("will compute backward FK models", () => {
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
@@ -424,12 +408,10 @@ describe("Shorthand selector specifications", () => {
     describe("one to one field selector specs", () => {
         let bookCover;
         let coverBook;
-
         beforeEach(() => {
             bookCover = createSelector(orm.Book.cover);
             coverBook = createSelector(orm.Cover.book);
         });
-
         it("will compute forward oneToOne models", () => {
             ormState = reducer(ormState, {
                 type: CREATE_COVER,
@@ -452,7 +434,6 @@ describe("Shorthand selector specifications", () => {
             expect(bookCover(ormState)).toEqual([{ id: 123 }]);
             expect(bookCover(ormState, 1)).toEqual({ id: 123 });
         });
-
         it("will compute backward oneToOne models", () => {
             ormState = reducer(ormState, {
                 type: CREATE_BOOK,
@@ -496,12 +477,10 @@ describe("Shorthand selector specifications", () => {
     describe("many to many field selector specs", () => {
         let authorPublishers;
         let publisherAuthors;
-
         beforeEach(() => {
             authorPublishers = createSelector(orm.Author.publishers);
             publisherAuthors = createSelector(orm.Publisher.authors);
         });
-
         it("will compute forward manyToMany models", () => {
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
@@ -524,7 +503,6 @@ describe("Shorthand selector specifications", () => {
             expect(authorPublishers(ormState)).toEqual([[{ id: 123 }]]);
             expect(authorPublishers(ormState, 1)).toEqual([{ id: 123 }]);
         });
-
         it("will compute backward manyToMany models", () => {
             ormState = reducer(ormState, {
                 type: CREATE_AUTHOR,
@@ -564,7 +542,6 @@ describe("Shorthand selector specifications", () => {
                 "Cannot create a selector for `tags.subTags` because `tags` is a collection field."
             );
         });
-
         it("will exist for back-and-forth fields", () => {
             const bookItself = createSelector(orm.Book.cover.book.cover.book);
             expect(bookItself).not.toBeUndefined();
@@ -585,7 +562,6 @@ describe("Shorthand selector specifications", () => {
             });
             expect(bookItself(ormState, 1)).toEqual(ormState.Book.itemsById[1]);
         });
-
         it("will not exist for self-referencing collections", () => {
             const _orm = new ORM({ stateSelector });
             class TreeNode extends Model {}
@@ -602,7 +578,6 @@ describe("Shorthand selector specifications", () => {
                 _orm.TreeNode.parent.parent.parent.parent
             ).not.toBeUndefined();
         });
-
         it("will compute for single model instances", () => {
             const coverAuthors = createSelector(
                 orm.Cover.book.publisher.authors
@@ -643,7 +618,6 @@ describe("Shorthand selector specifications", () => {
             expect(coverAuthors(ormState, 1)).toEqual([{ id: 3 }]);
             expect(coverAuthors(ormState, 1)).toEqual([{ id: 3 }]);
         });
-
         it("returns correct values for missing intermediate fields", () => {
             const coverAuthors = createSelector(
                 orm.Cover.book.publisher.authors
@@ -684,7 +658,6 @@ describe("Shorthand selector specifications", () => {
             expect(coverAuthors(ormState, 1)).toEqual([{ id: 3 }]);
             expect(coverAuthors(ormState, 1)).toEqual([{ id: 3 }]);
         });
-
         it("can handle self-referencing many-to-many chains", () => {
             const tagSubTags = createSelector(orm.Tag.subTags);
             expect(tagSubTags(emptyState, "Technology")).toEqual(null);
@@ -707,7 +680,6 @@ describe("Shorthand selector specifications", () => {
                 { name: "Redux" },
             ]);
         });
-
         it("can handle self-referencing one-to-one chains", () => {
             let _ormState;
             const _stateSelector = () => _ormState;
@@ -724,23 +696,19 @@ describe("Shorthand selector specifications", () => {
                 return session.state;
             };
             _ormState = _orm.getEmptyState();
-
             const yinItself = createSelector(_orm.Yin.yang.yin.yang.yin);
             expect(yinItself).not.toBeUndefined();
             const yinYang = createSelector(_orm.Yin.yang.yin.yang);
             expect(yinYang).not.toBeUndefined();
             const yangYin = createSelector(_orm.Yin.yin.yang.yin);
             expect(yangYin).not.toBeUndefined();
-
             expect(yinItself(_ormState, 1)).toBe(null);
             expect(yinYang(_ormState, 1)).toBe(null);
             expect(yangYin(_ormState, 2)).toBe(null);
-
             _ormState = _reducer(_ormState, { id: 1, yang: 2 });
             expect(yinItself(_ormState, 1)).toBe(null);
             expect(yinYang(_ormState, 1)).toBe(null);
             expect(yangYin(_ormState, 2)).toBe(null);
-
             _ormState = _reducer(_ormState, { id: 2 });
             expect(yinItself(_ormState, 1)).toBe(_ormState.Yin.itemsById[1]);
             expect(yinYang(_ormState, 1)).toBe(_ormState.Yin.itemsById[2]);
@@ -927,6 +895,7 @@ describe("Shorthand selector specifications", () => {
                     id: 1,
                 },
             });
+            expect(authorBookTags(ormState, 1)).toEqual([]);
             ormState = reducer(ormState, {
                 type: CREATE_BOOK,
                 payload: {
@@ -935,33 +904,22 @@ describe("Shorthand selector specifications", () => {
                     tags: ["Redux-ORM"],
                 },
             });
+            expect(authorBookTags(ormState, 1)).toEqual([[]]);
             ormState = reducer(ormState, {
                 type: CREATE_TAG,
                 payload: {
                     name: "Redux-ORM",
                 },
             });
-            // unrelated book
-            ormState = reducer(ormState, {
-                type: CREATE_BOOK,
-                payload: {
-                    id: 456,
-                    author: null,
-                    tags: ["Other tag"],
-                },
-            });
-            ormState = reducer(ormState, {
-                type: CREATE_TAG,
-                payload: {
-                    name: "Other tag",
-                },
-            });
+            expect(authorBookTags(ormState, 1)).toEqual([
+                [{ name: "Redux-ORM" }],
+            ]);
             // unrelated book and tag
             ormState = reducer(ormState, {
                 type: CREATE_BOOK,
                 payload: {
                     id: 456,
-                    author: null,
+                    author: null, // different author!
                     tags: ["Other tag"],
                 },
             });
