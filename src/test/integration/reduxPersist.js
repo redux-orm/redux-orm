@@ -117,19 +117,19 @@ describe("Redux Persist integration", () => {
                 });
 
                 const movies = createSelector(orm.Movie);
-                expect(movies(store.getState())).toStrictEqual([{ id: 123 }]);
+                expect(movies(store.getState())[0].id).toStrictEqual(123);
 
                 return persistor.flush().then(() => {
-                    expect(movies(store.getState())).toStrictEqual([
-                        { id: 123 },
-                    ]);
+                    expect(movies(store.getState())[0].ref).toStrictEqual({
+                        id: 123,
+                    });
 
                     const store2 = createStore(createPersistedReducer());
                     const persistor2 = persistStore(store2);
                     persistor2.subscribe(() => {
-                        expect(movies(store2.getState())).toStrictEqual([
-                            { id: 123 },
-                        ]);
+                        expect(movies(store2.getState())[0].ref).toStrictEqual({
+                            id: 123,
+                        });
 
                         resolve();
                     });

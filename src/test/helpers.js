@@ -174,7 +174,11 @@ export function createTestModels() {
         // synonymousTags: many('Tag', 'synonymousTags'),
     };
 
-    const Publisher = class PublisherModel extends Model {};
+    const Publisher = class PublisherModel extends Model {
+        aModelMethod() {
+            return `Name: ${this.name}`;
+        }
+    };
     Publisher.modelName = "Publisher";
     Publisher.fields = {
         id: attr(),

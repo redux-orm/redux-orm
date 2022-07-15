@@ -193,14 +193,9 @@ describe("Shorthand selector specifications", () => {
                     name: "First publisher",
                 },
             });
-            expect(publishers(ormState, 1)).toEqual({
-                id: 1,
-                name: "First publisher",
-            });
-            expect(publishers(ormState, 1)).toEqual({
-                id: 1,
-                name: "First publisher",
-            });
+            expect(publishers(ormState, 1).id).toEqual(1);
+            expect(publishers(ormState, 1).name).toEqual("First publisher");
+
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
@@ -208,14 +203,10 @@ describe("Shorthand selector specifications", () => {
                     name: "Second publisher",
                 },
             });
-            expect(publishers(ormState, 1)).toEqual({
-                id: 1,
-                name: "First publisher",
-            });
-            expect(publishers(ormState, 2)).toEqual({
-                id: 2,
-                name: "Second publisher",
-            });
+            expect(publishers(ormState, 1).id).toEqual(1);
+            expect(publishers(ormState, 1).name).toEqual("First publisher");
+            expect(publishers(ormState, 2).id).toEqual(2);
+            expect(publishers(ormState, 2).name).toEqual("Second publisher");
             ormState = reducer(ormState, {
                 type: UPSERT_PUBLISHER,
                 payload: {
@@ -223,10 +214,21 @@ describe("Shorthand selector specifications", () => {
                     name: "New name",
                 },
             });
-            expect(publishers(ormState, 1)).toEqual({
-                id: 1,
-                name: "New name",
+            expect(publishers(ormState, 1).name).toEqual("New name");
+        });
+
+        it("returns the method instanced", () => {
+            ormState = reducer(emptyState, {
+                type: CREATE_PUBLISHER,
+                payload: {
+                    id: 1,
+                    name: "First publisher",
+                },
             });
+            expect(publishers(ormState, 1).aModelMethod).toBeDefined();
+            expect(publishers(ormState, 1).aModelMethod()).toBe(
+                "Name: First publisher"
+            );
         });
 
         it("will recompute some model instances by ID array", () => {
@@ -249,8 +251,8 @@ describe("Shorthand selector specifications", () => {
                     id: 2,
                 },
             });
-            expect(publishers(ormState, zeroAndTwo)).toEqual([null, { id: 2 }]);
-            expect(publishers(ormState, zeroAndTwo)).toEqual([null, { id: 2 }]);
+            expect(publishers(ormState, zeroAndTwo)[0]).toEqual(null);
+            expect(publishers(ormState, zeroAndTwo)[1].id).toEqual(2);
         });
 
         it("will recompute all model instances", () => {
@@ -261,12 +263,9 @@ describe("Shorthand selector specifications", () => {
                     name: "First publisher",
                 },
             });
-            expect(publishers(ormState)).toEqual([
-                { id: 1, name: "First publisher" },
-            ]);
-            expect(publishers(ormState)).toEqual([
-                { id: 1, name: "First publisher" },
-            ]);
+            const p = publishers(ormState);
+            expect(p[0].id).toEqual(1);
+            expect(p[0].name).toEqual("First publisher");
             ormState = reducer(ormState, {
                 type: CREATE_PUBLISHER,
                 payload: {
@@ -274,10 +273,9 @@ describe("Shorthand selector specifications", () => {
                     name: "Second publisher",
                 },
             });
-            expect(publishers(ormState)).toEqual([
-                { id: 1, name: "First publisher" },
-                { id: 2, name: "Second publisher" },
-            ]);
+            const pp = publishers(ormState);
+            expect(pp[0].ref).toEqual({ id: 1, name: "First publisher" });
+            expect(pp[1].ref).toEqual({ id: 2, name: "Second publisher" });
             ormState = reducer(ormState, {
                 type: UPSERT_PUBLISHER,
                 payload: {
@@ -285,10 +283,14 @@ describe("Shorthand selector specifications", () => {
                 },
             });
             // Update should not have happened!
-            expect(publishers(ormState)).toEqual([
-                { id: 1, name: "First publisher" },
-                { id: 2, name: "Second publisher" },
-            ]);
+            expect(publishers(ormState)[0].ref).toEqual({
+                id: 1,
+                name: "First publisher",
+            });
+            expect(publishers(ormState)[1].ref).toEqual({
+                id: 2,
+                name: "Second publisher",
+            });
         });
     });
 
