@@ -18,16 +18,14 @@ export default class ModelSelectorSpec extends SelectorSpec {
     get resultFunc() {
         return ({ [this._model.modelName]: ModelClass }, idArg) => {
             if (typeof idArg === "undefined") {
-                return ModelClass.all().toRefArray();
+                return ModelClass.all().toModelArray();
             }
             if (Array.isArray(idArg)) {
                 return idArg.map((id) => {
-                    const instance = ModelClass.withId(id);
-                    return instance ? instance.ref : null;
+                    return ModelClass.withId(id);
                 });
             }
-            const instance = ModelClass.withId(idArg);
-            return instance ? instance.ref : null;
+            return ModelClass.withId(idArg);
         };
     }
 
